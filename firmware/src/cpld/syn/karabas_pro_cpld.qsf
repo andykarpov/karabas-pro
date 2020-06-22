@@ -1,0 +1,133 @@
+# -------------------------------------------------------------------------- #
+#
+# Copyright (C) 1991-2013 Altera Corporation
+# Your use of Altera Corporation's design tools, logic functions 
+# and other software and tools, and its AMPP partner logic 
+# functions, and any output files from any of the foregoing 
+# (including device programming or simulation files), and any 
+# associated documentation or information are expressly subject 
+# to the terms and conditions of the Altera Program License 
+# Subscription Agreement, Altera MegaCore Function License 
+# Agreement, or other applicable license agreement, including, 
+# without limitation, that your use is for the sole purpose of 
+# programming logic devices manufactured by Altera and sold by 
+# Altera or its authorized distributors.  Please refer to the 
+# applicable agreement for further details.
+#
+# -------------------------------------------------------------------------- #
+#
+# Quartus II 32-bit
+# Version 13.0.1 Build 232 06/12/2013 Service Pack 1 SJ Web Edition
+# Date created = 15:44:26  June 08, 2020
+#
+# -------------------------------------------------------------------------- #
+#
+# Notes:
+#
+# 1) The default values for assignments are stored in the file:
+#		test_karabas_fpga_fdd_assignment_defaults.qdf
+#    If this file doesn't exist, see file:
+#		assignment_defaults.qdf
+#
+# 2) Altera recommends that you do not modify this file. This
+#    file is updated automatically by the Quartus II software
+#    and any changes you make may be lost or overwritten.
+#
+# -------------------------------------------------------------------------- #
+
+
+set_global_assignment -name FAMILY MAX3000A
+set_global_assignment -name DEVICE "EPM3128ATC100-5"
+set_global_assignment -name TOP_LEVEL_ENTITY karabas_pro_cpld
+set_global_assignment -name ORIGINAL_QUARTUS_VERSION "13.0 SP1"
+set_global_assignment -name PROJECT_CREATION_TIME_DATE "15:44:26  JUNE 08, 2020"
+set_global_assignment -name LAST_QUARTUS_VERSION "13.0 SP1"
+set_global_assignment -name PROJECT_OUTPUT_DIRECTORY output_files
+set_global_assignment -name MIN_CORE_JUNCTION_TEMP 0
+set_global_assignment -name MAX_CORE_JUNCTION_TEMP 85
+set_global_assignment -name ERROR_CHECK_FREQUENCY_DIVISOR "-1"
+set_global_assignment -name VHDL_FILE ../rtl/karabas_pro_cpld.vhd
+set_global_assignment -name STRATIX_DEVICE_IO_STANDARD "2.5 V"
+set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
+set_global_assignment -name PARTITION_NETLIST_TYPE SOURCE -section_id Top
+set_global_assignment -name PARTITION_FITTER_PRESERVATION_LEVEL PLACEMENT_AND_ROUTING -section_id Top
+set_global_assignment -name PARTITION_COLOR 16764057 -section_id Top
+set_global_assignment -name VHDL_FILE ../rtl/spi/spi_slave.vhd
+set_global_assignment -name MAX7000_DEVICE_IO_STANDARD "3.3-V LVTTL"
+set_global_assignment -name SDC_FILE karabas_pro_cpld.sdc
+set_location_assignment PIN_27 -to HDD_D[3]
+set_location_assignment PIN_28 -to HDD_D[11]
+set_location_assignment PIN_29 -to HDD_D[4]
+set_location_assignment PIN_30 -to HDD_D[12]
+set_location_assignment PIN_31 -to HDD_D[5]
+set_location_assignment PIN_32 -to HDD_D[13]
+set_location_assignment PIN_35 -to HDD_D[6]
+set_location_assignment PIN_36 -to HDD_D[14]
+set_location_assignment PIN_37 -to HDD_D[7]
+set_location_assignment PIN_40 -to HDD_D[15]
+set_location_assignment PIN_41 -to HDD_NCS0
+set_location_assignment PIN_42 -to HDD_NCS1
+set_location_assignment PIN_44 -to HDD_NRD
+set_location_assignment PIN_45 -to HDD_NWR
+set_location_assignment PIN_47 -to HDD_A[2]
+set_location_assignment PIN_48 -to HDD_A[1]
+set_location_assignment PIN_49 -to HDD_A[0]
+set_location_assignment PIN_46 -to HDD_NRESET
+set_location_assignment PIN_50 -to HDD_D[0]
+set_location_assignment PIN_52 -to HDD_D[1]
+set_location_assignment PIN_54 -to HDD_D[8]
+set_location_assignment PIN_55 -to HDD_D[2]
+set_location_assignment PIN_56 -to HDD_D[9]
+set_location_assignment PIN_57 -to HDD_D[10]
+set_location_assignment PIN_25 -to SD[15]
+set_location_assignment PIN_24 -to SD[14]
+set_location_assignment PIN_23 -to SD[13]
+set_location_assignment PIN_22 -to SD[12]
+set_location_assignment PIN_21 -to SD[11]
+set_location_assignment PIN_20 -to SD[10]
+set_location_assignment PIN_19 -to SD[9]
+set_location_assignment PIN_17 -to SD[8]
+set_location_assignment PIN_16 -to SD[7]
+set_location_assignment PIN_14 -to SD[6]
+set_location_assignment PIN_13 -to SD[5]
+set_location_assignment PIN_12 -to SD[4]
+set_location_assignment PIN_10 -to SD[3]
+set_location_assignment PIN_9 -to SD[2]
+set_location_assignment PIN_8 -to SD[1]
+set_location_assignment PIN_7 -to SD[0]
+set_location_assignment PIN_6 -to SA[1]
+set_location_assignment PIN_5 -to SA[0]
+set_location_assignment PIN_2 -to SDIR
+set_location_assignment PIN_1 -to NRESET
+set_location_assignment PIN_87 -to CLK
+set_location_assignment PIN_58 -to FDC_NRESET
+set_location_assignment PIN_60 -to FDC_SR
+set_location_assignment PIN_61 -to FDC_SL
+set_location_assignment PIN_63 -to FDC_D[7]
+set_location_assignment PIN_64 -to FDC_D[6]
+set_location_assignment PIN_67 -to FDC_D[5]
+set_location_assignment PIN_68 -to FDC_D[4]
+set_location_assignment PIN_69 -to FDC_D[3]
+set_location_assignment PIN_70 -to FDC_D[2]
+set_location_assignment PIN_71 -to FDC_D[1]
+set_location_assignment PIN_72 -to FDC_D[0]
+set_location_assignment PIN_75 -to FDC_A[1]
+set_location_assignment PIN_76 -to FDC_A[0]
+set_location_assignment PIN_77 -to FDC_NRD
+set_location_assignment PIN_80 -to FDC_NWR
+set_location_assignment PIN_79 -to FDC_NCS
+set_location_assignment PIN_81 -to FDC_HLT
+set_location_assignment PIN_83 -to FDC_CLK
+set_location_assignment PIN_84 -to FDC_TR43
+set_location_assignment PIN_85 -to FDC_RDATA
+set_location_assignment PIN_88 -to FDC_WD
+set_location_assignment PIN_89 -to FDC_WF_DE
+set_location_assignment PIN_92 -to FDC_DRQ
+set_location_assignment PIN_93 -to FDC_INTRQ
+set_location_assignment PIN_94 -to FDC_NRAWR
+set_location_assignment PIN_100 -to FDC_DS1
+set_location_assignment PIN_99 -to FDC_DS0
+set_location_assignment PIN_98 -to FDC_WDATA
+set_location_assignment PIN_97 -to FDC_SIDE
+set_location_assignment PIN_96 -to FDC_RCLK
+set_location_assignment PIN_90 -to CLK2
