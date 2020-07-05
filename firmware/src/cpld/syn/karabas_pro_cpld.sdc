@@ -23,8 +23,8 @@
 
 # Clock constraints
 
-create_clock -name "CLK" -period 7.142ns [get_ports {CLK}]
-
+create_clock -name "CLK" -period 84MHz [get_ports {CLK}]
+create_clock -name "CLK2" -period 8MHz [get_ports {CLK2}]
 
 # Automatically constrain PLL and other generated clocks
 derive_pll_clocks -create_base_clocks

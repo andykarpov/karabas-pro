@@ -37,7 +37,7 @@
 
 
 set_global_assignment -name FAMILY MAX3000A
-set_global_assignment -name DEVICE "EPM3128ATC100-5"
+set_global_assignment -name DEVICE "EPM3128ATC100-10"
 set_global_assignment -name TOP_LEVEL_ENTITY karabas_pro_cpld
 set_global_assignment -name ORIGINAL_QUARTUS_VERSION "13.0 SP1"
 set_global_assignment -name PROJECT_CREATION_TIME_DATE "15:44:26  JUNE 08, 2020"
@@ -52,7 +52,6 @@ set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_
 set_global_assignment -name PARTITION_NETLIST_TYPE SOURCE -section_id Top
 set_global_assignment -name PARTITION_FITTER_PRESERVATION_LEVEL PLACEMENT_AND_ROUTING -section_id Top
 set_global_assignment -name PARTITION_COLOR 16764057 -section_id Top
-set_global_assignment -name VHDL_FILE ../rtl/spi/spi_slave.vhd
 set_global_assignment -name MAX7000_DEVICE_IO_STANDARD "3.3-V LVTTL"
 set_global_assignment -name SDC_FILE karabas_pro_cpld.sdc
 set_location_assignment PIN_27 -to HDD_D[3]
@@ -131,3 +130,6 @@ set_location_assignment PIN_98 -to FDC_WDATA
 set_location_assignment PIN_97 -to FDC_SIDE
 set_location_assignment PIN_96 -to FDC_RCLK
 set_location_assignment PIN_90 -to CLK2
+
+set_global_assignment -name VHDL_FILE ../rtl/ide_controller.vhd
+set_global_assignment -name VHDL_FILE ../rtl/fdd_controller.vhd

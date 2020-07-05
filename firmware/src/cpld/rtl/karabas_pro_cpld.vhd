@@ -52,77 +52,146 @@ end karabas_pro_cpld;
 
 architecture rtl of karabas_pro_cpld is 
 
-signal fdc_do: std_logic := '0';
-signal hdd_do: std_logic := '0'; 
+signal rx_buf: std_logic_vector(15 downto 0);
+signal bus_a : std_logic_vector(15 downto 0);
+signal bus_di: std_logic_vector(7 downto 0);
+signal bus_do: std_logic_vector(7 downto 0);
+signal bus_wr_n : std_logic := '1';
+signal bus_rd_n : std_logic := '1';
+signal bus_mreq_n : std_logic := '1';
+signal bus_iorq_n : std_logic := '1';
+signal bus_m1_n : std_logic := '1';
+signal bus_nmi_n : std_logic := '1';
+signal bus_wait_n : std_logic := '1';
+signal bus_cpm : std_logic;
+signal bus_dos : std_logic;
+signal bus_rom14 : std_logic;
+signal oe_n : std_logic := '1';
+signal ide_oe_n : std_logic := '1';
+signal fdd_oe_n : std_logic := '1';
+signal fdd_bus_do : std_logic_vector(7 downto 0);
+signal ide_bus_do : std_logic_vector(7 downto 0);
 
 begin 
 
+	-- zx bus rx/tx from/to the FPGA
 	process (CLK, SD, SA, SDIR, NRESET)
 	begin
 		if (NRESET = '0') then
 
-			fdc_do <= '0';
-			hdd_do <= '0';
-			
-			FDC_NRESET <= '0';
-			FDC_NWR <= '1';
-			FDC_NRD <= '1';
-			FDC_NCS <= '1';
-			
-			HDD_NRESET <= '0';
-			HDD_NCS0 <= '1';
-			HDD_NCS1 <= '1';
-			HDD_NWR <= '1';
-			HDD_NRD <= '1';
+			bus_a <= (others=> '0');
+			bus_di <= (others => '1');
+			bus_wr_n <= '1';
+			bus_rd_n <= '1';
+			bus_mreq_n <= '1';
+			bus_iorq_n <= '1';
+			bus_wait_n <= '1';
+			bus_m1_n <= '1';
 			
 		elsif (rising_edge(CLK)) then
 
 				if (SDIR = '1') then -- write from CPLD to FPGA
 					case SA is
-						when "00" => SD <= FDC_D & FDC_SL & FDC_SR & FDC_INTRQ & FDC_DRQ & FDC_WF_DE & FDC_WD & FDC_TR43 & FDC_RDATA;
-						when "01" => SD <= HDD_D;
+						when "00" => SD <= bus_do & oe_n & "0000000";
 						when others => null;
 					end case;
 				else
 					case SA is -- read from FPGA to CPLD
-						when "00" => 
-							fdc_do <= SD(15); 
-							hdd_do <= SD(14);
-							FDC_NWR <= SD(13);
-							FDC_NCS <= SD(12);
-							FDC_NRD <= SD(11);
-							FDC_A(1 downto 0) <= SD(10 downto 9);
-							FDC_NRESET <= SD(8);
-							FDC_NRAWR <= SD(7);
-							FDC_RCLK <= SD(6);
-							FDC_CLK <= SD(5);
-							FDC_HLT <= SD(4);
-							FDC_DS0 <= SD(3);
-							FDC_DS1 <= SD(2);
-							FDC_SIDE <= SD(1);
-							FDC_WDATA <= SD(0);
+						when "00" =>
+							rx_buf <= SD;
 						when "01" => 
-							if (fdc_do = '1') then
-								FDC_D <= SD(15 downto 8);
-							else
-								FDC_D <= (others => 'Z');
-							end if;
-							HDD_NRESET <= SD(7);
-							HDD_A <= SD(6 downto 4);
-							HDD_NCS0 <= SD(3);
-							HDD_NCS1 <= SD(2);
-							HDD_NWR <= SD(1);
-							HDD_NRD <= SD(0);
-						when "10" => 
-							if (hdd_do = '1') then
-								HDD_D <= SD;
-							else
-								HDD_D <= (others => 'Z');
-							end if;
+							bus_a <= rx_buf;
+							bus_di <= SD(15 downto 8);
+							bus_rd_n <= SD(7);
+							bus_wr_n <= SD(6);
+							bus_mreq_n <= SD(5);
+							bus_iorq_n <= SD(4);
+							bus_m1_n <= SD(3);
+							bus_cpm <= SD(2);
+							bus_dos <= SD(1);
+							bus_rom14 <= SD(0);
 						when others => null;
 					end case;
 				end if;
 		end if;
 	end process;
+	
+	U1: entity work.ide_controller 
+	port map (
+		CLK => CLK,
+		NRESET => NRESET,
+		
+		CPM => bus_cpm,
+		DOS => bus_dos,
+		ROM14 => bus_rom14,
+		
+		BUS_DI => bus_di,
+		BUS_DO => ide_bus_do,
+		BUS_A => bus_a,
+		BUS_RD_N => bus_rd_n,
+		BUS_WR_N => bus_wr_n,
+		BUS_MREQ_N => bus_mreq_n,
+		BUS_IORQ_N => bus_iorq_n,
+		BUS_M1_N => bus_m1_n,
+		OE_N => ide_oe_n,
+		
+		IDE_A => HDD_A,
+		IDE_D => HDD_D,
+		IDE_CS0_N => HDD_NCS0,
+		IDE_CS1_N => HDD_NCS1,
+		IDE_RD_N => HDD_NRD,
+		IDE_WR_N => HDD_NWR,
+		IDE_RESET_N => HDD_NRESET
+	);
+	
+	U2: entity work.fdd_controller
+	port map (
+		CLK => CLK,
+		CLK8 => CLK2,
+		NRESET => NRESET,
+		
+		CPM => bus_cpm,
+		DOS => bus_dos,
+		ROM14 => bus_rom14,
+		
+		BUS_DI => bus_di,
+		BUS_DO => fdd_bus_do,
+		BUS_A => bus_a,
+		BUS_RD_N => bus_rd_n,
+		BUS_WR_N => bus_wr_n,
+		BUS_MREQ_N => bus_mreq_n,
+		BUS_IORQ_N => bus_iorq_n,
+		BUS_M1_N => bus_m1_n,
+
+		OE_N => fdd_oe_n,
+		
+		FDC_NWR => FDC_NWR,
+		FDC_NRD => FDC_NRD,
+		FDC_D => FDC_D,	
+		FDC_NCS => FDC_NCS,
+		FDC_A => FDC_A,
+		FDC_SL => FDC_SL,
+		FDC_SR => FDC_SR,
+		FDC_NRESET => FDC_NRESET,
+		FDC_INTRQ => FDC_INTRQ,
+		FDC_DRQ => FDC_DRQ,
+		FDC_WF_DE => FDC_WF_DE,
+		FDC_WD => FDC_WD,
+		FDC_TR43 => FDC_TR43,
+		FDC_NRAWR => FDC_NRAWR,
+		FDC_RCLK => FDC_RCLK,
+		FDC_CLK => FDC_CLK,
+		FDC_HLT => FDC_HLT,
+		FDC_DS0 => FDC_DS0,
+		FDC_DS1 => FDC_DS1,
+		FDC_SIDE => FDC_SIDE,
+		FDC_RDATA => FDC_RDATA,
+		FDC_WDATA => FDC_WDATA
+	);
+	
+	bus_do <= fdd_bus_do when fdd_oe_n = '0' else 
+		ide_bus_do when ide_oe_n = '0' else 
+		"ZZZZZZZZ";
+	oe_n <= '0' when ide_oe_n = '0' or fdd_oe_n = '0' else '1';
 
 end rtl;
