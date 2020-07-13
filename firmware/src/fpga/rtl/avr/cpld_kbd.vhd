@@ -8,7 +8,6 @@ entity cpld_kbd is
 	(
 	 CLK			 : in std_logic;
 	 N_RESET 	 : in std_logic := '1';
-	 N_CS			 : in std_logic := '1';
     A           : in std_logic_vector(15 downto 8);     -- address bus for kbd
     KB          : out std_logic_vector(5 downto 0) := "111111";     -- data bus for kbd + extended bit (b6)
     AVR_MOSI    : in std_logic;
