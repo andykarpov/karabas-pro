@@ -18,14 +18,14 @@ entity osd is
 		
 		EN 		: in std_logic;
 		
-		HCNT_I	: in std_logic_vector(8 downto 0);
+		HCNT_I	: in std_logic_vector(9 downto 0);
 		VCNT_I	: in std_logic_vector(8 downto 0)
 		);
 end entity;
 
 architecture rtl of osd is
 
-	signal hcnt : std_logic_vector(8 downto 0);
+	signal hcnt : std_logic_vector(9 downto 0);
 	signal vcnt : std_logic_vector(8 downto 0);
 	signal rgb  : std_logic_vector(8 downto 0);
 	

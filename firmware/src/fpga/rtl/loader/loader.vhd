@@ -1,6 +1,5 @@
 -------------------------------------------------------------------[25.07.2019]
--- u16-Loader
--- DEVBOARD ReVerSE-U16
+-- Loader
 --
 -- Load data from SPI flash (W25Q16) into RAM on boot
 -- 1. Loader process initiates by RESET=1 (asynchronous)
@@ -22,12 +21,9 @@ USE ieee.std_logic_unsigned.all;
 entity loader is
 generic (
 	FLASH_ADDR_START	: std_logic_vector(23 downto 0) := "000010111000000000000000"; -- 753664; -- 24bit address
-	RAM_ADDR_START		: std_logic_vector(20 downto 0) := "110000000000000000000"; -- 21 bit address
-	SIZE_TO_READ		: integer := 73728; -- count of bytes to read (64 rom + 8kb esxdos)
+	RAM_ADDR_START		: std_logic_vector(20 downto 0) := "100000000000000000000"; -- 21 bit address
+	SIZE_TO_READ		: integer := 65536; -- count of bytes to read (64kb rom)
 	
---	RAM_CLEAR_ADDR_START	: std_logic_vector(24 downto 0) := "1000000000000000000000000"; 
---	SIZE_TO_CLEAR 		: integer := 524288; -- count of bytes to clear
-
 	RAM_CLEAR_ADDR_START	: std_logic_vector(20 downto 0) := "000000000000000000000"; 
 	SIZE_TO_CLEAR 		: integer := 131072; -- count of bytes to clear
 	
@@ -43,11 +39,9 @@ port (
 	
 	-- RAM interface
 	RAM_A 			: out std_logic_vector(20 downto 0);
-	RAM_DI 			: out std_logic_vector(7 downto 0);
-	RAM_DO 			: in std_logic_vector(7 downto 0);
+	RAM_DO 			: out std_logic_vector(7 downto 0);
 	RAM_WR			: out std_logic;
 	RAM_RD			: out std_logic;
-	RAM_RFSH			: out std_logic;
 
 	-- SPI FLASH (M25P16)
 	DATA0				: in std_logic;
@@ -79,10 +73,7 @@ signal spi_ss_n 		: std_logic_vector(0 downto 0);
 -- SDRAM
 signal sdr_a_bus 		: std_logic_vector(20 downto 0);
 signal sdr_di_bus		: std_logic_vector(7 downto 0);
-signal sdr_do_bus		: std_logic_vector(7 downto 0);
-signal sdr_wr			: std_logic;
-signal sdr_rd			: std_logic;
-signal sdr_rfsh		: std_logic;
+signal sdr_wr			: std_logic := '0';
 
 -- System
 signal loader_act 	: std_logic := '1';
@@ -130,15 +121,10 @@ DCLK <= spi_clk;
 -------------------------------------------------------------------------------
 
 -- RAM
-sdr_rd <= '0';
-sdr_rfsh <= '0';
-
 RAM_A <= sdr_a_bus;
-RAM_DI <= sdr_di_bus;
-sdr_do_bus <= RAM_DO;
+RAM_DO <= sdr_di_bus;
 RAM_WR <= sdr_wr;
-RAM_RD <= sdr_rd;
-RAM_RFSH <= sdr_rfsh;
+RAM_RD <= '0';
 
 -- loading state machine
 process (RESET, CLK, loader_act)
