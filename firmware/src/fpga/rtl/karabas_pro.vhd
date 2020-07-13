@@ -47,7 +47,6 @@ use IEEE.numeric_std.all;
 entity karabas_pro is
 	generic (
 		enable_ay_uart 	 : boolean := true; -- enable AY port A UART
-		enable_osd 	 		 : boolean := true; -- enable OSD debug menu
 		enable_turbo 		 : boolean := false -- enable Turbo mode 7MHz
 	);
 port (
@@ -134,9 +133,6 @@ signal cpu_mem_rd	: std_logic;
 signal cpu_nmi_n	: std_logic;
 signal cpu_wait_n : std_logic := '1';
 
--- Memory
-signal ram_a_bus	: std_logic_vector(7 downto 0);
-
 -- Port
 signal port_xxfe_reg	: std_logic_vector(7 downto 0) := "00000000";
 signal port_7ffd_reg	: std_logic_vector(7 downto 0);
@@ -188,9 +184,10 @@ signal mc146818_do_bus	: std_logic_vector(7 downto 0);
 signal mc146818_busy		: std_logic;
 signal port_bff7	: std_logic;
 signal port_eff7_reg	: std_logic_vector(7 downto 0);
+
+-- Port selectors
 signal fd_port 	: std_logic;
 signal fd_sel 		: std_logic;
-
 signal cs_xxfe : std_logic := '0'; 
 signal cs_xxff : std_logic := '0';
 signal cs_eff7 : std_logic := '0';
@@ -200,13 +197,6 @@ signal cs_1ffd : std_logic := '0';
 signal cs_dffd : std_logic := '0';
 signal cs_fffd : std_logic := '0';
 signal cs_xxfd : std_logic := '0';
-
--- SRAM
-signal sram_a_bus  : std_logic_vector(20 downto 0);
-signal sram_di_bus : std_logic_vector(7 downto 0);
-signal sram_do_bus	: std_logic_vector(7 downto 0);
-signal sram_wr		: std_logic;
-signal sram_rd		: std_logic;
 
 -- TurboSound
 signal ssg_sel		: std_logic;
@@ -222,6 +212,7 @@ signal audio_l		: std_logic_vector(15 downto 0);
 signal audio_r		: std_logic_vector(15 downto 0);
 signal sound		: std_logic_vector(7 downto 0);
 
+-- AY UART signals
 signal ay_bdir 	: std_logic;
 signal ay_bc1		: std_logic;
 signal ay_port 	: std_logic := '0';
@@ -247,7 +238,6 @@ signal clk_div2	: std_logic;
 signal clk_div4	: std_logic;
 signal clk_div8	: std_logic;
 signal clk_div16	: std_logic;
-
 signal vga_clk_x 	: std_logic;
 signal vga_clk_2x : std_logic;
 signal vga_clko_2x : std_logic;
@@ -276,9 +266,10 @@ signal loader_ram_a	: std_logic_vector(20 downto 0);
 signal loader_ram_wr : std_logic;
 signal loader_ram_rd : std_logic;
 
-signal loader_ncs : std_logic;
-signal loader_clk : std_logic;
-signal loader_do : std_logic;
+-- SPI flash / SD
+signal flash_ncs : std_logic;
+signal flash_clk : std_logic;
+signal flash_do : std_logic;
 signal sd_clk : std_logic;
 signal sd_si : std_logic;
 
@@ -461,7 +452,7 @@ port map (
 U7: entity work.osd
 port map (
 	CLK 	=> clk_bus,
-	EN 	=> enable_osd,
+	EN 	=> '1',
 	RGB_I => vid_rgb,
 	RGB_O => vid_rgb_osd,
 	HCNT_I => vid_hcnt,
@@ -500,9 +491,9 @@ port map(
 	RAM_RD 			=> loader_ram_rd,
 
 	DATA0				=> DATA0,
-	NCSO				=> loader_ncs,
-	DCLK				=> loader_clk,
-	ASDO				=> loader_do,
+	NCSO				=> flash_ncs,
+	DCLK				=> flash_clk,
+	ASDO				=> flash_do,
 
 	LOADER_ACTIVE 	=> loader_act,
 	LOADER_RESET 	=> loader_reset
@@ -728,9 +719,9 @@ sd_clk 	<= zc_sclk;
 sd_si 	<= zc_mosi;
 
 -- share SPI between flash and SD
-loader_ncs <= '0' when loader_act = '1' else '1';
-DCLK <= loader_clk when loader_act = '1' else sd_clk;
-ASDO <= loader_do when loader_act = '1' else sd_si;
+DCLK <= flash_clk when loader_act = '1' else sd_clk;
+ASDO <= flash_do when loader_act = '1' else sd_si;
+NCSO <= flash_ncs;
 
 -------------------------------------------------------------------------------
 -- Ports
