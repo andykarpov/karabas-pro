@@ -9,6 +9,7 @@ entity bus_port is
 	-- global clocks
 	CLK : in std_logic;
 	CLK2: in std_logic;
+	RESET : in std_logic;
 	 
 	-- physical interface with CPLD
 	SD : inout std_logic_vector(15 downto 0);
@@ -16,6 +17,7 @@ entity bus_port is
 	SDIR : out std_logic;
 	CPLD_CLK : out std_logic;
 	CPLD_CLK2 : out std_logic;
+	NRESET : out std_logic;
 
 	-- zx bus signals to rx/tx from/to the CPLD controller
 	BUS_A : in std_logic_vector(15 downto 0);
@@ -34,29 +36,33 @@ entity bus_port is
     end bus_port;
 architecture RTL of bus_port is
 
-type machine IS(rx1, tx1, tx2); --state machine datatype
+type machine IS(rx1, rx2, tx1, tx2); --state machine datatype
 signal state 			: machine := rx1; 	--current state
 
 begin
 	
 	CPLD_CLK <= CLK;
 	CPLD_CLK2 <= CLK2;
+	NRESET <= not reset;
 
 	process (CLK)
 	begin
-		if CLK'event and CLK='1' then
+		if CLK'event and CLK='0' then
 			case state is
-				when rx1 => 
+				when rx1 => -- set rx mode, address
 					SDIR <= '1'; SA <= "00";
-					BUS_DO <= SD(15 downto 8);
+					SD <= (others => 'Z');
+					state <= rx2;
+				when rx2 => 
+					BUS_DO <= SD(15 downto 8); -- receiving data from slave
 					OE_N <= SD(7);
 					state <= tx1;
 				when tx1 =>
-					SDIR <= '0'; SA <= "00";
+					SDIR <= '0'; SA <= "00"; -- tx cpu adress
 					SD <= BUS_A;
 					state <= tx2;
 				when tx2 => 
-					SDIR <= '0'; SA <= "01";
+					SDIR <= '0'; SA <= "01"; -- tx cpu signals
 					SD(15 downto 8) <= BUS_DI;
 					SD(7) <= BUS_RD_N;
 					SD(6) <= BUS_WR_N;

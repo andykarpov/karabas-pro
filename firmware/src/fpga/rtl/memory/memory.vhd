@@ -111,7 +111,7 @@ begin
 	
 	DO <= buf_md;
 	
-	N_OE <= '0' when is_ram = '1' and N_RD = '0' else '1';
+	N_OE <= '0' when (is_ram = '1' or is_rom = '1') and N_RD = '0' else '1';
 		
 	mux <= A(15 downto 14);
 		
@@ -145,7 +145,7 @@ begin
 
 	MA(20 downto 14) <= 
 		loader_ram_a(20 downto 14) when loader_act = '1' else -- loader ram
-		"10000" & rom_page(1 downto 0) when is_rom = '1' else -- rom from sram high bank 
+		"10000" & rom_page(1 downto 0) when is_rom = '1' and vbus_mode = '0' else -- rom from sram high bank 
 		ram_page(6 downto 0) when vbus_mode = '0' else 
 		"00001" & VID_PAGE & '1' when vbus_mode = '1' and DS80 = '0' else -- spectrum screen
 		"00001" & VID_PAGE & '0' when vbus_mode = '1' and DS80 = '1' and vid_rd = '0' else -- profi bitmap 

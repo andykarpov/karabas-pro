@@ -699,8 +699,8 @@ void do_reset()
   matrix[ZX_K_RESET] = 1;
 //  clear_matrix(ZX_MATRIX_SIZE);
   transmit_keyboard_matrix();
-  delay(10);
-  matrix[ZX_K_RESET] = 1;
+  delay(100);
+  matrix[ZX_K_RESET] = 0;
   transmit_keyboard_matrix();
 }
 
@@ -709,7 +709,7 @@ void do_magic()
   matrix[ZX_K_MAGICK] = 1;
 //  clear_matrix(ZX_MATRIX_SIZE);
   transmit_keyboard_matrix();
-  delay(10);
+  delay(100);
   matrix[ZX_K_MAGICK] = 0;
   transmit_keyboard_matrix();
 }

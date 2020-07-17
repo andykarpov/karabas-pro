@@ -46,6 +46,7 @@ use IEEE.numeric_std.all;
 
 entity karabas_pro is
 	generic (
+		enable_diag_rom	 : boolean := false; -- Retroleum diagrom
 		enable_turbo 		 : boolean := false -- enable Turbo mode 7MHz
 	);
 port (
@@ -54,9 +55,9 @@ port (
 
 	-- SRAM (2MB 2x8bit)
 	SRAM_D		: inout std_logic_vector(7 downto 0);
-	SRAM_A		: out std_logic_vector(20 downto 0);
-	SRAM_NWR		: out std_logic;
-	SRAM_NRD		: out std_logic;
+	SRAM_A		: buffer std_logic_vector(20 downto 0);
+	SRAM_NWR		: buffer std_logic;
+	SRAM_NRD		: buffer std_logic;
 	
 	-- SPI FLASH (M25P16)
 	DATA0			: in std_logic;  -- MISO
@@ -71,8 +72,8 @@ port (
 	VGA_R 		: out std_logic_vector(2 downto 0);
 	VGA_G 		: out std_logic_vector(2 downto 0);
 	VGA_B 		: out std_logic_vector(2 downto 0);
-	VGA_HS 		: out std_logic;
-	VGA_VS 		: out std_logic;
+	VGA_HS 		: buffer std_logic;
+	VGA_VS 		: buffer std_logic;
 		
 	-- AVR SPI slave
 	AVR_SCK 		: in std_logic;
@@ -94,12 +95,12 @@ port (
 	SND_DAT 		: out std_logic;
 	
 	-- Misc I/O
-	PIN_141		: in std_logic;
-	PIN_138 		: in std_logic;
-	PIN_121		: in std_logic;
-	PIN_120		: in std_logic;
-	PIN_119		: in std_logic;
-	PIN_115		: in std_logic;
+	PIN_141		: inout std_logic;
+	PIN_138 		: inout std_logic;
+	PIN_121		: inout std_logic;
+	PIN_120		: inout std_logic;
+	PIN_119		: inout std_logic;
+	PIN_115		: inout std_logic;
 		
 	-- UART / ESP8266
 	UART_RX 		: in std_logic;
@@ -241,6 +242,13 @@ signal vga_clk_x 		: std_logic;
 signal vga_clk_2x 	: std_logic;
 signal vga_clko_2x 	: std_logic;
 
+signal ena_div2	: std_logic;
+signal ena_div4	: std_logic;
+signal ena_div8	: std_logic;
+signal ena_div16	: std_logic;
+signal ena_div32	: std_logic;
+signal ena_cnt		: std_logic_vector(5 downto 0);
+
 -- System
 signal reset			: std_logic;
 signal areset			: std_logic;
@@ -279,6 +287,9 @@ signal uart_oe_n 		: std_logic;
 -- cpld port
 signal cpld_oe_n 		: std_logic := '1';
 signal cpld_do 		: std_logic_vector(7 downto 0);
+
+-- test rom 
+signal rom_do_bus 	: std_logic_vector(7 downto 0);
 
 -- profi special signals
 signal cpm 				: std_logic := '0';
@@ -334,7 +345,7 @@ port map(
 U4: entity work.T80se
 generic map (
 	Mode				=> 0,		-- 0 => Z80, 1 => Fast Z80, 2 => 8080, 3 => GB
-	T2Write			=> 1,		-- 0 => WR_n active in T3, /=0 => WR_n active in T2
+	T2Write			=> 0,--1,		-- 0 => WR_n active in T3, /=0 => WR_n active in T2
 	IOWait			=> 1 )	-- 0 => Single cycle I/O, 1 => Std I/O cycle
 
 port map (
@@ -424,7 +435,7 @@ port map (
 	ENA 				=> clk_div4, 	-- 7 / 6
 	
 	BORDER 			=> port_xxfe_reg(2 downto 0),
-	DI 				=> cpu_do_bus,
+	DI 				=> SRAM_D,
 	TURBO 			=> '0',
 	INTA 				=> cpu_inta_n,
 	INT 				=> cpu_int_n,
@@ -457,10 +468,10 @@ port map (
 	HCNT_I 			=> vid_hcnt,
 	VCNT_I 			=> vid_vcnt,
 
-	PORT_1 			=> port_dffd_reg,
+	PORT_1 			=> cpld_do,
 	PORT_2 			=> port_7ffd_reg,
-	PORT_3 			=> uart_do_bus,
-	PORT_4 			=> cpld_do	
+	PORT_3 			=> cpu_rd_n & cpu_wr_n & cpu_iorq_n & cpu_mreq_n & vbus_mode & vid_rd & SRAM_NRD & SRAM_NWR,
+	PORT_4 			=> cpld_oe_n & ds80 & cpm & rom14 & "0000" --cpld_do	
 );
 	
 -- Scan doubler
@@ -520,7 +531,7 @@ port map (
 U11: entity work.turbosound
 port map (
 	I_CLK				=> clk_bus,
-	I_ENA				=> clk_div16,
+	I_ENA				=> ena_div16,
 	I_ADDR			=> cpu_a_bus,
 	I_DATA			=> cpu_do_bus,
 	I_WR_N			=> cpu_wr_n,
@@ -618,14 +629,16 @@ port map (
 
 U16: entity work.bus_port
 port map (
-	CLK 				=> clk_cpld,
+	CLK 				=> clk_bus, --clk_cpld,
 	CLK2 				=> clk_8,
+	RESET 			=> reset,
 	
 	SD 				=> SD,
 	SA 				=> SA,
 	SDIR 				=> SDIR,
 	CPLD_CLK 		=> CPLD_CLK,
 	CPLD_CLK2 		=> CPLD_CLK2,
+	NRESET 			=> NRESET,
 
 	BUS_A 			=> cpu_a_bus,
 	BUS_DI 			=> cpu_do_bus,
@@ -656,6 +669,13 @@ port map(
 	UART_TX 			=> UART_TX,
 	UART_RX 			=> UART_RX,
 	UART_RTS 		=> UART_CTS
+);
+
+U18: entity work.altrom0
+port map(
+	clock => clk_bus,
+	address => cpu_a_bus(13 downto 0),
+	q => rom_do_bus
 );
 	
 -------------------------------------------------------------------------------
@@ -689,14 +709,27 @@ begin
 	end if;
 end process;
 
-vga_clk_x 	<= clk_div4 when ds80 = '0' else clk_div2;
-vga_clk_2x 	<= clk_div2 when port_dffd_reg(7) = '0' else clk_bus;
-vga_clko_2x <= clk_div2 when port_dffd_reg(7) = '0' else clk_bus;
+process (clk_bus)
+begin
+	if clk_bus'event and clk_bus = '0' then
+		ena_cnt <= ena_cnt + 1;
+	end if;
+end process;
+
+ena_div2 <= ena_cnt(0);
+ena_div4 <= ena_cnt(1) and ena_cnt(0);
+ena_div8 <= ena_cnt(2) and ena_cnt(1) and ena_cnt(0);
+ena_div16 <= ena_cnt(3) and ena_cnt(2) and ena_cnt(1) and ena_cnt(0);
+ena_div32 <= ena_cnt(5) and ena_cnt(4) and ena_cnt(3) and ena_cnt(2) and ena_cnt(1) and ena_cnt(0);
+
+vga_clk_x 	<= clk_div4 when ds80 = '0' else clk_div2; -- 7/12
+vga_clk_2x 	<= clk_div2 when ds80 = '0' else clk_bus;	 -- 14/24
+vga_clko_2x <= clk_div2 when ds80 = '0' else clk_28;   -- 14/28
 	
 -------------------------------------------------------------------------------
 -- Global signals
 
-areset <= not locked; -- global reset
+areset <= not locked or kb_magic; -- global reset
 reset <= areset or kb_reset or not(locked) or loader_reset or loader_act; -- hot reset
 
 cpu_reset_n <= not(reset) and not(loader_reset); -- CPU reset
@@ -704,7 +737,8 @@ cpu_inta_n <= cpu_iorq_n or cpu_m1_n;	-- INTA
 cpu_nmi_n <= '0' when kb_magic = '1' else '1'; -- NMI
 cpu_wait_n <= '1'; -- WAIT
 --cpuclk <= clk_bus and clk_div8;
-cpuclk <= clk_div8;
+--cpuclk <= clk_div8;
+cpuclk <= clk_bus and ena_div8;
 
 -------------------------------------------------------------------------------
 -- SD
@@ -844,7 +878,12 @@ ay_bc1 		<= '1' when ay_port = '1' and cpu_a_bus(14) = '1' and cpu_iorq_n = '0' 
 process (selector, ram_do_bus, mc146818_do_bus, kb_do_bus, zc_do_bus, ssg_cn0_bus, ssg_cn1_bus, port_7ffd_reg, port_dffd_reg, uart_do_bus, cpld_do, vid_attr, port_eff7_reg, port_1ffd_reg, joy_bus, ms_z, ms_b, ms_x, ms_y)
 begin
 	case selector is
-		when x"00" => cpu_di_bus <= ram_do_bus;
+		when x"00" => 
+			if (cpu_a_bus(15 downto 14) = "00" and enable_diag_rom) then 
+				cpu_di_bus <= rom_do_bus;
+			else
+				cpu_di_bus <= ram_do_bus;
+			end if;	
 		when x"01" => cpu_di_bus <= mc146818_do_bus;
 		when x"02" => cpu_di_bus <= "11" & kb_do_bus;
 		when x"03" => cpu_di_bus <= zc_do_bus;
@@ -878,7 +917,15 @@ selector <=
 	x"0B" when (cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_a_bus = X"FBDF") else	-- Mouse0 port x
 	x"0C" when (cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_a_bus = X"FFDF") else	-- Mouse0 port y 
 	x"0D" when uart_oe_n = '0' else 																-- AY UART
-	x"0E" when (cs_xxff = '1' and cpu_rd_n = '0' and dos_act = '0') else 			-- port #FF
+	x"0E" when (cs_xxff = '1' and cpu_rd_n = '0' and dos_act = '0' and cpm = '0') else 			-- port #FF
 	(others => '1');
-
+	
+-- debug 
+--PIN_141 <= cpuclk;
+--PIN_138 <= clk_bus;
+--PIN_121 <= reset;
+--PIN_120 <= areset;
+--PIN_119 <= VGA_HS;
+--PIN_115 <= VGA_VS;
+	
 end rtl;

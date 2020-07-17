@@ -113,9 +113,9 @@ begin
 				when X"04" => kb_data(31 downto 24) <= spi_do (7 downto 0);
 				when X"05" => kb_data(39 downto 32) <= spi_do (7 downto 0);
 				when X"06" => kb_data(40) <= spi_do (0); 
-								  RESET <= not spi_do(1);
-								  TURBO <= not spi_do(2);
-								  MAGICK <= not spi_do(3);
+								  RESET <= spi_do(1);
+								  TURBO <= spi_do(2);
+								  MAGICK <= spi_do(3);
 
 				-- mouse data
 				when X"0A" => mouse_x(7 downto 0) <= signed(spi_do(7 downto 0));
