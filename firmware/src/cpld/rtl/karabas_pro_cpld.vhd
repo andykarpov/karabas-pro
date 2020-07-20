@@ -52,7 +52,13 @@ end karabas_pro_cpld;
 
 architecture rtl of karabas_pro_cpld is 
 
-signal rx_buf: std_logic_vector(15 downto 0);
+--signal rx_buf_a: std_logic_vector(15 downto 0);
+--signal rx_buf_d: std_logic_vector(7 downto 0);
+signal rx_buf: std_logic_vector(7 downto 0);
+--signal rx_valid : std_logic := '0';
+
+signal clk_bus : std_logic;
+
 signal bus_a : std_logic_vector(15 downto 0);
 signal bus_di: std_logic_vector(7 downto 0);
 signal bus_do: std_logic_vector(7 downto 0);
@@ -74,51 +80,40 @@ signal ide_bus_do : std_logic_vector(7 downto 0);
 
 begin 
 
-	-- zx bus rx/tx from/to the FPGA
-	process (CLK, SD, SA, SDIR, NRESET)
-	begin
-		if (NRESET = '0') then
-
-			bus_a <= (others=> '0');
-			bus_di <= (others => '1');
-			bus_wr_n <= '1';
-			bus_rd_n <= '1';
-			bus_mreq_n <= '1';
-			bus_iorq_n <= '1';
-			bus_wait_n <= '1';
-			bus_m1_n <= '1';
-			
-		elsif (rising_edge(CLK)) then
-
-				if (SDIR = '1') then -- write from CPLD to FPGA
-					case SA is
-						when "00" => SD <= bus_do & oe_n & "0000000";
-						when others => null;
-					end case;
-				else
-					case SA is -- read from FPGA to CPLD
-						when "00" =>
-							rx_buf <= SD;
-						when "01" => 
-							bus_a <= rx_buf;
-							bus_di <= SD(15 downto 8);
-							bus_rd_n <= SD(7);
-							bus_wr_n <= SD(6);
-							bus_mreq_n <= SD(5);
-							bus_iorq_n <= SD(4);
-							bus_m1_n <= SD(3);
-							bus_cpm <= SD(2);
-							bus_dos <= SD(1);
-							bus_rom14 <= SD(0);
-						when others => null;
-					end case;
-				end if;
+	clk_bus <= SDIR;
+	SD(15 downto 8) <= bus_do;
+	
+	-- rx
+	process (CLK, SA, clk_bus)
+	begin 
+		if falling_edge(CLK) then
+		--if clk_bus = '0' then
+		case SA is 
+			when "00" => 
+				rx_buf <= SD(7 downto 0); -- rx
+			when "01" => 
+				bus_a(15 downto 8) <= rx_buf;
+				bus_a(7 downto 0) <= SD(7 downto 0);
+			when "10" =>
+				bus_di <= SD(7 downto 0);
+			when "11" =>
+				bus_rd_n <= SD(7); -- rx
+				bus_wr_n <= SD(6);
+				bus_mreq_n <= SD(5);
+				bus_iorq_n <= SD(4);
+				bus_m1_n <= SD(3);
+				bus_cpm <= not SD(2);
+				bus_dos <= not SD(1);
+				bus_rom14 <= SD(0);
+			when others => null;
+		end case;
+		--end if;
 		end if;
 	end process;
 	
 	U1: entity work.ide_controller 
 	port map (
-		CLK => CLK,
+		CLK => clk,
 		NRESET => NRESET,
 		
 		CPM => bus_cpm,
@@ -189,9 +184,12 @@ begin
 		FDC_WDATA => FDC_WDATA
 	);
 	
-	bus_do <= fdd_bus_do when fdd_oe_n = '0' else 
-		ide_bus_do when ide_oe_n = '0' else 
-		"ZZZZZZZZ";
-	oe_n <= '0' when ide_oe_n = '0' or fdd_oe_n = '0' else '1';
+bus_do <= fdd_bus_do when fdd_oe_n = '0' else 
+			 ide_bus_do when ide_oe_n = '0' else 
+			"11111111";
+oe_n <= '0' when ide_oe_n = '0' or fdd_oe_n = '0' else '1';
+
+--bus_do <= fdd_bus_do;
+--oe_n <= fdd_oe_n;
 
 end rtl;

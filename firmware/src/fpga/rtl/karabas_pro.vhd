@@ -87,7 +87,7 @@ port (
 	CPLD_CLK2 	: out std_logic;
 	SDIR 			: out std_logic;
 	SA				: out std_logic_vector(1 downto 0);
-	SD				: inout std_logic_vector(15 downto 0);
+	SD				: inout std_logic_vector(15 downto 0) := "ZZZZZZZZZZZZZZZZ";
 	
 	-- I2S Sound TDA1543
 	SND_BS		: out std_logic;
@@ -229,25 +229,24 @@ signal saa_out_l		: std_logic_vector(7 downto 0);
 signal saa_out_r		: std_logic_vector(7 downto 0);
 
 -- CLOCK
-signal clk_cpld		: std_logic;
-signal clk_28 			: std_logic;
-signal clk_24 			: std_logic;
-signal clk_8			: std_logic;
-signal clk_bus			: std_logic;
-signal clk_div2		: std_logic;
-signal clk_div4		: std_logic;
-signal clk_div8		: std_logic;
-signal clk_div16		: std_logic;
-signal vga_clk_x 		: std_logic;
-signal vga_clk_2x 	: std_logic;
-signal vga_clko_2x 	: std_logic;
+signal clk_28 			: std_logic := '0';
+signal clk_24 			: std_logic := '0';
+signal clk_8			: std_logic := '0';
+signal clk_bus			: std_logic := '0';
+signal clk_div2		: std_logic := '0';
+signal clk_div4		: std_logic := '0';
+signal clk_div8		: std_logic := '0';
+signal clk_div16		: std_logic := '0';
+signal vga_clk_x 		: std_logic := '0';
+signal vga_clk_2x 	: std_logic := '0';
+signal vga_clko_2x 	: std_logic := '0';
 
-signal ena_div2	: std_logic;
-signal ena_div4	: std_logic;
-signal ena_div8	: std_logic;
-signal ena_div16	: std_logic;
-signal ena_div32	: std_logic;
-signal ena_cnt		: std_logic_vector(5 downto 0);
+signal ena_div2	: std_logic := '0';
+signal ena_div4	: std_logic := '0';
+signal ena_div8	: std_logic := '0';
+signal ena_div16	: std_logic := '0';
+signal ena_div32	: std_logic := '0';
+signal ena_cnt		: std_logic_vector(5 downto 0) := "000000";
 
 -- System
 signal reset			: std_logic;
@@ -300,6 +299,11 @@ signal sco 				: std_logic := '0';
 signal u25 				: std_logic := '0';
 signal rom14 			: std_logic := '0';
 
+-- debug 
+signal fdd_oe_n 		: std_logic := '1';
+signal hdd_oe_n 		: std_logic := '1';
+signal port_nreset 	: std_logic := '1';
+
 component saa1099
 port (
 	clk_sys	: in std_logic;
@@ -320,17 +324,16 @@ U1: entity work.altpll0
 port map (
 	inclk0			=> CLK_50MHZ,	--  50.0 MHz
 	locked			=> locked,
-	c0					=> clk_28
-);
+	c0 				=> clk_28
+	);
 	
 -- PLL2
 U2: entity work.altpll1
 port map (
 	inclk0			=> CLK_50MHZ,	--  50.0 MHz
 	locked 			=> open,
-	c0					=> clk_cpld,	-- 84.0 MHz (28 x 3)
-	c1 				=> clk_24,
-	c2 				=> clk_8);
+	c0 				=> clk_24,
+	c1 				=> clk_8);
 	
 -- main clock selector
 U3: entity work.clk_mux
@@ -345,7 +348,7 @@ port map(
 U4: entity work.T80se
 generic map (
 	Mode				=> 0,		-- 0 => Z80, 1 => Fast Z80, 2 => 8080, 3 => GB
-	T2Write			=> 0,--1,		-- 0 => WR_n active in T3, /=0 => WR_n active in T2
+	T2Write			=> 1,		-- 0 => WR_n active in T3, /=0 => WR_n active in T2
 	IOWait			=> 1 )	-- 0 => Single cycle I/O, 1 => Std I/O cycle
 
 port map (
@@ -471,7 +474,7 @@ port map (
 	PORT_1 			=> cpld_do,
 	PORT_2 			=> port_7ffd_reg,
 	PORT_3 			=> cpu_rd_n & cpu_wr_n & cpu_iorq_n & cpu_mreq_n & vbus_mode & vid_rd & SRAM_NRD & SRAM_NWR,
-	PORT_4 			=> cpld_oe_n & ds80 & cpm & rom14 & "0000" --cpld_do	
+	PORT_4 			=> cpld_oe_n & ds80 & cpm & rom14 & fdd_oe_n & hdd_oe_n & port_nreset & '0' --cpld_do	
 );
 	
 -- Scan doubler
@@ -629,8 +632,10 @@ port map (
 
 U16: entity work.bus_port
 port map (
-	CLK 				=> clk_bus, --clk_cpld,
+	CLK 				=> clk_bus,
 	CLK2 				=> clk_8,
+	CLK_BUS 			=> clk_bus,
+	CLK_CPU 			=> cpuclk,
 	RESET 			=> reset,
 	
 	SD 				=> SD,
@@ -651,7 +656,11 @@ port map (
 	BUS_M1_N 		=> cpu_m1_n,
 	BUS_CPM 			=> cpm,
 	BUS_DOS 			=> dos_act,
-	BUS_ROM14 		=> rom14
+	BUS_ROM14 		=> rom14,
+	
+	FDD_OE_N 		=> fdd_oe_n,
+	HDD_OE_N 		=> hdd_oe_n,
+	PORT_NRESET 	=> port_nreset
 );
 
 -- UART (via AY port A)
@@ -884,40 +893,38 @@ begin
 			else
 				cpu_di_bus <= ram_do_bus;
 			end if;	
-		when x"01" => cpu_di_bus <= mc146818_do_bus;
+--		when x"01" => cpu_di_bus <= mc146818_do_bus;
 		when x"02" => cpu_di_bus <= "11" & kb_do_bus;
 		when x"03" => cpu_di_bus <= zc_do_bus;
-		when x"04" => cpu_di_bus <= "000" & joy_bus;
+--		when x"04" => cpu_di_bus <= "000" & joy_bus;
 		when x"05" => cpu_di_bus <= ssg_cn0_bus;
 		when x"06" => cpu_di_bus <= ssg_cn1_bus;
 		when x"07" => cpu_di_bus <= port_dffd_reg;
 		when x"08" => cpu_di_bus <= port_7ffd_reg;
-		when x"09" => cpu_di_bus <= cpld_do;
-		when x"0A" => cpu_di_bus <= ms_z(3 downto 0) & '1' & not ms_b(2) & not ms_b(0) & not ms_b(1);
-		when x"0B" => cpu_di_bus <= ms_x;
-		when x"0C" => cpu_di_bus <= not(ms_y);
-		when x"0D" => cpu_di_bus <= uart_do_bus;
-		when x"0E" => cpu_di_bus <= vid_attr;
-		when others => cpu_di_bus <= x"FF";
+		when x"09" => cpu_di_bus <= ms_z(3 downto 0) & '1' & not ms_b(2) & not ms_b(0) & not ms_b(1);
+		when x"0A" => cpu_di_bus <= ms_x;
+		when x"0B" => cpu_di_bus <= not(ms_y);
+		when x"0C" => cpu_di_bus <= uart_do_bus;
+--		when x"0D" => cpu_di_bus <= vid_attr;
+		when others => cpu_di_bus <= cpld_do;
 	end case;
 end process;
 
 selector <= 
 	x"00" when (ram_oe_n = '0') else -- ram / rom
-	x"01" when (cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_m1_n = '1' and port_bff7 = '1' and port_eff7_reg(7) = '1') else -- MC146818A
+--	x"01" when (cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_m1_n = '1' and port_bff7 = '1' and port_eff7_reg(7) = '1') else -- MC146818A
 	x"02" when (cs_xxfe = '1' and cpu_rd_n = '0') else 									-- Keyboard, port #FE
 	x"03" when (cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_m1_n = '1' and cpu_a_bus( 7 downto 6) = "01" and cpu_a_bus(4 downto 0) = "10111") else 	-- Z-Controller
-	x"04" when (cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_m1_n = '1' and cpu_a_bus( 7 downto 0) = X"1F" and dos_act = '0') else -- Joystick, port #1F
+--	x"04" when (cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_m1_n = '1' and cpu_a_bus( 7 downto 0) = X"1F" and dos_act = '0') else -- Joystick, port #1F
 	x"05" when (cs_fffd = '1' and cpu_rd_n = '0' and ssg_sel = '0') else 			-- TurboSound
 	x"06" when (cs_fffd = '1' and cpu_rd_n = '0' and ssg_sel = '1') else
 	x"07" when (cs_dffd = '1' and cpu_rd_n = '0') else										-- port #DFFD
 	x"08" when (cs_7ffd = '1' and cpu_rd_n = '0') else										-- port #7FFD
-	x"09" when cpld_oe_n = '0' else 																-- FDD / HDD controllers
-	x"0A" when (cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_a_bus = X"FADF") else	-- Mouse0 port key, z
-	x"0B" when (cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_a_bus = X"FBDF") else	-- Mouse0 port x
-	x"0C" when (cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_a_bus = X"FFDF") else	-- Mouse0 port y 
-	x"0D" when uart_oe_n = '0' else 																-- AY UART
-	x"0E" when (cs_xxff = '1' and cpu_rd_n = '0' and dos_act = '0' and cpm = '0') else 			-- port #FF
+	x"09" when (cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_a_bus = X"FADF") else	-- Mouse0 port key, z
+	x"0A" when (cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_a_bus = X"FBDF") else	-- Mouse0 port x
+	x"0B" when (cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_a_bus = X"FFDF") else	-- Mouse0 port y 
+	x"0C" when (cpu_iorq_n = '0' and cpu_rd_n = '0' and uart_oe_n = '0') else 																-- AY UART
+--	x"0D" when (cs_xxff = '1' and cpu_rd_n = '0' and dos_act = '0' and cpm = '0') else 			-- port #FF
 	(others => '1');
 	
 -- debug 

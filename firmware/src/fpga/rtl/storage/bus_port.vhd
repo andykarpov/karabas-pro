@@ -1,7 +1,7 @@
-library IEEE;
-use IEEE.std_logic_1164.all;
-use IEEE.std_logic_arith.conv_integer;
-use IEEE.numeric_std.all;
+library IEEE; 
+use IEEE.std_logic_1164.all; 
+use IEEE.std_logic_unsigned.all;
+use IEEE.numeric_std.all; 
 
 entity bus_port is
 	port (
@@ -9,10 +9,12 @@ entity bus_port is
 	-- global clocks
 	CLK : in std_logic;
 	CLK2: in std_logic;
+	CLK_BUS : in std_logic;
+	CLK_CPU : in std_logic;
 	RESET : in std_logic;
 	 
 	-- physical interface with CPLD
-	SD : inout std_logic_vector(15 downto 0);
+	SD : inout std_logic_vector(15 downto 0) := "ZZZZZZZZZZZZZZZZ";
 	SA : out std_logic_vector(1 downto 0);
 	SDIR : out std_logic;
 	CPLD_CLK : out std_logic;
@@ -31,51 +33,52 @@ entity bus_port is
 	BUS_M1_N : in std_logic;
 	BUS_CPM : in std_logic;
 	BUS_DOS : in std_logic;
-	BUS_ROM14 : in std_logic
-);
+	BUS_ROM14 : in std_logic;
+	
+	-- debug
+	FDD_OE_N : out std_logic;
+	HDD_OE_N : out std_logic;
+	PORT_NRESET : out std_logic
+	
+	);
     end bus_port;
 architecture RTL of bus_port is
 
-type machine IS(rx1, rx2, tx1, tx2); --state machine datatype
-signal state 			: machine := rx1; 	--current state
+signal cnt: std_logic_vector(1 downto 0) := "00";
+signal bus_a_reg : std_logic_vector(15 downto 0);
+signal bus_d_reg : std_logic_vector(7 downto 0);
+signal bus_s_reg : std_logic_vector(7 downto 0);
 
 begin
 	
 	CPLD_CLK <= CLK;
 	CPLD_CLK2 <= CLK2;
 	NRESET <= not reset;
+	SDIR <= CLK_BUS;
+	SA <= cnt;	
+	BUS_DO <= SD(15 downto 8);
 
-	process (CLK)
-	begin
-		if CLK'event and CLK='0' then
-			case state is
-				when rx1 => -- set rx mode, address
-					SDIR <= '1'; SA <= "00";
-					SD <= (others => 'Z');
-					state <= rx2;
-				when rx2 => 
-					BUS_DO <= SD(15 downto 8); -- receiving data from slave
-					OE_N <= SD(7);
-					state <= tx1;
-				when tx1 =>
-					SDIR <= '0'; SA <= "00"; -- tx cpu adress
-					SD <= BUS_A;
-					state <= tx2;
-				when tx2 => 
-					SDIR <= '0'; SA <= "01"; -- tx cpu signals
-					SD(15 downto 8) <= BUS_DI;
-					SD(7) <= BUS_RD_N;
-					SD(6) <= BUS_WR_N;
-					SD(5) <= BUS_MREQ_N;
-					SD(4) <= BUS_IORQ_N;
-					SD(3) <= BUS_M1_N;
-					SD(2) <=	BUS_CPM;
-					SD(1) <= BUS_DOS;
-					SD(0) <= BUS_ROM14;
-					state <= rx1;
-			end case;
+	process (CLK, cnt, CLK_BUS)
+	begin 
+		if (rising_edge(CLK)) then 
+			if (clk_cpu = '0') then --11
+				bus_a_reg <= bus_a;
+				bus_d_reg <= bus_di;
+				bus_s_reg <= BUS_RD_N & BUS_WR_N & BUS_MREQ_N & BUS_IORQ_N & BUS_M1_N & BUS_CPM & BUS_DOS & BUS_ROM14;
+			end if;
+			cnt <= cnt + 1;
 		end if;
 	end process;
+	
+	UMUX: entity work.bus_mux
+	port map(
+		data0x => bus_a_reg(15 downto 8),
+		data1x => bus_a_reg(7 downto 0),
+		data2x => bus_d_reg,
+		data3x => bus_s_reg,
+		sel => cnt,
+		result => SD(7 downto 0)
+	);
 
 end RTL;
 
