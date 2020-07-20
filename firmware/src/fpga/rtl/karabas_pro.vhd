@@ -479,21 +479,44 @@ port map (
 );
 	
 -- Scan doubler
-U8 : entity work.scan_convert
-port map (
-	I_VIDEO			=> vid_rgb_osd,
-	I_HSYNC			=> vid_hsync,
-	I_VSYNC			=> vid_vsync,
-	O_VIDEO(8 downto 6)	=> VGA_R,
-	O_VIDEO(5 downto 3)	=> VGA_G,
-	O_VIDEO(2 downto 0)	=> VGA_B,
-	O_HSYNC			=> VGA_HS,
-	O_VSYNC			=> VGA_VS,
-	MODE				=> ds80,
-	CLK				=> vga_clk_x,
-	CLK2 				=> vga_clk_2x,
-	CLK_x2			=> vga_clko_2x);
+--U8 : entity work.scan_convert
+--port map (
+--	I_VIDEO			=> vid_rgb_osd,
+--	I_HSYNC			=> vid_hsync,
+--	I_VSYNC			=> vid_vsync,
+--	O_VIDEO(8 downto 6)	=> VGA_R,
+--	O_VIDEO(5 downto 3)	=> VGA_G,
+--	O_VIDEO(2 downto 0)	=> VGA_B,
+--	O_HSYNC			=> VGA_HS,
+--	O_VSYNC			=> VGA_VS,
+--	MODE				=> ds80,
+--	CLK				=> vga_clk_x,
+--	CLK2 				=> vga_clk_2x,
+--	CLK_x2			=> vga_clko_2x);
 	
+U8: entity work.vga_pal 
+port map (
+	RGB_IN 			=> vid_rgb_osd,
+	KSI_IN 			=> vid_vsync,
+	SSI_IN 			=> vid_hsync,
+	CLK 				=> clk_div2,
+	CLK2 				=> clk_bus,
+	
+	INVERSE_RGBI 	=> '1',
+	INVERSE_KSI 	=> '1',
+	INVERSE_SSI 	=> '1',
+	INVERSE_F 		=> '1',
+	VGA_SCART 		=> '1',
+	SET_FK_IN 		=> '0', -- 50Hz
+	SET_FK_OUT 		=> '0', -- 50Hz
+	
+	RGB_O(8 downto 6)	=> VGA_R,
+	RGB_O(5 downto 3)	=> VGA_G,
+	RGB_O(2 downto 0)	=> VGA_B,
+	VSYNC_VGA		=> VGA_VS,
+	HSYNC_VGA		=> VGA_HS
+);
+
 -- Loader
 U9: entity work.loader
 port map(
