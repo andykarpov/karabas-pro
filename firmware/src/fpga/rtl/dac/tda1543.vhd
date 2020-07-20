@@ -1,7 +1,7 @@
 -------------------------------------------------------------------[23.10.2011]
 -- I2S Master Controller (TDA1543) Mode MSB First
 -------------------------------------------------------------------------------
--- V0.1 	12.02.2011	первая версия
+-- V0.1 	12.02.2011	пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
 -- V0.2
 
 -- STATE     01  02  03  04  05  06  07  08  09  0A  0B  ..  0F  10  11  12  13  14  15  16  17  18  19  1A  1B  ..  1F  00
@@ -26,14 +26,15 @@ use IEEE.std_logic_unsigned.all;
 
 entity tda1543 is
 	Port ( 
-		RESET	: in std_logic;
+		RESET		: in std_logic;
 		CLK		: in std_logic;
-		CS		: in std_logic;
-        DATA_L	: in std_logic_vector (15 downto 0);
-        DATA_R	: in std_logic_vector (15 downto 0);
+		CS			: in std_logic;
+      DATA_L	: in std_logic_vector (15 downto 0);
+      DATA_R	: in std_logic_vector (15 downto 0);
 		BCK		: out std_logic;
-		WS		: out std_logic;
-        DATA	: out std_logic );
+		WS			: out std_logic;
+      DATA		: out std_logic 
+);
 end tda1543;
  
 architecture tda1543_arch of tda1543 is

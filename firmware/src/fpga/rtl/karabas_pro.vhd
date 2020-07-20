@@ -237,6 +237,7 @@ signal clk_div2		: std_logic := '0';
 signal clk_div4		: std_logic := '0';
 signal clk_div8		: std_logic := '0';
 signal clk_div16		: std_logic := '0';
+signal clk_i2s 		: std_logic := '0';
 signal vga_clk_x 		: std_logic := '0';
 signal vga_clk_2x 	: std_logic := '0';
 signal vga_clko_2x 	: std_logic := '0';
@@ -334,7 +335,7 @@ port map (
 	locked 			=> open,
 	c0 				=> clk_24,
 	c1 				=> clk_8);
-	
+		
 -- main clock selector
 U3: entity work.clk_mux
 port map(
@@ -465,7 +466,7 @@ port map (
 U7: entity work.osd
 port map (
 	CLK 				=> clk_bus,
-	EN 				=> '1',
+	EN 				=> '0',
 	RGB_I 			=> vid_rgb,
 	RGB_O 			=> vid_rgb_osd,
 	HCNT_I 			=> vid_hcnt,
@@ -618,7 +619,7 @@ port map (
 U15: entity work.tda1543
 port map (
 	RESET				=> reset,
-	CLK 				=> clk_bus,
+	CLK 				=> clk_8,
 	CS 				=> '1',
 	DATA_L 			=> audio_l,
 	DATA_R 			=> audio_r,
@@ -745,8 +746,6 @@ cpu_reset_n <= not(reset) and not(loader_reset); -- CPU reset
 cpu_inta_n <= cpu_iorq_n or cpu_m1_n;	-- INTA
 cpu_nmi_n <= '0' when kb_magic = '1' else '1'; -- NMI
 cpu_wait_n <= '1'; -- WAIT
---cpuclk <= clk_bus and clk_div8;
---cpuclk <= clk_div8;
 cpuclk <= clk_bus and ena_div8;
 
 -------------------------------------------------------------------------------
@@ -893,10 +892,10 @@ begin
 			else
 				cpu_di_bus <= ram_do_bus;
 			end if;	
---		when x"01" => cpu_di_bus <= mc146818_do_bus;
+		when x"01" => cpu_di_bus <= mc146818_do_bus;
 		when x"02" => cpu_di_bus <= "11" & kb_do_bus;
 		when x"03" => cpu_di_bus <= zc_do_bus;
---		when x"04" => cpu_di_bus <= "000" & joy_bus;
+		when x"04" => cpu_di_bus <= "000" & joy_bus;
 		when x"05" => cpu_di_bus <= ssg_cn0_bus;
 		when x"06" => cpu_di_bus <= ssg_cn1_bus;
 		when x"07" => cpu_di_bus <= port_dffd_reg;
@@ -905,17 +904,17 @@ begin
 		when x"0A" => cpu_di_bus <= ms_x;
 		when x"0B" => cpu_di_bus <= not(ms_y);
 		when x"0C" => cpu_di_bus <= uart_do_bus;
---		when x"0D" => cpu_di_bus <= vid_attr;
+		when x"0D" => cpu_di_bus <= vid_attr;
 		when others => cpu_di_bus <= cpld_do;
 	end case;
 end process;
 
 selector <= 
 	x"00" when (ram_oe_n = '0') else -- ram / rom
---	x"01" when (cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_m1_n = '1' and port_bff7 = '1' and port_eff7_reg(7) = '1') else -- MC146818A
+	x"01" when (cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_m1_n = '1' and port_bff7 = '1' and port_eff7_reg(7) = '1') else -- MC146818A
 	x"02" when (cs_xxfe = '1' and cpu_rd_n = '0') else 									-- Keyboard, port #FE
 	x"03" when (cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_m1_n = '1' and cpu_a_bus( 7 downto 6) = "01" and cpu_a_bus(4 downto 0) = "10111") else 	-- Z-Controller
---	x"04" when (cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_m1_n = '1' and cpu_a_bus( 7 downto 0) = X"1F" and dos_act = '0') else -- Joystick, port #1F
+	x"04" when (cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_m1_n = '1' and cpu_a_bus( 7 downto 0) = X"1F" and dos_act = '0' and cpm = '0') else -- Joystick, port #1F
 	x"05" when (cs_fffd = '1' and cpu_rd_n = '0' and ssg_sel = '0') else 			-- TurboSound
 	x"06" when (cs_fffd = '1' and cpu_rd_n = '0' and ssg_sel = '1') else
 	x"07" when (cs_dffd = '1' and cpu_rd_n = '0') else										-- port #DFFD
@@ -924,7 +923,7 @@ selector <=
 	x"0A" when (cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_a_bus = X"FBDF") else	-- Mouse0 port x
 	x"0B" when (cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_a_bus = X"FFDF") else	-- Mouse0 port y 
 	x"0C" when (cpu_iorq_n = '0' and cpu_rd_n = '0' and uart_oe_n = '0') else 																-- AY UART
---	x"0D" when (cs_xxff = '1' and cpu_rd_n = '0' and dos_act = '0' and cpm = '0') else 			-- port #FF
+	x"0D" when (cs_xxff = '1' and cpu_rd_n = '0' and dos_act = '0' and cpm = '0') else 			-- port #FF
 	(others => '1');
 	
 -- debug 

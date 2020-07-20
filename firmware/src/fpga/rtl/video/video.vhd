@@ -46,6 +46,7 @@ architecture rtl of video is
 
 	signal rgb 	 		: std_logic_vector(2 downto 0);
 	signal i 			: std_logic;
+	signal o_rgb 		: std_logic_vector(8 downto 0);
 	
 	-- profi videocontroller signals
 	signal vid_a_profi : std_logic_vector(13 downto 0);
@@ -137,17 +138,19 @@ begin
 	HCNT <= hcnt_profi when ds80 = '1' else hcnt_spec;
 	VCNT <= vcnt_profi when ds80 = '1' else vcnt_spec;
 	
-	-- RGBS output
-	VIDEO_R <= "000" when rgb = "000" else 
-				  rgb(2) & rgb(2) & '1' when i = '1' else 
-				  rgb(2) & "ZZ";
-	VIDEO_G <= "000" when rgb = "000" else 
-				  rgb(1) & rgb(1) & '1' when i = '1' else 
-				  rgb(1) & "ZZ";
-	VIDEO_B <= "000" when rgb = "000" else 
-			  rgb(0) & rgb(0) & '1' when i = '1' else 
-			  rgb(0) & "ZZ";	
-			  
+	U9BIT: entity work.rgbi_9bit
+	port map(
+		I_RED		=> rgb(2),
+		I_GREEN	=> rgb(1),
+		I_BLUE	=> rgb(0),
+		I_BRIGHT => i,
+		O_RGB		=> o_rgb
+	);
+	
+	VIDEO_R <= o_rgb(8 downto 6);
+	VIDEO_G <= o_rgb(5 downto 3);
+	VIDEO_B <= o_rgb(2 downto 0);
+				  
 	CSYNC <= not (vsync xor hsync);
 
 end architecture;

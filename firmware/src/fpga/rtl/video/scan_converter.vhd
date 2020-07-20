@@ -67,7 +67,7 @@ entity scan_convert is
 		O_VIDEO				: out std_logic_vector(8 downto 0);
 		O_HSYNC				: out std_logic;
 		O_VSYNC				: out std_logic;
-		O_CMPBLK_N			: out std_logic;
+		O_CMPBLK_N			: buffer std_logic;
 		--
 		CLK					: in  std_logic;
 		CLK2					: in  std_logic;		
@@ -91,6 +91,7 @@ architecture RTL of scan_convert is
 	signal vcnt				: integer range 0 to 1023 := 0;
 	signal hcnt				: integer range 0 to 1023 := 0;
 	signal hcnti			: integer range 0 to 1023 := 0;
+	signal video_rgb		: std_logic_vector(8 downto 0) := (others => '0');
 	
 	constant cs0			: integer range 0 to 1023 := 38;		-- composite sync start
 	constant cl0			: integer range 0 to 1023 := 352;	-- composite sync length
@@ -136,7 +137,7 @@ begin
 		address_b	=> hpos_o,
 		data_b	 	=> "000000000",
 		wren_b	 	=> '0',
-		q_b	 		=> O_VIDEO
+		q_b	 		=> video_rgb
 	);
 	
 	-- horizontal counter for input video
@@ -241,5 +242,7 @@ begin
 			end if;
 		end if;
 	end process;
+	
+	O_VIDEO <= video_rgb when O_CMPBLK_N = '1' else (others => '0');
 
 end architecture RTL;
