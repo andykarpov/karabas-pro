@@ -499,16 +499,13 @@ port map (
 	RGB_IN 			=> vid_rgb_osd,
 	KSI_IN 			=> vid_vsync,
 	SSI_IN 			=> vid_hsync,
-	CLK 				=> clk_div2,
-	CLK2 				=> clk_bus,
+	CLK 				=> not clk_div2,
+	CLK2 				=> not clk_bus,
+	DS80				=> ds80,
 	
-	INVERSE_RGBI 	=> '1',
 	INVERSE_KSI 	=> '1',
 	INVERSE_SSI 	=> '1',
 	INVERSE_F 		=> '1',
-	VGA_SCART 		=> '1',
-	SET_FK_IN 		=> '0', -- 50Hz
-	SET_FK_OUT 		=> '0', -- 50Hz
 	
 	RGB_O(8 downto 6)	=> VGA_R,
 	RGB_O(5 downto 3)	=> VGA_G,
