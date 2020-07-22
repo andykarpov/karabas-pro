@@ -138,6 +138,7 @@ signal port_xxfe_reg	: std_logic_vector(7 downto 0) := "00000000";
 signal port_7ffd_reg	: std_logic_vector(7 downto 0);
 signal port_1ffd_reg	: std_logic_vector(7 downto 0);
 signal port_dffd_reg : std_logic_vector(7 downto 0);
+signal port_xx7e_reg : std_logic_vector(7 downto 0) := "00000000";
 
 -- Keyboard
 signal kb_do_bus		: std_logic_vector(5 downto 0);
@@ -197,6 +198,7 @@ signal cs_1ffd 		: std_logic := '0';
 signal cs_dffd 		: std_logic := '0';
 signal cs_fffd 		: std_logic := '0';
 signal cs_xxfd 		: std_logic := '0';
+signal cs_xx7e 		: std_logic := '0';
 
 -- TurboSound
 signal ssg_sel			: std_logic;
@@ -265,6 +267,7 @@ signal ram_do_bus 	: std_logic_vector(7 downto 0);
 signal ram_oe_n 		: std_logic := '1';
 signal vbus_mode 		: std_logic := '0';
 signal vid_rd 			: std_logic := '0';
+signal palette_en 	: std_logic := '1';
 
 -- Loader
 signal loader_ram_di	: std_logic_vector(7 downto 0);
@@ -299,6 +302,7 @@ signal scr 				: std_logic := '0';
 signal sco 				: std_logic := '0';
 signal u25 				: std_logic := '0';
 signal rom14 			: std_logic := '0';
+signal gx0 				: std_logic := '0';
 
 -- debug 
 signal fdd_oe_n 		: std_logic := '1';
@@ -437,15 +441,25 @@ port map (
 	CLK 				=> clk_div2, 	-- 14 / 12
 	CLK2x 			=> clk_bus, 	-- 28 / 24
 	ENA 				=> clk_div4, 	-- 7 / 6
+	RESET 			=> reset,
 	
-	BORDER 			=> port_xxfe_reg(2 downto 0),
+	BORDER 			=> port_xxfe_reg(3 downto 0),
 	DI 				=> SRAM_D,
 	TURBO 			=> '0',
 	INTA 				=> cpu_inta_n,
 	INT 				=> cpu_int_n,
 	ATTR_O 			=> vid_attr, 
 	A 					=> vid_a_bus,
+	
 	DS80 				=> ds80,
+	PALETTE_EN 		=> palette_en,
+	CS7E				=> cs_xx7e,
+	PORT7E 			=> port_xx7e_reg,
+	PORTFE 			=> port_xxfe_reg,
+	BUS_D 			=> cpu_do_bus,
+	BUS_A 			=> cpu_a_bus(15 downto 8),
+	BUS_WR_N 		=> cpu_wr_n,
+	GX0 				=> gx0,
 	
 	VIDEO_R 			=> vid_rgb(8 downto 6),
 	VIDEO_G 			=> vid_rgb(5 downto 3),
@@ -820,6 +834,7 @@ cs_1ffd <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and cpu_a_bus = X"1FFD" 
 cs_dffd <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and cpu_a_bus = X"DFFD" and fd_port = '1' else '0';
 cs_7ffd <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and cpu_a_bus = X"7FFD" else '0';
 cs_xxfd <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and cpu_a_bus(15) = '0' and cpu_a_bus(1) = '0' and fd_port = '0' else '0';
+cs_xx7e <= '1' when cs_xxfe = '1' and cpu_a_bus(7) = '0' else '0';
 
 process (reset, areset, clk_bus, cpu_a_bus, dos_act, cs_xxfe, cs_eff7, cs_dff7, cs_7ffd, cs_1ffd, cs_xxfd, port_7ffd_reg, port_1ffd_reg, cpu_mreq_n, cpu_m1_n, cpu_wr_n, cpu_do_bus, fd_port)
 begin
@@ -839,6 +854,11 @@ begin
 		-- #FE
 		if cs_xxfe = '1' and cpu_wr_n = '0' then 
 			port_xxfe_reg <= cpu_do_bus; 
+		end if;
+		
+		-- #7E
+		if cs_xx7e = '1' and cpu_wr_n = '0' then 
+			port_xx7e_reg <= cpu_do_bus;
 		end if;
 
 		-- #EFF7
@@ -913,7 +933,7 @@ begin
 				cpu_di_bus <= ram_do_bus;
 			end if;	
 		when x"01" => cpu_di_bus <= mc146818_do_bus;
-		when x"02" => cpu_di_bus <= "11" & kb_do_bus;
+		when x"02" => cpu_di_bus <= GX0 & "1" & kb_do_bus;
 		when x"03" => cpu_di_bus <= zc_do_bus;
 		when x"04" => cpu_di_bus <= "000" & joy_bus;
 		when x"05" => cpu_di_bus <= ssg_cn0_bus;
@@ -953,5 +973,6 @@ selector <=
 --PIN_120 <= areset;
 --PIN_119 <= VGA_HS;
 --PIN_115 <= VGA_VS;
+palette_en <= not kb_turbo;
 	
 end rtl;

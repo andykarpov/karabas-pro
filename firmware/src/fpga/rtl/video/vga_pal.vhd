@@ -2,12 +2,10 @@
 --  ПРОШИВКА ПЛИС ДЛЯ УСТРОЙСТВА: "ZXKit1 - ПЛАТА VGA & PAL"                  --                        
 --  ВЕРСИЯ:  V2.0.8.08                                          ДАТА: 091223  --
 --  АВТОР:   САБИРЖАНОВ ВАДИМ                                                 --
---                                                                            --
---  ПЛИС: EPM3128ATC100-10N (128 MACROCELLS, КОРПУС TQFP100)                  --
---  ОЗУ:  K6R4016V1D-UI10 (256K * 16 бит)                                     --
---  ТАКТОВАЯ ЧАСТОТА: 14/12/10/8 МГц,                                         --
---                    ПОДАЕТСЯ СО СПЕКТРУМА, ПРОФИ, ОРИОНА ИЛИ СПЕЦИАЛИСТА    --
---  СРЕДА РАЗРАБОТКИ: Quartus II Version 9.0 Web Edition                      --
+--
+--  Modified by Andy Karpov
+--  2020-07-20: Added profi video mode support and forced switch via DS80
+--  2020-07-20: Replaced ext video ram with 2-port fpga sram
 --------------------------------------------------------------------------------
 
 -- Compilation Report:

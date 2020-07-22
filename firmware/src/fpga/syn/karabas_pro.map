@@ -7,6 +7,6 @@ profi_mainrom_standart.hex		0x000B8000		0x000C7FFF
 
 Notes:
 
-- Data checksum for this conversion is 0x1A023A25
+- Data checksum for this conversion is 0x1A01DACD
 
 - All the addresses in this file are byte addresses

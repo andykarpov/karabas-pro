@@ -14,15 +14,19 @@ entity profi_video is
 		ENA		: in std_logic; -- 6
 		INTA		: in std_logic;
 		INT		: out std_logic;
-		BORDER	: in std_logic_vector(2 downto 0);	
+		BORDER	: in std_logic_vector(3 downto 0);	
 		A			: out std_logic_vector(13 downto 0);
+		PAL_A 	: out std_logic_vector(3 downto 0);
+		BUS_D 	: in std_logic_vector(7 downto 0);
 		DI			: in std_logic_vector(7 downto 0);
 		RGB		: out std_logic_vector(2 downto 0);	-- RGB
 		I 			: out std_logic;
+		BLANK 	: out std_logic;
 		HSYNC		: out std_logic;
 		VSYNC		: out std_logic;		
 		HCNT 		: out std_logic_vector(9 downto 0);
 		VCNT 		: out std_logic_vector(8 downto 0);	
+		DS80 		: in std_logic;
 		VBUS_MODE : in std_logic := '0';
 		VID_RD : in std_logic
 	);
@@ -81,6 +85,10 @@ architecture rtl of profi_video is
 	signal scan_cnt		: std_logic_vector(9 downto 0);
 	signal scan_cnt1		: std_logic_vector(9 downto 0);
 	signal rgbi				: std_logic_vector(3 downto 0);
+	signal bl_int 			: std_logic;
+	signal infp 			: std_logic;
+	signal i78				: std_logic;
+	signal selector 		: std_logic_vector(2 downto 0);
 
 begin
 
@@ -164,7 +172,7 @@ begin
 			if (blank_sig = '1') then 
 				rgbi <= "0000";
 			elsif paper1 = '1' and (pixel_reg(7 - to_integer(h_cnt(2 downto 0)))) = '0' then 
-				rgbi <= attr_reg(4) & attr_reg(5) & attr_reg(3) & attr_reg(6);
+				rgbi <= attr_reg(4) & attr_reg(5) & attr_reg(3) & i78;
 			elsif paper1 = '1' and (pixel_reg(7 - to_integer(h_cnt(2 downto 0)))) = '1' then 
 				rgbi <= attr_reg(1) & attr_reg(2) & attr_reg(0) & attr_reg(6);
 			else
@@ -173,17 +181,37 @@ begin
 		end if;
 	end if;
 end process;
+
+selector <= paper1 & infp & pixel_reg(7 - to_integer(h_cnt(2 downto 0)));
+
+-- адрес пикселя палитры до blank
+process (CLK2X, CLK, blank_sig, paper1, pixel_reg, h_cnt, attr_reg, BORDER)
+begin 
+	case (selector) is
+		when "100" | "110" => PAL_A <= i78 & attr_reg(5 downto 3);
+		when "101" | "111" => PAL_A <= attr_reg(6) & attr_reg(2 downto 0);
+		when "010" | "011" => PAL_A <= (not BORDER(3)) & (not BORDER(2 downto 0));
+		when "000" | "001" => PAL_A <= (not BORDER(3)) & BORDER(2 downto 0);
+		when others => null;
+	end case;
+end process;
+
+infp <= not blank_sig and ds80; -- testing
+i78 <= attr_reg(7) when ds80 = '1' else attr_reg(6);
 		
 A <= std_logic_vector((not h_cnt(3)) & v_cnt(7 downto 6)) & std_logic_vector(v_cnt(2 downto 0)) & std_logic_vector(v_cnt(5 downto 3)) & std_logic_vector(h_cnt(8 downto 4));		
 		
 blank_sig	<= '1' when (((h_cnt > pcpm_h_blk_on and h_cnt < pcpm_h_blk_off) or (v_cnt > pcpm_v_blk_on and v_cnt < pcpm_v_blk_off))) else '0';
 paper			<= '1' when ((h_cnt < pcpm_scr_h and v_cnt < pcpm_scr_v)) else '0';
+
 INT			<= int_sig;
+bl_int 		<= int_sig;
 RGB 			<= rgbi(3 downto 1);
 I 				<= rgbi(0);
 HSYNC 		<= h_sync;
 VSYNC 		<= v_sync;
 HCNT <= std_logic_vector(h_cnt);
 VCNT <= std_logic_vector(v_cnt);
+BLANK <= blank_sig;
 
 end architecture;

@@ -15,8 +15,9 @@ entity video is
 		CLK2X 	: in std_logic; -- 28 MHz
 		CLK		: in std_logic; -- 14 MHz
 		ENA		: in std_logic; -- 7 MHz 
+		RESET 	: in std_logic := '0';
 
-		BORDER	: in std_logic_vector(2 downto 0);	-- bordr color (port #xxFE)
+		BORDER	: in std_logic_vector(3 downto 0);	-- bordr color (port #xxFE)
 		DI			: in std_logic_vector(7 downto 0);	-- video data from memory
 		TURBO 	: in std_logic := '0'; -- 1 = turbo mode, 0 = normal mode
 		INTA		: in std_logic := '0'; -- int request for turbo mode
@@ -33,6 +34,14 @@ entity video is
 		CSYNC		: out std_logic;
 		
 		DS80		: in std_logic; -- 1 = Profi CP/M mode. 0 = standard mode
+		PALETTE_EN: in std_logic := '1';
+		CS7E 		: in std_logic := '0';
+		PORT7E 	: in std_logic_vector(7 downto 0);
+		PORTFE 	: in std_logic_vector(7 downto 0);
+		BUS_D 	: in std_logic_vector(7 downto 0);
+		BUS_A 	: in std_logic_vector(15 downto 8);
+		BUS_WR_N : in std_logic;
+		GX0 		: out std_logic;
 		
 		HCNT : out std_logic_vector(9 downto 0);
 		VCNT : out std_logic_vector(8 downto 0);
@@ -48,6 +57,11 @@ architecture rtl of video is
 	signal i 			: std_logic;
 	signal o_rgb 		: std_logic_vector(8 downto 0);
 	
+	signal palette_a 	: std_logic_vector(3 downto 0);
+	signal palette_wr : std_logic := '0';
+	signal palette_grb: std_logic_vector(8 downto 0);
+	signal palette_grb_reg: std_logic_vector(8 downto 0);
+	
 	-- profi videocontroller signals
 	signal vid_a_profi : std_logic_vector(13 downto 0);
 	signal int_profi : std_logic;
@@ -55,6 +69,7 @@ architecture rtl of video is
 	signal i_profi : std_logic;
 	signal hsync_profi : std_logic;
 	signal vsync_profi : std_logic;
+	signal blank_profi : std_logic;
 	
 	signal hcnt_profi : std_logic_vector(9 downto 0);
 	signal vcnt_profi : std_logic_vector(8 downto 0);
@@ -80,7 +95,7 @@ begin
 		CLK => CLK, -- 14
 		CLK2x => CLK2x, -- 28
 		ENA => ENA, -- 7
-		BORDER => BORDER,
+		BORDER => BORDER(2 downto 0),
 		DI => DI,
 		TURBO => TURBO,
 		INTA => INTA,
@@ -111,9 +126,13 @@ begin
 		INTA => INTA,
 		INT => int_profi,
 		A => vid_a_profi,
+		DS80 => DS80,
+		PAL_A => palette_a,
+		BUS_D => BUS_D,
 
 		RGB => rgb_profi,
 		I 	 => i_profi,
+		BLANK => blank_profi,
 		
 		HSYNC => hsync_profi,
 		VSYNC => vsync_profi,
@@ -138,6 +157,19 @@ begin
 	HCNT <= hcnt_profi when ds80 = '1' else hcnt_spec;
 	VCNT <= vcnt_profi when ds80 = '1' else vcnt_spec;
 	
+	-- #007E-#FF7E HGFEDCBA01111110 HGFEDCBA0xxxxxx0 - Pal(D)
+	
+	UPAL: entity work.palette
+	port map(
+		address 	=> palette_a,
+		clock 	=> CLK2X,
+		data 		=> BUS_A(15 downto 8) & "0", -- GGGRRR0BB
+		wren 		=> palette_wr,
+		q 			=> palette_grb
+	);
+	
+	palette_wr <= '1' when ds80 = '1' and CS7E = '1' and BUS_WR_N = '0' and reset = '0' else '0';
+	
 	U9BIT: entity work.rgbi_9bit
 	port map(
 		I_RED		=> rgb(2),
@@ -147,10 +179,34 @@ begin
 		O_RGB		=> o_rgb
 	);
 	
-	VIDEO_R <= o_rgb(8 downto 6);
-	VIDEO_G <= o_rgb(5 downto 3);
-	VIDEO_B <= o_rgb(2 downto 0);
-				  
+	GX0 <= palette_grb(6);
+	
+	process(CLK2x, CLK, blank_profi, palette_grb) 
+	begin 
+		if (CLK2x'event and CLK2x = '1') then 
+			if CLK = '1' then 
+				if (blank_profi = '1') then
+					palette_grb_reg <= (others => '0');
+				else
+					palette_grb_reg <= palette_grb;
+				end if;
+			end if;
+		end if;
+	end process;
+	
+	process(ds80, palette_en, palette_grb_reg, o_rgb)
+	begin
+		if (ds80 = '1' and palette_en = '1') then 
+			VIDEO_R <= palette_grb_reg(5 downto 3);
+			VIDEO_G <= palette_grb_reg(8 downto 6);
+			VIDEO_B <= palette_grb_reg(2 downto 0);
+		else
+			VIDEO_R <= o_rgb(8 downto 6);
+			VIDEO_G <= o_rgb(5 downto 3);
+			VIDEO_B <= o_rgb(2 downto 0);
+		end if;
+	end process;
+	
 	CSYNC <= not (vsync xor hsync);
 
 end architecture;
