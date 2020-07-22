@@ -89,6 +89,7 @@ architecture rtl of profi_video is
 	signal infp 			: std_logic;
 	signal i78				: std_logic;
 	signal selector 		: std_logic_vector(2 downto 0);
+	signal blank1 			: std_logic;
 
 begin
 
@@ -143,7 +144,8 @@ process( CLK2X, CLK, h_cnt )
 				if h_cnt(2 downto 0) = 7 then
 					pixel_reg <= vid_reg;
 					attr_reg <= at_reg;
-					paper1 <= paper;					
+					paper1 <= paper;
+					blank1 <= blank_sig;
 				end if;
 			end if;
 		end if;
@@ -169,7 +171,7 @@ process (CLK2X, CLK, blank_sig, paper1, pixel_reg, h_cnt, attr_reg, BORDER)
 begin 
 	if CLK2X'event and CLK2X='1' then 
 		if CLK = '1' then
-			if (blank_sig = '1') then 
+			if (blank1 = '1') then 
 				rgbi <= "0000";
 			elsif paper1 = '1' and (pixel_reg(7 - to_integer(h_cnt(2 downto 0)))) = '0' then 
 				rgbi <= attr_reg(4) & attr_reg(5) & attr_reg(3) & i78;
@@ -196,7 +198,7 @@ begin
 	end case;
 end process;
 
-infp <= not blank_sig and ds80; -- testing
+infp <= not blank1 and ds80; -- testing
 i78 <= attr_reg(7) when ds80 = '1' else attr_reg(6);
 		
 A <= std_logic_vector((not h_cnt(3)) & v_cnt(7 downto 6)) & std_logic_vector(v_cnt(2 downto 0)) & std_logic_vector(v_cnt(5 downto 3)) & std_logic_vector(h_cnt(8 downto 4));		
@@ -212,6 +214,6 @@ HSYNC 		<= h_sync;
 VSYNC 		<= v_sync;
 HCNT <= std_logic_vector(h_cnt);
 VCNT <= std_logic_vector(v_cnt);
-BLANK <= blank_sig;
+BLANK <= blank1;
 
 end architecture;

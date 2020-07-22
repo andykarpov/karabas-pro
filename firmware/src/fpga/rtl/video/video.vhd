@@ -162,7 +162,7 @@ begin
 	UPAL: entity work.palette
 	port map(
 		address 	=> palette_a,
-		clock 	=> CLK2X,
+		clock 	=> CLK2X and not CLK,
 		data 		=> BUS_A(15 downto 8) & "0", -- GGGRRR0BB
 		wren 		=> palette_wr,
 		q 			=> palette_grb

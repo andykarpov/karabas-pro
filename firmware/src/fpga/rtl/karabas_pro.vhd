@@ -825,7 +825,8 @@ sco 	<= port_dffd_reg(3); -- Выбор положения окна проеци
 
 ram_ext <= port_dffd_reg(2 downto 0);
 
-cs_xxfe <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and cpu_a_bus(0) = '0' else '0';
+--cs_xxfe <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and cpu_a_bus(0) = '0' else '0';
+cs_xxfe <= '1' when cpu_iorq_n = '0' and cpu_a_bus(0) = '0' else '0';
 cs_xxff <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and cpu_a_bus(7 downto 0) = X"FF" else '0';
 cs_eff7 <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and cpu_a_bus = X"EFF7" else '0';
 cs_dff7 <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and cpu_a_bus = X"DFF7" and port_eff7_reg(7) = '1' else '0';
@@ -834,7 +835,7 @@ cs_1ffd <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and cpu_a_bus = X"1FFD" 
 cs_dffd <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and cpu_a_bus = X"DFFD" and fd_port = '1' else '0';
 cs_7ffd <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and cpu_a_bus = X"7FFD" else '0';
 cs_xxfd <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and cpu_a_bus(15) = '0' and cpu_a_bus(1) = '0' and fd_port = '0' else '0';
-cs_xx7e <= '1' when cs_xxfe = '1' and cpu_a_bus(7) = '0' else '0';
+cs_xx7e <= '1' when cs_xxfe = '1' and cpu_a_bus(7) = '0' and port_dffd_reg(7) = '1' else '0';
 
 process (reset, areset, clk_bus, cpu_a_bus, dos_act, cs_xxfe, cs_eff7, cs_dff7, cs_7ffd, cs_1ffd, cs_xxfd, port_7ffd_reg, port_1ffd_reg, cpu_mreq_n, cpu_m1_n, cpu_wr_n, cpu_do_bus, fd_port)
 begin
