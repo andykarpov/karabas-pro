@@ -1,2 +1,3 @@
-# karabas-pro
-FPGA based retrocomputer with FDD and HDD controllers
+# Karabas-pro
+
+FPGA based retrocomputer with FDD and HDD controllers.
