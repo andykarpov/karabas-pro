@@ -1,3 +1,47 @@
-# Karabas-pro
+# Karabas-Pro
 
-FPGA based retrocomputer with FDD and HDD controllers.
+**Yet another FPGA ZX Spectrum clone ;)**
+
+## Intro
+
+ZX Spectrum compatible machine with a soft CPU, FDD and HDD (CF card) controllers, PS/2 keyboard/mouse, VGA output and all logic inside the Altera FPGA **EP4CE6**.
+
+## The idea
+
+The idea was to make a smaller Profi (Профи) ZX Spectrum clone, with real FDD and HDD controllers. The board size should fit the dimensions of the real 3.5" floppy drive. 
+
+## Firmwares
+
+**The main firmware is still in progress. Currently it implements:**
+
+1) ZX Spectrum classic and profi hi-res hi-color mode (512x240)
+2) ZX Profi ports
+3) FDD controller that works both in CP/M and classic modes
+4) HDD controller (works only in Profi CP/M mode)
+5) PS/2 keyboard and mouse
+6) VGA output (requires a monitor with 50Hz support)
+7) Turbosound (2 x AY-3-8912), Soundrive and SAA1099
+
+
+**The things that should be implemented (means a TODO list):**
+
+1) Joystick support
+2) Wi-Fi support in TR-DOS and CP/M modes
+3) RTC ports (profi and gluk)
+4) HDD by Nemo-IDE Standard
+5) SD card access in classical mode
+
+
+## More info
+
+**ERRATA for PCB rev.A:** [See ERRATA Rev.A](https://github.com/andykarpov/karabas-pro/blob/master/ERRATA-REVA.md).
+
+**Latest revision:** rev.B.
+
+
+### Pre-production renders:
+
+![image](https://github.com/andykarpov/karabas-pro/raw/master/docs/photos/karabas-pro-revB-top.png)
+
+![image](https://github.com/andykarpov/karabas-pro/raw/master/docs/photos/karabas-pro-revB-bot.png)
+
