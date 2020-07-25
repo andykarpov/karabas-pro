@@ -1,302 +1,337 @@
-68343006836731
-Battery
-BatteryHolder_Bulgin_BX0036_1xC
-Bulgin Battery Holder, BX0036, Battery Type C (https://www.bulgin.com/products/pub/media/bulgin/data/Battery_holders.pdf)
-Bulgin BX0036
+75710681487112
+footprints
+ALTERA-QFP-145
+
+
+0
+146
+145
+footprints
+AUDIO_JACK_3.5MM_SMD_TRRS
+TRRS 3.5MM RIGHT ANGLE STEREO JACK - SMT
+TRRS 3.5MM RIGHT ANGLE STEREO JACK - SMT
+0
+4
+4
+footprints
+C_0603_1608Metric
+Capacitor SMD 0603 (1608 Metric), square (rectangular) end terminal, IPC_7351 nominal, (Body size source: http://www.tortai-tech.com/upload/download/2011102023233369053.pdf), generated with kicad-footprint-generator
+capacitor
 0
 2
 2
-Battery
-BatteryHolder_ComfortableElectronic_CH273-2450_1x2450
-Comfortable Electronic CR2450 battery holder, http://www.comf.com.tw/ProductDetail.asp?no=148
-Comfortable Electronic CR2450
+footprints
+C_0805_2012Metric
+Capacitor SMD 0805 (2012 Metric), square (rectangular) end terminal, IPC_7351 nominal, (Body size source: https://docs.google.com/spreadsheets/d/1BsfQQcO9C6DZCsRaXUlFlo91Tg2WpOkGARC1WS5S8t0/edit?usp=sharing), generated with kicad-footprint-generator
+capacitor
 0
 2
 2
-Battery
-BatteryHolder_Eagle_12BH611-GR
-https://eu.mouser.com/datasheet/2/209/EPD-200766-1274481.pdf
-9V Battery Holder
+footprints
+C_1206_3216Metric
+Capacitor SMD 1206 (3216 Metric), square (rectangular) end terminal, IPC_7351 nominal, (Body size source: http://www.tortai-tech.com/upload/download/2011102023233369053.pdf), generated with kicad-footprint-generator
+capacitor
 0
 2
 2
-Battery
-BatteryHolder_Keystone_103_1x20mm
-http://www.keyelco.com/product-pdf.cfm?p=719
-Keystone type 103 battery holder
+footprints
+Conn_uSDcard
+
+
+0
+13
+9
+footprints
+Crystal_5.0x3.2mm
+
+
+0
+4
+4
+footprints
+GCT-MEM2055-00-190-01-A
+http://www.farnell.com/datasheets/1917242.pdf
+MicroSD card socket
+0
+13
+11
+footprints
+HDMI
+
+
+0
+23
+20
+footprints
+IDC_10M
+
+
+0
+10
+10
+footprints
+LED_0805_2012Metric
+LED SMD 0805 (2012 Metric), square (rectangular) end terminal, IPC_7351 nominal, (Body size source: https://docs.google.com/spreadsheets/d/1BsfQQcO9C6DZCsRaXUlFlo91Tg2WpOkGARC1WS5S8t0/edit?usp=sharing), generated with kicad-footprint-generator
+diode
 0
 2
 2
-Battery
-BatteryHolder_Keystone_104_1x23mm
-http://www.keyelco.com/product-pdf.cfm?p=744
-Keystone type 104 battery holder
+footprints
+MAX9814_module
+
+
 0
-2
-2
-Battery
-BatteryHolder_Keystone_105_1x2430
-http://www.keyelco.com/product-pdf.cfm?p=745
-Keystone type 105 battery holder
+5
+5
+footprints
+MDIN06SS
+<b>Mini Din</b> YAMAICHI CONNECTOR
+
 0
-2
-2
-Battery
-BatteryHolder_Keystone_106_1x20mm
-http://www.keyelco.com/product-pdf.cfm?p=720
-Keystone type 106 battery holder
+9
+7
+footprints
+MICRO_SD_MOLEX
+
+
 0
-2
-2
-Battery
-BatteryHolder_Keystone_107_1x23mm
-http://www.keyelco.com/product-pdf.cfm?p=746
-Keystone type 107 battery holder
+15
+15
+footprints
+MINI_DIN_6_33PRIMARY
+Original name <b>Mini_Din_6</b><p>
+
 0
-2
-2
-Battery
-BatteryHolder_Keystone_500
-Keystone #500, CR1220 battery holder, http://www.keyelco.com/product-pdf.cfm?p=710
-CR1220 battery holder
+9
+7
+footprints
+MLP-28
+
+
 0
-2
-2
-Battery
-BatteryHolder_Keystone_1042_1x18650
-Battery holder for 18650 cylindrical cells http://www.keyelco.com/product.cfm/product_id/918
-18650 Keystone 1042 Li-ion
-0
-2
-2
-Battery
-BatteryHolder_Keystone_1058_1x2032
-http://www.keyelco.com/product-pdf.cfm?p=14028
-Keystone type 1058 coin cell retainer
-0
-2
-2
-Battery
-BatteryHolder_Keystone_1060_1x2032
-http://www.keyelco.com/product-pdf.cfm?p=726
-CR2032 BR2032 BatteryHolder Battery
-0
-2
-2
-Battery
-BatteryHolder_Keystone_2460_1xAA
-https://www.keyelco.com/product-pdf.cfm?p=1025
-AA battery cell holder
-0
-2
-2
-Battery
-BatteryHolder_Keystone_2462_2xAA
-2xAA cell battery holder, Keystone P/N 2462, https://www.keyelco.com/product-pdf.cfm?p=1027
-AA battery cell holder
-0
-2
-2
-Battery
-BatteryHolder_Keystone_2466_1xAAA
-1xAAA Battery Holder, Keystone, Plastic Case, http://www.keyelco.com/product-pdf.cfm?p=1031
-AAA battery holder Keystone
-0
-2
-2
-Battery
-BatteryHolder_Keystone_2468_2xAAA
-2xAAA cell battery holder, Keystone P/N 2468, http://www.keyelco.com/product-pdf.cfm?p=1033
-AAA battery cell holder
-0
-2
-2
-Battery
-BatteryHolder_Keystone_2479_3xAAA
-Keystone Battery Holder, 2479, Battery Type 3xAAA (Script generated with StandardBox.py) (Keystone Battery Holder, 2479, Battery Type 3xAAA)
-Keystone Battery Holder 2479 Battery Type 3xAAA
-0
-2
-2
-Battery
-BatteryHolder_Keystone_2993
-http://www.keyelco.com/product-pdf.cfm?p=776
-Keystone type 2993 negative battery contact
+29
+28
+footprints
+MOLEX_SD_49225_201
+
+
 0
 1
 1
-Battery
-BatteryHolder_Keystone_2998_1x6.8mm
-www.keyelco.com/product-pdf.cfm?p=763
-Keystone type 2998 battery holder
+footprints
+Mini_din6
+
+MINI DIN
 0
-3
-2
-Battery
-BatteryHolder_Keystone_3000_1x12mm
-http://www.keyelco.com/product-pdf.cfm?p=777
-Keystone type 3000 coin cell retainer
+9
+7
+footprints
+Mini_din8
+
+MINI DIN
 0
-3
-2
-Battery
-BatteryHolder_Keystone_3001_1x12mm
-http://www.keyelco.com/product-pdf.cfm?p=778
-Keystone type 3001 coin cell retainer
-0
-3
-2
-Battery
-BatteryHolder_Keystone_3002_1x2032
-https://www.tme.eu/it/Document/a823211ec201a9e209042d155fe22d2b/KEYS2996.pdf
-BR2016 CR2016 DL2016 BR2020 CL2020 BR2025 CR2025 DL2025 DR2032 CR2032 DL2032
-0
-3
-2
-Battery
-BatteryHolder_Keystone_3008_1x2450
-http://www.keyelco.com/product-pdf.cfm?p=786
-Keystone type 3008 coin cell retainer
-0
-3
-2
-Battery
-BatteryHolder_Keystone_3009_1x2450
-http://www.keyelco.com/product-pdf.cfm?p=787
-Keystone type 3009 coin cell retainer
-0
-3
-2
-Battery
-BatteryHolder_Keystone_3034_1x20mm
-Keystone 3034 SMD battery holder for 2020, 2025 and 2032 coincell batteries. http://www.keyelco.com/product-pdf.cfm?p=798
-Keystone type 3034 coin cell retainer
-0
-3
-2
-Battery
-BatteryHolder_LINX_BAT-HLD-012-SMT
-SMT battery holder for CR1216/1220/1225, https://linxtechnologies.com/wp/wp-content/uploads/bat-hld-012-smt.pdf
-battery holder coin cell cr1216 cr1220 cr1225
-0
-3
-2
-Battery
-BatteryHolder_MPD_BA9VPC_1xPP3
-1xPP3 (9V) battery holder, Memory Protection Devices P/N BA9VPC, http://www.memoryprotectiondevices.com/datasheets/BA9VPC-datasheet.pdf
-PP3 Battery Holder BA9VPC 9V
-0
-2
-2
-Battery
-BatteryHolder_MPD_BC2AAPC_2xAA
-2xAA cell battery holder, Memory Protection Devices P/N BC2AAPC, http://www.memoryprotectiondevices.com/datasheets/BC2AAPC-datasheet.pdf
-AA battery cell holder
-0
-2
-2
-Battery
-BatteryHolder_MPD_BC12AAPC_2xAA
-2xAA cell battery holder, Memory Protection Devices P/N BC12AAPC, http://www.memoryprotectiondevices.com/datasheets/BC12AAPC-datasheet.pdf
-AA battery cell holder
-0
-2
-2
-Battery
-BatteryHolder_MPD_BC2003_1x2032
-http://www.memoryprotectiondevices.com/datasheets/BC-2003-datasheet.pdf
-BC2003 CR2032 2032 Battery Holder
-0
-3
-2
-Battery
-BatteryHolder_MPD_BH-18650-PC2
-18650 Battery Holder (http://www.memoryprotectiondevices.com/datasheets/BK-18650-PC2-datasheet.pdf)
-18650 Battery Holder
-0
-2
-2
-Battery
-BatteryHolder_Seiko_MS621F
-Seiko MS621F, https://www.sii.co.jp/en/me/files/2014/02/file_EXTENDED_PRDCT_SPEC_75_FILE_11.jpg
-Seiko MS621F
-0
-2
-2
-Battery
-BatteryHolder_TruPower_BH-331P_3xAA
-Keystone Battery Holder BH-331P Battery Type 3xAA (Script generated with StandardBox.py) (Keystone Battery Holder BH-331P Battery Type 3xAA)
-Battery Holder BH-331P Battery Type 3xAA
-0
-2
-2
-Battery
-Battery_CR1225
-CR1225 battery
-battery CR1225 coin cell
+11
+9
+footprints
+MountingHole_2.7mm_M2.5
+Mounting Hole 2.7mm, no annular, M2.5
+mounting hole 2.7mm no annular m2.5
 0
 0
 0
-Battery
-Battery_Panasonic_CR1025-VSK_Vertical_CircularHoles
-Panasonic CR-1025/VSK battery, https://industrial.panasonic.com/cdbs/www-data/pdf2/AAA4000/AAA4000D140.pdf
-battery CR-1025 coin cell vertical
+footprints
+NRF2401_LNA_module
+
+
+0
+8
+8
+footprints
+PAM8403_module
+
+
+0
+9
+9
+footprints
+PLCC-32_11.4x14.0mm_P1.27mm-bigpads
+PLCC, 32 Pin (http://ww1.microchip.com/downloads/en/DeviceDoc/doc0015.pdf), generated with kicad-footprint-generator ipc_plcc_jLead_generator.py
+PLCC LCC
+0
+32
+32
+footprints
+PLCC-32_SMD-Socket
+PLCC, 32 pins, surface mount
+plcc smt
+0
+32
+32
+footprints
+Pin_Header_Straight_1x02
+Through hole pin header
+pin header
 0
 2
 2
-Battery
-Battery_Panasonic_CR1220-VCN_Vertical_CircularHoles
-Panasonic CR-1220/VCN battery, https://industrial.panasonic.com/cdbs/www-data/pdf2/AAA4000/AAA4000D140.pdf
-battery CR-1220 coin cell vertical
+footprints
+Pin_Header_Straight_2x04
+Through hole pin header
+pin header
+0
+8
+8
+footprints
+Pin_Header_Straight_2x07
+Through hole pin header
+pin header
+0
+14
+14
+footprints
+QFP80P1200X1200X160-44N
+
+
+0
+44
+44
+footprints
+R_0603_1608Metric
+Resistor SMD 0603 (1608 Metric), square (rectangular) end terminal, IPC_7351 nominal, (Body size source: http://www.tortai-tech.com/upload/download/2011102023233369053.pdf), generated with kicad-footprint-generator
+resistor
 0
 2
 2
-Battery
-Battery_Panasonic_CR1632-V1AN_Vertical_CircularHoles
-Panasonic CR-1632-V1AN battery, https://industrial.panasonic.com/cdbs/www-data/pdf2/AAA4000/AAA4000D140.pdf
-battery CR-1632 coin cell vertical
+footprints
+SG053-SZ
+
+
 0
-2
-2
-Battery
-Battery_Panasonic_CR2025-V1AK_Vertical_CircularHoles
-Panasonic CR-2025/V1AK battery, https://industrial.panasonic.com/cdbs/www-data/pdf2/AAA4000/AAA4000D140.pdf
-battery CR-2025 coin cell vertical
+8
+4
+footprints
+SO-8_5.3x6.2mm_P1.27mm
+8-Lead Plastic Small Outline, 5.3x6.2mm Body (http://www.ti.com.cn/cn/lit/ds/symlink/tl7705a.pdf)
+SOIC 1.27
 0
-2
-2
-Battery
-Battery_Panasonic_CR2032-VS1N_Vertical_CircularHoles
-Panasonic CR-2032/VS1N battery, https://industrial.panasonic.com/cdbs/www-data/pdf2/AAA4000/AAA4000D140.pdf
-battery CR-2032 coin cell vertical
+8
+8
+footprints
+SOT-223
+module CMS SOT223 4 pins
+CMS SOT
 0
-2
-2
-Battery
-Battery_Panasonic_CR2354-VCN_Vertical_CircularHoles
-Panasonic CR-2354/VCN battery, https://industrial.panasonic.com/cdbs/www-data/pdf2/AAA4000/AAA4000D140.pdf
-battery CR-2354/VCN coin cell vertical
+4
+4
+footprints
+SW_Push_1P1T_NO_6x6mm_CAPPED
+tactile push button, 6x6mm e.g. PTS645xx series, height=9.5mm
+tact sw push 6mm smd
 0
+4
 2
-2
-Battery
-Battery_Panasonic_CR2450-VAN_Vertical_CircularHoles
-Panasonic CR-2450/VAN battery, https://industrial.panasonic.com/cdbs/www-data/pdf2/AAA4000/AAA4000D140.pdf
-battery CR-2450 coin cell
+footprints
+SW_SPST_PTS810_handsoldering
+C&K Components, PTS 810 Series, Microminiature SMT Top Actuated, http://www.ckswitches.com/media/1476/pts810.pdf
+SPST Button Switch
 0
+4
 2
-2
-Battery
-Battery_Panasonic_CR2477-VCN_Vertical_CircularHoles
-Panasonic CR-2477/VCN battery, https://industrial.panasonic.com/cdbs/www-data/pdf2/AAA4000/AAA4000D140.pdf
-battery CR-2477 coin cell vertical
+footprints
+TE_1734451-1
+
+
 0
-2
-2
-Battery
-Battery_Panasonic_CR3032-VCN_Vertical_CircularHoles
-Panasonic CR-3032/VCN battery, https://industrial.panasonic.com/cdbs/www-data/pdf2/AAA4000/AAA4000D140.pdf
-battery CR-3032 coin cell vertical
+52
+52
+footprints
+TP4056_module
+
+
 0
-2
-2
+6
+6
+footprints
+TQFP-44_10x10mm_P0.8mm
+44-Lead Plastic Thin Quad Flatpack (PT) - 10x10x1.0 mm Body [TQFP] (see Microchip Packaging Specification 00000049BS.pdf)
+QFP 0.8
+0
+44
+44
+footprints
+TQFP-44_12x12mm_P0.8mm
+44-Lead Plastic Thin Quad Flatpack (PT) - 10x10x1.0 mm Body [TQFP] (see Microchip Packaging Specification 00000049BS.pdf)
+QFP 0.8
+0
+44
+44
+footprints
+TQFP-44_14x14mm_P0.8mm
+44-Lead Plastic Thin Quad Flatpack (PT) - 14x14x1.0 mm Body [TQFP] (see Microchip Packaging Specification 00000049BS.pdf)
+QFP 0.8
+0
+44
+44
+footprints
+USB_Mini-B_Lumberg_2486_01_Horizontal
+USB Mini-B 5-pin SMD connector, http://downloads.lumberg.com/datenblaetter/en/2486_01.pdf
+USB USB_B USB_Mini connector
+0
+9
+6
+footprints
+Via_0.8mm
+
+
+0
+1
+1
+footprints
+karabas
+
+
+0
+0
+0
+footprints
+karabas2
+
+
+0
+0
+0
+footprints
+karabas_nano_logo
+
+
+0
+0
+0
+footprints
+karabas_nano_logo2
+
+
+0
+0
+0
+footprints
+karabas_nano_logo3
+
+
+0
+0
+0
+footprints
+karabas_pro_logo
+
+
+0
+0
+0
+footprints
+karabas_pro_logo2
+
+
+0
+0
+0

@@ -63,7 +63,7 @@ U 1 1 5F33A7DF
 P 12650 3250
 F 0 "CON5" H 12650 3617 50  0000 C CNN
 F 1 "Keyboard" H 12650 3526 50  0000 C CNN
-F 2 "footprints:MDIN06SS" H 12650 3250 50  0001 C CNN
+F 2 "footprints:MINI_DIN_6_33PRIMARY" H 12650 3250 50  0001 C CNN
 F 3 "http://service.powerdynamics.com/ec/Catalog17/Section%2011.pdf" H 12650 3250 50  0001 C CNN
 	1    12650 3250
 	1    0    0    -1  
@@ -74,7 +74,7 @@ U 1 1 5F33B38D
 P 12650 4250
 F 0 "CON6" H 12650 4617 50  0000 C CNN
 F 1 "Mouse" H 12650 4526 50  0000 C CNN
-F 2 "footprints:MDIN06SS" H 12650 4250 50  0001 C CNN
+F 2 "footprints:MINI_DIN_6_33PRIMARY" H 12650 4250 50  0001 C CNN
 F 3 "http://service.powerdynamics.com/ec/Catalog17/Section%2011.pdf" H 12650 4250 50  0001 C CNN
 	1    12650 4250
 	1    0    0    -1  
@@ -6365,6 +6365,8 @@ Entry Wire Line
 	4850 10050 4950 10150
 Wire Wire Line
 	4950 10150 5400 10150
+Text Label 4950 10150 0    50   ~ 0
+~LAVR_CS
 Wire Bus Line
 	14200 10200 14200 11000
 Wire Bus Line
@@ -6397,6 +6399,4 @@ Wire Bus Line
 	6500 700  6500 11200
 Wire Bus Line
 	8750 700  8750 11450
-Text Label 4950 10150 0    50   ~ 0
-~LAVR_CS
 $EndSCHEMATC
