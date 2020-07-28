@@ -359,11 +359,11 @@ port map(
 );
 
 -- Zilog Z80A CPU
-U4: entity work.T80se
-generic map (
-	Mode				=> 0,		-- 0 => Z80, 1 => Fast Z80, 2 => 8080, 3 => GB
-	T2Write			=> 1,		-- 0 => WR_n active in T3, /=0 => WR_n active in T2
-	IOWait			=> 1 )	-- 0 => Single cycle I/O, 1 => Std I/O cycle
+U4: entity work.T80aw
+--generic map (
+--	Mode				=> 0,		-- 0 => Z80, 1 => Fast Z80, 2 => 8080, 3 => GB
+--	T2Write			=> 1,		-- 0 => WR_n active in T3, /=0 => WR_n active in T2
+--	IOWait			=> 1 )	-- 0 => Single cycle I/O, 1 => Std I/O cycle
 
 port map (
 	RESET_n			=> cpu_reset_n,
