@@ -135,9 +135,9 @@ signal cpu_wait_n 	: std_logic := '1';
 
 -- Port
 signal port_xxfe_reg	: std_logic_vector(7 downto 0) := "00000000";
-signal port_7ffd_reg	: std_logic_vector(7 downto 0);
-signal port_1ffd_reg	: std_logic_vector(7 downto 0);
-signal port_dffd_reg : std_logic_vector(7 downto 0);
+signal port_7ffd_reg	: std_logic_vector(7 downto 0) := "00000000";
+signal port_1ffd_reg	: std_logic_vector(7 downto 0) := "00000000";
+signal port_dffd_reg : std_logic_vector(7 downto 0) := "00000000";
 signal port_xx7e_reg : std_logic_vector(7 downto 0) := "00000000";
 
 -- Keyboard
@@ -329,7 +329,8 @@ U1: entity work.altpll0
 port map (
 	inclk0			=> CLK_50MHZ,	--  50.0 MHz
 	locked			=> locked,
-	c0 				=> clk_28
+	c0 				=> clk_28,
+	c1 				=> clk_24
 	);
 	
 -- PLL2
@@ -337,16 +338,24 @@ U2: entity work.altpll1
 port map (
 	inclk0			=> CLK_50MHZ,	--  50.0 MHz
 	locked 			=> open,
-	c0 				=> clk_24,
+	c0 				=> open, -- 24
 	c1 				=> clk_8);
 		
 -- main clock selector
-U3: entity work.clk_mux
+--U3: entity work.clk_mux
+--port map(
+--	data0 			=> clk_28,
+--	data1 			=> clk_24,
+--	sel 				=> ds80,
+--	result 			=> clk_bus
+--);
+
+U3: entity work.clk_ctrl
 port map(
-	data0 			=> clk_28,
-	data1 			=> clk_24,
-	sel 				=> ds80,
-	result 			=> clk_bus
+	clkselect 	=> ds80,
+	inclk0x 		=> clk_28,
+	inclk1x 		=> clk_24,
+	outclk 		=> clk_bus
 );
 
 -- Zilog Z80A CPU
@@ -825,8 +834,8 @@ sco 	<= port_dffd_reg(3); -- Выбор положения окна проеци
 
 ram_ext <= port_dffd_reg(2 downto 0);
 
---cs_xxfe <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and cpu_a_bus(0) = '0' else '0';
-cs_xxfe <= '1' when cpu_iorq_n = '0' and cpu_a_bus(0) = '0' else '0';
+cs_xxfe <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and cpu_a_bus(0) = '0' else '0';
+--cs_xxfe <= '1' when cpu_iorq_n = '0' and cpu_a_bus(0) = '0' else '0';
 cs_xxff <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and cpu_a_bus(7 downto 0) = X"FF" else '0';
 cs_eff7 <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and cpu_a_bus = X"EFF7" else '0';
 cs_dff7 <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and cpu_a_bus = X"DFF7" and port_eff7_reg(7) = '1' else '0';
@@ -933,29 +942,29 @@ begin
 			else
 				cpu_di_bus <= ram_do_bus;
 			end if;	
-		when x"01" => cpu_di_bus <= mc146818_do_bus;
+--		when x"01" => cpu_di_bus <= mc146818_do_bus;
 		when x"02" => cpu_di_bus <= GX0 & "1" & kb_do_bus;
 		when x"03" => cpu_di_bus <= zc_do_bus;
-		when x"04" => cpu_di_bus <= "000" & joy_bus;
+--		when x"04" => cpu_di_bus <= "000" & joy_bus;
 		when x"05" => cpu_di_bus <= ssg_cn0_bus;
 		when x"06" => cpu_di_bus <= ssg_cn1_bus;
 		when x"07" => cpu_di_bus <= port_dffd_reg;
 		when x"08" => cpu_di_bus <= port_7ffd_reg;
 		when x"09" => cpu_di_bus <= ms_z(3 downto 0) & '1' & not ms_b(2) & not ms_b(0) & not ms_b(1);
 		when x"0A" => cpu_di_bus <= ms_x;
-		when x"0B" => cpu_di_bus <= not(ms_y);
+		when x"0B" => cpu_di_bus <= ms_y;
 		when x"0C" => cpu_di_bus <= uart_do_bus;
-		when x"0D" => cpu_di_bus <= vid_attr;
+--		when x"0D" => cpu_di_bus <= vid_attr;
 		when others => cpu_di_bus <= cpld_do;
 	end case;
 end process;
 
 selector <= 
 	x"00" when (ram_oe_n = '0') else -- ram / rom
-	x"01" when (cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_m1_n = '1' and port_bff7 = '1' and port_eff7_reg(7) = '1') else -- MC146818A
+--	x"01" when (cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_m1_n = '1' and port_bff7 = '1' and port_eff7_reg(7) = '1') else -- MC146818A
 	x"02" when (cs_xxfe = '1' and cpu_rd_n = '0') else 									-- Keyboard, port #FE
-	x"03" when (cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_m1_n = '1' and cpu_a_bus( 7 downto 6) = "01" and cpu_a_bus(4 downto 0) = "10111") else 	-- Z-Controller
-	x"04" when (cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_m1_n = '1' and cpu_a_bus( 7 downto 0) = X"1F" and dos_act = '0' and cpm = '0') else -- Joystick, port #1F
+	x"03" when (cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_m1_n = '1' and cpu_a_bus( 7 downto 6) = "01" and cpu_a_bus(4 downto 0) = "10111" and cpm='0') else 	-- Z-Controller
+--	x"04" when (cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_m1_n = '1' and cpu_a_bus( 7 downto 0) = X"1F" and dos_act = '0' and cpm = '0') else -- Joystick, port #1F
 	x"05" when (cs_fffd = '1' and cpu_rd_n = '0' and ssg_sel = '0') else 			-- TurboSound
 	x"06" when (cs_fffd = '1' and cpu_rd_n = '0' and ssg_sel = '1') else
 	x"07" when (cs_dffd = '1' and cpu_rd_n = '0') else										-- port #DFFD
@@ -964,7 +973,7 @@ selector <=
 	x"0A" when (cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_a_bus = X"FBDF") else	-- Mouse0 port x
 	x"0B" when (cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_a_bus = X"FFDF") else	-- Mouse0 port y 
 	x"0C" when (cpu_iorq_n = '0' and cpu_rd_n = '0' and uart_oe_n = '0') else 																-- AY UART
-	x"0D" when (cs_xxff = '1' and cpu_rd_n = '0' and dos_act = '0' and cpm = '0') else 			-- port #FF
+--	x"0D" when (cs_xxff = '1' and cpu_rd_n = '0' and dos_act = '0' and cpm = '0') else 			-- port #FF
 	(others => '1');
 	
 -- debug 
