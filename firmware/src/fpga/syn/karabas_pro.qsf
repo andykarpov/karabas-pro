@@ -186,6 +186,10 @@ set_instance_assignment -name GLOBAL_SIGNAL "GLOBAL CLOCK" -to CLK_50MHZ
 
 
 
+set_global_assignment -name VHDL_FILE ../rtl/video/ram_scan.vhd
+set_global_assignment -name VHDL_FILE ../rtl/video/scan_converter.vhd
+set_global_assignment -name VHDL_FILE ../rtl/t80se/T80aw.vhd
+set_global_assignment -name VHDL_FILE ../rtl/t80se/T80a.vhd
 set_global_assignment -name VHDL_FILE ../rtl/karabas_pro.vhd
 set_global_assignment -name QIP_FILE ../rtl/pll/altpll0.qip
 set_global_assignment -name QIP_FILE ../rtl/pll/altpll1.qip
@@ -198,7 +202,6 @@ set_global_assignment -name VHDL_FILE ../rtl/loader/loader_spi.vhd
 set_global_assignment -name VHDL_FILE ../rtl/avr/spi_slave.vhd
 set_global_assignment -name VHDL_FILE ../rtl/avr/mc146818a.vhd
 set_global_assignment -name VHDL_FILE ../rtl/avr/cpld_kbd.vhd
-set_global_assignment -name VHDL_FILE ../rtl/t80se/T80se.vhd
 set_global_assignment -name VHDL_FILE ../rtl/t80se/T80_Reg.vhd
 set_global_assignment -name VHDL_FILE ../rtl/t80se/T80_Pack.vhd
 set_global_assignment -name VHDL_FILE ../rtl/t80se/T80_MCode.vhd

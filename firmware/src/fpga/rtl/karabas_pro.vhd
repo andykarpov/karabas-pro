@@ -501,7 +501,7 @@ port map (
 	PORT_4 			=> cpld_oe_n & ds80 & cpm & rom14 & fdd_oe_n & hdd_oe_n & port_nreset & '0' --cpld_do	
 );
 	
--- Scan doubler
+---- Scan doubler
 --U8 : entity work.scan_convert
 --port map (
 --	I_VIDEO			=> vid_rgb_osd,
@@ -857,53 +857,57 @@ begin
 		dos_act <= '1';
 	elsif clk_bus'event and clk_bus = '1' then
 
-		if cpu_iorq_n = '0' and cpu_m1_n = '1' and cpu_a_bus(15)='0' and cpu_a_bus(1) = '0' and port_dffd_reg(5) = '0' then 
-			u25 <= cpu_do_bus(4);
-		end if;
+		if ena_div2 = '1' and ena_div4 = '1' then -- захват портов при 7МГц ena
 	
-		-- #FE
-		if cs_xxfe = '1' and cpu_wr_n = '0' then 
-			port_xxfe_reg <= cpu_do_bus; 
-		end if;
+			if cpu_iorq_n = '0' and cpu_m1_n = '1' and cpu_a_bus(15)='0' and cpu_a_bus(1) = '0' and port_dffd_reg(5) = '0' then 
+				u25 <= cpu_do_bus(4);
+			end if;
 		
-		-- #7E
-		if cs_xx7e = '1' and cpu_wr_n = '0' then 
-			port_xx7e_reg <= cpu_do_bus;
-		end if;
+			-- #FE
+			if cs_xxfe = '1' and cpu_wr_n = '0' then 
+				port_xxfe_reg <= cpu_do_bus; 
+			end if;
+			
+			-- #7E
+			if cs_xx7e = '1' and cpu_wr_n = '0' then 
+				port_xx7e_reg <= cpu_do_bus;
+			end if;
 
-		-- #EFF7
-		if cs_eff7 = '1' and cpu_wr_n = '0' then 
-			port_eff7_reg <= cpu_do_bus; 
-		end if;
-		
-		-- #DFF7
-		if cs_dff7 = '1' and cpu_wr_n = '0' then 
-			mc146818_a_bus <= cpu_do_bus(5 downto 0); 
-		end if;
+			-- #EFF7
+			if cs_eff7 = '1' and cpu_wr_n = '0' then 
+				port_eff7_reg <= cpu_do_bus; 
+			end if;
+			
+			-- #DFF7
+			if cs_dff7 = '1' and cpu_wr_n = '0' then 
+				mc146818_a_bus <= cpu_do_bus(5 downto 0); 
+			end if;
 
-		-- #1FFD
-		if cs_1ffd = '1' and cpu_wr_n = '0' then
-			port_1ffd_reg <= cpu_do_bus;
-		end if;
+			-- #1FFD
+			if cs_1ffd = '1' and cpu_wr_n = '0' then
+				port_1ffd_reg <= cpu_do_bus;
+			end if;
 
-		-- #DFFD
-		if cs_dffd = '1' and cpu_wr_n = '0' then
-			port_dffd_reg <= cpu_do_bus;
+			-- #DFFD
+			if cs_dffd = '1' and cpu_wr_n = '0' then
+				port_dffd_reg <= cpu_do_bus;
+			end if;
+			
+			-- #7FFD
+			if cs_7ffd = '1' and cpu_wr_n = '0' and (port_7ffd_reg(5) = '0' or port_dffd_reg(4)='1') then
+				port_7ffd_reg <= cpu_do_bus;
+			-- #FD
+			elsif cs_xxfd = '1' and cpu_wr_n = '0' and (port_7ffd_reg(5) = '0' or port_dffd_reg(4)='1') then -- short #FD
+				port_7ffd_reg <= cpu_do_bus;
+			end if;
+			
+			if port_dffd_reg(5) = '1' then u25 <= '0'; end if;
+			
+			-- TR-DOS FLAG
+			if cpu_m1_n = '0' and cpu_mreq_n = '0' and cpu_a_bus(15 downto 8) = X"3D" and u25 = '1' and port_dffd_reg(5) = '0' then dos_act <= '1';
+			elsif ((cpu_m1_n = '0' and cpu_mreq_n = '0' and cpu_a_bus(15 downto 14) /= "00") or (port_dffd_reg(5) = '1')) then dos_act <= '0'; end if;
+			
 		end if;
-		
-		-- #7FFD
-		if cs_7ffd = '1' and cpu_wr_n = '0' and (port_7ffd_reg(5) = '0' or port_dffd_reg(4)='1') then
-			port_7ffd_reg <= cpu_do_bus;
-		-- #FD
-		elsif cs_xxfd = '1' and cpu_wr_n = '0' and (port_7ffd_reg(5) = '0' or port_dffd_reg(4)='1') then -- short #FD
-			port_7ffd_reg <= cpu_do_bus;
-		end if;
-		
-		if port_dffd_reg(5) = '1' then u25 <= '0'; end if;
-		
-		-- TR-DOS FLAG
-		if cpu_m1_n = '0' and cpu_mreq_n = '0' and cpu_a_bus(15 downto 8) = X"3D" and u25 = '1' and port_dffd_reg(5) = '0' then dos_act <= '1';
-		elsif ((cpu_m1_n = '0' and cpu_mreq_n = '0' and cpu_a_bus(15 downto 14) /= "00") or (port_dffd_reg(5) = '1')) then dos_act <= '0'; end if;
 				
 	end if;
 end process;
