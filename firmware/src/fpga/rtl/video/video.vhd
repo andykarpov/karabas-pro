@@ -159,16 +159,16 @@ begin
 	
 	-- #007E-#FF7E HGFEDCBA01111110 HGFEDCBA0xxxxxx0 - Pal(D)
 	
-	UPAL: entity work.palette
-	port map(
-		address 	=> palette_a,
-		clock 	=> CLK2X and not CLK,
-		data 		=> BUS_A(15 downto 8) & "0", -- GGGRRR0BB
-		wren 		=> palette_wr,
-		q 			=> palette_grb
-	);
+--	UPAL: entity work.palette
+--	port map(
+--		address 	=> palette_a,
+--		clock 	=> CLK2X and not CLK,
+--		data 		=> BUS_A(15 downto 8) & "0", -- GGGRRR0BB
+--		wren 		=> palette_wr,
+--		q 			=> palette_grb
+--	);
 	
-	palette_wr <= '1' when ds80 = '1' and CS7E = '1' and BUS_WR_N = '0' and reset = '0' else '0';
+--	palette_wr <= '1' when ds80 = '1' and CS7E = '1' and BUS_WR_N = '0' and reset = '0' else '0';
 	
 	U9BIT: entity work.rgbi_9bit
 	port map(
@@ -179,33 +179,37 @@ begin
 		O_RGB		=> o_rgb
 	);
 	
-	GX0 <= palette_grb(6);
+	GX0 <= '1'; --palette_grb(6);
 	
-	process(CLK2x, CLK, blank_profi, palette_grb) 
-	begin 
-		if (CLK2x'event and CLK2x = '1') then 
-			if CLK = '1' then 
-				if (blank_profi = '1') then
-					palette_grb_reg <= (others => '0');
-				else
-					palette_grb_reg <= palette_grb;
-				end if;
-			end if;
-		end if;
-	end process;
+--	process(CLK2x, CLK, blank_profi, palette_grb) 
+--	begin 
+--		if (CLK2x'event and CLK2x = '1') then 
+--			if CLK = '1' then 
+--				if (blank_profi = '1') then
+--					palette_grb_reg <= (others => '0');
+--				else
+--					palette_grb_reg <= palette_grb;
+--				end if;
+--			end if;
+--		end if;
+--	end process;
 	
-	process(ds80, palette_en, palette_grb_reg, o_rgb)
-	begin
-		if (ds80 = '1' and palette_en = '1') then 
-			VIDEO_R <= palette_grb_reg(5 downto 3);
-			VIDEO_G <= palette_grb_reg(8 downto 6);
-			VIDEO_B <= palette_grb_reg(2 downto 0);
-		else
-			VIDEO_R <= o_rgb(8 downto 6);
-			VIDEO_G <= o_rgb(5 downto 3);
-			VIDEO_B <= o_rgb(2 downto 0);
-		end if;
-	end process;
+--	process(ds80, palette_en, palette_grb_reg, o_rgb)
+--	begin
+--		if (ds80 = '1' and palette_en = '1') then 
+--			VIDEO_R <= palette_grb_reg(5 downto 3);
+--			VIDEO_G <= palette_grb_reg(8 downto 6);
+--			VIDEO_B <= palette_grb_reg(2 downto 0);
+--		else
+--			VIDEO_R <= o_rgb(8 downto 6);
+--			VIDEO_G <= o_rgb(5 downto 3);
+--			VIDEO_B <= o_rgb(2 downto 0);
+--		end if;
+--	end process;
+	
+	VIDEO_R <= o_rgb(8 downto 6);
+	VIDEO_G <= o_rgb(5 downto 3);
+	VIDEO_B <= o_rgb(2 downto 0);
 	
 	CSYNC <= not (vsync xor hsync);
 
