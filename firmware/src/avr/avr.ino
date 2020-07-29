@@ -341,15 +341,33 @@ void fill_kbd_matrix(int sc)
 
     // [,{ -> SS+Y / SS+F
     case PS2_L_BRACKET:
-      if (!is_up) {
-        send_macros(is_shift ? ZX_K_F : ZX_K_Y);
-      }
+      if (!profi_mode) {
+        if (!is_up) {
+          send_macros(is_shift ? ZX_K_F : ZX_K_Y);
+        }
+      } else {
+        matrix[ZX_K_SS] = !is_up;        
+        matrix[is_shift ? ZX_K_F : ZX_K_Y] = !is_up;
+        if (is_up) {
+          matrix[ZX_K_F] = false;
+          matrix[ZX_K_Y] = false;
+        }
+      }  
       break;
 
     // ],} -> SS+U / SS+G
     case PS2_R_BRACKET:
-      if (!is_up) {
-        send_macros(is_shift ? ZX_K_G : ZX_K_U);
+      if (!profi_mode) {
+        if (!is_up) {
+          send_macros(is_shift ? ZX_K_G : ZX_K_U);
+        }
+      } else {
+        matrix[ZX_K_SS] = !is_up;        
+        matrix[is_shift ? ZX_K_G : ZX_K_U] = !is_up;
+        if (is_up) {
+          matrix[ZX_K_G] = false;
+          matrix[ZX_K_U] = false;
+        }
       }
       break;
 
@@ -367,8 +385,17 @@ void fill_kbd_matrix(int sc)
 
     // \,| -> SS+D / SS+S
     case PS2_BACK_SLASH:
-      if (!is_up) {
-        send_macros(is_shift ? ZX_K_S : ZX_K_D);
+      if (!profi_mode) {
+        if (!is_up) {
+          send_macros(is_shift ? ZX_K_S : ZX_K_D);
+        }
+      } else {
+        matrix[ZX_K_SS] = !is_up;        
+        matrix[is_shift ? ZX_K_S : ZX_K_D] = !is_up;
+        if (is_up) {
+          matrix[ZX_K_S] = false;
+          matrix[ZX_K_D] = false;
+        }
       }
       break;
 
@@ -1064,13 +1091,13 @@ void loop()
 
   // react on hardware buttons
   
-  if (digitalRead(PIN_BTN1) == LOW) {
-    do_reset();
-  }
-
-  if (digitalRead(PIN_BTN2) == LOW) {
-    do_magic();
-  }
+//  if (digitalRead(PIN_BTN1) == LOW) {
+//    do_reset();
+//  }
+//
+//  if (digitalRead(PIN_BTN2) == LOW) {
+//    do_magic();
+//  }
 
   // read joystick
   joy[ZX_JOY_UP] = digitalRead(PIN_JOY_UP);
