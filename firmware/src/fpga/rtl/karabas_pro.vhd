@@ -949,7 +949,7 @@ begin
 --		when x"01" => cpu_di_bus <= mc146818_do_bus;
 		when x"02" => cpu_di_bus <= GX0 & "1" & kb_do_bus;
 		when x"03" => cpu_di_bus <= zc_do_bus;
---		when x"04" => cpu_di_bus <= "000" & joy_bus;
+		when x"04" => cpu_di_bus <= "000" & joy_bus;
 		when x"05" => cpu_di_bus <= ssg_cn0_bus;
 		when x"06" => cpu_di_bus <= ssg_cn1_bus;
 		when x"07" => cpu_di_bus <= port_dffd_reg;
@@ -968,7 +968,7 @@ selector <=
 --	x"01" when (cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_m1_n = '1' and port_bff7 = '1' and port_eff7_reg(7) = '1') else -- MC146818A
 	x"02" when (cs_xxfe = '1' and cpu_rd_n = '0') else 									-- Keyboard, port #FE
 	x"03" when (cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_m1_n = '1' and cpu_a_bus( 7 downto 6) = "01" and cpu_a_bus(4 downto 0) = "10111" and cpm='0') else 	-- Z-Controller
---	x"04" when (cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_m1_n = '1' and cpu_a_bus( 7 downto 0) = X"1F" and dos_act = '0' and cpm = '0') else -- Joystick, port #1F
+	x"04" when (cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_m1_n = '1' and cpu_a_bus( 7 downto 0) = X"1F" and dos_act = '0' and cpm = '0') else -- Joystick, port #1F
 	x"05" when (cs_fffd = '1' and cpu_rd_n = '0' and ssg_sel = '0') else 			-- TurboSound
 	x"06" when (cs_fffd = '1' and cpu_rd_n = '0' and ssg_sel = '1') else
 	x"07" when (cs_dffd = '1' and cpu_rd_n = '0') else										-- port #DFFD

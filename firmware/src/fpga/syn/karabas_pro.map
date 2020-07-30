@@ -1,11 +1,12 @@
 BLOCK		START ADDRESS		END ADDRESS
 
+Page_0		0x00000000		0x00059D8A
 profi_mainrom_fatall.hex		0x000B8000		0x000C7FFF
 
 
 
 Notes:
 
-- Data checksum for this conversion is 0x1F615BA2
+- Data checksum for this conversion is 0x1A07D322
 
 - All the addresses in this file are byte addresses
