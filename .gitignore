@@ -50,7 +50,7 @@ PLLJ_PLLSPE_INFO.txt
 
 # KiCAD
 #*-cache.lib
-*-bak
+*.*-bak
 #*-info-cache
 
 # Gtkwave
