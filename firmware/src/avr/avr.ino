@@ -74,6 +74,7 @@ unsigned long tm = 0; // mouse poll time
 unsigned long tl = 0; // blink poll time
 unsigned long tr = 0; // rtc poll time
 unsigned long te = 0; // eeprom store time
+unsigned long tb = 0; // hw buttons poll time
 int mouse_tries = 2; // number of triers to init mouse
 
 uint8_t mouse_x = 0; // current mouse X
@@ -820,20 +821,22 @@ void init_mouse()
 
 void do_reset()
 {
+  clear_matrix(ZX_MATRIX_SIZE);
   matrix[ZX_K_RESET] = 1;
-//  clear_matrix(ZX_MATRIX_SIZE);
   transmit_keyboard_matrix();
   delay(100);
+  clear_matrix(ZX_MATRIX_SIZE);
   matrix[ZX_K_RESET] = 0;
   transmit_keyboard_matrix();
 }
 
 void do_magic()
 {
+  clear_matrix(ZX_MATRIX_SIZE);
   matrix[ZX_K_MAGICK] = 1;
-//  clear_matrix(ZX_MATRIX_SIZE);
   transmit_keyboard_matrix();
   delay(100);
+  clear_matrix(ZX_MATRIX_SIZE);
   matrix[ZX_K_MAGICK] = 0;
   transmit_keyboard_matrix();
 }
@@ -1013,6 +1016,14 @@ void setup()
 
   pinMode(PIN_MOUSE_CLK, INPUT_PULLUP);
   pinMode(PIN_MOUSE_DAT, INPUT_PULLUP);
+
+  // joy
+  pinMode(PIN_JOY_UP, INPUT_PULLUP);
+  pinMode(PIN_JOY_DOWN, INPUT_PULLUP);
+  pinMode(PIN_JOY_LEFT, INPUT_PULLUP);
+  pinMode(PIN_JOY_RIGHT, INPUT_PULLUP);
+  pinMode(PIN_JOY_FIRE1, INPUT_PULLUP);
+  pinMode(PIN_JOY_FIRE2, INPUT_PULLUP);
   
   // clear full matrix
   clear_matrix(ZX_MATRIX_SIZE);
@@ -1089,15 +1100,21 @@ void loop()
   // transmit kbd always
   transmit_keyboard_matrix();
 
-  // react on hardware buttons
+  // react on hardware buttons every 200ms
+  if (n - tb >= 200) {
+    if (analogRead(PIN_BTN1) < 100) {
+      digitalWrite(PIN_LED2, LOW);
+      do_reset();
+      digitalWrite(PIN_LED2, HIGH);
+    }
   
-//  if (digitalRead(PIN_BTN1) == LOW) {
-//    do_reset();
-//  }
-//
-//  if (digitalRead(PIN_BTN2) == LOW) {
-//    do_magic();
-//  }
+    if (analogRead(PIN_BTN2) < 100) {
+      digitalWrite(PIN_LED1, LOW);
+      do_magic();
+      digitalWrite(PIN_LED1, HIGH);
+    }
+    tb = n;
+  }
 
   // read joystick
   joy[ZX_JOY_UP] = digitalRead(PIN_JOY_UP);
