@@ -193,10 +193,10 @@ begin
 	FDC_NRD <= BUS_RD_N;-- when FDC_NCS = '0' else '1';
 	FDC_NWR <= BUS_WR_N;-- when FDC_NCS = '0' else '1';
 	FDC_A <= BUS_A(6 downto 5);
-	FDC_D <= BUS_DI when BUS_WR_N = '0' else (others => 'Z');
-	BUS_DO <= FDC_D when FDC_NCS = '0' and BUS_RD_N = '0' else 
-				 FDC_INTRQ & FDC_DRQ & "111111" when csff = '1' and BUS_RD_N = '0' else 
+	FDC_D <= BUS_DI when FDC_NCS = '0' and BUS_WR_N = '0' and BUS_IORQ_N = '0' else (others => 'Z');
+	BUS_DO <= FDC_D when FDC_NCS = '0' and BUS_RD_N = '0' and BUS_IORQ_N = '0' else 
+				 FDC_INTRQ & FDC_DRQ & "111111" when csff = '1' and BUS_RD_N = '0' and BUS_IORQ_N = '0' else 
 				 "11111111";
-	OE_N <= '0' when (csff = '1' or FDC_NCS = '0') and BUS_RD_N = '0' else '1';
+	OE_N <= '0' when (csff = '1' or FDC_NCS = '0') and BUS_RD_N = '0' and BUS_IORQ_N = '0' else '1';
 
 end rtl;

@@ -52,12 +52,7 @@ end karabas_pro_cpld;
 
 architecture rtl of karabas_pro_cpld is 
 
---signal rx_buf_a: std_logic_vector(15 downto 0);
---signal rx_buf_d: std_logic_vector(7 downto 0);
 signal rx_buf: std_logic_vector(7 downto 0);
---signal rx_valid : std_logic := '0';
-
-signal clk_bus : std_logic;
 
 signal bus_a : std_logic_vector(15 downto 0);
 signal bus_di: std_logic_vector(7 downto 0);
@@ -72,7 +67,7 @@ signal bus_wait_n : std_logic := '1';
 signal bus_cpm : std_logic;
 signal bus_dos : std_logic;
 signal bus_rom14 : std_logic;
-signal oe_n : std_logic := '1';
+
 signal ide_oe_n : std_logic := '1';
 signal fdd_oe_n : std_logic := '1';
 signal fdd_bus_do : std_logic_vector(7 downto 0);
@@ -80,11 +75,10 @@ signal ide_bus_do : std_logic_vector(7 downto 0);
 
 begin 
 
-	clk_bus <= SDIR;
 	SD(15 downto 8) <= bus_do;
 	
 	-- rx
-	process (CLK, SA, clk_bus)
+	process (CLK, SA)
 	begin 
 		if falling_edge(CLK) then
 		--if clk_bus = '0' then
@@ -184,12 +178,9 @@ begin
 		FDC_WDATA => FDC_WDATA
 	);
 	
-bus_do <= fdd_bus_do when fdd_oe_n = '0' else 
+bus_do <= 
+			 fdd_bus_do when fdd_oe_n = '0' else 
 			 ide_bus_do when ide_oe_n = '0' else 
 			"11111111";
-oe_n <= '0' when ide_oe_n = '0' or fdd_oe_n = '0' else '1';
-
---bus_do <= fdd_bus_do;
---oe_n <= fdd_oe_n;
 
 end rtl;
