@@ -171,15 +171,16 @@ begin
 	P0 <='0' when BUS_A(7)='1' and BUS_A(4 downto 0)="00011" and BUS_IORQ_N='0' and CPM='0' and DOS='1' and ROM14='1' else '1';
 
 	FDC_NCS <= RT_F1 and P0;
-	FDC_DS0 <= not pff(0);
-	FDC_DS1 <= not pff(1);
+
+	FDC_DS0 <= '1' when pff(1 downto 0) = "00" else '0';
+	FDC_DS1 <= '1' when pff(1 downto 0) = "01" else '0';
 
 	----------------port ff to WG93------------------------------
 	process(CLK,pff,BUS_DI,BUS_WR_N,csff,NRESET)
 	begin 
 		if NRESET='0' then
 			pff(7 downto 0) <= "00000000";
-		elsif (CLK'event and CLK='1') then
+		elsif (CLK'event and CLK='0') then
 			if csff='1' and BUS_WR_N='0' then
 				pff <= BUS_DI;
 			end if;
@@ -193,10 +194,18 @@ begin
 	FDC_NRD <= BUS_RD_N;-- when FDC_NCS = '0' else '1';
 	FDC_NWR <= BUS_WR_N;-- when FDC_NCS = '0' else '1';
 	FDC_A <= BUS_A(6 downto 5);
-	FDC_D <= BUS_DI when FDC_NCS = '0' and BUS_WR_N = '0' and BUS_IORQ_N = '0' else (others => 'Z');
-	BUS_DO <= FDC_D when FDC_NCS = '0' and BUS_RD_N = '0' and BUS_IORQ_N = '0' else 
-				 FDC_INTRQ & FDC_DRQ & "111111" when csff = '1' and BUS_RD_N = '0' and BUS_IORQ_N = '0' else 
+
+	FDC_D <= BUS_DI when FDC_NCS = '0' and BUS_WR_N = '0' else (others => 'Z');
+	BUS_DO <= FDC_D when FDC_NCS = '0' else 
+				 FDC_INTRQ & FDC_DRQ & "111111" when csff = '1' and BUS_RD_N = '0' else 
 				 "11111111";
-	OE_N <= '0' when (csff = '1' or FDC_NCS = '0') and BUS_RD_N = '0' and BUS_IORQ_N = '0' else '1';
+	OE_N <= '0' when (csff = '1' or FDC_NCS = '0') else '1';
+	
+--	FDC_D <= BUS_DI when FDC_NCS = '0' and BUS_WR_N = '0' and BUS_IORQ_N = '0' else (others => 'Z');
+--	BUS_DO <= FDC_D when FDC_NCS = '0' and BUS_RD_N = '0' and BUS_IORQ_N = '0' else 
+--				 FDC_INTRQ & FDC_DRQ & "111111" when csff = '1' and BUS_RD_N = '0' and BUS_IORQ_N = '0' else 
+--				 "11111111";
+--	OE_N <= '0' when (csff = '1' or FDC_NCS = '0') and BUS_RD_N = '0' and BUS_IORQ_N = '0' else '1';
+	
 
 end rtl;

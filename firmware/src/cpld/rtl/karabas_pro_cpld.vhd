@@ -178,9 +178,8 @@ begin
 		FDC_WDATA => FDC_WDATA
 	);
 	
-bus_do <= 
-			 fdd_bus_do when fdd_oe_n = '0' else 
-			 ide_bus_do when ide_oe_n = '0' else 
+bus_do <= ide_bus_do when ide_oe_n = '0' else 
+			 fdd_bus_do when fdd_oe_n = '0' else 			 
 			"11111111";
 
 end rtl;

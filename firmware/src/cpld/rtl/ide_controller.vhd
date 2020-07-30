@@ -83,7 +83,7 @@ IDE_RESET_N <= NRESET;
 
 process (CLK,BUS_A,BUS_WR_N,BUS_RD_N,cs1fx,cs3fx,rwe,wwe,wwc,rww,profi_ebl)
 begin
-	if CLK'event and CLK='1' then
+--	if CLK'event and CLK='1' then
 		if profi_ebl = '1' then	
 			IDE_A <= BUS_A(10 downto 8);
 			IDE_WR_N <=BUS_WR_N;
@@ -97,30 +97,8 @@ begin
 			IDE_CS0_N <= '1';
 			IDE_CS1_N <= '1';
 		end if;
-	end if;
+--	end if;
 end process;
-
---process (IDE_D, BUS_DI, CLK,cs_hdd_wr,cs_hdd_rd) -- Write low byte Data bus and HDD bus to temp. registers
---begin
---	if CLK'event and CLK='1' then
---		if cs_hdd_wr='0' then
---			WD_reg_in (7 downto 0) <= BUS_DI;
---		elsif cs_hdd_rd='0' then
---			WD_reg_out (7 downto 0) <= IDE_D(7 downto 0);
---		end if;
---	end if;
---end process;
---
---process (CLK, hdd_rwl_t, WD_reg_in,cs_hdd_wr)
---begin
---	if CLK'event and CLK='1' then
---		if hdd_rwl_t='1' and cs_hdd_wr='0' then
---			IDE_D(7 downto 0) <= WD_reg_in (7 downto 0);
---		else 
---			IDE_D(7 downto 0) <= "ZZZZZZZZ";
---		end if;
---	end if;
---end process;
 
 process (hdd_rh_c, IDE_D)
 begin
@@ -143,6 +121,5 @@ BUS_DO <= IDE_D(7 downto 0) when hdd_rwl_t='0' and cs_hdd_rd='0' else
 			wd_reg_out (15 downto 8) when hdd_rh_oe='0' else "11111111";
 	
 OE_N <= '0' when (hdd_rwl_t='0' and cs_hdd_rd='0') or hdd_rh_oe='0' else '1';
---OE_N <= '0' when hdd_rwl_t='0' or hdd_rh_oe='0' else '1';
 
 end rtl;
