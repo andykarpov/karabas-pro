@@ -29,7 +29,7 @@ timing
 #*.hex
 *.html
 *.jdi
-*.jpg
+#*.jpg
 *.mif
 *.pin
 *.ptf.*
@@ -38,7 +38,7 @@ timing
 *.qws
 *.rpt
 *.smsg
-*.sof
+#*.sof
 *.sopc_builder
 *.summary
 *.tcl
@@ -46,12 +46,12 @@ timing
 *~
 *example*
 *sopc_*
-PLLJ_PLLSPE_INFO.txt # The generated PLL specification file
+PLLJ_PLLSPE_INFO.txt
 
 # KiCAD
 #*-cache.lib
 *-bak
-*-info-cache
+#*-info-cache
 
 # Gtkwave
 *.ghw
