@@ -1117,12 +1117,18 @@ void loop()
   }
 
   // read joystick
-  joy[ZX_JOY_UP] = digitalRead(PIN_JOY_UP);
-  joy[ZX_JOY_DOWN] = digitalRead(PIN_JOY_DOWN);
-  joy[ZX_JOY_LEFT] = digitalRead(PIN_JOY_LEFT);
-  joy[ZX_JOY_RIGHT] = digitalRead(PIN_JOY_RIGHT);
-  joy[ZX_JOY_FIRE] = digitalRead(PIN_JOY_FIRE1);
-  joy[ZX_JOY_FIRE2] = digitalRead(PIN_JOY_FIRE2);
+  joy[ZX_JOY_UP] = digitalRead(PIN_JOY_UP) == LOW;
+  joy[ZX_JOY_DOWN] = digitalRead(PIN_JOY_DOWN) == LOW;
+  joy[ZX_JOY_LEFT] = digitalRead(PIN_JOY_LEFT) == LOW;
+  joy[ZX_JOY_RIGHT] = digitalRead(PIN_JOY_RIGHT) == LOW;
+  joy[ZX_JOY_FIRE] = digitalRead(PIN_JOY_FIRE1) == LOW;
+  joy[ZX_JOY_FIRE2] = digitalRead(PIN_JOY_FIRE2) == LOW;
+
+  if (joy[0] || joy[1] || joy[2] || joy[3] || joy[4] || joy[5]) {
+    digitalWrite(PIN_LED1, HIGH);
+    blink_state = true;
+    tl = n;
+  }
 
   // transmit joy matrix
   transmit_joy_data();
