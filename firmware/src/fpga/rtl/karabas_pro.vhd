@@ -300,7 +300,6 @@ signal worom 			: std_logic := '0';
 signal ds80 			: std_logic := '0';
 signal scr 				: std_logic := '0';
 signal sco 				: std_logic := '0';
-signal u25 				: std_logic := '0';
 signal rom14 			: std_logic := '0';
 signal gx0 				: std_logic := '0';
 
@@ -849,7 +848,6 @@ cs_xx7e <= '1' when cs_xxfe = '1' and cpu_a_bus(7) = '0' and port_dffd_reg(7) = 
 process (reset, areset, clk_bus, cpu_a_bus, dos_act, cs_xxfe, cs_eff7, cs_dff7, cs_7ffd, cs_1ffd, cs_xxfd, port_7ffd_reg, port_1ffd_reg, cpu_mreq_n, cpu_m1_n, cpu_wr_n, cpu_do_bus, fd_port)
 begin
 	if reset = '1' then
-		u25 <= '1';
 		port_eff7_reg <= (others => '0');
 		port_7ffd_reg <= (others => '0');
 		port_dffd_reg <= (others => '0');
@@ -857,12 +855,8 @@ begin
 		dos_act <= '1';
 	elsif clk_bus'event and clk_bus = '1' then
 
-		if ena_div2 = '1' and ena_div4 = '1' then -- захват портов при 7МГц ena
-	
-			if cpu_iorq_n = '0' and cpu_m1_n = '1' and cpu_a_bus(15)='0' and cpu_a_bus(1) = '0' and port_dffd_reg(5) = '0' then 
-				u25 <= cpu_do_bus(4);
-			end if;
-		
+		--if ena_div2 = '1' then -- захват портов при 14МГц ena
+			
 			-- #FE
 			if cs_xxfe = '1' and cpu_wr_n = '0' then 
 				port_xxfe_reg <= cpu_do_bus; 
@@ -901,13 +895,11 @@ begin
 				port_7ffd_reg <= cpu_do_bus;
 			end if;
 			
-			if port_dffd_reg(5) = '1' then u25 <= '0'; end if;
-			
 			-- TR-DOS FLAG
-			if cpu_m1_n = '0' and cpu_mreq_n = '0' and cpu_a_bus(15 downto 8) = X"3D" and u25 = '1' and port_dffd_reg(5) = '0' then dos_act <= '1';
+			if cpu_m1_n = '0' and cpu_mreq_n = '0' and cpu_a_bus(15 downto 8) = X"3D" and rom14 = '1' and port_dffd_reg(5) = '0' then dos_act <= '1';
 			elsif ((cpu_m1_n = '0' and cpu_mreq_n = '0' and cpu_a_bus(15 downto 14) /= "00") or (port_dffd_reg(5) = '1')) then dos_act <= '0'; end if;
 			
-		end if;
+		--end if;
 				
 	end if;
 end process;
