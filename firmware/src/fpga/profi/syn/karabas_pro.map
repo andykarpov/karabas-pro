@@ -7,9 +7,6 @@ profi_mainrom_fatall.hex		0x000B8000		0x000C7FFF
 
 Notes:
 
-- Data checksum for this conversion is 0x1A0AA73B
+- Data checksum for this conversion is 0x1A17865D
 
 - All the addresses in this file are byte addresses
-
-- The following changes from default values for Advanced Options settings are in effect:
-	Disable EPCS ID check: ON
