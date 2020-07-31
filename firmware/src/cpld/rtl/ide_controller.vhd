@@ -37,26 +37,23 @@ end ide_controller;
 architecture rtl of ide_controller is 
 
 --------------------HDD-NEMO/PROFI-----------------------
-signal WWC			: std_logic; -- WWC# строб записи данных от контролера в регистр DD6 (ИP23)
-signal WWE			: std_logic; -- WWE# - разрешение выставления данных старшего байта слова [D15: D8] на шину устройства от регистра DD6 (ИP23)
-signal RWW			: std_logic; -- RWW# - указывает буферу DD3 (АП6) направление передачи данных. При низком активном уровне данные [D7: D0] принимаются от устройства.
-signal RWE			: std_logic; -- RWE# - разрешение выставления на шину данных регистром DD3 (ИP23) старшего байта слова [D15: D8] от устройства
-signal CS1FX		: std_logic; -- Из сигналов WWE# и RWW# формируется сигнала выбора блока команд — CS1FX
-signal CS3FX		: std_logic; -- CS3FX - выбор блока управляющих регистров устройства. При низком активном уровне выбран блок управляющих регистров
-
+signal WWC			: std_logic;
+signal WWE			: std_logic;
+signal RWW			: std_logic;
+signal RWE			: std_logic;
+signal CS1FX		: std_logic;
+signal CS3FX		: std_logic;
 signal cs_hdd_wr	: std_logic;
 signal cs_hdd_rd	: std_logic;
 signal hdd_iorqge	: std_logic;
-
 signal profi_ebl	: std_logic;
 signal hdd_rh_oe	: std_logic;
 signal hdd_rh_c		: std_logic;
 signal hdd_wh_oe	: std_logic;
 signal hdd_wh_c		: std_logic;
 signal hdd_rwl_t	: std_logic;
-
-signal WD_reg_in	: std_logic_vector(15 downto 8);
-signal WD_reg_out	: std_logic_vector(15 downto 8);
+signal WD_reg_in	: std_logic_vector(15 downto 0);
+signal WD_reg_out	: std_logic_vector(15 downto 0);
 
 begin 
 
@@ -69,10 +66,8 @@ RWW <='0' when BUS_WR_N='1' and BUS_A(7 downto 0)="11001011" and BUS_IORQ_N='0' 
 RWE <='0' when BUS_WR_N='1' and BUS_A(7 downto 0)="11101011" and BUS_IORQ_N='0' and CPM='0' and dos='1' and rom14='1' else '1';
 CS3FX <='0' when BUS_WR_N='0' and BUS_A(7 downto 0)="10101011" and BUS_IORQ_N='0' and CPM='0' and dos='1' and rom14='1' else '1';
 CS1FX <= RWW and WWE;
-
 cs_hdd_wr <= cs3fx and wwe and wwc;
 cs_hdd_rd <= rww and rwe;
-
 hdd_rh_oe <=rwe; -- Read High byte from "Read register" to Data bus
 hdd_rh_c <=cs1fx; -- Write High byte from HDD bus to "Read register"
 hdd_wh_oe <=wwe; -- Read High byte from "Write register" to HDD bus
@@ -83,7 +78,7 @@ IDE_RESET_N <= NRESET;
 
 process (CLK,BUS_A,BUS_WR_N,BUS_RD_N,cs1fx,cs3fx,rwe,wwe,wwc,rww,profi_ebl)
 begin
---	if CLK'event and CLK='1' then
+	if CLK'event and CLK='1' then
 		if profi_ebl = '1' then	
 			IDE_A <= BUS_A(10 downto 8);
 			IDE_WR_N <=BUS_WR_N;
@@ -97,7 +92,29 @@ begin
 			IDE_CS0_N <= '1';
 			IDE_CS1_N <= '1';
 		end if;
---	end if;
+	end if;
+end process;
+
+process (IDE_D, BUS_DI, CLK,cs_hdd_wr,cs_hdd_rd) -- Write low byte Data bus and HDD bus to temp. registers
+begin
+	if CLK'event and CLK='0' then
+		if cs_hdd_wr='0' then
+			WD_reg_in (7 downto 0) <= BUS_DI;
+		elsif cs_hdd_rd='0' then
+			WD_reg_out (7 downto 0) <= IDE_D(7 downto 0);
+		end if;
+	end if;
+end process;
+
+process (CLK, hdd_rwl_t, WD_reg_in,cs_hdd_wr)
+begin
+	if CLK'event and CLK='1' then
+		if hdd_rwl_t='1' and cs_hdd_wr='0' then
+			IDE_D(7 downto 0) <= WD_reg_in (7 downto 0);
+		else 
+			IDE_D(7 downto 0) <= "ZZZZZZZZ";
+		end if;
+	end if;
 end process;
 
 process (hdd_rh_c, IDE_D)
@@ -114,10 +131,9 @@ begin
 		end if;
 end process;
 
-IDE_D (7 downto 0) <= BUS_DI when hdd_rwl_t = '1' and cs_hdd_wr = '0' else "ZZZZZZZZ";
 IDE_D (15 downto 8) <= WD_reg_in (15 downto 8) when hdd_wh_oe='0' else "ZZZZZZZZ";
 
-BUS_DO <= IDE_D(7 downto 0) when hdd_rwl_t='0' and cs_hdd_rd='0' else
+BUS_DO <= wd_reg_out (7 downto 0) when hdd_rwl_t='0' and cs_hdd_rd='0' else
 			wd_reg_out (15 downto 8) when hdd_rh_oe='0' else "11111111";
 	
 OE_N <= '0' when (hdd_rwl_t='0' and cs_hdd_rd='0') or hdd_rh_oe='0' else '1';
