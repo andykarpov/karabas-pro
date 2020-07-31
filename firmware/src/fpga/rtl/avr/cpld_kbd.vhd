@@ -123,7 +123,7 @@ begin
 				when X"0C" => mouse_z(3 downto 0) <= signed(spi_do(3 downto 0)); buttons(2 downto 0) <= spi_do(6 downto 4); newPacket <= spi_do(7);
 				
 				-- joy data
-				when X"0D" => joy(4 downto 0) <= spi_do(5 downto 1);
+				when X"0D" => joy(4 downto 0) <= not spi_do(5 downto 2) & not spi_do(0); -- right, left,  down, up, fire2, fire
 				
 				when others => 
 						rtc_cmd <= spi_do(15 downto 8);
