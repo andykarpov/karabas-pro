@@ -1182,9 +1182,9 @@ void loop()
     mouse_y = m.position.y;
     mouse_z = m.wheel;
 
-    bool btn1 = not bitRead(m.status, 0);
-    bool btn2 = not bitRead(m.status, 1);
-    bool btn3 = not bitRead(m.status, 2);    
+    bool btn1 = bitRead(m.status, 0);
+    bool btn2 = bitRead(m.status, 1);
+    bool btn3 = bitRead(m.status, 2);    
     bitWrite(mouse_z, 4, btn1);
     bitWrite(mouse_z, 5, btn2);
     bitWrite(mouse_z, 6, btn3);

@@ -155,6 +155,7 @@ signal ms_x				: std_logic_vector(7 downto 0);
 signal ms_y				: std_logic_vector(7 downto 0);
 signal ms_z				: std_logic_vector(3 downto 0);
 signal ms_b				: std_logic_vector(2 downto 0);
+signal ms_present 	: std_logic := '0';
 
 -- Video
 signal vid_a_bus		: std_logic_vector(13 downto 0);
@@ -642,6 +643,7 @@ port map (
 	 MS_Y 			=> ms_y,
 	 MS_BTNS 		=> ms_b,
 	 MS_Z 			=> ms_z,
+	 MS_PRESET 		=> ms_present,
 	 
 	 RTC_A 			=> mc146818_a_bus,
 	 RTC_DI 			=>	cpu_do_bus,
@@ -946,7 +948,7 @@ begin
 		when x"06" => cpu_di_bus <= ssg_cn1_bus;
 		when x"07" => cpu_di_bus <= port_dffd_reg;
 		when x"08" => cpu_di_bus <= port_7ffd_reg;
-		when x"09" => cpu_di_bus <= ms_z(3 downto 0) & '1' & not ms_b(2) & not ms_b(0) & not ms_b(1);
+		when x"09" => cpu_di_bus <= ms_z(3 downto 0) & '1' & not(ms_b(2)) & not(ms_b(0)) & not(ms_b(1));
 		when x"0A" => cpu_di_bus <= ms_x;
 		when x"0B" => cpu_di_bus <= ms_y;
 		when x"0C" => cpu_di_bus <= uart_do_bus;
@@ -965,9 +967,9 @@ selector <=
 	x"06" when (cs_fffd = '1' and cpu_rd_n = '0' and ssg_sel = '1') else
 	x"07" when (cs_dffd = '1' and cpu_rd_n = '0') else										-- port #DFFD
 	x"08" when (cs_7ffd = '1' and cpu_rd_n = '0') else										-- port #7FFD
-	x"09" when (cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_a_bus = X"FADF") else	-- Mouse0 port key, z
-	x"0A" when (cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_a_bus = X"FBDF") else	-- Mouse0 port x
-	x"0B" when (cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_a_bus = X"FFDF") else	-- Mouse0 port y 
+	x"09" when (cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_a_bus = X"FADF" and ms_present = '1') else	-- Mouse0 port key, z
+	x"0A" when (cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_a_bus = X"FBDF" and ms_present = '1') else	-- Mouse0 port x
+	x"0B" when (cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_a_bus = X"FFDF" and ms_present = '1') else	-- Mouse0 port y 
 	x"0C" when (cpu_iorq_n = '0' and cpu_rd_n = '0' and uart_oe_n = '0') else 																-- AY UART
 --	x"0D" when (cs_xxff = '1' and cpu_rd_n = '0' and dos_act = '0' and cpm = '0') else 			-- port #FF
 	(others => '1');

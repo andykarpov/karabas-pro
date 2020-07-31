@@ -15,21 +15,22 @@ entity cpld_kbd is
     AVR_SCK     : in std_logic;
 	 AVR_SS 		 : in std_logic;
 	 
-	 MS_X 	 	: out std_logic_vector(7 downto 0);
-	 MS_Y 	 	: out std_logic_vector(7 downto 0);
-	 MS_BTNS 	 	: out std_logic_vector(2 downto 0);
-	 MS_Z 		: out std_logic_vector(3 downto 0);
+	 MS_X 	 	: out std_logic_vector(7 downto 0) := "00000000";
+	 MS_Y 	 	: out std_logic_vector(7 downto 0) := "00000000";
+	 MS_BTNS 	 	: out std_logic_vector(2 downto 0) := "000";
+	 MS_Z 		: out std_logic_vector(3 downto 0) := "0000";
+	 MS_PRESET  : out std_logic := '0';
 	 
 	 RTC_A 		: in std_logic_vector(5 downto 0);
 	 RTC_DI 		: in std_logic_vector(7 downto 0);
 	 RTC_DO 		: out std_logic_vector(7 downto 0);
 	 RTC_WR_N 	: in std_logic := '1';
 	 
-	 RESET		: out std_logic;
-	 TURBO		: out std_logic;
-	 MAGICK		: out std_logic;
+	 RESET		: out std_logic := '0';
+	 TURBO		: out std_logic := '0';
+	 MAGICK		: out std_logic := '0';
 	 
-	 JOY			: out std_logic_vector(4 downto 0)
+	 JOY			: out std_logic_vector(4 downto 0) := "00000"
 	 
 	);
     end cpld_kbd;
@@ -40,10 +41,10 @@ architecture RTL of cpld_kbd is
 	 signal ms_flag : std_logic := '0';
 	 
 	 -- mouse
-	 signal mouse_x : signed(7 downto 0);
-	 signal mouse_y : signed(7 downto 0);
-	 signal mouse_z : signed(3 downto 0);
-	 signal buttons   : std_logic_vector(2 downto 0);
+	 signal mouse_x : signed(7 downto 0) := "00000000";
+	 signal mouse_y : signed(7 downto 0) := "00000000";
+	 signal mouse_z : signed(3 downto 0) := "0000";
+	 signal buttons   : std_logic_vector(2 downto 0) := "000";
 	 signal newPacket : std_logic := '0';
 
 	 signal currentX 	: unsigned(7 downto 0);
@@ -219,9 +220,10 @@ begin
 				deltaX(7 downto 0) <= mouse_x(7 downto 0);
 				deltaY(7 downto 0) <= mouse_y(7 downto 0);
 				deltaZ(3 downto 0) <= mouse_z(3 downto 0);
-				MS_BTNS(2) <= not(buttons(2));
-				MS_BTNS(1) <= not(buttons(1));
-				MS_BTNS(0) <= not(buttons(0));				
+				MS_BTNS(2) <= buttons(2);
+				MS_BTNS(1) <= buttons(1);
+				MS_BTNS(0) <= buttons(0);	
+				MS_PRESET <= '1';
 				ms_flag <= newPacket;
 				trigger <= '1';
 			end if;
