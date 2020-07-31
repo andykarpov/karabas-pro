@@ -1101,20 +1101,20 @@ void loop()
   transmit_keyboard_matrix();
 
   // react on hardware buttons every 200ms
-  if (n - tb >= 200) {
-    if (analogRead(PIN_BTN1) < 100) {
-      digitalWrite(PIN_LED2, LOW);
-      do_reset();
-      digitalWrite(PIN_LED2, HIGH);
-    }
-  
-    if (analogRead(PIN_BTN2) < 100) {
-      digitalWrite(PIN_LED1, LOW);
-      do_magic();
-      digitalWrite(PIN_LED1, HIGH);
-    }
-    tb = n;
-  }
+//  if (n - tb >= 200) {
+//    if (analogRead(PIN_BTN1) < 100) {
+//      digitalWrite(PIN_LED2, LOW);
+//      do_reset();
+//      digitalWrite(PIN_LED2, HIGH);
+//    }
+//  
+//    if (analogRead(PIN_BTN2) < 100) {
+//      digitalWrite(PIN_LED1, LOW);
+//      do_magic();
+//      digitalWrite(PIN_LED1, HIGH);
+//    }
+//    tb = n;
+//  }
 
   // read joystick
   joy[ZX_JOY_UP] = digitalRead(PIN_JOY_UP) == LOW;
