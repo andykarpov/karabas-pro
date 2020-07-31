@@ -11,3 +11,5 @@
 9) w25q32 does not work, better to use EPCS16 or M25P16
 10) Board required more labels, marks, etc
 11) Missing 10k pull-up on the /AVR_CS line
+12) Missing 10k pull-ups on the BTN1, BTN2 lines
+
