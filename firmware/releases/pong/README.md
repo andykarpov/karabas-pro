@@ -8,11 +8,11 @@
 - Q - move up
 - A - move down 
 
-** Right player:**
+**Right player:**
 - P or joystick up - move up
 - L or joystick down - move down
 
-** Global keys:**
+**Global keys:**
 - Space or Ctrl+Alt+Del - restart game
 - Scroll lock - toggle the scanlines effect
 
