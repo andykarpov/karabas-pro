@@ -255,7 +255,7 @@ port map (
 -- Global signals
 
 areset <= not locked; -- global reset
-reset <= areset or kb_reset or not(locked); -- hot reset
+reset <= areset or kb_reset; -- hot reset
 
 -------------------------------------------------------------------------------
 -- Disabled hw

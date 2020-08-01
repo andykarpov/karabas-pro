@@ -31,6 +31,14 @@ architecture RTL of cpld_kbd is
 	 -- joy state
 	 signal joy : std_logic_vector(4 downto 0) := (others => '0');
 
+	 -- temp scancode rx buffers
+	 signal is_up : std_logic := '1';
+	 signal rxsc : std_logic_vector(7 downto 0);
+
+	 -- raw scancode
+	 signal is_up_reg : std_logic;
+	 signal scancode_reg : std_logic_vector(15 downto 0);
+	 
 	 -- spi
 	 signal spi_do_valid : std_logic := '0';
 	 signal spi_do : std_logic_vector(15 downto 0);
@@ -78,7 +86,11 @@ begin
 								  rst <= spi_do(1);
 								  SCANLINES <= spi_do(2);
 								  --MAGICK <= spi_do(3);
-				
+								  is_up <= spi_do(4);
+				when X"07" => rxsc(7 downto 0) <= spi_do( 7 downto 0);		  
+				when X"08" => 
+									is_up_reg <= is_up;
+									scancode_reg <= spi_do(7 downto 0) & rxsc(7 downto 0);
 				-- joy data
 				when X"0D" => joy(4 downto 0) <= spi_do(5 downto 2) & spi_do(0); -- right, left,  down, up, fire2, fire
 				

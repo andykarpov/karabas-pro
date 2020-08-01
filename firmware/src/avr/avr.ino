@@ -111,6 +111,7 @@ void fill_kbd_matrix(int sc)
 
   static bool is_up=false, is_e=false, is_e1=false;
   static bool is_ctrl=false, is_alt=false, is_del=false, is_bksp = false, is_shift = false, is_esc = false, is_ss_used = false, is_cs_used = false;
+  static int scancode = 0;
 
   // is extended scancode prefix
   if (sc == 0xE0) {
@@ -130,10 +131,28 @@ void fill_kbd_matrix(int sc)
     return;
   }
 
-  int scancode = sc + ((is_e || is_e1) ? 0x100 : 0);
+  scancode = sc + ((is_e || is_e1) ? 0x100 : 0);
 
   is_ss_used = false;
   is_cs_used = false;
+
+  matrix[ZX_K_IS_UP] = is_up;
+  matrix[ZX_K_SCANCODE15] = bitRead(scancode, 15);
+  matrix[ZX_K_SCANCODE14] = bitRead(scancode, 14);
+  matrix[ZX_K_SCANCODE13] = bitRead(scancode, 13);
+  matrix[ZX_K_SCANCODE12] = bitRead(scancode, 12);
+  matrix[ZX_K_SCANCODE11] = bitRead(scancode, 11);
+  matrix[ZX_K_SCANCODE10] = bitRead(scancode, 10);
+  matrix[ZX_K_SCANCODE9] = bitRead(scancode, 9);
+  matrix[ZX_K_SCANCODE8] = bitRead(scancode, 8);
+  matrix[ZX_K_SCANCODE7] = bitRead(scancode, 7);
+  matrix[ZX_K_SCANCODE6] = bitRead(scancode, 6);
+  matrix[ZX_K_SCANCODE5] = bitRead(scancode, 5);
+  matrix[ZX_K_SCANCODE4] = bitRead(scancode, 4);
+  matrix[ZX_K_SCANCODE3] = bitRead(scancode, 3);
+  matrix[ZX_K_SCANCODE2] = bitRead(scancode, 2);
+  matrix[ZX_K_SCANCODE1] = bitRead(scancode, 1);
+  matrix[ZX_K_SCANCODE0] = bitRead(scancode, 0);
 
   switch (scancode) {
   
@@ -658,7 +677,7 @@ void spi_send(uint8_t addr, uint8_t data)
 // transmit keyboard matrix from AVR to CPLD side via SPI
 void transmit_keyboard_matrix()
 {
-    uint8_t bytes = 6;
+    uint8_t bytes = 8;
     for (uint8_t i=0; i<bytes; i++) {
       uint8_t data = get_matrix_byte(i);
       spi_send(i+1, data);

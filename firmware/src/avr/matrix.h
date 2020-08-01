@@ -25,8 +25,7 @@
 
 // Key position in output array
 
-//#define ZX_MATRIX_SIZE 65 // 40 keys + bit6 + 8bit mouse x + 8 bit mouse y + 3 mouse buttons + wheel data + flag
-#define ZX_MATRIX_SIZE 44 // only 40 keys + bit6 + 3 special signals
+#define ZX_MATRIX_SIZE 64 // 40 keys + bit6 + reset + turbo + magic + keyboard is_up + 000 +  16 bit scancode
 
 #define ZX_K_CS  0
 #define ZX_K_A   1
@@ -76,6 +75,24 @@
 #define ZX_K_RESET  41
 #define ZX_K_TURBO  42
 #define ZX_K_MAGICK 43
+#define ZX_K_IS_UP 44
+
+#define ZX_K_SCANCODE0 48
+#define ZX_K_SCANCODE1 49
+#define ZX_K_SCANCODE2 50
+#define ZX_K_SCANCODE3 51
+#define ZX_K_SCANCODE4 52
+#define ZX_K_SCANCODE5 53
+#define ZX_K_SCANCODE6 54
+#define ZX_K_SCANCODE7 55
+#define ZX_K_SCANCODE8 56
+#define ZX_K_SCANCODE9 57
+#define ZX_K_SCANCODE10 58
+#define ZX_K_SCANCODE11 59
+#define ZX_K_SCANCODE12 60
+#define ZX_K_SCANCODE13 61
+#define ZX_K_SCANCODE14 62
+#define ZX_K_SCANCODE15 63
 
 // Joystick signals
 #define ZX_JOY_FIRE 0
@@ -92,6 +109,8 @@
 #define CMD_KBD_BYTE4 0x04
 #define CMD_KBD_BYTE5 0x05
 #define CMD_KBD_BYTE6 0x06
+#define CMD_KBD_BYTE7 0x07 // scancode
+#define CMD_KBD_BYTE8 0x08 // scancode
 
 // mouse commands
 #define CMD_MOUSE_X 0x0A
