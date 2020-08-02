@@ -523,8 +523,8 @@ port map (
 	RGB_IN 			=> vid_rgb_osd,
 	KSI_IN 			=> vid_vsync,
 	SSI_IN 			=> vid_hsync,
-	CLK 				=> not clk_div2,
-	CLK2 				=> not clk_bus,
+	CLK 				=> clk_div2,
+	CLK2 				=> clk_bus,
 	DS80				=> ds80,
 	
 	INVERSE_KSI 	=> '1',
@@ -845,23 +845,19 @@ cs_7ffd <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and cpu_a_bus = X"7FFD" 
 cs_xxfd <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and cpu_a_bus(15) = '0' and cpu_a_bus(1) = '0' and fd_port = '0' else '0';
 cs_xx7e <= '1' when cs_xxfe = '1' and cpu_a_bus(7) = '0' and port_dffd_reg(7) = '1' else '0';
 
----- регистр AS часов
---cs_rtc_as <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and (
---							(cpu_a_bus = X"FFFF" and dos_act = '0') or -- длинная адресация доступна во всех режимах работы компа
---							((cpu_a_bus(7 downto 0) = X"FF" or cpu_a_bus(7 downto 0) = X"BF") and cpm='1' and rom14='1') or -- расширенная периферия
---							((cpu_a_bus(7 downto 0) = X"FF") and rom14='0')) -- периферия режима синклер							 
---				     else '0';
-----
----- регистр DS часов					  
---cs_rtc_ds <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and (
---							(cpu_a_bus = X"FFDF") or -- длинная адресация доступна во всех режимах работы компа
---							((cpu_a_bus(7 downto 0) = X"DF" or cpu_a_bus(7 downto 0) = X"9F") and cpm='1' and rom14='1') or -- расширенная периферия
---							((cpu_a_bus(7 downto 0) = X"DF") and rom14='0')) -- периферия режима синклер							 
---				     else '0';
+-- регистр AS часов
+cs_rtc_as <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and
+							((cpu_a_bus(7 downto 0) = X"FF" or cpu_a_bus(7 downto 0) = X"BF") and cpm='1' and rom14='1') -- расширенная периферия
+				     else '0';
+--
+-- регистр DS часов					  
+cs_rtc_ds <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and 
+							((cpu_a_bus(7 downto 0) = X"DF" or cpu_a_bus(7 downto 0) = X"9F") and cpm='1' and rom14='1') -- расширенная периферия
+				     else '0';
 					  
--- Profi RTC
-cs_rtc_as <= '1' when cpu_a_bus(9)='0' and cpu_a_bus(7)='1' and cpu_a_bus(5)='1' and cpu_a_bus(3 downto 0)=X"F" and cpu_m1_n = '1' and cpu_iorq_n='0' and cpm='1' and rom14='1' else '0';
-cs_rtc_ds <= '1' when cpu_a_bus(9)='0' and cpu_a_bus(7)='1' and cpu_a_bus(5)='0' and cpu_a_bus(3 downto 0)=X"F" and cpu_m1_n = '1' and cpu_iorq_n='0' and cpm='1' and rom14='1' else '0';
+---- Profi RTC
+--cs_rtc_as <= '1' when cpu_a_bus(9)='0' and cpu_a_bus(7)='1' and cpu_a_bus(5)='1' and cpu_a_bus(3 downto 0)=X"F" and cpu_m1_n = '1' and cpu_iorq_n='0' and cpm='1' and rom14='1' else '0';
+--cs_rtc_ds <= '1' when cpu_a_bus(9)='0' and cpu_a_bus(7)='1' and cpu_a_bus(5)='0' and cpu_a_bus(3 downto 0)=X"F" and cpu_m1_n = '1' and cpu_iorq_n='0' and cpm='1' and rom14='1' else '0';
 
 process (reset, areset, clk_bus, cpu_a_bus, dos_act, cs_xxfe, cs_eff7, cs_dff7, cs_7ffd, cs_1ffd, cs_xxfd, port_7ffd_reg, port_1ffd_reg, cpu_mreq_n, cpu_m1_n, cpu_wr_n, cpu_do_bus, fd_port)
 begin
