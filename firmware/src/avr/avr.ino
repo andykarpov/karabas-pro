@@ -17,6 +17,7 @@
 #include <SPI.h>
 
 #define DEBUG_MODE 0
+#define DEBUG_TIME 0
 
 // ---- Pins for Atmega328
 #define PIN_KBD_CLK 2 // pin 28 (CLKK)
@@ -95,8 +96,8 @@ uint8_t rtc_minutes_alarm = 0;
 uint8_t rtc_hours_alarm = 0;
 uint8_t rtc_week = 0;
 
-uint8_t rtc_last_reg = 0;
-uint8_t etc_last_data = 0;
+uint8_t rtc_last_write_reg = 0;
+uint8_t rtc_last_write_data = 0;
 
 const int buf_len = 128; 
 char buf[buf_len];
@@ -714,12 +715,14 @@ void rtc_save() {
 void rtc_send(uint8_t reg, uint8_t data) {
 
 #if DEBUG_MODE
+#if DEBUG_TIME
     Serial.print(F("RTC send: "));
     Serial.print(F("\treg="));
     Serial.print(reg, HEX);
     Serial.print(F("\tdata="));
     Serial.print(data);
     Serial.println();
+#endif
 #endif
 
   spi_send(CMD_RTC_READ + reg, data);
@@ -786,6 +789,12 @@ void process_in_cmd(uint8_t cmd, uint8_t data)
     // write rtc register
    reg = cmd - CMD_RTC_WRITE;
 
+   // skip double write
+   if (rtc_last_write_reg == reg && rtc_last_write_data == data) return;
+
+   rtc_last_write_reg = reg;
+   rtc_last_write_data = data;
+
 #if DEBUG_MODE
     Serial.print(F("RTC write: "));
     Serial.print(F("\treg="));
@@ -820,6 +829,8 @@ void process_in_cmd(uint8_t cmd, uint8_t data)
         rtc_year = 2000 + data; // TODO
         rtc_save();
       break;
+      default:
+        EEPROM.write(EEPROM_RTC_OFFSET + reg, data);
    }
   }
 }
