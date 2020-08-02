@@ -187,7 +187,7 @@ end process;
 selector <= paper1 & infp & pixel_reg(7 - to_integer(h_cnt(2 downto 0)));
 
 -- адрес пикселя палитры до blank
-process (CLK2X, CLK, blank_sig, paper1, pixel_reg, h_cnt, attr_reg, BORDER)
+process (CLK2X, CLK, selector, i78, blank_sig, paper1, pixel_reg, h_cnt, attr_reg, BORDER)
 begin 
 	case (selector) is
 		when "100" | "110" => PAL_A <= i78 & attr_reg(5 downto 3);

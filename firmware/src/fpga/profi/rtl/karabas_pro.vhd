@@ -181,6 +181,7 @@ signal zc_miso			: std_logic;
 
 -- MC146818A
 signal mc146818_wr		: std_logic;
+signal mc146818_rd		: std_logic;
 signal mc146818_a_bus	: std_logic_vector(5 downto 0);
 signal mc146818_do_bus	: std_logic_vector(7 downto 0);
 signal mc146818_busy		: std_logic;
@@ -200,6 +201,8 @@ signal cs_dffd 		: std_logic := '0';
 signal cs_fffd 		: std_logic := '0';
 signal cs_xxfd 		: std_logic := '0';
 signal cs_xx7e 		: std_logic := '0';
+signal cs_rtc_ds 		: std_logic := '0';
+signal cs_rtc_as 		: std_logic := '0'; 			
 
 -- TurboSound
 signal ssg_sel			: std_logic;
@@ -221,10 +224,8 @@ signal ay_bc1			: std_logic;
 signal ay_port 		: std_logic := '0';
 
 -- Soundrive
-signal covox_a			: std_logic_vector(7 downto 0);
-signal covox_b			: std_logic_vector(7 downto 0);
-signal covox_c			: std_logic_vector(7 downto 0);
-signal covox_d			: std_logic_vector(7 downto 0);
+signal soundrive_l			: std_logic_vector(15 downto 0);
+signal soundrive_r			: std_logic_vector(15 downto 0);
 
 -- SAA1099
 signal saa_wr_n		: std_logic;
@@ -608,10 +609,10 @@ port map (
 	I_DATA			=> cpu_do_bus,
 	I_IORQ_N			=> cpu_iorq_n,
 	I_DOS				=> dos_act,
-	O_COVOX_A		=> covox_a,
-	O_COVOX_B		=> covox_b,
-	O_COVOX_C		=> covox_c,
-	O_COVOX_D		=> covox_d);
+	I_CPM 			=> cpm,
+	I_ROM14 			=> rom14,
+	O_LEFT			=> soundrive_l,
+	O_RIGHT			=> soundrive_r);
 	 
 U13: saa1099
 port map(
@@ -648,6 +649,7 @@ port map (
 	 RTC_A 			=> mc146818_a_bus,
 	 RTC_DI 			=>	cpu_do_bus,
 	 RTC_DO 			=>	mc146818_do_bus,
+	 RTC_CS 			=> '1',
 	 RTC_WR_N 		=> not mc146818_wr,
 
 	 RESET 			=> kb_reset,
@@ -701,11 +703,7 @@ port map (
 	BUS_M1_N 		=> cpu_m1_n,
 	BUS_CPM 			=> cpm,
 	BUS_DOS 			=> dos_act,
-	BUS_ROM14 		=> rom14,
-	
-	FDD_OE_N 		=> fdd_oe_n,
-	HDD_OE_N 		=> hdd_oe_n,
-	PORT_NRESET 	=> port_nreset
+	BUS_ROM14 		=> rom14	
 );
 
 -- UART (via AY port A)
@@ -847,6 +845,24 @@ cs_7ffd <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and cpu_a_bus = X"7FFD" 
 cs_xxfd <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and cpu_a_bus(15) = '0' and cpu_a_bus(1) = '0' and fd_port = '0' else '0';
 cs_xx7e <= '1' when cs_xxfe = '1' and cpu_a_bus(7) = '0' and port_dffd_reg(7) = '1' else '0';
 
+-- регистр AS часов
+cs_rtc_as <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and (
+							(cpu_a_bus = X"FFFF" and dos_act = '0') or -- длинная адресация доступна во всех режимах работы компа
+							((cpu_a_bus(7 downto 0) = X"FF" or cpu_a_bus(7 downto 0) = X"BF") and cpm='1' and rom14='1') or -- расширенная периферия
+							((cpu_a_bus(7 downto 0) = X"FF") and rom14='0')) -- периферия режима синклер							 
+				     else '0';
+--
+-- регистр DS часов					  
+cs_rtc_ds <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and (
+							(cpu_a_bus = X"FFDF") or -- длинная адресация доступна во всех режимах работы компа
+							((cpu_a_bus(7 downto 0) = X"DF" or cpu_a_bus(7 downto 0) = X"9F") and cpm='1' and rom14='1') or -- расширенная периферия
+							((cpu_a_bus(7 downto 0) = X"DF") and rom14='0')) -- периферия режима синклер							 
+				     else '0';
+					  
+-- Profi RTC
+--cs_rtc_as <= '1' when cpu_a_bus(9)='0' and cpu_a_bus(7)='1' and cpu_a_bus(5)='1' and cpu_a_bus(3 downto 0)=X"F" and cpu_m1_n = '1' and cpu_iorq_n='0' and cpm='1' and rom14='1' else '0';
+--cs_rtc_ds <= '1' when cpu_a_bus(9)='0' and cpu_a_bus(7)='1' and cpu_a_bus(5)='0' and cpu_a_bus(3 downto 0)=X"F" and cpu_m1_n = '1' and cpu_iorq_n='0' and cpm='1' and rom14='1' else '0';
+
 process (reset, areset, clk_bus, cpu_a_bus, dos_act, cs_xxfe, cs_eff7, cs_dff7, cs_7ffd, cs_1ffd, cs_xxfd, port_7ffd_reg, port_1ffd_reg, cpu_mreq_n, cpu_m1_n, cpu_wr_n, cpu_do_bus, fd_port)
 begin
 	if reset = '1' then
@@ -874,8 +890,8 @@ begin
 				port_eff7_reg <= cpu_do_bus; 
 			end if;
 			
-			-- #DFF7
-			if cs_dff7 = '1' and cpu_wr_n = '0' then 
+			-- profi RTC #BF / #FF
+			if cs_rtc_as = '1' and cpu_wr_n = '0' then 
 				mc146818_a_bus <= cpu_do_bus(5 downto 0); 
 			end if;
 
@@ -910,8 +926,8 @@ end process;
 -- Audio mixer
 
 speaker <= port_xxfe_reg(4);
-audio_l <= "0000000000000000" when loader_act = '1' else ("000" & speaker & "000000000000") + ("000" & ssg_cn0_a & "00000") + ("000" & ssg_cn0_b & "00000") + ("000" & ssg_cn1_a & "00000") + ("000" & ssg_cn1_b & "00000") + ("000" & covox_a   & "00000") + ("000" & covox_b   & "00000") + ("000" & saa_out_l & "00000");
-audio_r <= "0000000000000000" when loader_act = '1' else ("000" & speaker & "000000000000") + ("000" & ssg_cn0_c & "00000") + ("000" & ssg_cn0_b & "00000") + ("000" & ssg_cn1_c & "00000") + ("000" & ssg_cn1_b & "00000") + ("000" & covox_c   & "00000") + ("000" & covox_d   & "00000") + ("000" & saa_out_r & "00000");
+audio_l <= "0000000000000000" when loader_act = '1' else ("000" & speaker & "000000000000") + ("000" & ssg_cn0_a & "00000") + ("000" & ssg_cn0_b & "00000") + ("000" & ssg_cn1_a & "00000") + ("000" & ssg_cn1_b & "00000") + soundrive_l + ("000" & saa_out_l & "00000");
+audio_r <= "0000000000000000" when loader_act = '1' else ("000" & speaker & "000000000000") + ("000" & ssg_cn0_c & "00000") + ("000" & ssg_cn0_b & "00000") + ("000" & ssg_cn1_c & "00000") + ("000" & ssg_cn1_b & "00000") + soundrive_r + ("000" & saa_out_r & "00000");
 
 -- SAA1099
 saa_wr_n <= '0' when (cpu_iorq_n = '0' and cpu_wr_n = '0' and cpu_a_bus(7 downto 0) = "11111111" and dos_act = '0') else '1';
@@ -919,7 +935,8 @@ saa_wr_n <= '0' when (cpu_iorq_n = '0' and cpu_wr_n = '0' and cpu_a_bus(7 downto
 -------------------------------------------------------------------------------
 -- Port I/O
 
-mc146818_wr <= '1' when (port_bff7 = '1' and cpu_wr_n = '0') else '0';
+mc146818_wr <= '1' when (cs_rtc_ds = '1' and cpu_iorq_n = '0' and cpu_wr_n = '0') else '0';
+
 port_bff7 	<= '1' when (cpu_iorq_n = '0' and cpu_a_bus = X"BFF7" and cpu_m1_n = '1' and port_eff7_reg(7) = '1') else '0';
 zc_wr 		<= '1' when (cpu_iorq_n = '0' and cpu_wr_n = '0' and cpu_a_bus(7 downto 6) = "01" and cpu_a_bus(4 downto 0) = "10111") else '0';
 zc_rd 		<= '1' when (cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_a_bus(7 downto 6) = "01" and cpu_a_bus(4 downto 0) = "10111") else '0';
@@ -931,7 +948,7 @@ ay_bc1 		<= '1' when ay_port = '1' and cpu_a_bus(14) = '1' and cpu_iorq_n = '0' 
 -------------------------------------------------------------------------------
 -- CPU0 Data bus
 
-process (selector, ram_do_bus, mc146818_do_bus, kb_do_bus, zc_do_bus, ssg_cn0_bus, ssg_cn1_bus, port_7ffd_reg, port_dffd_reg, uart_do_bus, cpld_do, vid_attr, port_eff7_reg, port_1ffd_reg, joy_bus, ms_z, ms_b, ms_x, ms_y)
+process (selector, cpu_a_bus, gx0, ram_do_bus, mc146818_do_bus, kb_do_bus, zc_do_bus, ssg_cn0_bus, ssg_cn1_bus, port_7ffd_reg, port_dffd_reg, uart_do_bus, cpld_do, vid_attr, port_eff7_reg, port_1ffd_reg, joy_bus, ms_z, ms_b, ms_x, ms_y)
 begin
 	case selector is
 		when x"00" => 
@@ -940,7 +957,7 @@ begin
 			else
 				cpu_di_bus <= ram_do_bus;
 			end if;	
---		when x"01" => cpu_di_bus <= mc146818_do_bus;
+		when x"01" => cpu_di_bus <= mc146818_do_bus;
 		when x"02" => cpu_di_bus <= GX0 & "1" & kb_do_bus;
 		when x"03" => cpu_di_bus <= zc_do_bus;
 		when x"04" => cpu_di_bus <= "000" & joy_bus;
@@ -959,7 +976,7 @@ end process;
 
 selector <= 
 	x"00" when (ram_oe_n = '0') else -- ram / rom
---	x"01" when (cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_m1_n = '1' and port_bff7 = '1' and port_eff7_reg(7) = '1') else -- MC146818A
+	x"01" when (cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_m1_n = '1' and cs_rtc_ds = '1') else -- RTC MC146818A
 	x"02" when (cs_xxfe = '1' and cpu_rd_n = '0') else 									-- Keyboard, port #FE
 	x"03" when (cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_m1_n = '1' and cpu_a_bus( 7 downto 6) = "01" and cpu_a_bus(4 downto 0) = "10111" and cpm='0') else 	-- Z-Controller
 	x"04" when (cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_m1_n = '1' and cpu_a_bus( 7 downto 0) = X"1F" and dos_act = '0' and cpm = '0') else -- Joystick, port #1F
@@ -967,9 +984,9 @@ selector <=
 	x"06" when (cs_fffd = '1' and cpu_rd_n = '0' and ssg_sel = '1') else
 	x"07" when (cs_dffd = '1' and cpu_rd_n = '0') else										-- port #DFFD
 	x"08" when (cs_7ffd = '1' and cpu_rd_n = '0') else										-- port #7FFD
-	x"09" when (cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_a_bus = X"FADF" and ms_present = '1') else	-- Mouse0 port key, z
-	x"0A" when (cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_a_bus = X"FBDF" and ms_present = '1') else	-- Mouse0 port x
-	x"0B" when (cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_a_bus = X"FFDF" and ms_present = '1') else	-- Mouse0 port y 
+	x"09" when (cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_a_bus = X"FADF" and ms_present = '1' and cpm='0') else	-- Mouse0 port key, z
+	x"0A" when (cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_a_bus = X"FBDF" and ms_present = '1' and cpm='0') else	-- Mouse0 port x
+	x"0B" when (cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_a_bus = X"FFDF" and ms_present = '1' and cpm='0') else	-- Mouse0 port y 
 	x"0C" when (cpu_iorq_n = '0' and cpu_rd_n = '0' and uart_oe_n = '0') else 																-- AY UART
 --	x"0D" when (cs_xxff = '1' and cpu_rd_n = '0' and dos_act = '0' and cpm = '0') else 			-- port #FF
 	(others => '1');

@@ -25,7 +25,7 @@ entity bus_port is
 	BUS_A : in std_logic_vector(15 downto 0);
 	BUS_DI : in std_logic_vector(7 downto 0);
 	BUS_DO : out std_logic_vector(7 downto 0);
-	OE_N : out std_logic;
+	OE_N : out std_logic := '1';
 	BUS_RD_N : in std_logic;
 	BUS_WR_N : in std_logic;
 	BUS_MREQ_N : in std_logic;
@@ -33,12 +33,7 @@ entity bus_port is
 	BUS_M1_N : in std_logic;
 	BUS_CPM : in std_logic;
 	BUS_DOS : in std_logic;
-	BUS_ROM14 : in std_logic;
-	
-	-- debug
-	FDD_OE_N : out std_logic;
-	HDD_OE_N : out std_logic;
-	PORT_NRESET : out std_logic
+	BUS_ROM14 : in std_logic	
 	
 	);
     end bus_port;

@@ -7,6 +7,6 @@ profi_mainrom_fatall.hex		0x000B8000		0x000C7FFF
 
 Notes:
 
-- Data checksum for this conversion is 0x1A17865D
+- Data checksum for this conversion is 0x1A20A630
 
 - All the addresses in this file are byte addresses
