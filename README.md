@@ -21,16 +21,15 @@ The idea was to make a smaller Profi (Профи) ZX Spectrum clone, with real F
 5) PS/2 keyboard and mouse
 6) VGA output (requires a monitor with 50Hz support)
 7) Turbosound (2 x AY-3-8912), Soundrive and SAA1099
-
+8) Kempston joystick support
+9) RTC (profi), emulated read-only yet, set time via atmega UART
+10) SD card access via Z-Controller emulation
 
 **The things that should be implemented (means a TODO list):**
 
-1) Joystick support
-2) Wi-Fi support in TR-DOS and CP/M modes
-3) RTC ports (profi and gluk)
-4) HDD by Nemo-IDE Standard
-5) SD card access in classical mode
-
+1) Wi-Fi support in TR-DOS and CP/M modes
+2) RTC ports read/write to set time from the profi interface
+3) Profi palette
 
 ## More info
 
