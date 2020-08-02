@@ -43,6 +43,7 @@ architecture soundrive_unit of soundrive is
 	signal out4f_reg : std_logic_vector (7 downto 0);
 	signal out5f_reg : std_logic_vector (7 downto 0);
 	signal outfb_reg : std_logic_vector (7 downto 0);
+	signal outb3_reg : std_logic_vector (7 downto 0);
 begin
 
 	process (I_CLK, I_RESET, I_CS, I_DOS)
@@ -54,8 +55,8 @@ begin
 			out4f_reg <= (others => '0');
 			out5f_reg <= (others => '0');
 			outfb_reg <= (others => '0');			
-		elsif I_CLK'event and I_CLK = '1' and I_DOS = '0' and I_CPM='0' and I_ROM14='0' and I_CS = '1' and  I_IORQ_N = '0' and I_WR_N = '0' then
-			if I_ADDR = X"0F" then -- soundrive 4 left 
+		elsif I_CLK'event and I_CLK = '1' and I_DOS = '0' and I_CPM='0' and I_CS = '1' and  I_IORQ_N = '0' and I_WR_N = '0' then
+			if I_ADDR = X"0F" then -- soundrive 4 left
 				out0f_reg <= I_DATA;
 			elsif I_ADDR = X"1F" then -- soundrive 4 left2 
 				out1f_reg <= I_DATA;
@@ -65,13 +66,15 @@ begin
 				out4f_reg <= I_DATA;
 			elsif I_ADDR = X"5F" then -- profi right / soundrive 4 right2
 				out5f_reg <= I_DATA;
+			elsif I_ADDR = X"B3" then -- ?
+				outb3_reg <= I_DATA;
 			elsif I_ADDR = X"FB" then -- single covox 1
 				outfb_reg <= I_DATA;
 			end if;
 		end if;
 	end process;
 	
-	O_LEFT <= ("000" & out0f_reg   & "00000") + ("000" & out1f_reg   & "00000") + ("000" & out3f_reg   & "00000") + ("000" & outfb_reg   & "00000");
+	O_LEFT <= ("000" & out0f_reg   & "00000") + ("000" & out1f_reg   & "00000") + ("000" & out3f_reg   & "00000") + ("000" & outfb_reg   & "00000") + ("000" & outb3_reg   & "00000");
 	O_RIGHT <= ("000" & out4f_reg   & "00000") + ("000" & out5f_reg   & "00000") + ("000" & outfb_reg   & "00000");
 	
 end soundrive_unit;
