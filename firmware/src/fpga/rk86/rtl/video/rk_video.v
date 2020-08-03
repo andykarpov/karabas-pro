@@ -10,7 +10,7 @@
 // An open implementation of Radio-86RK video output
 //
 // Author: Dmitry Tselikov   http://bashkiria-2m.narod.ru/
-// Modified by: Andy Karpov <andy.karpov@gmail.com> for WXEDA board
+// Modified by: Andy Karpov <andy.karpov@gmail.com> for Karabas-pro board
 // 
 // Design File: rk_video.v
 //

@@ -207,9 +207,18 @@ k580ww55 ppa1(.clk(CLK_50MHZ), .reset(reset), .addr(addrbus[1:0]), .we_n(ppa1_we
 ////////////////////   SOUND   ////////////////////
 reg tapein;
 
+wire clk_8;
+wire locked;
+
+altpll0 clock(
+	.inclk0(CLK_50MHZ),
+	.locked(locked),
+	.c0(clk_8)
+);
+
 tda1543 sound(
 	.RESET(reset),
-	.CLK(CLK_50MHZ),
+	.CLK(clk_8),
 	.CS(1'b1),
 	.DATA_L(audio_l),
 	.DATA_R(audio_r),
