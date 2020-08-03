@@ -26,6 +26,7 @@ entity cpld_kbd is
 	 RTC_DO 		: out std_logic_vector(7 downto 0);
 	 RTC_CS 		: in std_logic := '0';
 	 RTC_WR_N 	: in std_logic := '1';
+	 RTC_INIT 	: in std_logic := '0';
 	 
 	 RESET		: out std_logic := '0';
 	 TURBO		: out std_logic := '0';
@@ -310,18 +311,26 @@ begin
 		end case;
 	end process;
 		
-	process(CLK, N_RESET)
+	process(CLK, N_RESET, RTC_INIT, queue_wr_full, RTC_WR_N, RTC_CS, rtc_cmd, rtc_data)
 	begin
 		if CLK'event and CLK = '1' then
 
+			queue_wr_req <= '0';
+			queue_di <= x"FFFF"; -- nop
+		
+--			-- init request to avr rtc
+--			if RTC_INIT = '1' and last_queue_di /= x"FC" & "00000000" and queue_wr_full = '0' then 
+--		
+--				queue_di <= x"FC" & "00000000";
+--				last_queue_di <= x"FC" & "00000000";
+--				queue_wr_req <= '1';
+		
+			-- host reset
 			if N_RESET='0' then
 				a_reg <= "00100110";
 				b_reg <= (others => '0');
-				c_reg <= (others => '0');
-				queue_wr_req <= '0';
+				c_reg <= (others => '0');				
 			else 
-			
-				queue_wr_req <= '0';
 			
 				-- RTC register set by ZX
 				if RTC_WR_N = '0' AND RTC_CS = '1' then

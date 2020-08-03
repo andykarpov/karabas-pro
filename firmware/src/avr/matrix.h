@@ -121,9 +121,10 @@
 #define CMD_JOY 0x0D
 
 // RTC commands
-#define CMD_RTC_READ 0x40 // + regnum 0e-3f (64 + 0...63)
-#define CMD_RTC_WRITE 0x80 // + regnum 0e-3f (128 + 0...63)
+#define CMD_RTC_READ 0x40 // + regnum 0e-3f (64 ... 127)
+#define CMD_RTC_WRITE 0x80 // + regnum 0e-3f (128 ... 191)
 
+#define CMD_RTC_INIT_REQ 0xFC // rtc init request
 #define CMD_RTC_WRITE_OK 0xFD // write done
 #define CMD_RTC_READY 0xFE // ready for next write
 #define CMD_NONE 0xFF

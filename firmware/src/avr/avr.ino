@@ -99,6 +99,8 @@ uint8_t rtc_week = 0;
 uint8_t rtc_last_write_reg = 0;
 uint8_t rtc_last_write_data = 0;
 
+bool rtc_init_done = false;
+
 const int buf_len = 128; 
 char buf[buf_len];
 byte index = 0;
@@ -785,7 +787,18 @@ void rtc_send_all() {
 void process_in_cmd(uint8_t cmd, uint8_t data)
 {
   uint8_t reg;
-  if (cmd >= CMD_RTC_WRITE && cmd < CMD_RTC_WRITE+63) {
+
+//  if (cmd == CMD_RTC_INIT_REQ && !rtc_init_done) {
+//
+//#if DEBUG_MODE
+//    Serial.println(F("RTC INIT REQUEST"));
+//#endif
+//    
+//    rtc_send_all();
+//    rtc_init_done = true;
+//  }
+  
+  if (cmd >= CMD_RTC_WRITE && cmd < CMD_RTC_WRITE+64) {
     // write rtc register
    reg = cmd - CMD_RTC_WRITE;
 
@@ -1102,6 +1115,16 @@ Serial.println(F("ZX Keyboard / mouse / rtc controller v1.0"));
 #if DEBUG_MODE
   Serial.println(F("done"));
 #endif
+
+  if (!rtc_init_done) {
+#if DEBUG_MODE
+  Serial.println(F("RTC send all registers on boot"));
+#endif
+     rtc_send_all();
+#if DEBUG_MODE
+  Serial.println(F("done"));
+#endif     
+  }
 
   Serial.println(F("Builtin commands: HELP, SET, GET"));
 

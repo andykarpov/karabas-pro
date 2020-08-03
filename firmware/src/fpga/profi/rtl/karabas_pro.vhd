@@ -259,6 +259,7 @@ signal areset			: std_logic;
 signal locked			: std_logic;
 signal loader_act		: std_logic := '1';
 signal loader_reset 	: std_logic := '0';
+signal loader_done 	: std_logic := '0';
 signal dos_act			: std_logic := '1';
 signal cpuclk			: std_logic;
 signal selector		: std_logic_vector(7 downto 0);
@@ -651,6 +652,7 @@ port map (
 	 RTC_DO 			=>	mc146818_do_bus,
 	 RTC_CS 			=> '1',
 	 RTC_WR_N 		=> not mc146818_wr,
+	 RTC_INIT 		=> loader_act,
 
 	 RESET 			=> kb_reset,
 	 TURBO 			=> kb_turbo,
