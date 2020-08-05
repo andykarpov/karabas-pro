@@ -35,18 +35,18 @@ end entity;
 architecture rtl of profi_video is
 -- Profi-CPM screen mode
 	constant pcpm_scr_h			: natural := 512;
-	constant pcpm_brd_right		: natural :=  40;	-- для выравнивания из-за задержки на чтение vid_reg и attr_reg задано на 8 точек больше
-	constant pcpm_blk_front		: natural :=  48;--32
-	constant pcpm_sync_h			: natural :=  64;
-	constant pcpm_blk_back		: natural :=  80;--96
-	constant pcpm_brd_left		: natural :=  24;	-- для выравнивания из-за задержки на чтение vid_reg и attr_reg задано на 8 точек меньше
+	constant pcpm_brd_right		: natural :=  48;	-- 32 для выравнивания из-за задержки на чтение vid_reg и attr_reg задано на 8 точек больше
+	constant pcpm_blk_front		: natural :=  32; -- 48
+	constant pcpm_sync_h			: natural :=  64; -- 64
+	constant pcpm_blk_back		: natural :=  64; -- 80
+	constant pcpm_brd_left		: natural :=  48;	-- 32 для выравнивания из-за задержки на чтение vid_reg и attr_reg задано на 8 точек меньше
 
 	constant pcpm_scr_v			: natural := 240;
-	constant pcpm_brd_bot		: natural :=  8;--16
-	constant pcpm_blk_down		: natural :=  40;--16
+	constant pcpm_brd_bot		: natural :=  16;--16
+	constant pcpm_blk_down		: natural :=  16;--8
 	constant pcpm_sync_v			: natural :=  16;--16
 	constant pcpm_blk_up			: natural :=  8;--16
-	constant pcpm_brd_top		: natural :=  8;--16
+	constant pcpm_brd_top		: natural :=  16;--16
 
 	constant pcpm_h_blk_on		: natural := (pcpm_scr_h + pcpm_brd_right) - 1;
 	constant pcpm_h_sync_on		: natural := (pcpm_scr_h + pcpm_brd_right + pcpm_blk_front) - 1;
@@ -58,12 +58,12 @@ architecture rtl of profi_video is
 	constant pcpm_v_sync_on		: natural := (pcpm_scr_v + pcpm_brd_bot + pcpm_blk_down) - 1;
 	constant pcpm_v_sync_off	: natural := (pcpm_scr_v + pcpm_brd_bot + pcpm_blk_down + pcpm_sync_v);
 	constant pcpm_v_blk_off		: natural := (pcpm_scr_v + pcpm_brd_bot + pcpm_blk_down + pcpm_sync_v + pcpm_blk_up);
-	constant pcpm_v_end			: natural := 319;
+	constant pcpm_v_end			: natural := 311;
 
-	constant pcpm_h_int_on		: natural := 752; --pspec_sync_h+8;
-	constant pcpm_v_int_on		: natural := 303; --pspec_v_blk_off - 1;
+	constant pcpm_h_int_on		: natural := 656; --pspec_sync_h+8;
+	constant pcpm_v_int_on		: natural := 241; --pspec_v_blk_off - 1;
 	constant pcpm_h_int_off		: natural := 128;
-	constant pcpm_v_int_off		: natural := 304;
+	constant pcpm_v_int_off		: natural := 256;
 
 -- INT  Y303,X752  - Y304,X128
 
@@ -129,7 +129,7 @@ begin
 				end if;
 
 				
-				if (h_cnt > pcpm_h_int_on  and v_cnt = pcpm_v_int_on) or (h_cnt < pcpm_h_int_off and v_cnt = pcpm_v_int_off) then
+				if (h_cnt > pcpm_h_int_on  and v_cnt = pcpm_v_int_on) then -- or (h_cnt < pcpm_h_int_off and v_cnt = pcpm_v_int_off) then
 					int_sig <= '0'; else	int_sig <= '1';
 				end if;				
 			end if;

@@ -990,12 +990,12 @@ selector <=
 	(others => '1');
 	
 -- debug 
---PIN_141 <= cpuclk;
---PIN_138 <= clk_bus;
---PIN_121 <= reset;
---PIN_120 <= areset;
---PIN_119 <= VGA_HS;
---PIN_115 <= VGA_VS;
+PIN_141 <= vid_rgb(2);
+PIN_138 <= vid_rgb(5);
+PIN_121 <= vid_rgb(8);
+PIN_120 <= vid_hsync xor (not vid_vsync);
+PIN_119 <= cpu_int_n;
+PIN_115 <= VGA_VS;
 palette_en <= not kb_turbo;
 	
 end rtl;
