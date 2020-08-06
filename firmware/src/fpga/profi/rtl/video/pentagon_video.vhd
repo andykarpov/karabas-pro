@@ -110,6 +110,12 @@ begin
 						VSYNC <= '1';
 					end if;
 					
+--					if hor_cnt & chr_col_cnt = 327 and ver_cnt & chr_row_cnt = 240 then	-- works, but unstable :(
+--						int_sig <= '0';
+--					elsif INTA = '0' then
+--						int_sig <= '1';
+--					end if;
+					
 				end if;
 			
 				-- int
