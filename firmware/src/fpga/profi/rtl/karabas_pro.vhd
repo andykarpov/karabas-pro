@@ -487,21 +487,23 @@ port map (
 	VCNT 				=> vid_vcnt
 );
 	
--- osd (debug)
-U7: entity work.osd
-port map (
-	CLK 				=> clk_bus,
-	EN 				=> '0',
-	RGB_I 			=> vid_rgb,
-	RGB_O 			=> vid_rgb_osd,
-	HCNT_I 			=> vid_hcnt,
-	VCNT_I 			=> vid_vcnt,
+---- osd (debug)
+--U7: entity work.osd
+--port map (
+--	CLK 				=> clk_bus,
+--	EN 				=> '0',
+--	RGB_I 			=> vid_rgb,
+--	RGB_O 			=> vid_rgb_osd,
+--	HCNT_I 			=> vid_hcnt,
+--	VCNT_I 			=> vid_vcnt,
+--
+--	PORT_1 			=> cpld_do,
+--	PORT_2 			=> port_7ffd_reg,
+--	PORT_3 			=> cpu_rd_n & cpu_wr_n & cpu_iorq_n & cpu_mreq_n & vbus_mode & vid_rd & SRAM_NRD & SRAM_NWR,
+--	PORT_4 			=> cpld_oe_n & ds80 & cpm & rom14 & fdd_oe_n & hdd_oe_n & port_nreset & '0' --cpld_do	
+--);
 
-	PORT_1 			=> cpld_do,
-	PORT_2 			=> port_7ffd_reg,
-	PORT_3 			=> cpu_rd_n & cpu_wr_n & cpu_iorq_n & cpu_mreq_n & vbus_mode & vid_rd & SRAM_NRD & SRAM_NWR,
-	PORT_4 			=> cpld_oe_n & ds80 & cpm & rom14 & fdd_oe_n & hdd_oe_n & port_nreset & '0' --cpld_do	
-);
+vid_rgb_osd <= vid_rgb;
 	
 ---- Scan doubler
 --U8 : entity work.scan_convert
@@ -527,11 +529,7 @@ port map (
 	CLK 				=> clk_div2,
 	CLK2 				=> clk_bus,
 	DS80				=> ds80,
-	
-	INVERSE_KSI 	=> '1',
-	INVERSE_SSI 	=> '1',
-	INVERSE_F 		=> '1',
-	
+		
 	RGB_O(8 downto 6)	=> VGA_R,
 	RGB_O(5 downto 3)	=> VGA_G,
 	RGB_O(2 downto 0)	=> VGA_B,

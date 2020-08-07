@@ -81,6 +81,7 @@ ARCHITECTURE SYN OF linebuf IS
 		outdata_reg_a		: STRING;
 		outdata_reg_b		: STRING;
 		power_up_uninitialized		: STRING;
+		ram_block_type		: STRING;
 		read_during_write_mode_port_a		: STRING;
 		read_during_write_mode_port_b		: STRING;
 		widthad_a		: NATURAL;
@@ -127,7 +128,8 @@ BEGIN
 		outdata_reg_a => "CLOCK0",
 		outdata_reg_b => "CLOCK1",
 		power_up_uninitialized => "FALSE",
-		read_during_write_mode_port_a => "NEW_DATA_NO_NBE_READ",
+		ram_block_type => "M9K",
+		read_during_write_mode_port_a => "OLD_DATA",
 		read_during_write_mode_port_b => "OLD_DATA",
 		widthad_a => 11,
 		widthad_b => 11,
@@ -193,9 +195,9 @@ END SYN;
 -- Retrieval info: PRIVATE: OPERATION_MODE NUMERIC "3"
 -- Retrieval info: PRIVATE: OUTDATA_ACLR_B NUMERIC "0"
 -- Retrieval info: PRIVATE: OUTDATA_REG_B NUMERIC "1"
--- Retrieval info: PRIVATE: RAM_BLOCK_TYPE NUMERIC "0"
+-- Retrieval info: PRIVATE: RAM_BLOCK_TYPE NUMERIC "2"
 -- Retrieval info: PRIVATE: READ_DURING_WRITE_MODE_MIXED_PORTS NUMERIC "2"
--- Retrieval info: PRIVATE: READ_DURING_WRITE_MODE_PORT_A NUMERIC "3"
+-- Retrieval info: PRIVATE: READ_DURING_WRITE_MODE_PORT_A NUMERIC "1"
 -- Retrieval info: PRIVATE: READ_DURING_WRITE_MODE_PORT_B NUMERIC "1"
 -- Retrieval info: PRIVATE: REGdata NUMERIC "1"
 -- Retrieval info: PRIVATE: REGq NUMERIC "1"
@@ -233,7 +235,8 @@ END SYN;
 -- Retrieval info: CONSTANT: OUTDATA_REG_A STRING "CLOCK0"
 -- Retrieval info: CONSTANT: OUTDATA_REG_B STRING "CLOCK1"
 -- Retrieval info: CONSTANT: POWER_UP_UNINITIALIZED STRING "FALSE"
--- Retrieval info: CONSTANT: READ_DURING_WRITE_MODE_PORT_A STRING "NEW_DATA_NO_NBE_READ"
+-- Retrieval info: CONSTANT: RAM_BLOCK_TYPE STRING "M9K"
+-- Retrieval info: CONSTANT: READ_DURING_WRITE_MODE_PORT_A STRING "OLD_DATA"
 -- Retrieval info: CONSTANT: READ_DURING_WRITE_MODE_PORT_B STRING "OLD_DATA"
 -- Retrieval info: CONSTANT: WIDTHAD_A NUMERIC "11"
 -- Retrieval info: CONSTANT: WIDTHAD_B NUMERIC "11"

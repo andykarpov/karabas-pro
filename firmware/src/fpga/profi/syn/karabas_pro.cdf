@@ -1,12 +1,12 @@
-/* Quartus II 64-Bit Version 13.0.1 Build 232 06/12/2013 Service Pack 1 SJ Web Edition */
+/* Quartus II 32-bit Version 13.0.1 Build 232 06/12/2013 Service Pack 1 SJ Web Edition */
 JedecChain;
 	FileRevision(JESD32A);
 	DefaultMfr(6E);
 
 	P ActionCode(Ign)
-		Device PartName(EPM3128AT100) MfrSpec(OpMask(0) FullPath("D:/Google_Drive/ZX/Karabas/karabas-pro/firmware/src/cpld/syn/output_files/karabas_pro_cpld.pof"));
+		Device PartName(EPM3128AT100) MfrSpec(OpMask(0) FullPath("/home/andy/Documents/Projects/Retrocomp/ZX-Spectrum/karabas-pro/firmware/src/cpld/syn/output_files/karabas_pro_cpld.pof"));
 	P ActionCode(Cfg)
-		Device PartName(EP4CE6E22) Path("D:/Google_Drive/ZX/Karabas/karabas-pro/firmware/src/fpga/profi/syn/") File("karabas_pro.sof") MfrSpec(OpMask(1));
+		Device PartName(EP4CE6) Path("/home/andy/Documents/Projects/Retrocomp/ZX-Spectrum/karabas-pro/firmware/src/fpga/profi/syn/") File("karabas_pro.jic") MfrSpec(OpMask(1) SEC_Device(EPCS16) Child_OpMask(1 1));
 
 ChainEnd;
 
