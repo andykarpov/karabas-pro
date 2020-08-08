@@ -176,8 +176,8 @@ begin
 			elsif paper1 = '1' and (pixel_reg(7 - to_integer(h_cnt(2 downto 0)))) = '1' then 
 				rgbi <= attr_reg(1) & attr_reg(2) & attr_reg(0) & attr_reg(6);
 			else
-				--rgbi <= not BORDER(1) & not BORDER(2) & not BORDER(0) & '0';
-				rgbi <= BORDER(1) & BORDER(2) & BORDER(0) & '0';
+				rgbi <= not BORDER(1) & not BORDER(2) & not BORDER(0) & '0';
+				--rgbi <= BORDER(1) & BORDER(2) & BORDER(0) & '0';
 			end if;
 		end if;
 	end if;

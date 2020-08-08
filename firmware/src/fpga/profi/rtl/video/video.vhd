@@ -184,7 +184,7 @@ begin
 		--	RET
 			
 	-- убрал altsyncram, память палитры - это регистр, пишется по уровню,а не по клоку (?)
-	process(CLK2x, palette_wr, palette_a, palette_wr_data)
+	process(palette_wr, palette_a, palette_wr_data, palette)
 	begin
 		--if falling_edge(CLK2x) then
 			if (palette_wr = '1') then
@@ -194,7 +194,7 @@ begin
 		palette_grb <= palette(to_integer(unsigned(palette_a)));
 	end process;
 		
-	palette_wr_a <= not border(3 downto 0); 
+	palette_wr_a <= not BORDER(3 downto 0); 
 	palette_wr_data <= not PORT7EA(15 downto 8); 
    palette_wr <= '1' when CS7E = '1' and BUS_WR_N = '0' and ds80 = '1' else '0';	
 	palette_a <= palette_wr_a when palette_wr = '1' else i & rgb(1) & rgb(2) & rgb(0);

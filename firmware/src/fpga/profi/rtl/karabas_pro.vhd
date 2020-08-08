@@ -832,7 +832,7 @@ sco 	<= port_dffd_reg(3); -- Выбор положения окна проеци
 
 ram_ext <= port_dffd_reg(2 downto 0);
 
-cs_xxfe <= '1' when cpu_iorq_n = '0' and cpu_a_bus(0) = '0' else '0';
+cs_xxfe <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and cpu_a_bus(0) = '0' else '0';
 cs_xx7e <= '1' when cs_xxfe = '1' and cpu_a_bus(7) = '0' else '0';
 cs_xxff <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and cpu_a_bus(7 downto 0) = X"FF" else '0';
 cs_eff7 <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and cpu_a_bus = X"EFF7" else '0';
@@ -857,10 +857,9 @@ cs_rtc_ds <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and
 --cs_rtc_as <= '1' when cpu_a_bus(9)='0' and cpu_a_bus(7)='1' and cpu_a_bus(5)='1' and cpu_a_bus(3 downto 0)=X"F" and cpu_m1_n = '1' and cpu_iorq_n='0' and cpm='1' and rom14='1' else '0';
 --cs_rtc_ds <= '1' when cpu_a_bus(9)='0' and cpu_a_bus(7)='1' and cpu_a_bus(5)='0' and cpu_a_bus(3 downto 0)=X"F" and cpu_m1_n = '1' and cpu_iorq_n='0' and cpm='1' and rom14='1' else '0';
 
--- порты #fe, #7e - пишутся по фронту /wr
-port_xxfe_reg <= cpu_do_bus when (cs_xxfe = '1' and (cpu_wr_n'event and cpu_wr_n = '0'));
-port_xx7e_reg <= cpu_do_bus when (cs_xx7e = '1' and (cpu_wr_n'event and cpu_wr_n = '0'));
-port_xx7e_a <= cpu_a_bus(15 downto 8) when (cs_xx7e = '1' and (cpu_wr_n'event and cpu_wr_n = '0'));
+-- порты #7e - пишутся по фронту /wr
+--port_xx7e_reg <= cpu_do_bus when (cs_xx7e = '1' and (cpu_wr_n'event and cpu_wr_n = '0'));
+--port_xx7e_a <= cpu_a_bus(15 downto 8) when (cs_xx7e = '1' and (cpu_wr_n'event and cpu_wr_n = '0'));
 
 process (reset, areset, clk_bus, cpu_a_bus, dos_act, cs_xxfe, cs_eff7, cs_dff7, cs_7ffd, cs_1ffd, cs_xxfd, port_7ffd_reg, port_1ffd_reg, cpu_mreq_n, cpu_m1_n, cpu_wr_n, cpu_do_bus, fd_port)
 begin
@@ -875,15 +874,15 @@ begin
 		--if ena_div2 = '1' then -- захват портов при 14МГц ena
 			
 			-- #FE
---			if cs_xxfe = '1' and cpu_wr_n = '0' then 
---				port_xxfe_reg <= cpu_do_bus; 
---			end if;
---			
---			-- #7E
---			if cs_xx7e = '1' and cpu_wr_n = '0' then 
---				port_xx7e_reg <= cpu_do_bus;
---				port_xx7e_a   <= cpu_a_bus(15 downto 8);
---			end if;
+			if cs_xxfe = '1' and cpu_wr_n = '0' then 
+				port_xxfe_reg <= cpu_do_bus; 
+			end if;
+			
+			-- #7E
+			if cs_xx7e = '1' and cpu_wr_n = '0' then 
+				port_xx7e_reg <= cpu_do_bus;
+				port_xx7e_a   <= cpu_a_bus(15 downto 8);
+			end if;
 
 			-- #EFF7
 			if cs_eff7 = '1' and cpu_wr_n = '0' then 
@@ -998,6 +997,6 @@ PIN_121 <= vid_rgb(8);
 PIN_120 <= vid_hsync xor (not vid_vsync);
 PIN_119 <= cpu_int_n;
 PIN_115 <= VGA_VS;
-palette_en <= not kb_turbo;
+palette_en <= kb_turbo;
 	
 end rtl;
