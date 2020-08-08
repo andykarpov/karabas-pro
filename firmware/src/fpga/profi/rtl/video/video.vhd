@@ -36,8 +36,8 @@ entity video is
 		DS80		: in std_logic; -- 1 = Profi CP/M mode. 0 = standard mode
 		PALETTE_EN: in std_logic := '1';
 		CS7E 		: in std_logic := '0';
-		PORT7E 	: in std_logic_vector(7 downto 0);
-		PORT7EA 	: in std_logic_vector(15 downto 8);	
+		BUS_A 	: in std_logic_vector(15 downto 8);
+		BUS_D 	: in std_logic_vector(7 downto 0);
 		BUS_WR_N : in std_logic;
 		GX0 		: out std_logic;
 		
@@ -64,6 +64,7 @@ architecture rtl of video is
 	signal palette_need_wr : std_logic := '0';
 	signal palette_grb: std_logic_vector(8 downto 0);
 	signal palette_grb_reg: std_logic_vector(8 downto 0);
+	signal palette_prev : std_logic_vector(15 downto 8);
 	
 	-- profi videocontroller signals
 	signal vid_a_profi : std_logic_vector(13 downto 0);
@@ -186,18 +187,16 @@ begin
 	-- убрал altsyncram, память палитры - это регистр, пишется по уровню,а не по клоку (?)
 	process(palette_wr, palette_a, palette_wr_data, palette)
 	begin
-		--if falling_edge(CLK2x) then
+		if rising_edge(CLK2x) then
 			if (palette_wr = '1') then
-				palette(to_integer(unsigned(palette_a))) <= palette_wr_data & '0';
+				palette(to_integer(unsigned(BORDER(3 downto 0) xor X"F"))) <= (not BUS_A) & '0';
 			end if;
-		--end if;
-		palette_grb <= palette(to_integer(unsigned(palette_a)));
+			palette_grb <= palette(to_integer(unsigned(palette_a)));
+		end if;
 	end process;
 		
-	palette_wr_a <= not BORDER(3 downto 0); 
-	palette_wr_data <= not PORT7EA(15 downto 8); 
-   palette_wr <= '1' when CS7E = '1' and BUS_WR_N = '0' and ds80 = '1' else '0';	
-	palette_a <= palette_wr_a when palette_wr = '1' else i & rgb(1) & rgb(2) & rgb(0);
+	palette_a <= i & rgb(1) & rgb(2) & rgb(0);
+   palette_wr <= '1' when CS7E = '1' and BUS_WR_N = '0' and ds80 = '1' and reset = '0' else '0';
 	
 	-- возвращаем наверх значение младшего разряда зеленого компонента палитры, это служит для отпределения наличия палитры в системе
 	GX0 <= palette_grb(6);

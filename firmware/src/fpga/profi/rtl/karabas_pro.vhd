@@ -140,6 +140,7 @@ signal port_1ffd_reg	: std_logic_vector(7 downto 0) := "00000000";
 signal port_dffd_reg : std_logic_vector(7 downto 0) := "00000000";
 signal port_xx7e_reg : std_logic_vector(7 downto 0) := "00000000";
 signal port_xx7e_a   : std_logic_vector(15 downto 8) := "00000000";
+signal port_xx7e_aprev   : std_logic_vector(15 downto 8) := "00000000";
 
 -- Keyboard
 signal kb_do_bus		: std_logic_vector(5 downto 0);
@@ -466,8 +467,8 @@ port map (
 	DS80 				=> ds80,
 	PALETTE_EN 		=> palette_en,
 	CS7E				=> cs_xx7e,
-	PORT7E 			=> port_xx7e_reg,
-	PORT7EA 			=> port_xx7e_a,
+	BUS_A 			=> cpu_a_bus(15 downto 8),
+	BUS_D 			=> cpu_do_bus,
 	BUS_WR_N 		=> cpu_wr_n,
 	GX0 				=> gx0,
 	
@@ -832,7 +833,8 @@ sco 	<= port_dffd_reg(3); -- Выбор положения окна проеци
 
 ram_ext <= port_dffd_reg(2 downto 0);
 
-cs_xxfe <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and cpu_a_bus(0) = '0' else '0';
+--cs_xxfe <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and cpu_a_bus(0) = '0' else '0';
+cs_xxfe <= '1' when cpu_iorq_n = '0' and cpu_a_bus(0) = '0' else '0';
 cs_xx7e <= '1' when cs_xxfe = '1' and cpu_a_bus(7) = '0' else '0';
 cs_xxff <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and cpu_a_bus(7 downto 0) = X"FF" else '0';
 cs_eff7 <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and cpu_a_bus = X"EFF7" else '0';
@@ -878,12 +880,6 @@ begin
 				port_xxfe_reg <= cpu_do_bus; 
 			end if;
 			
-			-- #7E
-			if cs_xx7e = '1' and cpu_wr_n = '0' then 
-				port_xx7e_reg <= cpu_do_bus;
-				port_xx7e_a   <= cpu_a_bus(15 downto 8);
-			end if;
-
 			-- #EFF7
 			if cs_eff7 = '1' and cpu_wr_n = '0' then 
 				port_eff7_reg <= cpu_do_bus; 
