@@ -139,6 +139,7 @@ signal port_7ffd_reg	: std_logic_vector(7 downto 0) := "00000000";
 signal port_1ffd_reg	: std_logic_vector(7 downto 0) := "00000000";
 signal port_dffd_reg : std_logic_vector(7 downto 0) := "00000000";
 signal port_xx7e_reg : std_logic_vector(7 downto 0) := "00000000";
+signal port_xx7e_a   : std_logic_vector(15 downto 8) := "00000000";
 
 -- Keyboard
 signal kb_do_bus		: std_logic_vector(5 downto 0);
@@ -466,9 +467,7 @@ port map (
 	PALETTE_EN 		=> palette_en,
 	CS7E				=> cs_xx7e,
 	PORT7E 			=> port_xx7e_reg,
-	PORTFE 			=> port_xxfe_reg,
-	BUS_D 			=> cpu_do_bus,
-	BUS_A 			=> cpu_a_bus(15 downto 8),
+	PORT7EA 			=> port_xx7e_a,
 	BUS_WR_N 		=> cpu_wr_n,
 	GX0 				=> gx0,
 	
@@ -833,8 +832,8 @@ sco 	<= port_dffd_reg(3); -- Выбор положения окна проеци
 
 ram_ext <= port_dffd_reg(2 downto 0);
 
-cs_xxfe <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and cpu_a_bus(0) = '0' else '0';
---cs_xxfe <= '1' when cpu_iorq_n = '0' and cpu_a_bus(0) = '0' else '0';
+cs_xxfe <= '1' when cpu_iorq_n = '0' and cpu_a_bus(0) = '0' else '0';
+cs_xx7e <= '1' when cs_xxfe = '1' and cpu_a_bus(7) = '0' else '0';
 cs_xxff <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and cpu_a_bus(7 downto 0) = X"FF" else '0';
 cs_eff7 <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and cpu_a_bus = X"EFF7" else '0';
 cs_dff7 <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and cpu_a_bus = X"DFF7" and port_eff7_reg(7) = '1' else '0';
@@ -843,7 +842,6 @@ cs_1ffd <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and cpu_a_bus = X"1FFD" 
 cs_dffd <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and cpu_a_bus = X"DFFD" and fd_port = '1' else '0';
 cs_7ffd <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and cpu_a_bus = X"7FFD" else '0';
 cs_xxfd <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and cpu_a_bus(15) = '0' and cpu_a_bus(1) = '0' and fd_port = '0' else '0';
-cs_xx7e <= '1' when cs_xxfe = '1' and cpu_a_bus(7) = '0' and port_dffd_reg(7) = '1' else '0';
 
 -- регистр AS часов
 cs_rtc_as <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and
@@ -859,6 +857,11 @@ cs_rtc_ds <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and
 --cs_rtc_as <= '1' when cpu_a_bus(9)='0' and cpu_a_bus(7)='1' and cpu_a_bus(5)='1' and cpu_a_bus(3 downto 0)=X"F" and cpu_m1_n = '1' and cpu_iorq_n='0' and cpm='1' and rom14='1' else '0';
 --cs_rtc_ds <= '1' when cpu_a_bus(9)='0' and cpu_a_bus(7)='1' and cpu_a_bus(5)='0' and cpu_a_bus(3 downto 0)=X"F" and cpu_m1_n = '1' and cpu_iorq_n='0' and cpm='1' and rom14='1' else '0';
 
+-- порты #fe, #7e - пишутся по фронту /wr
+port_xxfe_reg <= cpu_do_bus when (cs_xxfe = '1' and (cpu_wr_n'event and cpu_wr_n = '0'));
+port_xx7e_reg <= cpu_do_bus when (cs_xx7e = '1' and (cpu_wr_n'event and cpu_wr_n = '0'));
+port_xx7e_a <= cpu_a_bus(15 downto 8) when (cs_xx7e = '1' and (cpu_wr_n'event and cpu_wr_n = '0'));
+
 process (reset, areset, clk_bus, cpu_a_bus, dos_act, cs_xxfe, cs_eff7, cs_dff7, cs_7ffd, cs_1ffd, cs_xxfd, port_7ffd_reg, port_1ffd_reg, cpu_mreq_n, cpu_m1_n, cpu_wr_n, cpu_do_bus, fd_port)
 begin
 	if reset = '1' then
@@ -872,14 +875,15 @@ begin
 		--if ena_div2 = '1' then -- захват портов при 14МГц ena
 			
 			-- #FE
-			if cs_xxfe = '1' and cpu_wr_n = '0' then 
-				port_xxfe_reg <= cpu_do_bus; 
-			end if;
-			
-			-- #7E
-			if cs_xx7e = '1' and cpu_wr_n = '0' then 
-				port_xx7e_reg <= cpu_do_bus;
-			end if;
+--			if cs_xxfe = '1' and cpu_wr_n = '0' then 
+--				port_xxfe_reg <= cpu_do_bus; 
+--			end if;
+--			
+--			-- #7E
+--			if cs_xx7e = '1' and cpu_wr_n = '0' then 
+--				port_xx7e_reg <= cpu_do_bus;
+--				port_xx7e_a   <= cpu_a_bus(15 downto 8);
+--			end if;
 
 			-- #EFF7
 			if cs_eff7 = '1' and cpu_wr_n = '0' then 

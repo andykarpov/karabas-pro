@@ -16,8 +16,6 @@ entity profi_video is
 		INT		: out std_logic;
 		BORDER	: in std_logic_vector(3 downto 0);	
 		A			: out std_logic_vector(13 downto 0);
-		PAL_A 	: out std_logic_vector(3 downto 0);
-		BUS_D 	: in std_logic_vector(7 downto 0);
 		DI			: in std_logic_vector(7 downto 0);
 		RGB		: out std_logic_vector(2 downto 0);	-- RGB
 		I 			: out std_logic;
@@ -178,27 +176,13 @@ begin
 			elsif paper1 = '1' and (pixel_reg(7 - to_integer(h_cnt(2 downto 0)))) = '1' then 
 				rgbi <= attr_reg(1) & attr_reg(2) & attr_reg(0) & attr_reg(6);
 			else
+				--rgbi <= not BORDER(1) & not BORDER(2) & not BORDER(0) & '0';
 				rgbi <= BORDER(1) & BORDER(2) & BORDER(0) & '0';
 			end if;
 		end if;
 	end if;
 end process;
 
-selector <= paper1 & infp & pixel_reg(7 - to_integer(h_cnt(2 downto 0)));
-
--- адрес пикселя палитры до blank
-process (CLK2X, CLK, selector, i78, blank_sig, paper1, pixel_reg, h_cnt, attr_reg, BORDER)
-begin 
-	case (selector) is
-		when "100" | "110" => PAL_A <= i78 & attr_reg(5 downto 3);
-		when "101" | "111" => PAL_A <= attr_reg(6) & attr_reg(2 downto 0);
-		when "010" | "011" => PAL_A <= (not BORDER(3)) & (not BORDER(2 downto 0));
-		when "000" | "001" => PAL_A <= (not BORDER(3)) & BORDER(2 downto 0);
-		when others => null;
-	end case;
-end process;
-
-infp <= not blank1 and ds80; -- testing
 i78 <= attr_reg(7) when ds80 = '1' else attr_reg(6);
 		
 A <= std_logic_vector((not h_cnt(3)) & v_cnt(7 downto 6)) & std_logic_vector(v_cnt(2 downto 0)) & std_logic_vector(v_cnt(5 downto 3)) & std_logic_vector(h_cnt(8 downto 4));		
