@@ -37,13 +37,15 @@ The idea was to make a smaller Profi (Профи) ZX Spectrum clone, with real F
 
 **ERRATA for PCB rev.B:** [See ERRATA Rev.B](https://github.com/andykarpov/karabas-pro/blob/master/ERRATA-REVB.md).
 
-**Latest revision:** rev.B.
+**Latest revision:** rev.C.
 
 **Profi firmware** [Download a Profi firmware](https://github.com/andykarpov/karabas-pro/tree/master/firmware/releases/profi).
 
 ### Pre-production renders:
 
-![image](https://github.com/andykarpov/karabas-pro/raw/master/docs/photos/karabas-pro-revB-top.png)
+![image](https://github.com/andykarpov/karabas-pro/raw/master/docs/photos/karabas-pro-revC-top.png)
 
-![image](https://github.com/andykarpov/karabas-pro/raw/master/docs/photos/karabas-pro-revB-bot.png)
+![image](https://github.com/andykarpov/karabas-pro/raw/master/docs/photos/karabas-pro-revC-bot.png)
+
+![image](https://github.com/andykarpov/karabas-pro/raw/master/docs/photos/karabas-pro-revC-back.png)
 

@@ -1,0 +1,337 @@
+75710682298112
+footprints
+ALTERA-QFP-145
+
+
+0
+146
+145
+footprints
+AUDIO_JACK_3.5MM_SMD_TRRS
+TRRS 3.5MM RIGHT ANGLE STEREO JACK - SMT
+TRRS 3.5MM RIGHT ANGLE STEREO JACK - SMT
+0
+4
+4
+footprints
+C_0603_1608Metric
+Capacitor SMD 0603 (1608 Metric), square (rectangular) end terminal, IPC_7351 nominal, (Body size source: http://www.tortai-tech.com/upload/download/2011102023233369053.pdf), generated with kicad-footprint-generator
+capacitor
+0
+2
+2
+footprints
+C_0805_2012Metric
+Capacitor SMD 0805 (2012 Metric), square (rectangular) end terminal, IPC_7351 nominal, (Body size source: https://docs.google.com/spreadsheets/d/1BsfQQcO9C6DZCsRaXUlFlo91Tg2WpOkGARC1WS5S8t0/edit?usp=sharing), generated with kicad-footprint-generator
+capacitor
+0
+2
+2
+footprints
+C_1206_3216Metric
+Capacitor SMD 1206 (3216 Metric), square (rectangular) end terminal, IPC_7351 nominal, (Body size source: http://www.tortai-tech.com/upload/download/2011102023233369053.pdf), generated with kicad-footprint-generator
+capacitor
+0
+2
+2
+footprints
+Conn_uSDcard
+
+
+0
+13
+9
+footprints
+Crystal_5.0x3.2mm
+
+
+0
+4
+4
+footprints
+GCT-MEM2055-00-190-01-A
+http://www.farnell.com/datasheets/1917242.pdf
+MicroSD card socket
+0
+13
+11
+footprints
+HDMI
+
+
+0
+23
+20
+footprints
+IDC_10M
+
+
+0
+10
+10
+footprints
+LED_0805_2012Metric
+LED SMD 0805 (2012 Metric), square (rectangular) end terminal, IPC_7351 nominal, (Body size source: https://docs.google.com/spreadsheets/d/1BsfQQcO9C6DZCsRaXUlFlo91Tg2WpOkGARC1WS5S8t0/edit?usp=sharing), generated with kicad-footprint-generator
+diode
+0
+2
+2
+footprints
+MAX9814_module
+
+
+0
+5
+5
+footprints
+MDIN06SS
+<b>Mini Din</b> YAMAICHI CONNECTOR
+
+0
+9
+7
+footprints
+MICRO_SD_MOLEX
+
+
+0
+15
+15
+footprints
+MINI_DIN_6_33PRIMARY
+Original name <b>Mini_Din_6</b><p>
+
+0
+9
+7
+footprints
+MLP-28
+
+
+0
+29
+28
+footprints
+MOLEX_SD_49225_201
+
+
+0
+1
+1
+footprints
+Mini_din6
+
+MINI DIN
+0
+9
+7
+footprints
+Mini_din8
+
+MINI DIN
+0
+11
+9
+footprints
+MountingHole_2.7mm_M2.5
+Mounting Hole 2.7mm, no annular, M2.5
+mounting hole 2.7mm no annular m2.5
+0
+0
+0
+footprints
+NRF2401_LNA_module
+
+
+0
+8
+8
+footprints
+PAM8403_module
+
+
+0
+9
+9
+footprints
+PLCC-32_11.4x14.0mm_P1.27mm-bigpads
+PLCC, 32 Pin (http://ww1.microchip.com/downloads/en/DeviceDoc/doc0015.pdf), generated with kicad-footprint-generator ipc_plcc_jLead_generator.py
+PLCC LCC
+0
+32
+32
+footprints
+PLCC-32_SMD-Socket
+PLCC, 32 pins, surface mount
+plcc smt
+0
+32
+32
+footprints
+Pin_Header_Straight_1x02
+Through hole pin header
+pin header
+0
+2
+2
+footprints
+Pin_Header_Straight_2x04
+Through hole pin header
+pin header
+0
+8
+8
+footprints
+Pin_Header_Straight_2x07
+Through hole pin header
+pin header
+0
+14
+14
+footprints
+QFP80P1200X1200X160-44N
+
+
+0
+44
+44
+footprints
+R_0603_1608Metric
+Resistor SMD 0603 (1608 Metric), square (rectangular) end terminal, IPC_7351 nominal, (Body size source: http://www.tortai-tech.com/upload/download/2011102023233369053.pdf), generated with kicad-footprint-generator
+resistor
+0
+2
+2
+footprints
+SG053-SZ
+
+
+0
+8
+4
+footprints
+SO-8_5.3x6.2mm_P1.27mm
+8-Lead Plastic Small Outline, 5.3x6.2mm Body (http://www.ti.com.cn/cn/lit/ds/symlink/tl7705a.pdf)
+SOIC 1.27
+0
+8
+8
+footprints
+SOT-223
+module CMS SOT223 4 pins
+CMS SOT
+0
+4
+4
+footprints
+SW_Push_1P1T_NO_6x6mm_CAPPED
+tactile push button, 6x6mm e.g. PTS645xx series, height=9.5mm
+tact sw push 6mm smd
+0
+4
+2
+footprints
+SW_SPST_PTS810_handsoldering
+C&K Components, PTS 810 Series, Microminiature SMT Top Actuated, http://www.ckswitches.com/media/1476/pts810.pdf
+SPST Button Switch
+0
+4
+2
+footprints
+TE_1734451-1
+
+
+0
+52
+52
+footprints
+TP4056_module
+
+
+0
+6
+6
+footprints
+TQFP-44_10x10mm_P0.8mm
+44-Lead Plastic Thin Quad Flatpack (PT) - 10x10x1.0 mm Body [TQFP] (see Microchip Packaging Specification 00000049BS.pdf)
+QFP 0.8
+0
+44
+44
+footprints
+TQFP-44_12x12mm_P0.8mm
+44-Lead Plastic Thin Quad Flatpack (PT) - 10x10x1.0 mm Body [TQFP] (see Microchip Packaging Specification 00000049BS.pdf)
+QFP 0.8
+0
+44
+44
+footprints
+TQFP-44_14x14mm_P0.8mm
+44-Lead Plastic Thin Quad Flatpack (PT) - 14x14x1.0 mm Body [TQFP] (see Microchip Packaging Specification 00000049BS.pdf)
+QFP 0.8
+0
+44
+44
+footprints
+USB_Mini-B_Lumberg_2486_01_Horizontal
+USB Mini-B 5-pin SMD connector, http://downloads.lumberg.com/datenblaetter/en/2486_01.pdf
+USB USB_B USB_Mini connector
+0
+9
+6
+footprints
+Via_0.8mm
+
+
+0
+1
+1
+footprints
+karabas
+
+
+0
+0
+0
+footprints
+karabas2
+
+
+0
+0
+0
+footprints
+karabas_nano_logo
+
+
+0
+0
+0
+footprints
+karabas_nano_logo2
+
+
+0
+0
+0
+footprints
+karabas_nano_logo3
+
+
+0
+0
+0
+footprints
+karabas_pro_logo
+
+
+0
+0
+0
+footprints
+karabas_pro_logo2
+
+
+0
+0
+0
