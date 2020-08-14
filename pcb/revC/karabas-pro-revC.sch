@@ -4121,7 +4121,6 @@ NoConn ~ 12950 1500
 NoConn ~ 12950 1700
 NoConn ~ 12950 2300
 NoConn ~ 12350 2100
-NoConn ~ 12350 2000
 Entry Wire Line
 	11050 1100 11150 1200
 Entry Wire Line
@@ -6825,6 +6824,51 @@ Wire Wire Line
 	13400 8100 14100 8100
 Wire Wire Line
 	13400 8200 14100 8200
+Text Label 14100 7600 2    50   ~ 0
+~SD_CS
+Text Label 14100 7700 2    50   ~ 0
+ASDO
+Text Label 14100 7800 2    50   ~ 0
+VCC3_3
+Text Label 14100 7900 2    50   ~ 0
+DCLK
+Text Label 14100 8100 2    50   ~ 0
+DATA0
+Text Label 14100 8200 2    50   ~ 0
+~SD_DET
+$Comp
+L Device:R R53
+U 1 1 5F45EBBB
+P 11650 2950
+F 0 "R53" V 11700 2750 50  0000 C CNN
+F 1 "X*" V 11700 2600 50  0000 C CNN
+F 2 "Resistor_SMD:R_0805_2012Metric_Pad1.15x1.40mm_HandSolder" V 11580 2950 50  0001 C CNN
+F 3 "~" H 11650 2950 50  0001 C CNN
+	1    11650 2950
+	0    -1   -1   0   
+$EndComp
+Entry Wire Line
+	11050 2850 11150 2950
+Wire Wire Line
+	11150 2950 11500 2950
+Wire Wire Line
+	11800 2950 12150 2950
+Wire Wire Line
+	12150 2950 12150 2000
+Wire Wire Line
+	12150 2000 12350 2000
+Text Label 11150 2950 0    50   ~ 0
+VCC
+Text Notes 11250 3250 0    50   ~ 0
+Optional for VGA\n0 Ohm for HDMI-VGA\n200 Ohm for SCART
+Wire Notes Line
+	11100 2800 12100 2800
+Wire Notes Line
+	12100 2800 12100 3300
+Wire Notes Line
+	12100 3300 11100 3300
+Wire Notes Line
+	11100 3300 11100 2800
 Wire Bus Line
 	14200 10200 14200 11000
 Wire Bus Line
@@ -6857,16 +6901,4 @@ Wire Bus Line
 	6500 700  6500 11200
 Wire Bus Line
 	8750 700  8750 11450
-Text Label 14100 7600 2    50   ~ 0
-~SD_CS
-Text Label 14100 7700 2    50   ~ 0
-ASDO
-Text Label 14100 7800 2    50   ~ 0
-VCC3_3
-Text Label 14100 7900 2    50   ~ 0
-DCLK
-Text Label 14100 8100 2    50   ~ 0
-DATA0
-Text Label 14100 8200 2    50   ~ 0
-~SD_DET
 $EndSCHEMATC
