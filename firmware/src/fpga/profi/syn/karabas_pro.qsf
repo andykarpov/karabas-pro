@@ -186,6 +186,8 @@ set_instance_assignment -name GLOBAL_SIGNAL "GLOBAL CLOCK" -to CLK_50MHZ
 
 
 
+set_global_assignment -name EDA_GENERATE_FUNCTIONAL_NETLIST OFF -section_id eda_formal_verification
+set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
 set_global_assignment -name VHDL_FILE ../rtl/video/ram_scan.vhd
 set_global_assignment -name VHDL_FILE ../rtl/video/scan_converter.vhd
 set_global_assignment -name VHDL_FILE ../rtl/t80se/T80aw.vhd
@@ -218,7 +220,9 @@ set_global_assignment -name SYSTEMVERILOG_FILE ../rtl/sound/turbosound/ym2149.sv
 set_global_assignment -name VHDL_FILE ../rtl/sound/turbosound/turbosound.vhd
 set_global_assignment -name SYSTEMVERILOG_FILE ../rtl/sound/turbosound/saa1099.sv
 set_global_assignment -name VHDL_FILE ../rtl/sound/soundrive/soundrive.vhd
+set_global_assignment -name VHDL_FILE ../rtl/dac/dac.vhd
 set_global_assignment -name VHDL_FILE ../rtl/dac/tda1543.vhd
+set_global_assignment -name VHDL_FILE ../rtl/dac/tda1543a.vhd
 set_global_assignment -name VHDL_FILE ../rtl/uart/ay_uart.vhd
 set_global_assignment -name VHDL_FILE ../rtl/sd/zcontroller.vhd
 set_global_assignment -name VHDL_FILE ../rtl/storage/bus_port.vhd
@@ -230,4 +234,3 @@ set_global_assignment -name QIP_FILE ../rtl/clock/clk_ctrl.qip
 set_global_assignment -name QIP_FILE ../rtl/avr/rtc.qip
 set_global_assignment -name QIP_FILE ../rtl/avr/queue.qip
 set_global_assignment -name CDF_FILE karabas_pro_video_ubus.cdf
-set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top

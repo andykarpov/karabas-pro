@@ -46,6 +46,7 @@ use IEEE.numeric_std.all;
 
 entity karabas_pro is
 	generic (
+		dac_type 			 : integer range 0 to 2 := 1; -- 0 - PWM, 1 - TDA1543, 2 - TDA1543A
 		enable_diag_rom	 : boolean := false; -- Retroleum diagrom
 		enable_turbo 		 : boolean := false -- enable Turbo mode 7MHz
 	);
@@ -662,6 +663,25 @@ port map (
 -------------------------------------------------------------------------------
 -- I2S sound
 
+G_PWM_DAC: if dac_type = 0 generate
+U15_L: entity work.dac
+port map (
+	I_RESET				=> reset,
+	I_CLK 			=> clk_bus,
+	I_DATA 			=> audio_l,
+	O_DAC 			=> SND_BS
+);
+U15_R: entity work.dac
+port map (
+	I_RESET				=> reset,
+	I_CLK 			=> clk_bus,
+	I_DATA 			=> audio_r,
+	O_DAC 			=> SND_WS
+);
+end generate G_PWM_DAC;
+
+-- TDA1543
+G_TDA1543: if dac_type = 1 generate
 U15: entity work.tda1543
 port map (
 	RESET				=> reset,
@@ -673,6 +693,22 @@ port map (
 	WS  				=> SND_WS,
 	DATA 				=> SND_DAT
 );
+end generate G_TDA1543;
+
+-- TDA1543A
+G_TDA1543A: if dac_type = 2 generate
+U15: entity work.tda1543a
+port map (
+	RESET				=> reset,
+	CLK 				=> clk_8,
+	CS 				=> '1',
+	DATA_L 			=> audio_l,
+	DATA_R 			=> audio_r,
+	BCK 				=> SND_BS,
+	WS  				=> SND_WS,
+	DATA 				=> SND_DAT
+);
+end generate G_TDA1543A;
 
 -------------------------------------------------------------------------------
 -- FDD / HDD controllers
