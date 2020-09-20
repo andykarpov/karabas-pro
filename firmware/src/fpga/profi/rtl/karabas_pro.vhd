@@ -46,7 +46,8 @@ use IEEE.numeric_std.all;
 
 entity karabas_pro is
 	generic (
-		dac_type 			 : integer range 0 to 2 := 1; -- 0 - PWM, 1 - TDA1543, 2 - TDA1543A
+		enable_switches 	 : boolean := true; -- rev.C has SW3 with 4 dip switches
+		dac_type 			 : integer range 0 to 2 := 2; -- 0 - PWM, 1 - TDA1543, 2 - TDA1543A
 		enable_diag_rom	 : boolean := false; -- Retroleum diagrom
 		enable_turbo 		 : boolean := false -- enable Turbo mode 7MHz
 	);
@@ -102,6 +103,9 @@ port (
 	PIN_120		: inout std_logic;
 	PIN_119		: inout std_logic;
 	PIN_115		: inout std_logic;
+	
+	-- Dip Switches 
+	SW3 			: in std_logic_vector(4 downto 1) := "1111";
 		
 	-- UART / ESP8266
 	UART_RX 		: in std_logic;
