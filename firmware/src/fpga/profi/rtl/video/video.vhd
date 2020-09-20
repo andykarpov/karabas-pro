@@ -36,10 +36,8 @@ entity video is
 		DS80		: in std_logic; -- 1 = Profi CP/M mode. 0 = standard mode
 		PALETTE_EN: in std_logic := '1';
 		CS7E 		: in std_logic := '0';
-		PORT7E 	: in std_logic_vector(7 downto 0);
-		PORTFE 	: in std_logic_vector(7 downto 0);
-		BUS_D 	: in std_logic_vector(7 downto 0);
 		BUS_A 	: in std_logic_vector(15 downto 8);
+		BUS_D 	: in std_logic_vector(7 downto 0);
 		BUS_WR_N : in std_logic;
 		GX0 		: out std_logic;
 		
@@ -57,10 +55,16 @@ architecture rtl of video is
 	signal i 			: std_logic;
 	signal o_rgb 		: std_logic_vector(8 downto 0);
 	
+	type t_palette is array (0 to 15) of std_logic_vector(8 downto 0);
+	signal palette		: t_palette;
 	signal palette_a 	: std_logic_vector(3 downto 0);
+	signal palette_wr_a 	: std_logic_vector(3 downto 0);
+	signal palette_wr_data 	: std_logic_vector(7 downto 0);
 	signal palette_wr : std_logic := '0';
+	signal palette_need_wr : std_logic := '0';
 	signal palette_grb: std_logic_vector(8 downto 0);
 	signal palette_grb_reg: std_logic_vector(8 downto 0);
+	signal palette_prev : std_logic_vector(15 downto 8);
 	
 	-- profi videocontroller signals
 	signal vid_a_profi : std_logic_vector(13 downto 0);
@@ -127,8 +131,6 @@ begin
 		INT => int_profi,
 		A => vid_a_profi,
 		DS80 => DS80,
-		PAL_A => palette_a,
-		BUS_D => BUS_D,
 
 		RGB => rgb_profi,
 		I 	 => i_profi,
@@ -157,19 +159,63 @@ begin
 	HCNT <= hcnt_profi when ds80 = '1' else hcnt_spec;
 	VCNT <= vcnt_profi when ds80 = '1' else vcnt_spec;
 	
-	-- #007E-#FF7E HGFEDCBA01111110 HGFEDCBA0xxxxxx0 - Pal(D)
+	-- Палитра profi:
+	-- 1) палитра - это память на 16 ячеек
+	-- 2) в палитру пишется значение старшей половины адреса ША по адресу, заданному в порту #FE
+	-- 3) строб записи по схеме формируется при обращении к порту палитры #7E в режиме DS80
+	-- 4) при чтении адресом выступает код цвета от видеоконтроллера - YGRB
+	-- 5) по примерам на асме, найденным в интернете, я так понял, что адрес ША (код цвета) также инвертируется (порт FE при записи также инвертируется):
+		--	SetPal:	DI
+		--	LD	D,16	;кол-во "цветов"
+		--	LD	E,0EH
+		--	LD	C,7EH	;порт палитры, в рег бордера задаем инверсный код "цвета"
+		--			   ;значение цвета задается в битах A15-A8 при выполнении записи в порт 7E
+		--	LD	A,0FH	;задали первое значение (цвет 0)
+		--	OUT	(C),A	;но т.к. надо инвертироовать то он =0F
+		--Z046F:	LD	A,(HL)	;значение цвета 8 бит
+		--	CPL		;инверитруем (так надо по схеме компа)
+		--	LD	B,A	
+		--	LD	A,E     ;в А берём код цвета (он тоже инвертирован)
+		--	AND	0FH
+		--	OUT	(C),A	;задали цвет
+		--	INC	HL
+		--	DEC	E
+		--	DEC	D
+		--	JR	NZ,Z046F
+		--	RET
+			
+	-- убрал altsyncram, память палитры - это регистр, пишется по уровню,а не по клоку (?)
+	process(palette_wr, palette_a, palette_wr_data, palette)
+	begin
+		if rising_edge(CLK2x) then
+			if (palette_wr = '1') then
+				palette(to_integer(unsigned(BORDER(3 downto 0) xor X"F"))) <= (not BUS_A) & '0';
+			end if;
+			palette_grb <= palette(to_integer(unsigned(palette_a)));
+		end if;
+	end process;
+		
+	palette_a <= i & rgb(1) & rgb(2) & rgb(0);
+   palette_wr <= '1' when CS7E = '1' and BUS_WR_N = '0' and ds80 = '1' and reset = '0' else '0';
 	
---	UPAL: entity work.palette
---	port map(
---		address 	=> palette_a,
---		clock 	=> CLK2X and not CLK,
---		data 		=> BUS_A(15 downto 8) & "0", -- GGGRRR0BB
---		wren 		=> palette_wr,
---		q 			=> palette_grb
---	);
+	-- возвращаем наверх значение младшего разряда зеленого компонента палитры, это служит для отпределения наличия палитры в системе
+	GX0 <= palette_grb(6);
 	
---	palette_wr <= '1' when ds80 = '1' and CS7E = '1' and BUS_WR_N = '0' and reset = '0' else '0';
-	
+	-- применяем blank для профи, ибо в видеоконтроллере он после палитры
+	process(CLK2x, CLK, blank_profi, palette_grb) 
+	begin 
+		--if (CLK2x'event and CLK2x = '1') then 
+		--	if CLK = '1' then 
+				if (blank_profi = '1') then
+					palette_grb_reg <= (others => '0');
+				else
+					palette_grb_reg <= palette_grb;
+				end if;
+		--	end if;
+		--end if;
+	end process;
+
+	-- преобразование стандартного цвета RGBI в RGB 3:3:3 
 	U9BIT: entity work.rgbi_9bit
 	port map(
 		I_RED		=> rgb(2),
@@ -179,37 +225,19 @@ begin
 		O_RGB		=> o_rgb
 	);
 	
-	GX0 <= '1'; --palette_grb(6);
-	
---	process(CLK2x, CLK, blank_profi, palette_grb) 
---	begin 
---		if (CLK2x'event and CLK2x = '1') then 
---			if CLK = '1' then 
---				if (blank_profi = '1') then
---					palette_grb_reg <= (others => '0');
---				else
---					palette_grb_reg <= palette_grb;
---				end if;
---			end if;
---		end if;
---	end process;
-	
---	process(ds80, palette_en, palette_grb_reg, o_rgb)
---	begin
---		if (ds80 = '1' and palette_en = '1') then 
---			VIDEO_R <= palette_grb_reg(5 downto 3);
---			VIDEO_G <= palette_grb_reg(8 downto 6);
---			VIDEO_B <= palette_grb_reg(2 downto 0);
---		else
---			VIDEO_R <= o_rgb(8 downto 6);
---			VIDEO_G <= o_rgb(5 downto 3);
---			VIDEO_B <= o_rgb(2 downto 0);
---		end if;
---	end process;
-	
-	VIDEO_R <= o_rgb(8 downto 6);
-	VIDEO_G <= o_rgb(5 downto 3);
-	VIDEO_B <= o_rgb(2 downto 0);
+	-- переключение видео вывода с палитрой или без по сигналу palette_en
+	process(ds80, palette_en, palette_grb_reg, o_rgb)
+	begin
+		if (ds80 = '1' and palette_en = '1') then 
+			VIDEO_R <= palette_grb_reg(5 downto 3);
+			VIDEO_G <= palette_grb_reg(8 downto 6);
+			VIDEO_B <= palette_grb_reg(2 downto 0);
+		else
+			VIDEO_R <= o_rgb(8 downto 6);
+			VIDEO_G <= o_rgb(5 downto 3);
+			VIDEO_B <= o_rgb(2 downto 0);
+		end if;
+	end process;
 	
 	CSYNC <= not (vsync xor hsync);
 

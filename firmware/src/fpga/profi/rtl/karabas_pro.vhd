@@ -46,6 +46,7 @@ use IEEE.numeric_std.all;
 
 entity karabas_pro is
 	generic (
+		dac_type 			 : integer range 0 to 2 := 1; -- 0 - PWM, 1 - TDA1543, 2 - TDA1543A
 		enable_diag_rom	 : boolean := false; -- Retroleum diagrom
 		enable_turbo 		 : boolean := false -- enable Turbo mode 7MHz
 	);
@@ -139,6 +140,8 @@ signal port_7ffd_reg	: std_logic_vector(7 downto 0) := "00000000";
 signal port_1ffd_reg	: std_logic_vector(7 downto 0) := "00000000";
 signal port_dffd_reg : std_logic_vector(7 downto 0) := "00000000";
 signal port_xx7e_reg : std_logic_vector(7 downto 0) := "00000000";
+signal port_xx7e_a   : std_logic_vector(15 downto 8) := "00000000";
+signal port_xx7e_aprev   : std_logic_vector(15 downto 8) := "00000000";
 
 -- Keyboard
 signal kb_do_bus		: std_logic_vector(5 downto 0);
@@ -465,10 +468,8 @@ port map (
 	DS80 				=> ds80,
 	PALETTE_EN 		=> palette_en,
 	CS7E				=> cs_xx7e,
-	PORT7E 			=> port_xx7e_reg,
-	PORTFE 			=> port_xxfe_reg,
-	BUS_D 			=> cpu_do_bus,
 	BUS_A 			=> cpu_a_bus(15 downto 8),
+	BUS_D 			=> cpu_do_bus,
 	BUS_WR_N 		=> cpu_wr_n,
 	GX0 				=> gx0,
 	
@@ -662,6 +663,25 @@ port map (
 -------------------------------------------------------------------------------
 -- I2S sound
 
+G_PWM_DAC: if dac_type = 0 generate
+U15_L: entity work.dac
+port map (
+	I_RESET				=> reset,
+	I_CLK 			=> clk_bus,
+	I_DATA 			=> audio_l,
+	O_DAC 			=> SND_BS
+);
+U15_R: entity work.dac
+port map (
+	I_RESET				=> reset,
+	I_CLK 			=> clk_bus,
+	I_DATA 			=> audio_r,
+	O_DAC 			=> SND_WS
+);
+end generate G_PWM_DAC;
+
+-- TDA1543
+G_TDA1543: if dac_type = 1 generate
 U15: entity work.tda1543
 port map (
 	RESET				=> reset,
@@ -673,6 +693,22 @@ port map (
 	WS  				=> SND_WS,
 	DATA 				=> SND_DAT
 );
+end generate G_TDA1543;
+
+-- TDA1543A
+G_TDA1543A: if dac_type = 2 generate
+U15: entity work.tda1543a
+port map (
+	RESET				=> reset,
+	CLK 				=> clk_8,
+	CS 				=> '1',
+	DATA_L 			=> audio_l,
+	DATA_R 			=> audio_r,
+	BCK 				=> SND_BS,
+	WS  				=> SND_WS,
+	DATA 				=> SND_DAT
+);
+end generate G_TDA1543A;
 
 -------------------------------------------------------------------------------
 -- FDD / HDD controllers
@@ -833,8 +869,9 @@ sco 	<= port_dffd_reg(3); -- Выбор положения окна проеци
 
 ram_ext <= port_dffd_reg(2 downto 0);
 
-cs_xxfe <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and cpu_a_bus(0) = '0' else '0';
---cs_xxfe <= '1' when cpu_iorq_n = '0' and cpu_a_bus(0) = '0' else '0';
+--cs_xxfe <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and cpu_a_bus(0) = '0' else '0';
+cs_xxfe <= '1' when cpu_iorq_n = '0' and cpu_a_bus(0) = '0' else '0';
+cs_xx7e <= '1' when cs_xxfe = '1' and cpu_a_bus(7) = '0' else '0';
 cs_xxff <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and cpu_a_bus(7 downto 0) = X"FF" else '0';
 cs_eff7 <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and cpu_a_bus = X"EFF7" else '0';
 cs_dff7 <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and cpu_a_bus = X"DFF7" and port_eff7_reg(7) = '1' else '0';
@@ -843,7 +880,6 @@ cs_1ffd <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and cpu_a_bus = X"1FFD" 
 cs_dffd <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and cpu_a_bus = X"DFFD" and fd_port = '1' else '0';
 cs_7ffd <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and cpu_a_bus = X"7FFD" else '0';
 cs_xxfd <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and cpu_a_bus(15) = '0' and cpu_a_bus(1) = '0' and fd_port = '0' else '0';
-cs_xx7e <= '1' when cs_xxfe = '1' and cpu_a_bus(7) = '0' and port_dffd_reg(7) = '1' else '0';
 
 -- регистр AS часов
 cs_rtc_as <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and
@@ -858,6 +894,10 @@ cs_rtc_ds <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and
 ---- Profi RTC
 --cs_rtc_as <= '1' when cpu_a_bus(9)='0' and cpu_a_bus(7)='1' and cpu_a_bus(5)='1' and cpu_a_bus(3 downto 0)=X"F" and cpu_m1_n = '1' and cpu_iorq_n='0' and cpm='1' and rom14='1' else '0';
 --cs_rtc_ds <= '1' when cpu_a_bus(9)='0' and cpu_a_bus(7)='1' and cpu_a_bus(5)='0' and cpu_a_bus(3 downto 0)=X"F" and cpu_m1_n = '1' and cpu_iorq_n='0' and cpm='1' and rom14='1' else '0';
+
+-- порты #7e - пишутся по фронту /wr
+--port_xx7e_reg <= cpu_do_bus when (cs_xx7e = '1' and (cpu_wr_n'event and cpu_wr_n = '0'));
+--port_xx7e_a <= cpu_a_bus(15 downto 8) when (cs_xx7e = '1' and (cpu_wr_n'event and cpu_wr_n = '0'));
 
 process (reset, areset, clk_bus, cpu_a_bus, dos_act, cs_xxfe, cs_eff7, cs_dff7, cs_7ffd, cs_1ffd, cs_xxfd, port_7ffd_reg, port_1ffd_reg, cpu_mreq_n, cpu_m1_n, cpu_wr_n, cpu_do_bus, fd_port)
 begin
@@ -876,11 +916,6 @@ begin
 				port_xxfe_reg <= cpu_do_bus; 
 			end if;
 			
-			-- #7E
-			if cs_xx7e = '1' and cpu_wr_n = '0' then 
-				port_xx7e_reg <= cpu_do_bus;
-			end if;
-
 			-- #EFF7
 			if cs_eff7 = '1' and cpu_wr_n = '0' then 
 				port_eff7_reg <= cpu_do_bus; 
@@ -994,6 +1029,6 @@ PIN_121 <= vid_rgb(8);
 PIN_120 <= vid_hsync xor (not vid_vsync);
 PIN_119 <= cpu_int_n;
 PIN_115 <= VGA_VS;
-palette_en <= not kb_turbo;
+palette_en <= kb_turbo;
 	
 end rtl;
