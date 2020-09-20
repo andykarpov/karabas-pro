@@ -46,8 +46,10 @@ use IEEE.numeric_std.all;
 
 entity karabas_pro is
 	generic (
+		-- Warning! The following 2 parameters are assigned on the project level:
 		enable_switches 	 : boolean := true; -- rev.C has SW3 with 4 dip switches
 		dac_type 			 : integer range 0 to 1 := 0; -- 0 - TDA1543, 1 - TDA1543A (only has effect when enable_switches = false)
+		
 		enable_ay_uart 	 : boolean := false; -- Enable ESP8266 module on AY I/O port A
 		enable_diag_rom	 : boolean := false; -- Retroleum diagrom
 		enable_turbo 		 : boolean := false -- enable Turbo mode 7MHz
