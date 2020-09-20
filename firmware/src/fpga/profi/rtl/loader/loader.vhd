@@ -22,10 +22,10 @@ entity loader is
 generic (
 	FLASH_ADDR_START	: std_logic_vector(23 downto 0) := "000010111000000000000000"; -- 753664; -- 24bit address
 	RAM_ADDR_START		: std_logic_vector(20 downto 0) := "100000000000000000000"; -- 21 bit address
-	SIZE_TO_READ		: integer := 65536; -- count of bytes to read (64kb rom)
+	SIZE_TO_READ		: integer := 262144; -- count of bytes to read (4x 64KB rom)
 	
 	RAM_CLEAR_ADDR_START	: std_logic_vector(20 downto 0) := "000000000000000000000"; 
-	SIZE_TO_CLEAR 		: integer := 131072; -- count of bytes to clear
+	SIZE_TO_CLEAR 		: integer := 131072; -- count of bytes to clear (128 KB)
 	
 	SPI_CMD_READ  		: std_logic_vector(7 downto 0) := X"03"; -- W25Q16 read command
 	SPI_CMD_POWERON 	: std_logic_vector(7 downto 0) := X"AB" -- W25Q16 power on command
@@ -78,7 +78,7 @@ signal sdr_wr			: std_logic := '0';
 -- System
 signal loader_act 	: std_logic := '1';
 signal reset_cnt  	: std_logic_vector(3 downto 0) := "0000";
-signal read_cnt 		: std_logic_vector(16 downto 0) := (others => '0');
+signal read_cnt 		: std_logic_vector(20 downto 0) := (others => '0');
 signal clear_cnt 		: std_logic_vector(20 downto 0) := (others => '0');
 
 type machine IS(init, release_init, wait_init, 

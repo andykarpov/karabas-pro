@@ -47,7 +47,8 @@ use IEEE.numeric_std.all;
 entity karabas_pro is
 	generic (
 		enable_switches 	 : boolean := true; -- rev.C has SW3 with 4 dip switches
-		dac_type 			 : integer range 0 to 2 := 2; -- 0 - PWM, 1 - TDA1543, 2 - TDA1543A
+		dac_type 			 : integer range 0 to 1 := 0; -- 0 - TDA1543, 1 - TDA1543A (only has effect when enable_switches = false)
+		enable_ay_uart 	 : boolean := false; -- Enable ESP8266 module on AY I/O port A
 		enable_diag_rom	 : boolean := false; -- Retroleum diagrom
 		enable_turbo 		 : boolean := false -- enable Turbo mode 7MHz
 	);
@@ -176,6 +177,7 @@ signal vid_rgb_osd 	: std_logic_vector(8 downto 0);
 signal vid_invert 	: std_logic;
 signal vid_hcnt 		: std_logic_vector(9 downto 0);
 signal vid_vcnt 		: std_logic_vector(8 downto 0);
+signal vid_scandoubler_enable : std_logic := '1';
 
 -- Z-Controller
 signal zc_do_bus		: std_logic_vector(7 downto 0);
@@ -224,6 +226,7 @@ signal ssg_cn1_c		: std_logic_vector(7 downto 0);
 signal audio_l			: std_logic_vector(15 downto 0);
 signal audio_r			: std_logic_vector(15 downto 0);
 signal sound			: std_logic_vector(7 downto 0);
+signal audio_dac_type: std_logic := '0'; -- 0 = TDA1543, 1 = TDA1543A
 
 -- AY UART signals
 signal ay_bdir 		: std_logic;
@@ -278,6 +281,7 @@ signal ram_oe_n 		: std_logic := '1';
 signal vbus_mode 		: std_logic := '0';
 signal vid_rd 			: std_logic := '0';
 signal palette_en 	: std_logic := '1';
+signal ext_rom_bank  : std_logic_vector(1 downto 0) := "00";
 
 -- Loader
 signal loader_ram_di	: std_logic_vector(7 downto 0);
@@ -447,7 +451,8 @@ port map (
 	TRDOS 			=> dos_act,
 	
 	-- rom
-	ROM_BANK 		=> port_7ffd_reg(4)
+	ROM_BANK 		=> port_7ffd_reg(4),
+	EXT_ROM_BANK   => ext_rom_bank
 );	
 
 -- Video Spectrum/Pentagon
@@ -533,6 +538,7 @@ port map (
 	SSI_IN 			=> vid_hsync,
 	CLK 				=> clk_div2,
 	CLK2 				=> clk_bus,
+	EN 				=> vid_scandoubler_enable,
 	DS80				=> ds80,
 		
 	RGB_O(8 downto 6)	=> VGA_R,
@@ -667,29 +673,12 @@ port map (
 -------------------------------------------------------------------------------
 -- I2S sound
 
-G_PWM_DAC: if dac_type = 0 generate
-U15_L: entity work.dac
-port map (
-	I_RESET				=> reset,
-	I_CLK 			=> clk_bus,
-	I_DATA 			=> audio_l,
-	O_DAC 			=> SND_BS
-);
-U15_R: entity work.dac
-port map (
-	I_RESET				=> reset,
-	I_CLK 			=> clk_bus,
-	I_DATA 			=> audio_r,
-	O_DAC 			=> SND_WS
-);
-end generate G_PWM_DAC;
-
 -- TDA1543
-G_TDA1543: if dac_type = 1 generate
 U15: entity work.tda1543
 port map (
 	RESET				=> reset,
 	CLK 				=> clk_8,
+	DAC_TYPE 		=> audio_dac_type,
 	CS 				=> '1',
 	DATA_L 			=> audio_l,
 	DATA_R 			=> audio_r,
@@ -697,23 +686,6 @@ port map (
 	WS  				=> SND_WS,
 	DATA 				=> SND_DAT
 );
-end generate G_TDA1543;
-
--- TDA1543A
-G_TDA1543A: if dac_type = 2 generate
-U15: entity work.tda1543a
-port map (
-	RESET				=> reset,
-	CLK 				=> clk_8,
-	CS 				=> '1',
-	DATA_L 			=> audio_l,
-	DATA_R 			=> audio_r,
-	BCK 				=> SND_BS,
-	WS  				=> SND_WS,
-	DATA 				=> SND_DAT
-);
-end generate G_TDA1543A;
-
 -------------------------------------------------------------------------------
 -- FDD / HDD controllers
 
@@ -829,6 +801,10 @@ cpu_inta_n <= cpu_iorq_n or cpu_m1_n;	-- INTA
 cpu_nmi_n <= '0' when kb_magic = '1' else '1'; -- NMI
 cpu_wait_n <= '1'; -- WAIT
 cpuclk <= clk_bus and ena_div8;
+
+vid_scandoubler_enable <= '0' when enable_switches and SW3(1) = '0' else '1'; -- enable scandoubler by default for older revisions and switchable by SW3(1) for a newer ones
+audio_dac_type <= '0' when ((enable_switches and SW3(2) = '1') or (not(enable_switches) and dac_type = 0)) else '1'; -- default is dac_type for older revisions and switchable by SW3(2) for a newer ones
+ext_rom_bank <= not SW3(4 downto 3) when enable_switches else "00"; -- SW3 and SW4 switches a 4 external rom banks for newer revisions, otherwise - the only one ROM used 
 
 -------------------------------------------------------------------------------
 -- SD
@@ -976,7 +952,7 @@ port_bff7 	<= '1' when (cpu_iorq_n = '0' and cpu_a_bus = X"BFF7" and cpu_m1_n = 
 zc_wr 		<= '1' when (cpu_iorq_n = '0' and cpu_wr_n = '0' and cpu_a_bus(7 downto 6) = "01" and cpu_a_bus(4 downto 0) = "10111") else '0';
 zc_rd 		<= '1' when (cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_a_bus(7 downto 6) = "01" and cpu_a_bus(4 downto 0) = "10111") else '0';
 
-ay_port 		<= '1' when cpu_a_bus(7 downto 0) = x"FD" and cpu_a_bus(15)='1' and fd_port = '1' else '0';
+ay_port 		<= '1' when enable_ay_uart and cpu_a_bus(7 downto 0) = x"FD" and cpu_a_bus(15)='1' and fd_port = '1' else '0';
 ay_bdir 		<= '1' when ay_port = '1' and cpu_iorq_n = '0' and cpu_wr_n = '0' else '0';
 ay_bc1 		<= '1' when ay_port = '1' and cpu_a_bus(14) = '1' and cpu_iorq_n = '0' and (cpu_wr_n='0' or cpu_rd_n='0') else '0';
 
@@ -1027,12 +1003,12 @@ selector <=
 	(others => '1');
 	
 -- debug 
-PIN_141 <= vid_rgb(2);
-PIN_138 <= vid_rgb(5);
-PIN_121 <= vid_rgb(8);
-PIN_120 <= vid_hsync xor (not vid_vsync);
-PIN_119 <= cpu_int_n;
-PIN_115 <= VGA_VS;
+--PIN_141 <= vid_rgb(2);
+--PIN_138 <= vid_rgb(5);
+--PIN_121 <= vid_rgb(8);
+--PIN_120 <= vid_hsync xor (not vid_vsync);
+--PIN_119 <= cpu_int_n;
+--PIN_115 <= VGA_VS;
 palette_en <= kb_turbo;
 	
 end rtl;
