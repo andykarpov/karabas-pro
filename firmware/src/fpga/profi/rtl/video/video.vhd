@@ -56,7 +56,10 @@ architecture rtl of video is
 	signal o_rgb 		: std_logic_vector(8 downto 0);
 	
 	type t_palette is array (0 to 15) of std_logic_vector(8 downto 0);
-	signal palette		: t_palette;
+	signal palette		: t_palette := (
+		0 => "000000000", 1 => "000000100", 2 =>  "000100000", 3 =>  "000100100", 4 =>  "100000000", 5 =>  "100000100", 6 =>  "100100000", 7 =>  "100100100",
+		8 => "000000000", 9 => "000000110", 10 => "000110000", 11 => "000110110", 12 => "110000000", 13 => "110000110", 14 => "110110000", 15 => "110110110"
+	);
 	signal palette_a 	: std_logic_vector(3 downto 0);
 	signal palette_wr_a 	: std_logic_vector(3 downto 0);
 	signal palette_wr_data 	: std_logic_vector(7 downto 0);
@@ -160,59 +163,50 @@ begin
 	VCNT <= vcnt_profi when ds80 = '1' else vcnt_spec;
 	
 	-- Палитра profi:
-	-- 1) палитра - это память на 16 ячеек
-	-- 2) в палитру пишется значение старшей половины адреса ША по адресу, заданному в порту #FE
+
+	-- 1) палитра - это память на 16 ячеек. каждая ячейка - 8-битное значение цвета в виде GGGRRRBB
+	-- 2) в палитру пишется инвертированное значение старшей половины адреса ША по адресу, заданному в порту #FE (тоже инвертированное значение)
 	-- 3) строб записи по схеме формируется при обращении к порту палитры #7E в режиме DS80
 	-- 4) при чтении адресом выступает код цвета от видеоконтроллера - YGRB
-	-- 5) по примерам на асме, найденным в интернете, я так понял, что адрес ША (код цвета) также инвертируется (порт FE при записи также инвертируется):
-		--	SetPal:	DI
-		--	LD	D,16	;кол-во "цветов"
-		--	LD	E,0EH
-		--	LD	C,7EH	;порт палитры, в рег бордера задаем инверсный код "цвета"
-		--			   ;значение цвета задается в битах A15-A8 при выполнении записи в порт 7E
-		--	LD	A,0FH	;задали первое значение (цвет 0)
-		--	OUT	(C),A	;но т.к. надо инвертироовать то он =0F
-		--Z046F:	LD	A,(HL)	;значение цвета 8 бит
-		--	CPL		;инверитруем (так надо по схеме компа)
-		--	LD	B,A	
-		--	LD	A,E     ;в А берём код цвета (он тоже инвертирован)
-		--	AND	0FH
-		--	OUT	(C),A	;задали цвет
-		--	INC	HL
-		--	DEC	E
-		--	DEC	D
-		--	JR	NZ,Z046F
-		--	RET
 			
-	-- убрал altsyncram, память палитры - это регистр, пишется по уровню,а не по клоку (?)
-	process(palette_wr, palette_a, palette_wr_data, palette)
+	-- запись палитры
+	process(CLK2x, reset, palette_wr, palette_a, palette_wr_data, palette)
 	begin
-		if rising_edge(CLK2x) then
-			if (palette_wr = '1') then
-				palette(to_integer(unsigned(BORDER(3 downto 0) xor X"F"))) <= (not BUS_A) & '0';
+		if reset = '1' then 
+			-- set default palette on reset
+			palette <= (
+				0 => "000000000", 1 => "000000100", 2 =>  "000100000", 3 =>  "000100100", 4 =>  "100000000", 5 =>  "100000100", 6 =>  "100100000", 7 =>  "100100100",
+				8 => "000000000", 9 => "000000110", 10 => "000110000", 11 => "000110110", 12 => "110000000", 13 => "110000110", 14 => "110110000", 15 => "110110110"
+			);
+		elsif rising_edge(CLK2x) then 
+			if palette_wr = '1' then
+				-- это костыль для проверки теории, что первый цвет пишется криво
+				if (BORDER(3 downto 0) = X"F") then -- первый цвет в палитре (неяркий черный)
+					palette(to_integer(unsigned(BORDER(3 downto 0) xor X"F"))) <= (others => '0');
+				else 
+					palette(to_integer(unsigned(BORDER(3 downto 0) xor X"F"))) <= (not BUS_A) & '0';
+				end if;
 			end if;
-			palette_grb <= palette(to_integer(unsigned(palette_a)));
 		end if;
 	end process;
-		
+	
 	palette_a <= i & rgb(1) & rgb(2) & rgb(0);
    palette_wr <= '1' when CS7E = '1' and BUS_WR_N = '0' and ds80 = '1' and reset = '0' else '0';
+
+	-- чтение из палитры
+	palette_grb <= palette(to_integer(unsigned(palette_a)));
 	
-	-- возвращаем наверх значение младшего разряда зеленого компонента палитры, это служит для отпределения наличия палитры в системе
+	-- возвращаем наверх (top level) значение младшего разряда зеленого компонента палитры, это служит для отпределения наличия палитры в системе
 	GX0 <= palette_grb(6);
 	
 	-- применяем blank для профи, ибо в видеоконтроллере он после палитры
 	process(CLK2x, CLK, blank_profi, palette_grb) 
 	begin 
-		--if (CLK2x'event and CLK2x = '1') then 
-		--	if CLK = '1' then 
-				if (blank_profi = '1') then
-					palette_grb_reg <= (others => '0');
-				else
-					palette_grb_reg <= palette_grb;
-				end if;
-		--	end if;
-		--end if;
+		if (blank_profi = '1') then
+			palette_grb_reg <= (others => '0');
+		else
+			palette_grb_reg <= palette_grb;
+		end if;
 	end process;
 
 	-- преобразование стандартного цвета RGBI в RGB 3:3:3 

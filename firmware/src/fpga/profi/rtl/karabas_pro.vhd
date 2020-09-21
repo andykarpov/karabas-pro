@@ -1011,6 +1011,8 @@ selector <=
 --PIN_120 <= vid_hsync xor (not vid_vsync);
 --PIN_119 <= cpu_int_n;
 --PIN_115 <= VGA_VS;
-palette_en <= kb_turbo;
+
+-- временно включаем-выключаем палитру по кнопке ScrollLock. Потом сделаем включенной постоянно
+palette_en <= not kb_turbo;
 	
 end rtl;
