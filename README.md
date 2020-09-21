@@ -14,7 +14,7 @@ The idea was to make a smaller Profi (Профи) ZX Spectrum clone, with real F
 
 **The main firmware is still in progress. Currently it implements:**
 
-1) ZX Spectrum classic and profi hi-res hi-color mode (512x240)
+1) ZX Spectrum classic and profi hi-res hi-color mode (with palette) (512x240)
 2) ZX Profi ports
 3) FDD controller that works both in CP/M and classic modes
 4) HDD controller (works only in Profi CP/M mode)
@@ -29,7 +29,7 @@ The idea was to make a smaller Profi (Профи) ZX Spectrum clone, with real F
 
 1) Wi-Fi support in TR-DOS and CP/M modes
 2) RTC ports read/write to set time from the profi interface
-3) Profi palette
+3) Simple UART via Atmega
 
 ## More info
 
