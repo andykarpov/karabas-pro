@@ -180,12 +180,12 @@ begin
 			);
 		elsif rising_edge(CLK2x) then 
 			if palette_wr = '1' then
-				-- это костыль для проверки теории, что первый цвет пишется криво
-				if (BORDER(3 downto 0) = X"F") then -- первый цвет в палитре (неяркий черный)
-					palette(to_integer(unsigned(BORDER(3 downto 0) xor X"F"))) <= (others => '0');
-				else 
+--				-- это костыль для проверки теории, что первый цвет пишется криво
+--				if (BORDER(3 downto 0) = X"F") then -- первый цвет в палитре (неяркий черный)
+--					palette(to_integer(unsigned(BORDER(3 downto 0) xor X"F"))) <= (others => '0');
+--				else 
 					palette(to_integer(unsigned(BORDER(3 downto 0) xor X"F"))) <= (not BUS_A) & '0';
-				end if;
+--				end if;
 			end if;
 		end if;
 	end process;
@@ -202,7 +202,7 @@ begin
 	-- применяем blank для профи, ибо в видеоконтроллере он после палитры
 	process(CLK2x, CLK, blank_profi, palette_grb) 
 	begin 
-		if (blank_profi = '1') then
+		if (blank_profi = '1' and ds80='1') then
 			palette_grb_reg <= (others => '0');
 		else
 			palette_grb_reg <= palette_grb;
@@ -210,28 +210,28 @@ begin
 	end process;
 
 	-- преобразование стандартного цвета RGBI в RGB 3:3:3 
-	U9BIT: entity work.rgbi_9bit
-	port map(
-		I_RED		=> rgb(2),
-		I_GREEN	=> rgb(1),
-		I_BLUE	=> rgb(0),
-		I_BRIGHT => i,
-		O_RGB		=> o_rgb
-	);
+--	U9BIT: entity work.rgbi_9bit
+--	port map(
+--		I_RED		=> rgb(2),
+--		I_GREEN	=> rgb(1),
+--		I_BLUE	=> rgb(0),
+--		I_BRIGHT => i,
+--		O_RGB		=> o_rgb
+--	);
 	
-	-- переключение видео вывода с палитрой или без по сигналу palette_en
-	process(ds80, palette_en, palette_grb_reg, o_rgb)
-	begin
-		if (ds80 = '1' and palette_en = '1') then 
+--	-- переключение видео вывода с палитрой или без по сигналу palette_en
+--	process(ds80, palette_en, palette_grb_reg, o_rgb)
+--	begin
+--		if (ds80 = '1' and palette_en = '1') then 
 			VIDEO_R <= palette_grb_reg(5 downto 3);
 			VIDEO_G <= palette_grb_reg(8 downto 6);
 			VIDEO_B <= palette_grb_reg(2 downto 0);
-		else
-			VIDEO_R <= o_rgb(8 downto 6);
-			VIDEO_G <= o_rgb(5 downto 3);
-			VIDEO_B <= o_rgb(2 downto 0);
-		end if;
-	end process;
+--		else
+--			VIDEO_R <= o_rgb(8 downto 6);
+--			VIDEO_G <= o_rgb(5 downto 3);
+--			VIDEO_B <= o_rgb(2 downto 0);
+--		end if;
+--	end process;
 	
 	CSYNC <= not (vsync xor hsync);
 

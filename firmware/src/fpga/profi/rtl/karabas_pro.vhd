@@ -881,6 +881,8 @@ cs_rtc_ds <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and
 --port_xx7e_reg <= cpu_do_bus when (cs_xx7e = '1' and (cpu_wr_n'event and cpu_wr_n = '0'));
 --port_xx7e_a <= cpu_a_bus(15 downto 8) when (cs_xx7e = '1' and (cpu_wr_n'event and cpu_wr_n = '0'));
 
+	port_xxfe_reg <= cpu_do_bus when cs_xxfe = '1' and (cpu_wr_n'event and cpu_wr_n = '1');
+
 process (reset, areset, clk_bus, cpu_a_bus, dos_act, cs_xxfe, cs_eff7, cs_dff7, cs_7ffd, cs_1ffd, cs_xxfd, port_7ffd_reg, port_1ffd_reg, cpu_mreq_n, cpu_m1_n, cpu_wr_n, cpu_do_bus, fd_port)
 begin
 	if reset = '1' then
@@ -894,9 +896,9 @@ begin
 		--if ena_div2 = '1' then -- захват портов при 14МГц ena
 			
 			-- #FE
-			if cs_xxfe = '1' and cpu_wr_n = '0' then 
-				port_xxfe_reg <= cpu_do_bus; 
-			end if;
+--			if cs_xxfe = '1' and cpu_wr_n = '0' then 
+--				port_xxfe_reg <= cpu_do_bus; 
+--			end if;
 			
 			-- #EFF7
 			if cs_eff7 = '1' and cpu_wr_n = '0' then 
