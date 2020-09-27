@@ -180,12 +180,12 @@ begin
 			);
 		elsif rising_edge(CLK2x) then 
 			if palette_wr = '1' then
-				-- это костыль для проверки теории, что первый цвет пишется криво
-				if (BORDER(3 downto 0) = X"F") then -- первый цвет в палитре (неяркий черный)
-					palette(to_integer(unsigned(BORDER(3 downto 0) xor X"F"))) <= (others => '0');
-				else 
+--				-- это костыль для проверки теории, что первый цвет пишется криво
+--				if (BORDER(3 downto 0) = X"F") then -- первый цвет в палитре (неяркий черный)
+--					palette(to_integer(unsigned(BORDER(3 downto 0) xor X"F"))) <= (others => '0');
+--				else 
 					palette(to_integer(unsigned(BORDER(3 downto 0) xor X"F"))) <= (not BUS_A) & '0';
-				end if;
+--				end if;
 			end if;
 		end if;
 	end process;
