@@ -125,15 +125,16 @@ begin
 
 	U_PROFI: entity work.profi_video 
 	port map (
-		CLK => CLK, -- 14
-		CLK2x => CLK2x, -- 28
-		ENA => ENA, -- 7
+		CLK => CLK, -- 12
+		CLK2x => CLK2x, -- 24
+		ENA => ENA, -- 6
 		BORDER => BORDER,
 		DI => DI,
 		INTA => INTA,
 		INT => int_profi,
 		A => vid_a_profi,
 		DS80 => DS80,
+		MODE60 => palette_en,
 
 		RGB => rgb_profi,
 		I 	 => i_profi,
