@@ -1,0 +1,337 @@
+library IEEE;
+use IEEE.std_logic_1164.all;
+use IEEE.std_logic_arith.conv_integer;
+use IEEE.numeric_std.all;
+
+entity serial_mouse is
+port(
+	 CLK			: in std_logic;
+	 CLKEN 		: in std_logic;
+	 N_RESET 	: in std_logic := '1';
+	 
+    A          : in std_logic_vector(15 downto 0);
+	 DI 			: in std_logic_vector(7 downto 0);
+	 WR_N 		: in std_logic := '1';
+	 RD_N 		: in std_logic := '1';
+	 IORQ_N 		: in std_logic := '1';
+	 M1_N 		: in std_logic := '1';
+	 CPM 			: in std_logic := '0';
+	 DOS 			: in std_logic := '0';
+	 ROM14 		: in std_logic := '0';
+	 DS80 		: in std_logic := '0';
+	 TURBO 		: in std_logic := '0';
+	 
+	 MS_X 	 	: in signed(7 downto 0) := "00000000";
+	 MS_Y 	 	: in signed(7 downto 0) := "00000000";
+	 MS_BTNS 	: in std_logic_vector(2 downto 0) := "000";
+--	 MS_Z 		: in std_logic_vector(3 downto 0) := "0000";
+	 MS_PRESET  : in std_logic := '0';
+	 MS_EVENT 	: in std_logic := '0';
+	 
+	 DO			: out std_logic_vector(7 downto 0);
+	 INT_N 		: out std_logic := '1';
+	 OE_N 		: out std_logic := '1';
+	 
+	 DEBUG1 		: out std_logic_vector(7 downto 0);
+	 DEBUG2 		: out std_logic_vector(7 downto 0);
+	 DEBUG3 		: out std_logic_vector(7 downto 0);
+	 DEBUG4 		: out std_logic_vector(7 downto 0)
+	 
+);
+end serial_mouse;
+
+architecture RTL of serial_mouse is
+		
+	-- Microsoft mouse flavour
+	-- Bit  7  6  5  4  3  2  1  0
+	--		  x  1  L  R Y7 Y6 X7 X6   Byte 0
+	--		  x  0 X5 X4 X3 X2 X1 X0   Byte 1
+	--		  x  0 Y5 Y4 Y3 Y2 Y1 Y0   Byte 2
+	-- L = Left Button (1 when pressed)
+	-- R = Right Button (1 when pressed)
+	-- X0..X7 = X distance 8-bit two's complement value -128 to +127
+	-- Y0..Y7 = Y distance 8-bit two's complement value -128 to +127
+	
+	-- https://www.sgu.ru/sites/default/files/textdocsfiles/2014/01/10/k580bb51.pdf
+	-- https://www.intel.cn/content/dam/www/programmable/us/en/pdfs/literature/ds/ds8251.pdf
+	-- http://www.danbigras.ru/RK86/RS232/RS232s.asm
+	
+	-- # регистр команд (запись)
+	-- D7 - 1=Режим поиска синхросимволов (EH)
+	-- D6 - 1=сброс в исходное состояние (IR)
+	-- D5 - 1=передача разрешена (RTS)
+	-- D4 - 1=установка ошибок в исходное состояние (ER)
+	-- D3 - 1=конец передачи (SBRK), 0=нормальная работа передачи
+	-- D2 - 1=разрешение приема (RxE)
+	-- D1 - 1=готовность передачи (DTR)
+	-- D0 - 1=разрешение передачи (TxEN)
+	
+	-- # регистр статуса (чтение)
+	-- D7 - DSR 1=готовность передатчика терминала
+	-- D6 - SYNDET синхросимвол найден
+	-- D5 - FE 1=ошибка стоп-бита
+	-- D4 - OE 1=переполнение буфера
+	-- D3 - PE 1=ошибка четности
+	-- D2 - TxE   1=конец передачи
+	-- D1 - RxRDY 1=готовность приемника
+	-- D0 - TxRDY 1=готовность передатчика
+	
+	-- инициализация чтения драйвером мыши:
+	-- DTR + RxE + ER + RTS
+	
+	-- алгоритм приема
+	-- если RxRDY = 1 - можно читать байт
+	
+	-- В  компьютере  PROFI 2+ в связи с добавлением новой аппаратуры
+   -- система  прерываний  была  расширена:  в  режиме  IM0, IM2 программист
+   -- должен учитывать следущие особенности:
+
+   --      - кроме прерывания от кадровой синхронизации (50 Герц) должна
+   --      осуществляться   обработка  прерываний  от  коммуникационного
+   --      порта  (  RST20H - прием, RST28H - передача ) и от аппаратных
+   --      часов   (   RST30H   ),в  системе  обработка  этих  пррываний
+   --      осуществляется    драйверами    коммуникационного   порта   и
+   --      аппаратных часов;	
+
+	signal di_reg : std_logic_vector(7 downto 0) := "00000000";
+	signal do_reg : std_logic_vector(7 downto 0) := "00000000";	
+	signal ctl_reg : std_logic_vector(7 downto 0) := "00000000";
+	signal status_reg : std_logic_vector(7 downto 0) := "00000000";
+	signal mode_reg : std_logic_vector(7 downto 0) := "00000000";
+	
+	signal int : std_logic := '0';
+	signal int_rq : std_logic := '0';
+	signal fi : std_logic := '0';
+	signal rxrdt : std_logic := '0';
+	signal txrdt : std_logic := '0';
+	signal port93_b0 : std_logic := '0';
+	
+	signal cnt : std_logic_vector(2 downto 0) := "000";
+	signal cnt_reset : unsigned (22 downto 0) := (others => '0');
+	signal cnt_wait : unsigned(2 downto 0) := "000";
+	
+	signal p4 : std_logic := '1';
+	signal vv51_cs : std_logic := '1';
+	signal vv51_cs_cmd : std_logic := '1';
+	signal vv51_cs_data : std_logic := '1';
+	signal vv51_read : std_logic := '0';
+	signal p4i : std_logic := '1';
+	
+	signal is_mode : std_logic := '1';
+	
+	type rmachine IS(st_init, st_prepare, st_byte0, st_byte0r, st_wait0, st_byte1, st_byte1r, st_wait1, st_byte2, st_byte2r, st_wait2); --state machine datatype
+	signal state 			: rmachine := st_init; --current state
+	
+	signal prev_event : std_logic := '0';
+	signal new_data 	: std_logic := '0';
+	signal ms_buf 		: std_logic_vector(17 downto 0) := (others => '0');
+	
+begin
+
+	--p4 <= '0' when A(7)='1' and A(4 downto 0)="10011" and cpm='1' and dos='0' and rom14='1' and IORQ_N='0' else '1';
+	p4 <= '0' when A(7)='1' and A(4 downto 0)="10011" and IORQ_N='0' else '1';
+	vv51_cs      <= not A(6) or p4;
+	vv51_cs_cmd  <= '0' when vv51_cs='0' and A(5) = '1' else '1';
+	vv51_cs_data <= '0' when vv51_cs='0' and A(5) = '0' else '1';
+	vv51_read <= '1' when vv51_cs_data = '0' and WR_N = '1' else '0';
+	p4i <= A(6) or p4;
+	
+	rxrdt <= '1' when status_reg(1) = '1' and ctl_reg(2) = '1' else '0'; -- RxRDY + RxEn
+	txrdt <= '1' when status_reg(0) = '1' else '0'; 
+	int_rq <= rxrdt or txrdt;
+	int <= '0' when int_rq='1' and cpm='1' and dos='0' and rom14='1' and port93_b0='1' else '1';
+	fi <= M1_N or IORQ_N or int;
+	
+	-- port #93
+	process (N_RESET, CLK, WR_N, DI, p4i, RD_N)
+	begin
+		if N_RESET = '0' then
+			port93_b0 <= '0';			
+		elsif CLK'event and CLK = '1' then
+			-- int reg
+			if (p4i = '0' and wr_n = '0') then
+				port93_b0 <= DI(0); -- 1 = enable int
+			end if;
+		end if;
+	end process;
+	
+	-- vv51 ports #F3, #D3	
+	process (N_RESET, CLK, WR_N, DI, vv51_cs_data, vv51_cs_cmd)
+	begin
+		if N_RESET = '0' then
+		
+			di_reg <= (others => '0');
+			ctl_reg <= "00000000";
+			
+		elsif CLK'event and CLK = '1' then
+			
+			-- data reg
+			if (vv51_cs_data = '0' and wr_n = '0') then 
+				di_reg <= DI;
+			end if;
+			
+			-- control reg
+			if (vv51_cs_cmd = '0' and wr_n = '0') then 
+				ctl_reg <= DI;
+			end if;
+			
+		end if;
+	end process;
+	
+	
+	process (N_RESET, CLK, MS_EVENT, prev_event, state, cnt_reset, new_data, status_reg, ctl_reg, MS_X, MS_Y, MS_BTNS, vv51_read, cnt_wait)
+	begin
+		if N_RESET = '0' then
+			do_reg <= "00000000";	
+			cnt_reset <= (others => '0');
+			status_reg <= "00000000"; 
+			state <= st_init;
+			new_data <= '0';			
+		--elsif CLKEN'event and CLKEN = '0' then -- <<<<<<<<< '1'
+		elsif CLKEN'event and CLKEN = '1' then 
+
+			if ctl_reg(2) = '1' then -- RxE
+			
+				if (MS_EVENT /= prev_event) then 
+					new_data <= '1';
+					prev_event <= MS_EVENT;
+				end if;
+			
+				case state is 
+
+					-- pause after reset
+					when st_init => 
+						cnt <= "000";
+						status_reg(1) <= '0';
+						--if (cnt_reset < "111111111111") then -- <<<<<<<<
+						--	cnt_reset <= cnt_reset + 1;
+						--	state <= st_init;
+						--else 
+							state <= st_prepare;
+						--end if;
+
+					-- capture mouse buffer
+					when st_prepare =>
+						cnt <= "001";
+						status_reg(1) <= '0';
+						if (new_data = '1' and ms_buf /= MS_BTNS(0) & MS_BTNS(1) & std_logic_vector(MS_Y(7 downto 6)) & std_logic_vector(MS_X(7 downto 6)) & std_logic_vector(MS_X(5 downto 0)) & std_logic_vector(MS_Y(5 downto 0))) then 
+							ms_buf <= MS_BTNS(0) & MS_BTNS(1) & std_logic_vector(MS_Y(7 downto 6)) & std_logic_vector(MS_X(7 downto 6)) & std_logic_vector(MS_X(5 downto 0)) & std_logic_vector(MS_Y(5 downto 0));
+							state <= st_byte0;
+							new_data <= '0';
+						else 
+							state <= st_prepare;
+						end if;
+						
+					-- preparing the first mouse byte in a packet
+					when st_byte0 => 
+						cnt <= "010";
+						cnt_wait <= "000";
+						do_reg <= "01" & ms_buf(17 downto 12);
+						status_reg(1) <= '0';
+						state <= st_byte0r;
+						
+					-- waiting for read by the CPU
+					when st_byte0r => 
+						status_reg(1) <= '1';
+						if (vv51_read = '1') then
+							status_reg(1) <= '0';	
+							state <= st_wait0;
+						else 
+							state <= st_byte0r;
+						end if;
+
+					-- waiting 8 tacts in inactive state after the first mouse byte
+					when st_wait0 => 					
+						cnt <= "011";
+						status_reg(1) <= '0';
+						if (cnt_wait < 7) then 
+							cnt_wait <= cnt_wait + 1;
+							state <= st_wait0;
+						else
+							state <= st_byte1;
+						end if;
+
+					-- preparing the second mouse byte in a packet
+					when st_byte1 => 
+						cnt <= "100";
+						cnt_wait <= "000";
+						do_reg <= "00" & ms_buf(11 downto 6); 
+						status_reg(1) <= '0';
+						state <= st_byte1r;
+						
+					-- waiting for read by CPU 
+					when st_byte1r => 
+						status_reg(1) <= '1';
+						if (vv51_read = '1') then 
+							status_reg(1) <= '0';
+							state <= st_wait1;
+						else 
+							state <= st_byte1r;
+						end if;
+
+					-- waiting 8 tacts in inactive state after the second mouse byte
+					when st_wait1 => 
+						cnt <= "101";
+						status_reg(1) <= '0';
+						if (cnt_wait < 7) then 
+							cnt_wait <= cnt_wait + 1;
+							state <= st_wait1;
+						else
+							state <= st_byte2;
+						end if;
+
+					-- preparing the third mouse byte in a packet
+					when st_byte2 => 
+						cnt <= "110";
+						cnt_wait <= "000";
+						do_reg <= "00" & ms_buf(5 downto 0);
+						status_reg(1) <= '0';
+						state <= st_byte2r;
+						
+					-- waiting for read by CPU 
+					when st_byte2r => 
+						status_reg(1) <= '1';
+						if (vv51_read = '1') then 
+							status_reg(1) <= '0';
+							state <= st_wait2;
+						else 
+							state <= st_byte2r;
+						end if;
+
+					-- waiting 8 tacts in inactive state after the second mouse byte
+					when st_wait2 => 
+						cnt <= "111";
+						status_reg(1) <= '0';
+						if (cnt_wait < 7) then 
+							cnt_wait <= cnt_wait + 1;
+							state <= st_wait2;
+						else
+							state <= st_prepare;
+						end if;
+						
+					when others => state <= st_prepare;
+				end case;
+			end if;
+		end if;
+	end process;
+			
+	-- output data to CPU
+	OE_N <= '0' when (vv51_cs = '0' AND RD_N = '0') 
+					or (fi='0' and (rxrdt = '1' or txrdt = '1')) 
+					else '1';
+	DO <= 			
+			do_reg when vv51_cs_data = '0' and RD_N = '0' else 
+			status_reg when vv51_cs_cmd = '0' and RD_N = '0' else 
+			"11100111" when fi='0' and rxrdt = '1' else -- RST20h
+			"11101111" when fi='0' and txrdt = '1' else -- RST28h
+			(others => '1');
+	INT_N <= int;
+	--INT_N <= '1';
+	
+	DEBUG1 <= ctl_reg;
+	DEBUG2 <= status_reg;	
+	DEBUG3 <= do_reg;
+	DEBUG4 <= vv51_cs & vv51_cs_cmd & vv51_cs_data & rxrdt & cnt & port93_b0;
+
+end RTL;
+

@@ -16,6 +16,7 @@ entity osd is
 		PORT_3   : in std_logic_vector(7 downto 0);
 		PORT_4   : in std_logic_vector(7 downto 0);
 		
+		DS80		: in std_logic;
 		EN 		: in std_logic;
 		
 		HCNT_I	: in std_logic_vector(9 downto 0);
@@ -56,8 +57,8 @@ begin
 	hpos2(1) <= '1' when hcnt >= 64 and hcnt < 66 else '0';
 	hpos2(0) <= '1' when hcnt >= 68 and hcnt < 70 else '0';
 	
-	vpos(1) <= '1' when vcnt >= 280 and vcnt < 284 else '0';
-	vpos(0) <= '1' when vcnt >= 288 and vcnt < 292 else '0';
+	vpos(1) <= '1' when (DS80='0' and vcnt >= 280 and vcnt < 284) or (DS80='1' and vcnt >= 8 and vcnt < 10) else '0';
+	vpos(0) <= '1' when (DS80='0' and vcnt >= 288 and vcnt < 292) or (DS80='1' and vcnt >= 12 and vcnt < 14) else '0';
 	
 	rgb <= "000111000" when -- green = ON 
 		(vpos(1) = '1' and (

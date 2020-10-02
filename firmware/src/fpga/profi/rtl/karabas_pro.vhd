@@ -166,6 +166,9 @@ signal ms_y				: std_logic_vector(7 downto 0);
 signal ms_z				: std_logic_vector(3 downto 0);
 signal ms_b				: std_logic_vector(2 downto 0);
 signal ms_present 	: std_logic := '0';
+signal ms_event		: std_logic := '0';
+signal ms_delta_x		: signed(7 downto 0);
+signal ms_delta_y		: signed(7 downto 0);
 
 -- Video
 signal vid_a_bus		: std_logic_vector(13 downto 0);
@@ -307,6 +310,15 @@ signal uart_oe_n 		: std_logic;
 signal cpld_oe_n 		: std_logic := '1';
 signal cpld_do 		: std_logic_vector(7 downto 0);
 
+-- serial mouse 
+signal serial_ms_do_bus : std_logic_vector(7 downto 0);
+signal serial_ms_oe_n : std_logic := '1';
+signal serial_ms_int : std_logic := '1';
+signal serial_ms_debug1 : std_logic_vector(7 downto 0);
+signal serial_ms_debug2 : std_logic_vector(7 downto 0);
+signal serial_ms_debug3 : std_logic_vector(7 downto 0);
+signal serial_ms_debug4 : std_logic_vector(7 downto 0);
+
 -- test rom 
 signal rom_do_bus 	: std_logic_vector(7 downto 0);
 
@@ -385,7 +397,7 @@ port map (
 	CLK_n				=> clk_bus,
 	ENA				=> cpuclk,
 	WAIT_n			=> cpu_wait_n,
-	INT_n				=> cpu_int_n,
+	INT_n				=> cpu_int_n and serial_ms_int,
 	NMI_n				=> cpu_nmi_n,
 	BUSRQ_n			=> '1',
 	M1_n				=> cpu_m1_n,
@@ -499,23 +511,24 @@ port map (
 	VCNT 				=> vid_vcnt
 );
 	
----- osd (debug)
---U7: entity work.osd
---port map (
---	CLK 				=> clk_bus,
---	EN 				=> '0',
---	RGB_I 			=> vid_rgb,
---	RGB_O 			=> vid_rgb_osd,
---	HCNT_I 			=> vid_hcnt,
---	VCNT_I 			=> vid_vcnt,
---
---	PORT_1 			=> cpld_do,
---	PORT_2 			=> port_7ffd_reg,
---	PORT_3 			=> cpu_rd_n & cpu_wr_n & cpu_iorq_n & cpu_mreq_n & vbus_mode & vid_rd & SRAM_NRD & SRAM_NWR,
---	PORT_4 			=> cpld_oe_n & ds80 & cpm & rom14 & fdd_oe_n & hdd_oe_n & port_nreset & '0' --cpld_do	
---);
+-- osd (debug)
+U7: entity work.osd
+port map (
+	CLK 				=> clk_bus,
+	EN 				=> '1',
+	DS80				=> ds80,
+	RGB_I 			=> vid_rgb,
+	RGB_O 			=> vid_rgb_osd,
+	HCNT_I 			=> vid_hcnt,
+	VCNT_I 			=> vid_vcnt,
 
-vid_rgb_osd <= vid_rgb;
+	PORT_1 			=> serial_ms_debug1,
+	PORT_2 			=> serial_ms_debug2,
+	PORT_3 			=> serial_ms_debug3,
+	PORT_4 			=> serial_ms_debug4
+	
+);
+--vid_rgb_osd <= vid_rgb;
 	
 ---- Scan doubler
 --U8 : entity work.scan_convert
@@ -657,6 +670,9 @@ port map (
 	 MS_BTNS 		=> ms_b,
 	 MS_Z 			=> ms_z,
 	 MS_PRESET 		=> ms_present,
+	 MS_EVENT 		=> ms_event,
+	 MS_DELTA_X 	=> ms_delta_x,
+	 MS_DELTA_Y 	=> ms_delta_y,
 	 
 	 RTC_A 			=> mc146818_a_bus,
 	 RTC_DI 			=>	cpu_do_bus,
@@ -743,6 +759,41 @@ port map(
 	address => cpu_a_bus(13 downto 0),
 	q => rom_do_bus
 );
+
+-- Serial mouse emulation
+U19: entity work.serial_mouse
+port map(
+	CLK 				=> clk_bus,
+	CLKEN 			=> cpuclk,
+	N_RESET 			=> not(reset),
+	A 					=> cpu_a_bus,
+	DI					=> cpu_do_bus,
+	WR_N 				=> cpu_wr_n,
+	RD_N 				=> cpu_rd_n,
+	IORQ_N 			=> cpu_iorq_n,
+	M1_N 				=> cpu_m1_n,
+	CPM 				=> cpm,
+	DOS 				=> dos_act,
+	ROM14 			=> rom14,
+	DS80 				=> ds80,
+	TURBO 			=> '0',
+	
+	MS_X 				=> ms_delta_x, --ms_x,
+	MS_Y				=> ms_delta_y, --ms_y,
+	MS_BTNS 			=> ms_b,
+	--MS_Z				=> ms_z,
+	MS_PRESET 		=> ms_present,
+	MS_EVENT 		=> ms_event,
+	
+	DO 				=> serial_ms_do_bus,
+	INT_N 			=> serial_ms_int,
+	OE_N 				=> serial_ms_oe_n,
+	DEBUG1 			=> serial_ms_debug1,
+	DEBUG2			=> serial_ms_debug2,
+	DEBUG3			=> serial_ms_debug3,
+	DEBUG4			=> serial_ms_debug4
+);
+
 	
 -------------------------------------------------------------------------------
 -- clocks
@@ -963,7 +1014,7 @@ ay_bc1 		<= '1' when ay_port = '1' and cpu_a_bus(14) = '1' and cpu_iorq_n = '0' 
 -------------------------------------------------------------------------------
 -- CPU0 Data bus
 
-process (selector, cpu_a_bus, gx0, ram_do_bus, mc146818_do_bus, kb_do_bus, zc_do_bus, ssg_cn0_bus, ssg_cn1_bus, port_7ffd_reg, port_dffd_reg, uart_do_bus, cpld_do, vid_attr, port_eff7_reg, port_1ffd_reg, joy_bus, ms_z, ms_b, ms_x, ms_y)
+process (selector, cpu_a_bus, gx0, serial_ms_do_bus, ram_do_bus, mc146818_do_bus, kb_do_bus, zc_do_bus, ssg_cn0_bus, ssg_cn1_bus, port_7ffd_reg, port_dffd_reg, uart_do_bus, cpld_do, vid_attr, port_eff7_reg, port_1ffd_reg, joy_bus, ms_z, ms_b, ms_x, ms_y)
 begin
 	case selector is
 		when x"00" => 
@@ -984,12 +1035,12 @@ begin
 		when x"0A" => cpu_di_bus <= ms_x;
 		when x"0B" => cpu_di_bus <= ms_y;
 		when x"0C" => cpu_di_bus <= uart_do_bus;
---		when x"0D" => cpu_di_bus <= vid_attr;
+		when x"0D" => cpu_di_bus <= serial_ms_do_bus;
 		when others => cpu_di_bus <= cpld_do;
 	end case;
 end process;
 
-selector <= 
+selector <= 	
 	x"00" when (ram_oe_n = '0') else -- ram / rom
 	x"01" when (cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_m1_n = '1' and cs_rtc_ds = '1') else -- RTC MC146818A
 	x"02" when (cs_xxfe = '1' and cpu_rd_n = '0') else 									-- Keyboard, port #FE
@@ -1001,9 +1052,9 @@ selector <=
 	x"08" when (cs_7ffd = '1' and cpu_rd_n = '0') else										-- port #7FFD
 	x"09" when (cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_a_bus = X"FADF" and ms_present = '1' and cpm='0') else	-- Mouse0 port key, z
 	x"0A" when (cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_a_bus = X"FBDF" and ms_present = '1' and cpm='0') else	-- Mouse0 port x
-	x"0B" when (cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_a_bus = X"FFDF" and ms_present = '1' and cpm='0') else	-- Mouse0 port y 
-	x"0C" when (cpu_iorq_n = '0' and cpu_rd_n = '0' and uart_oe_n = '0') else 																-- AY UART
---	x"0D" when (cs_xxff = '1' and cpu_rd_n = '0' and dos_act = '0' and cpm = '0') else 			-- port #FF
+	x"0B" when (cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_a_bus = X"FFDF" and ms_present = '1' and cpm='0') else	-- Mouse0 port y 																
+	x"0C" when (cpu_iorq_n = '0' and cpu_rd_n = '0' and uart_oe_n = '0') else -- AY UART
+	x"0D" when (serial_ms_oe_n = '0') else -- Serial mouse
 	(others => '1');
 	
 -- debug 
@@ -1013,6 +1064,15 @@ selector <=
 --PIN_120 <= vid_hsync xor (not vid_vsync);
 --PIN_119 <= cpu_int_n;
 --PIN_115 <= VGA_VS;
+
+
+
+PIN_141 <= cpuclk;  -- CH8
+PIN_138 <= serial_ms_do_bus(4);  -- CH7
+PIN_121 <= serial_ms_do_bus(5);  -- CH6 / d bit5
+PIN_120 <= serial_ms_do_bus(6);  -- CH5 / d bit6
+PIN_119 <= serial_ms_debug4(5);	-- CH4 / read from VV51
+PIN_115 <= serial_ms_debug2(1); 	-- CH3 / RxRDY status
 
 -- временно включаем-выключаем палитру по кнопке ScrollLock. Потом сделаем включенной постоянно
 palette_en <= not kb_turbo;
