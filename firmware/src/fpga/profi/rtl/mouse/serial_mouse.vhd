@@ -109,12 +109,14 @@ architecture RTL of serial_mouse is
 	signal cnt : std_logic_vector(2 downto 0) := "000";
 	signal cnt_reset : unsigned (22 downto 0) := (others => '0');
 	signal cnt_wait : unsigned(2 downto 0) := "000";
+	signal cnt_byte : unsigned(1 downto 0) := "11";
 	
 	signal p4 : std_logic := '1';
 	signal vv51_cs : std_logic := '1';
 	signal vv51_cs_cmd : std_logic := '1';
 	signal vv51_cs_data : std_logic := '1';
 	signal vv51_read : std_logic := '0';
+	signal vv51_read_after : std_logic := '0';
 	signal p4i : std_logic := '1';
 	
 	signal is_mode : std_logic := '1';
@@ -133,7 +135,7 @@ begin
 	vv51_cs      <= not A(6) or p4;
 	vv51_cs_cmd  <= '0' when vv51_cs='0' and A(5) = '1' else '1';
 	vv51_cs_data <= '0' when vv51_cs='0' and A(5) = '0' else '1';
-	vv51_read <= '1' when vv51_cs_data = '0' and WR_N = '1' else '0';
+	vv51_read <= '0' when vv51_cs_data = '0' and RD_N = '0' else '1';
 	p4i <= A(6) or p4;
 	
 	rxrdt <= '1' when status_reg(1) = '1' and ctl_reg(2) = '1' else '0'; -- RxRDY + RxEn
@@ -182,14 +184,17 @@ begin
 	process (N_RESET, CLK, MS_EVENT, prev_event, state, cnt_reset, new_data, status_reg, ctl_reg, MS_X, MS_Y, MS_BTNS, vv51_read, cnt_wait)
 	begin
 		if N_RESET = '0' then
-			do_reg <= "00000000";	
+			--do_reg <= "00000000";	
 			cnt_reset <= (others => '0');
 			status_reg <= "00000000"; 
 			state <= st_init;
-			new_data <= '0';			
-		--elsif CLKEN'event and CLKEN = '0' then -- <<<<<<<<< '1'
+			new_data <= '0';
+			cnt_byte <= "00";
+
 		elsif CLKEN'event and CLKEN = '1' then 
 
+			vv51_read_after <= vv51_read;
+		
 			if ctl_reg(2) = '1' then -- RxE
 			
 				if (MS_EVENT /= prev_event) then 
@@ -202,13 +207,9 @@ begin
 					-- pause after reset
 					when st_init => 
 						cnt <= "000";
+						cnt_byte <= "00";
 						status_reg(1) <= '0';
-						--if (cnt_reset < "111111111111") then -- <<<<<<<<
-						--	cnt_reset <= cnt_reset + 1;
-						--	state <= st_init;
-						--else 
-							state <= st_prepare;
-						--end if;
+						state <= st_prepare;
 
 					-- capture mouse buffer
 					when st_prepare =>
@@ -225,18 +226,19 @@ begin
 					-- preparing the first mouse byte in a packet
 					when st_byte0 => 
 						cnt <= "010";
+						cnt_byte <= "00";
 						cnt_wait <= "000";
-						do_reg <= "01" & ms_buf(17 downto 12);
+						--do_reg <= "01" & ms_buf(17 downto 12);
 						status_reg(1) <= '0';
 						state <= st_byte0r;
 						
 					-- waiting for read by the CPU
 					when st_byte0r => 
-						status_reg(1) <= '1';
-						if (vv51_read = '1') then
+						if (vv51_read_after = '0') then
 							status_reg(1) <= '0';	
 							state <= st_wait0;
 						else 
+							status_reg(1) <= '1';
 							state <= st_byte0r;
 						end if;
 
@@ -255,17 +257,18 @@ begin
 					when st_byte1 => 
 						cnt <= "100";
 						cnt_wait <= "000";
-						do_reg <= "00" & ms_buf(11 downto 6); 
+						cnt_byte <= "01";
+						--do_reg <= "00" & ms_buf(11 downto 6); 
 						status_reg(1) <= '0';
 						state <= st_byte1r;
 						
 					-- waiting for read by CPU 
 					when st_byte1r => 
-						status_reg(1) <= '1';
-						if (vv51_read = '1') then 
+						if (vv51_read_after = '0') then 
 							status_reg(1) <= '0';
 							state <= st_wait1;
 						else 
+							status_reg(1) <= '1';
 							state <= st_byte1r;
 						end if;
 
@@ -284,17 +287,18 @@ begin
 					when st_byte2 => 
 						cnt <= "110";
 						cnt_wait <= "000";
-						do_reg <= "00" & ms_buf(5 downto 0);
+						cnt_byte <= "10";
+						--do_reg <= "00" & ms_buf(5 downto 0);
 						status_reg(1) <= '0';
 						state <= st_byte2r;
 						
 					-- waiting for read by CPU 
 					when st_byte2r => 
-						status_reg(1) <= '1';
-						if (vv51_read = '1') then 
+						if (vv51_read_after = '0') then 
 							status_reg(1) <= '0';
 							state <= st_wait2;
 						else 
+							status_reg(1) <= '1';
 							state <= st_byte2r;
 						end if;
 
@@ -314,6 +318,16 @@ begin
 			end if;
 		end if;
 	end process;
+			
+	U_MUX: entity work.mmux
+	port map(
+		data0x => "01" & ms_buf(17 downto 12),
+		data1x => "00" & ms_buf(11 downto 6),
+		data2x => "00" & ms_buf(5 downto 0),
+		data3x => "00000000",
+		sel => std_logic_vector(cnt_byte),
+		result => do_reg 
+	);
 			
 	-- output data to CPU
 	OE_N <= '0' when (vv51_cs = '0' AND RD_N = '0') 
