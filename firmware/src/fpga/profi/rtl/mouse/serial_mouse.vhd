@@ -139,13 +139,14 @@ begin
 	p4i <= A(6) or p4;
 	
 	rxrdt <= '1' when status_reg(1) = '1' and ctl_reg(2) = '1' else '0'; -- RxRDY + RxEn
-	txrdt <= '1' when status_reg(0) = '1' else '0'; 
+	txrdt <= '1' when status_reg(0) = '1' and ctl_reg(0) = '1' else '0'; -- TxRDY + TxEn
 	int_rq <= rxrdt or txrdt;
 	int <= '0' when int_rq='1' and cpm='1' and dos='0' and rom14='1' and port93_b0='1' else '1';
+	--int <= '0' when int_rq='1' and port93_b0='1' else '1';
 	fi <= M1_N or IORQ_N or int;
 	
 	-- port #93
-	process (N_RESET, CLK, WR_N, DI, p4i, RD_N)
+	process (N_RESET, CLK, WR_N, DI, p4i)
 	begin
 		if N_RESET = '0' then
 			port93_b0 <= '0';			
