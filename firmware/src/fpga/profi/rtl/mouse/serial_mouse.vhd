@@ -82,29 +82,14 @@ architecture RTL of serial_mouse is
 	-- алгоритм приема
 	-- если RxRDY = 1 - можно читать байт
 	
-	-- В  компьютере  PROFI 2+ в связи с добавлением новой аппаратуры
-   -- система  прерываний  была  расширена:  в  режиме  IM0, IM2 программист
-   -- должен учитывать следущие особенности:
-
-   --      - кроме прерывания от кадровой синхронизации (50 Герц) должна
-   --      осуществляться   обработка  прерываний  от  коммуникационного
-   --      порта  (  RST20H - прием, RST28H - передача ) и от аппаратных
-   --      часов   (   RST30H   ),в  системе  обработка  этих  пррываний
-   --      осуществляется    драйверами    коммуникационного   порта   и
-   --      аппаратных часов;	
-
 	signal di_reg : std_logic_vector(7 downto 0) := "00000000";
 	signal do_reg : std_logic_vector(7 downto 0) := "00000000";	
 	signal ctl_reg : std_logic_vector(7 downto 0) := "00000000";
-	signal status_reg : std_logic_vector(7 downto 0) := "00000000";
+	signal status_reg : std_logic_vector(7 downto 0) := "00000101";
 	signal mode_reg : std_logic_vector(7 downto 0) := "00000000";
 	
-	signal int : std_logic := '0';
-	signal int_rq : std_logic := '0';
-	signal fi : std_logic := '0';
 	signal rxrdt : std_logic := '0';
 	signal txrdt : std_logic := '0';
-	signal port93_b0 : std_logic := '0';
 	
 	signal cnt : std_logic_vector(2 downto 0) := "000";
 	signal cnt_reset : unsigned (22 downto 0) := (others => '0');
@@ -117,7 +102,6 @@ architecture RTL of serial_mouse is
 	signal vv51_cs_data : std_logic := '1';
 	signal vv51_read : std_logic := '0';
 	signal vv51_read_after : std_logic := '0';
-	signal p4i : std_logic := '1';
 	
 	signal is_mode : std_logic := '1';
 	
@@ -128,6 +112,11 @@ architecture RTL of serial_mouse is
 	signal new_data 	: std_logic := '0';
 	signal ms_buf 		: std_logic_vector(17 downto 0) := (others => '0');
 	
+	signal hw_int_n : std_logic := '1';	
+	signal hw_int_do : std_logic_vector(7 downto 0);
+	signal hw_int_oe_n : std_logic := '1';
+	signal hw_int_en 	: std_logic := '0';
+	
 begin
 
 	--p4 <= '0' when A(7)='1' and A(4 downto 0)="10011" and cpm='1' and dos='0' and rom14='1' and IORQ_N='0' else '1';
@@ -136,27 +125,9 @@ begin
 	vv51_cs_cmd  <= '0' when vv51_cs='0' and A(5) = '1' else '1';
 	vv51_cs_data <= '0' when vv51_cs='0' and A(5) = '0' else '1';
 	vv51_read <= '0' when vv51_cs_data = '0' and RD_N = '0' else '1';
-	p4i <= A(6) or p4;
 	
 	rxrdt <= '1' when status_reg(1) = '1' and ctl_reg(2) = '1' else '0'; -- RxRDY + RxEn
-	txrdt <= '1' when status_reg(0) = '1' and ctl_reg(0) = '1' else '0'; -- TxRDY + TxEn
-	int_rq <= rxrdt or txrdt;
-	int <= '0' when int_rq='1' and cpm='1' and dos='0' and rom14='1' and port93_b0='1' else '1';
-	--int <= '0' when int_rq='1' and port93_b0='1' else '1';
-	fi <= M1_N or IORQ_N or int;
-	
-	-- port #93
-	process (N_RESET, CLK, WR_N, DI, p4i)
-	begin
-		if N_RESET = '0' then
-			port93_b0 <= '0';			
-		elsif CLK'event and CLK = '1' then
-			-- int reg
-			if (p4i = '0' and wr_n = '0') then
-				port93_b0 <= DI(0); -- 1 = enable int
-			end if;
-		end if;
-	end process;
+	txrdt <= '1' when status_reg(0) = '1' and status_reg(2) = '0' and ctl_reg(0) = '1' else '0'; -- TxRDY + !TxEmpty + TxEn
 	
 	-- vv51 ports #F3, #D3	
 	process (N_RESET, CLK, WR_N, DI, vv51_cs_data, vv51_cs_cmd)
@@ -187,7 +158,7 @@ begin
 		if N_RESET = '0' then
 			--do_reg <= "00000000";	
 			cnt_reset <= (others => '0');
-			status_reg <= "00000000"; 
+			status_reg <= "00000101"; -- 5 = TxRdy + TxEmpty 
 			state <= st_init;
 			new_data <= '0';
 			cnt_byte <= "00";
@@ -329,24 +300,44 @@ begin
 		sel => std_logic_vector(cnt_byte),
 		result => do_reg 
 	);
+	
+	U_INT: entity work.hw_int 
+	port map(
+		 CLK		=> CLK,
+		 N_RESET => N_RESET,
+		 
+		 A 		=> A,
+		 DI 		=> DI,
+		 WR_N 	=> WR_N,
+		 RD_N		=> RD_N,
+		 IORQ_N  => IORQ_N,
+		 M1_N 	=> M1_N,
+		 CPM 		=> CPM,
+		 DOS 		=> DOS,
+		 ROM14 	=> ROM14,
+		 
+		 RXRDT 	=> rxrdt,
+		 TXRDT 	=> txrdt,
+		 
+		 DO		=> hw_int_do,
+		 INT_N 	=> hw_int_n,
+		 INT_EN  => hw_int_en,
+		 OE_N 	=> hw_int_oe_n
+	);
 			
 	-- output data to CPU
-	OE_N <= '0' when (vv51_cs = '0' AND RD_N = '0') 
-					or (fi='0' and (rxrdt = '1' or txrdt = '1')) 
-					else '1';
-	DO <= 			
+	OE_N <= '0' when (vv51_cs = '0' AND RD_N = '0') or hw_int_oe_n = '0' else '1';
+	DO <= 
+			hw_int_do when hw_int_oe_n = '0' else
 			do_reg when vv51_cs_data = '0' and RD_N = '0' else 
-			status_reg when vv51_cs_cmd = '0' and RD_N = '0' else 
-			"11100111" when fi='0' and rxrdt = '1' else -- RST20h
-			"11101111" when fi='0' and txrdt = '1' else -- RST28h
+			status_reg when vv51_cs_cmd = '0' and RD_N = '0' else		
 			(others => '1');
-	INT_N <= int;
-	--INT_N <= '1';
+	INT_N <= hw_int_n;
 	
 	DEBUG1 <= ctl_reg;
 	DEBUG2 <= status_reg;	
 	DEBUG3 <= do_reg;
-	DEBUG4 <= vv51_cs & vv51_cs_cmd & vv51_cs_data & rxrdt & cnt & port93_b0;
+	DEBUG4 <= vv51_cs & vv51_cs_cmd & vv51_cs_data & rxrdt & cnt & hw_int_en;
 
 end RTL;
 
