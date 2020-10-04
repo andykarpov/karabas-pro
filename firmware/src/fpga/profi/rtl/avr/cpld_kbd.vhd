@@ -20,6 +20,9 @@ entity cpld_kbd is
 	 MS_BTNS 	 	: out std_logic_vector(2 downto 0) := "000";
 	 MS_Z 		: out std_logic_vector(3 downto 0) := "0000";
 	 MS_PRESET  : out std_logic := '0';
+	 MS_EVENT 	: out std_logic;
+	 MS_DELTA_X : out signed(7 downto 0) := "00000000";
+	 MS_DELTA_Y : out signed(7 downto 0) := "00000000";
 	 
 	 RTC_A 		: in std_logic_vector(5 downto 0);
 	 RTC_DI 		: in std_logic_vector(7 downto 0);
@@ -241,9 +244,12 @@ begin
 					deltaZ(3 downto 0) <= mouse_z(3 downto 0);
 					MS_BTNS(2) <= buttons(2);
 					MS_BTNS(1) <= buttons(1);
-					MS_BTNS(0) <= buttons(0);	
+					MS_BTNS(0) <= buttons(0);
+					MS_DELTA_X <= mouse_x;
+					MS_DELTA_Y <= mouse_y; 
 					MS_PRESET <= '1';
 					ms_flag <= newPacket;
+					MS_EVENT <= newPacket;
 					trigger <= '1';
 				end if;
 			end if;
@@ -267,7 +273,7 @@ begin
 	
 	MS_X 		<= std_logic_vector(cursorX);
 	MS_Y 		<= std_logic_vector(cursorY);
-	MS_Z		<= std_logic_vector(deltaZ);
+	MS_Z		<= std_logic_vector(deltaZ);	
 
 	-- memory for rtc registers
 	URTC: entity work.rtc 
