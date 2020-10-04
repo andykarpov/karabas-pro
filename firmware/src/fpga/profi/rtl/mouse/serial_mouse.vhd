@@ -31,6 +31,7 @@ port(
 	 DO			: out std_logic_vector(7 downto 0);
 	 INT_N 		: out std_logic := '1';
 	 OE_N 		: out std_logic := '1';
+	 WAIT_N 		: out std_logic := '1';
 	 
 	 DEBUG1 		: out std_logic_vector(7 downto 0);
 	 DEBUG2 		: out std_logic_vector(7 downto 0);
@@ -116,6 +117,7 @@ architecture RTL of serial_mouse is
 	signal hw_int_do : std_logic_vector(7 downto 0);
 	signal hw_int_oe_n : std_logic := '1';
 	signal hw_int_en 	: std_logic := '0';
+	signal hw_int_wait_n : std_logic := '1';
 	
 begin
 
@@ -322,7 +324,8 @@ begin
 		 DO		=> hw_int_do,
 		 INT_N 	=> hw_int_n,
 		 INT_EN  => hw_int_en,
-		 OE_N 	=> hw_int_oe_n
+		 OE_N 	=> hw_int_oe_n,
+		 WAIT_N 	=> hw_int_wait_n
 	);
 			
 	-- output data to CPU
@@ -333,11 +336,13 @@ begin
 			status_reg when vv51_cs_cmd = '0' and RD_N = '0' else		
 			(others => '1');
 	INT_N <= hw_int_n;
+	WAIT_N <= hw_int_wait_n;
 	
 	DEBUG1 <= ctl_reg;
 	DEBUG2 <= status_reg;	
 	DEBUG3 <= do_reg;
-	DEBUG4 <= vv51_cs & vv51_cs_cmd & vv51_cs_data & rxrdt & cnt & hw_int_en;
+	DEBUG4 <= std_logic_vector(cnt_byte) & rxrdt & hw_int_do(4 downto 3) & hw_int_oe_n & hw_int_n & hw_int_en;
+	
 
 end RTL;
 

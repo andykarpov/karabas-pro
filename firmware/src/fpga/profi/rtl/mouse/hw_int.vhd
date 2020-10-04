@@ -24,62 +24,55 @@ port(
 	 DO			: out std_logic_vector(7 downto 0);
 	 INT_N 		: out std_logic := '1';
 	 INT_EN 		: out std_logic := '0';
-	 OE_N 		: out std_logic := '1'
+	 OE_N 		: out std_logic := '1';
+	 WAIT_N 		: out std_logic := '1'
 	 
 );
 end hw_int;
 
 architecture RTL of hw_int is
 	
-	-- В  компьютере  PROFI 2+ в связи с добавлением новой аппаратуры
-   -- система  прерываний  была  расширена:  в  режиме  IM0, IM2 программист
-   -- должен учитывать следущие особенности:
-
-   --      - кроме прерывания от кадровой синхронизации (50 Герц) должна
-   --      осуществляться   обработка  прерываний  от  коммуникационного
-   --      порта  (  RST20H - прием, RST28H - передача ) и от аппаратных
-   --      часов   (   RST30H   ),в  системе  обработка  этих  пррываний
-   --      осуществляется    драйверами    коммуникационного   порта   и
-   --      аппаратных часов;	
+	-- В компьютере  PROFI 2+ в связи с добавлением новой аппаратуры система прерываний была расширена: 
+	-- в режиме  IM0, IM2 программист должен учитывать следущие особенности: 
+   -- кроме прерывания от кадровой синхронизации (50 Герц) должна осуществляться обработка прерываний от коммуникационного порта 
+	-- (RST20H - прием, RST28H - передача) и от аппаратных часов (RST30H), в системе обработка этих пррываний осуществляется 
+	-- драйверами коммуникационного порта и аппаратных часов;
 
 	signal int : std_logic := '0';
 	signal int_rq : std_logic := '0';
 	signal fi : std_logic := '0';
 	signal port93_b0 : std_logic := '0';
-	
-	signal p4 : std_logic := '1';
 	signal p4i : std_logic := '1';
 		
 begin
 
-	p4 <= '0' when A(7)='1' and A(4 downto 0)="10011" and IORQ_N='0' else '1';
-	p4i <= A(6) or p4;
-	
+	p4i <= '0' when (A(7 downto 0) = x"B3" or A(7 downto 0) = x"93") and IORQ_N='0' and CPM='1' and DOS='0' and ROM14='1' else '1';	
 	int_rq <= rxrdt or txrdt;
-	int <= '0' when int_rq='1' and cpm='1' and port93_b0='1' else '1';
-	fi <= M1_N or IORQ_N or int;
+	int <= '0' when int_rq='1' and CPM='1' and port93_b0='1' else '1';
+	fi <= '0' when M1_N='0' and IORQ_N = '0' and int = '0' else '1';
 	
-	-- port #93
+	-- port #93 / #B3
 	process (N_RESET, CLK, WR_N, DI, p4i)
 	begin
 		if N_RESET = '0' then
 			port93_b0 <= '0';			
 		elsif CLK'event and CLK = '1' then
 			-- int reg
-			if (p4i = '0' and wr_n = '0' and cpm='1') then
+			if (p4i = '0' and WR_N = '0') then
 				port93_b0 <= DI(0); -- 1 = enable int
 			end if;
 		end if;
 	end process;
 			
 	-- output data to CPU
-	OE_N <= '0' when (fi='0' and (rxrdt = '1' or txrdt = '1')) else '1';
+	OE_N <= '0' when (fi='0' and int_rq = '1') else '1';
 	DO <= 
 			"11100111" when fi='0' and rxrdt = '1' else -- RST20h
 			"11101111" when fi='0' and txrdt = '1' else -- RST28h	
 			(others => '1');
 	INT_N <= int;
 	INT_EN <= port93_b0;
+	WAIT_N <= '1';
 	
 end RTL;
 
