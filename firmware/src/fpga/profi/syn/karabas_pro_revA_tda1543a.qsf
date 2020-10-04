@@ -239,6 +239,10 @@ set_global_assignment -name VHDL_FILE ../rtl/mouse/serial_mouse.vhd
 set_global_assignment -name QIP_FILE ../rtl/mouse/mmux.qip
 set_global_assignment -name VHDL_FILE ../rtl/mouse/hw_int.vhd
 
+set_global_assignment -name VERILOG_FILE ../rtl/uart/zxunouart.v
+set_global_assignment -name VERILOG_FILE ../rtl/uart/zxunoregs.v
+set_global_assignment -name VERILOG_FILE ../rtl/uart/uart.v
+
 set_parameter -name dac_type 1
 set_parameter -name enable_switches false
 

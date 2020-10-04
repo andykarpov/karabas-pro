@@ -51,6 +51,7 @@ entity karabas_pro is
 		dac_type 			 : integer range 0 to 1 := 0; -- 0 - TDA1543, 1 - TDA1543A (only has effect when enable_switches = false)
 		
 		enable_ay_uart 	 : boolean := false; -- Enable ESP8266 module on AY I/O port A
+		enable_zxuno_uart  : boolean := true;  -- enable ZXUNO UART
 		enable_diag_rom	 : boolean := false; -- Retroleum diagrom
 		enable_turbo 		 : boolean := false -- enable Turbo mode 7MHz
 	);
@@ -302,9 +303,17 @@ signal flash_do 		: std_logic;
 signal sd_clk 			: std_logic;
 signal sd_si 			: std_logic;
 
--- uart 
+-- AY UART 
 signal uart_do_bus 	: std_logic_vector(7 downto 0);
 signal uart_oe_n 		: std_logic;
+
+-- ZXUNO regs / UART ports
+signal zxuno_regrd : std_logic;
+signal zxuno_regwr : std_logic;
+signal zxuno_addr : std_logic_vector(7 downto 0);
+signal zxuno_regaddr_changed : std_logic;
+signal zxuno_addr_oe_n : std_logic;
+signal zxuno_addr_to_cpu : std_logic_vector(7 downto 0);
 
 -- cpld port
 signal cpld_oe_n 		: std_logic := '1';
@@ -343,6 +352,52 @@ port (
 	din		: in std_logic_vector(7 downto 0);
 	out_l		: out std_logic_vector(7 downto 0);
 	out_r		: out std_logic_vector(7 downto 0));
+end component;
+
+component zxunoregs
+port (
+	clk: in std_logic;
+	rst_n : in std_logic;
+	a : in std_logic_vector(15 downto 0);
+	iorq_n : in std_logic;
+	rd_n : in std_logic;
+	wr_n : in std_logic;
+	din : in std_logic_vector(7 downto 0);
+	dout : out std_logic_vector(7 downto 0);
+	oe_n : out std_logic;
+	addr : out std_logic_vector(7 downto 0);
+	read_from_reg: out std_logic;
+	write_to_reg: out std_logic;
+	regaddr_changed: out std_logic);
+end component;
+
+component zxunouart
+port (
+	clk : in std_logic;
+	ds80 : in std_logic;
+	zxuno_addr : in std_logic_vector(7 downto 0);
+	zxuno_regrd : in std_logic;
+	zxuno_regwr : in std_logic;
+	din : in std_logic_vector(7 downto 0);
+	dout : out std_logic_vector(7 downto 0);
+	oe_n : out std_logic;
+	uart_tx : out std_logic;
+	uart_rx : in std_logic;
+	uart_rts : out std_logic);
+end component;
+
+component uart 
+port ( 
+	clk: in std_logic;
+	txdata: in std_logic_vector(7 downto 0);
+	txbegin: in std_logic;
+	txbusy : out std_logic;
+	rxdata : out std_logic_vector(7 downto 0);
+	rxrecv : out std_logic;
+	data_read : in std_logic;
+	rx : in std_logic;
+	tx : out std_logic;
+	rts: out std_logic);
 end component;
 
 begin
@@ -733,6 +788,7 @@ port map (
 );
 
 -- UART (via AY port A)
+G_AY_UART: if enable_ay_uart generate
 U17: entity work.ay_uart 
 port map(
 	CLK_I 			=> clk_bus,
@@ -748,6 +804,7 @@ port map(
 	UART_RX 			=> UART_RX,
 	UART_RTS 		=> UART_CTS
 );
+end generate G_AY_UART;
 
 U18: entity work.altrom0
 port map(
@@ -783,6 +840,40 @@ port map(
 	OE_N 				=> serial_ms_oe_n
 );
 
+-- UART (via ZX UNO ports #FC3B / #FD3B) 	
+G_UNO_UART: if enable_zxuno_uart generate
+	U20: zxunoregs 
+	port map(
+		clk => clk_bus,
+		rst_n => not(reset),
+		a => cpu_a_bus,
+		iorq_n => cpu_iorq_n,
+		rd_n => cpu_rd_n,
+		wr_n => cpu_wr_n,
+		din => cpu_do_bus,
+		dout => zxuno_addr_to_cpu,
+		oe_n => zxuno_addr_oe_n,
+		addr => zxuno_addr,
+		read_from_reg => zxuno_regrd,
+		write_to_reg => zxuno_regwr,
+		regaddr_changed => zxuno_regaddr_changed
+);
+
+	U21: zxunouart 
+	port map(
+		clk => clk_div4, -- 7 or 6 mhz
+		ds80 => ds80,
+		zxuno_addr => zxuno_addr,
+		zxuno_regrd => zxuno_regrd,
+		zxuno_regwr => zxuno_regwr,
+		din => cpu_do_bus,
+		dout => uart_do_bus,
+		oe_n => uart_oe_n,
+		uart_tx => UART_TX,
+		uart_rx => UART_RX,
+		uart_rts => UART_CTS
+	);	
+end generate G_UNO_UART;
 	
 -------------------------------------------------------------------------------
 -- clocks
@@ -1025,6 +1116,7 @@ begin
 		when x"0B" => cpu_di_bus <= ms_y;
 		when x"0C" => cpu_di_bus <= uart_do_bus;
 		when x"0D" => cpu_di_bus <= serial_ms_do_bus;
+		when x"0E" => cpu_di_bus <= zxuno_addr_to_cpu;
 		when others => cpu_di_bus <= cpld_do;
 	end case;
 end process;
@@ -1044,6 +1136,7 @@ selector <=
 	x"0B" when (cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_a_bus = X"FFDF" and ms_present = '1' and cpm='0') else	-- Mouse0 port y 																
 	x"0C" when (cpu_iorq_n = '0' and cpu_rd_n = '0' and uart_oe_n = '0') else -- AY UART
 	x"0D" when (serial_ms_oe_n = '0') else -- Serial mouse
+	x"0E" when (enable_zxuno_uart and cpu_iorq_n = '0' and cpu_rd_n = '0' and zxuno_addr_oe_n = '0') else -- ZX UNO UART
 	(others => '1');
 	
 -- debug 
