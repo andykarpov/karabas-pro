@@ -18,32 +18,23 @@ port(
 	 CPM 			: in std_logic := '0';
 	 DOS 			: in std_logic := '0';
 	 ROM14 		: in std_logic := '0';
-	 DS80 		: in std_logic := '0';
-	 TURBO 		: in std_logic := '0';
 	 
 	 MS_X 	 	: in signed(7 downto 0) := "00000000";
 	 MS_Y 	 	: in signed(7 downto 0) := "00000000";
 	 MS_BTNS 	: in std_logic_vector(2 downto 0) := "000";
---	 MS_Z 		: in std_logic_vector(3 downto 0) := "0000";
 	 MS_PRESET  : in std_logic := '0';
 	 MS_EVENT 	: in std_logic := '0';
 	 
 	 DO			: out std_logic_vector(7 downto 0);
 	 INT_N 		: out std_logic := '1';
-	 OE_N 		: out std_logic := '1';
-	 WAIT_N 		: out std_logic := '1';
-	 
-	 DEBUG1 		: out std_logic_vector(7 downto 0);
-	 DEBUG2 		: out std_logic_vector(7 downto 0);
-	 DEBUG3 		: out std_logic_vector(7 downto 0);
-	 DEBUG4 		: out std_logic_vector(7 downto 0)
+	 OE_N 		: out std_logic := '1'
 	 
 );
 end serial_mouse;
 
 architecture RTL of serial_mouse is
 		
-	-- Microsoft mouse flavour
+	-- Microsoft mouse flavour:
 	-- Bit  7  6  5  4  3  2  1  0
 	--		  x  1  L  R Y7 Y6 X7 X6   Byte 0
 	--		  x  0 X5 X4 X3 X2 X1 X0   Byte 1
@@ -83,17 +74,13 @@ architecture RTL of serial_mouse is
 	-- алгоритм приема
 	-- если RxRDY = 1 - можно читать байт
 	
-	signal di_reg : std_logic_vector(7 downto 0) := "00000000";
 	signal do_reg : std_logic_vector(7 downto 0) := "00000000";	
 	signal ctl_reg : std_logic_vector(7 downto 0) := "00000000";
 	signal status_reg : std_logic_vector(7 downto 0) := "00000101";
-	signal mode_reg : std_logic_vector(7 downto 0) := "00000000";
 	
 	signal rxrdt : std_logic := '0';
 	signal txrdt : std_logic := '0';
 	
-	signal cnt : std_logic_vector(2 downto 0) := "000";
-	signal cnt_reset : unsigned (22 downto 0) := (others => '0');
 	signal cnt_wait : unsigned(2 downto 0) := "000";
 	signal cnt_byte : unsigned(1 downto 0) := "11";
 	
@@ -117,7 +104,6 @@ architecture RTL of serial_mouse is
 	signal hw_int_do : std_logic_vector(7 downto 0);
 	signal hw_int_oe_n : std_logic := '1';
 	signal hw_int_en 	: std_logic := '0';
-	signal hw_int_wait_n : std_logic := '1';
 	
 begin
 
@@ -134,33 +120,21 @@ begin
 	-- vv51 ports #F3, #D3	
 	process (N_RESET, CLK, WR_N, DI, vv51_cs_data, vv51_cs_cmd)
 	begin
-		if N_RESET = '0' then
-		
-			di_reg <= (others => '0');
-			ctl_reg <= "00000000";
-			
+		if N_RESET = '0' then		
+			ctl_reg <= "00000000";			
 		elsif CLK'event and CLK = '1' then
-			
-			-- data reg
-			if (vv51_cs_data = '0' and wr_n = '0') then 
-				di_reg <= DI;
-			end if;
-			
 			-- control reg
 			if (vv51_cs_cmd = '0' and wr_n = '0') then 
 				ctl_reg <= DI;
 			end if;
-			
 		end if;
 	end process;
 	
-	
-	process (N_RESET, CLK, MS_EVENT, prev_event, state, cnt_reset, new_data, status_reg, ctl_reg, MS_X, MS_Y, MS_BTNS, vv51_read, cnt_wait)
+	-- vv51 data / status register logic
+	process (N_RESET, CLK, MS_EVENT, prev_event, state, new_data, status_reg, ctl_reg, MS_X, MS_Y, MS_BTNS, vv51_read, cnt_wait)
 	begin
 		if N_RESET = '0' then
-			--do_reg <= "00000000";	
-			cnt_reset <= (others => '0');
-			status_reg <= "00000101"; -- 5 = TxRdy + TxEmpty 
+			status_reg <= "00000101"; -- 5 = TxRdy + TxEmpty
 			state <= st_init;
 			new_data <= '0';
 			cnt_byte <= "00";
@@ -180,14 +154,12 @@ begin
 
 					-- pause after reset
 					when st_init => 
-						cnt <= "000";
 						cnt_byte <= "00";
 						status_reg(1) <= '0';
 						state <= st_prepare;
 
 					-- capture mouse buffer
 					when st_prepare =>
-						cnt <= "001";
 						status_reg(1) <= '0';
 						if (new_data = '1' and ms_buf /= MS_BTNS(0) & MS_BTNS(1) & std_logic_vector(MS_Y(7 downto 6)) & std_logic_vector(MS_X(7 downto 6)) & std_logic_vector(MS_X(5 downto 0)) & std_logic_vector(MS_Y(5 downto 0))) then 
 							ms_buf <= MS_BTNS(0) & MS_BTNS(1) & std_logic_vector(MS_Y(7 downto 6)) & std_logic_vector(MS_X(7 downto 6)) & std_logic_vector(MS_X(5 downto 0)) & std_logic_vector(MS_Y(5 downto 0));
@@ -199,10 +171,8 @@ begin
 						
 					-- preparing the first mouse byte in a packet
 					when st_byte0 => 
-						cnt <= "010";
 						cnt_byte <= "00";
 						cnt_wait <= "000";
-						--do_reg <= "01" & ms_buf(17 downto 12);
 						status_reg(1) <= '0';
 						state <= st_byte0r;
 						
@@ -217,8 +187,7 @@ begin
 						end if;
 
 					-- waiting 8 tacts in inactive state after the first mouse byte
-					when st_wait0 => 					
-						cnt <= "011";
+					when st_wait0 => 	
 						status_reg(1) <= '0';
 						if (cnt_wait < 7) then 
 							cnt_wait <= cnt_wait + 1;
@@ -229,10 +198,8 @@ begin
 
 					-- preparing the second mouse byte in a packet
 					when st_byte1 => 
-						cnt <= "100";
 						cnt_wait <= "000";
 						cnt_byte <= "01";
-						--do_reg <= "00" & ms_buf(11 downto 6); 
 						status_reg(1) <= '0';
 						state <= st_byte1r;
 						
@@ -248,7 +215,6 @@ begin
 
 					-- waiting 8 tacts in inactive state after the second mouse byte
 					when st_wait1 => 
-						cnt <= "101";
 						status_reg(1) <= '0';
 						if (cnt_wait < 7) then 
 							cnt_wait <= cnt_wait + 1;
@@ -259,10 +225,8 @@ begin
 
 					-- preparing the third mouse byte in a packet
 					when st_byte2 => 
-						cnt <= "110";
 						cnt_wait <= "000";
 						cnt_byte <= "10";
-						--do_reg <= "00" & ms_buf(5 downto 0);
 						status_reg(1) <= '0';
 						state <= st_byte2r;
 						
@@ -278,7 +242,6 @@ begin
 
 					-- waiting 8 tacts in inactive state after the second mouse byte
 					when st_wait2 => 
-						cnt <= "111";
 						status_reg(1) <= '0';
 						if (cnt_wait < 7) then 
 							cnt_wait <= cnt_wait + 1;
@@ -293,6 +256,7 @@ begin
 		end if;
 	end process;
 			
+	-- data buffer mux
 	U_MUX: entity work.mmux
 	port map(
 		data0x => "01" & ms_buf(17 downto 12),
@@ -303,11 +267,11 @@ begin
 		result => do_reg 
 	);
 	
+	-- hardware int
 	U_INT: entity work.hw_int 
 	port map(
 		 CLK		=> CLK,
-		 N_RESET => N_RESET,
-		 
+		 N_RESET => N_RESET,		 
 		 A 		=> A,
 		 DI 		=> DI,
 		 WR_N 	=> WR_N,
@@ -316,16 +280,13 @@ begin
 		 M1_N 	=> M1_N,
 		 CPM 		=> CPM,
 		 DOS 		=> DOS,
-		 ROM14 	=> ROM14,
-		 
+		 ROM14 	=> ROM14,		 
 		 RXRDT 	=> rxrdt,
-		 TXRDT 	=> txrdt,
-		 
+		 TXRDT 	=> txrdt,		 
 		 DO		=> hw_int_do,
 		 INT_N 	=> hw_int_n,
 		 INT_EN  => hw_int_en,
-		 OE_N 	=> hw_int_oe_n,
-		 WAIT_N 	=> hw_int_wait_n
+		 OE_N 	=> hw_int_oe_n
 	);
 			
 	-- output data to CPU
@@ -333,16 +294,9 @@ begin
 	DO <= 
 			hw_int_do when hw_int_oe_n = '0' else
 			do_reg when vv51_cs_data = '0' and RD_N = '0' else 
-			status_reg when vv51_cs_cmd = '0' and RD_N = '0' else		
+			status_reg when vv51_cs_cmd = '0' and RD_N = '0' else	
 			(others => '1');
 	INT_N <= hw_int_n;
-	WAIT_N <= hw_int_wait_n;
-	
-	DEBUG1 <= ctl_reg;
-	DEBUG2 <= status_reg;	
-	DEBUG3 <= do_reg;
-	DEBUG4 <= std_logic_vector(cnt_byte) & rxrdt & hw_int_do(4 downto 3) & hw_int_oe_n & hw_int_n & hw_int_en;
-	
 
 end RTL;
 

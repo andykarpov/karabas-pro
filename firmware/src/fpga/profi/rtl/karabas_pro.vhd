@@ -314,12 +314,6 @@ signal cpld_do 		: std_logic_vector(7 downto 0);
 signal serial_ms_do_bus : std_logic_vector(7 downto 0);
 signal serial_ms_oe_n : std_logic := '1';
 signal serial_ms_int : std_logic := '1';
-signal serial_ms_wait_n : std_logic := '1';
-
-signal serial_ms_debug1 : std_logic_vector(7 downto 0);
-signal serial_ms_debug2 : std_logic_vector(7 downto 0);
-signal serial_ms_debug3 : std_logic_vector(7 downto 0);
-signal serial_ms_debug4 : std_logic_vector(7 downto 0);
 
 -- test rom 
 signal rom_do_bus 	: std_logic_vector(7 downto 0);
@@ -514,23 +508,23 @@ port map (
 );
 	
 -- osd (debug)
-U7: entity work.osd
-port map (
-	CLK 				=> clk_bus,
-	EN 				=> not kb_turbo,
-	DS80				=> ds80,
-	RGB_I 			=> vid_rgb,
-	RGB_O 			=> vid_rgb_osd,
-	HCNT_I 			=> vid_hcnt,
-	VCNT_I 			=> vid_vcnt,
-
-	PORT_1 			=> serial_ms_debug1,
-	PORT_2 			=> serial_ms_debug2,
-	PORT_3 			=> serial_ms_debug3,
-	PORT_4 			=> serial_ms_debug4
-	
-);
---vid_rgb_osd <= vid_rgb;
+--U7: entity work.osd
+--port map (
+--	CLK 				=> clk_bus,
+--	EN 				=> not kb_turbo,
+--	DS80				=> ds80,
+--	RGB_I 			=> vid_rgb,
+--	RGB_O 			=> vid_rgb_osd,
+--	HCNT_I 			=> vid_hcnt,
+--	VCNT_I 			=> vid_vcnt,
+--
+--	PORT_1 			=> serial_ms_debug1,
+--	PORT_2 			=> serial_ms_debug2,
+--	PORT_3 			=> serial_ms_debug3,
+--	PORT_4 			=> serial_ms_debug4
+--	
+--);
+vid_rgb_osd <= vid_rgb;
 	
 ---- Scan doubler
 --U8 : entity work.scan_convert
@@ -777,25 +771,16 @@ port map(
 	CPM 				=> cpm,
 	DOS 				=> dos_act,
 	ROM14 			=> rom14,
-	DS80 				=> ds80,
-	TURBO 			=> '0',
 	
-	MS_X 				=> ms_delta_x, --ms_x,
-	MS_Y				=> -ms_delta_y, --ms_y,
+	MS_X 				=> ms_delta_x,
+	MS_Y				=> -ms_delta_y,
 	MS_BTNS 			=> ms_b,
-	--MS_Z				=> ms_z,
 	MS_PRESET 		=> ms_present,
 	MS_EVENT 		=> ms_event,
 	
 	DO 				=> serial_ms_do_bus,
 	INT_N 			=> serial_ms_int,
-	OE_N 				=> serial_ms_oe_n,
-	WAIT_N 			=> serial_ms_wait_n,
-	
-	DEBUG1 			=> serial_ms_debug1,
-	DEBUG2			=> serial_ms_debug2,
-	DEBUG3			=> serial_ms_debug3,
-	DEBUG4			=> serial_ms_debug4
+	OE_N 				=> serial_ms_oe_n
 );
 
 	
@@ -856,7 +841,7 @@ reset <= areset or kb_reset or not(locked) or loader_reset or loader_act; -- hot
 cpu_reset_n <= not(reset) and not(loader_reset); -- CPU reset
 cpu_inta_n <= cpu_iorq_n or cpu_m1_n;	-- INTA
 cpu_nmi_n <= '0' when kb_magic = '1' else '1'; -- NMI
-cpu_wait_n <= serial_ms_wait_n; --'1'; -- WAIT
+cpu_wait_n <= '1'; -- WAIT
 cpuclk <= clk_bus and ena_div8;
 
 vid_scandoubler_enable <= '0' when enable_switches and SW3(1) = '0' else '1'; -- enable scandoubler by default for older revisions and switchable by SW3(1) for a newer ones

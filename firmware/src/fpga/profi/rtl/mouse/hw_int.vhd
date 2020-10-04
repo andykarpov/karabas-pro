@@ -24,8 +24,7 @@ port(
 	 DO			: out std_logic_vector(7 downto 0);
 	 INT_N 		: out std_logic := '1';
 	 INT_EN 		: out std_logic := '0';
-	 OE_N 		: out std_logic := '1';
-	 WAIT_N 		: out std_logic := '1'
+	 OE_N 		: out std_logic := '1'
 	 
 );
 end hw_int;
@@ -72,7 +71,6 @@ begin
 			(others => '1');
 	INT_N <= int;
 	INT_EN <= port93_b0;
-	WAIT_N <= '1';
 	
 end RTL;
 
