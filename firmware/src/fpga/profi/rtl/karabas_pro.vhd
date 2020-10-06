@@ -156,6 +156,7 @@ signal kb_reset 		: std_logic := '0';
 signal kb_magic 		: std_logic := '0';
 signal kb_special 	: std_logic := '0';
 signal kb_turbo 		: std_logic := '0';
+signal kb_wait 		: std_logic := '0';
 
 -- Joy
 signal joy_bus 		: std_logic_vector(4 downto 0) := "11111";
@@ -680,6 +681,7 @@ port map (
 	 RESET 			=> kb_reset,
 	 TURBO 			=> kb_turbo,
 	 MAGICK 			=> kb_magic,
+	 WAIT_CPU 		=> kb_wait,
 	 
 	 JOY 				=> joy_bus
 );
@@ -835,13 +837,13 @@ vga_clko_2x <= clk_div2 when ds80 = '0' else clk_28;   -- 14/28
 -------------------------------------------------------------------------------
 -- Global signals
 
-areset <= not locked or kb_magic; -- global reset
+areset <= not locked; -- global reset
 reset <= areset or kb_reset or not(locked) or loader_reset or loader_act; -- hot reset
 
 cpu_reset_n <= not(reset) and not(loader_reset); -- CPU reset
 cpu_inta_n <= cpu_iorq_n or cpu_m1_n;	-- INTA
 cpu_nmi_n <= '0' when kb_magic = '1' else '1'; -- NMI
-cpu_wait_n <= '1'; -- WAIT
+cpu_wait_n <= '0' when kb_wait = '1' else '1'; -- WAIT
 cpuclk <= clk_bus and ena_div8;
 
 vid_scandoubler_enable <= '0' when enable_switches and SW3(1) = '0' else '1'; -- enable scandoubler by default for older revisions and switchable by SW3(1) for a newer ones

@@ -34,6 +34,7 @@ entity cpld_kbd is
 	 RESET		: out std_logic := '0';
 	 TURBO		: out std_logic := '0';
 	 MAGICK		: out std_logic := '0';
+	 WAIT_CPU 	: out std_logic := '0';
 	 
 	 JOY			: out std_logic_vector(4 downto 0) := "00000"
 	 
@@ -140,7 +141,8 @@ begin
 									  RESET <= spi_do(1);
 									  TURBO <= spi_do(2);
 									  MAGICK <= spi_do(3);
-
+									  WAIT_CPU <= spi_do(5);
+					-- when X"06" (4 - is_up), X"07", X"08" - scancode
 					-- mouse data
 					when X"0A" => mouse_x(7 downto 0) <= signed(spi_do(7 downto 0));
 					when X"0B" => mouse_y(7 downto 0) <= signed(spi_do(7 downto 0));
