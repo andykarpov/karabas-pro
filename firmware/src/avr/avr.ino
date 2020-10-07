@@ -77,6 +77,8 @@ bool led1_overwrite = false;
 bool led2_overwrite = false;
 
 unsigned long t = 0;  // current time
+unsigned long tl1 = 0; // led1 time
+unsigned long tl2 = 0; // led1 time
 unsigned long tm = 0; // mouse poll time
 unsigned long tl = 0; // blink poll time
 unsigned long tr = 0; // rtc poll time
@@ -1311,12 +1313,30 @@ void loop()
 
   checkSerialInput();
 
+  // control led1
   if (led1_overwrite) {
-    digitalWrite(PIN_LED1, led1_state);
+    if (led1_state == 1) {
+      digitalWrite(PIN_LED1, HIGH);
+    }
+    if (n - tl1 >= 100) {
+      tl1 = n;
+      if (led1_state == false) {
+        digitalWrite(PIN_LED1, LOW);
+      }
+    }
   }
 
+  // control led2
   if (led2_overwrite) {
-    digitalWrite(PIN_LED2, led2_state);
+    if (led2_state == 1) {
+      digitalWrite(PIN_LED2, HIGH);
+    }
+    if (n - tl2 >= 100) {
+      tl2 = n;
+      if (led2_state == false) {
+        digitalWrite(PIN_LED2, LOW);
+      }
+    }
   }
   
 }
