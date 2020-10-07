@@ -71,7 +71,7 @@ port (
 	ASDO			: out std_logic; -- MOSI
 	
 	-- SD/MMC Card
-	SD_NCS		: out std_logic; -- /CS
+	SD_NCS		: buffer std_logic; -- /CS
 	
 	-- VGA 
 	VGA_R 		: out std_logic_vector(2 downto 0);
@@ -90,7 +90,7 @@ port (
 	NRESET 		: out std_logic;
 	CPLD_CLK 	: out std_logic;
 	CPLD_CLK2 	: out std_logic;
-	SDIR 			: out std_logic;
+	SDIR 			: in std_logic;
 	SA				: out std_logic_vector(1 downto 0);
 	SD				: inout std_logic_vector(15 downto 0) := "ZZZZZZZZZZZZZZZZ";
 	
@@ -327,6 +327,12 @@ signal scr 				: std_logic := '0';
 signal sco 				: std_logic := '0';
 signal rom14 			: std_logic := '0';
 signal gx0 				: std_logic := '0';
+
+-- avr leds
+signal led1				: std_logic := '0';
+signal led2				: std_logic := '0';
+signal led1_overwrite: std_logic := '0';
+signal led2_overwrite: std_logic := '0';
 
 -- debug 
 signal fdd_oe_n 		: std_logic := '1';
@@ -677,6 +683,11 @@ port map (
 	 RTC_CS 			=> '1',
 	 RTC_WR_N 		=> not mc146818_wr,
 	 RTC_INIT 		=> loader_act,
+	 
+	 LED1 			=> led1,
+	 LED2				=> led2,
+	 LED1_OWR 		=> led1_overwrite,
+	 LED2_OWR 		=> led2_overwrite,
 
 	 RESET 			=> kb_reset,
 	 TURBO 			=> kb_turbo,
@@ -715,7 +726,7 @@ port map (
 	
 	SD 				=> SD,
 	SA 				=> SA,
-	SDIR 				=> SDIR,
+--	SDIR 				=> SDIR,
 	CPLD_CLK 		=> CPLD_CLK,
 	CPLD_CLK2 		=> CPLD_CLK2,
 	NRESET 			=> NRESET,
@@ -849,6 +860,14 @@ cpuclk <= clk_bus and ena_div8;
 vid_scandoubler_enable <= '0' when enable_switches and SW3(1) = '0' else '1'; -- enable scandoubler by default for older revisions and switchable by SW3(1) for a newer ones
 audio_dac_type <= '0' when ((enable_switches and SW3(2) = '1') or (not(enable_switches) and dac_type = 0)) else '1'; -- default is dac_type for older revisions and switchable by SW3(2) for a newer ones
 ext_rom_bank <= not SW3(4 downto 3) when enable_switches else "00"; -- SW3 and SW4 switches a 4 external rom banks for newer revisions, otherwise - the only one ROM used 
+
+-- HDD access
+led1_overwrite <= '1';
+led1 <= '1' when SDIR = '1' else '0';
+
+-- SD access
+led2_overwrite <= '1';
+led2 <= '1' when SD_NCS = '0' else '0';
 
 -------------------------------------------------------------------------------
 -- SD

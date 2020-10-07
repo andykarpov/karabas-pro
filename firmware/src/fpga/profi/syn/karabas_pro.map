@@ -10,6 +10,6 @@ DiagROM.v50.hex		0x000E8000		0x000EBFFF
 
 Notes:
 
-- Data checksum for this conversion is 0x18EE2425
+- Data checksum for this conversion is 0x18E83229
 
 - All the addresses in this file are byte addresses

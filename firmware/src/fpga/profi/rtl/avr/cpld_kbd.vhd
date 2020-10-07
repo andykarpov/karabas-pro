@@ -31,6 +31,11 @@ entity cpld_kbd is
 	 RTC_WR_N 	: in std_logic := '1';
 	 RTC_INIT 	: in std_logic := '0';
 	 
+	 LED1			: in std_logic := '0';
+	 LED2 		: in std_logic := '0';
+	 LED1_OWR	: in std_logic := '0';
+	 LED2_OWR 	: in std_logic := '0';
+	 
 	 RESET		: out std_logic := '0';
 	 TURBO		: out std_logic := '0';
 	 MAGICK		: out std_logic := '0';
@@ -96,9 +101,40 @@ architecture RTL of cpld_kbd is
 	signal queue_rd_empty   : std_logic;
 	
 	signal last_queue_di 	: std_logic_vector(15 downto 0) := (others => '1');
+	
+	signal led1_debounced 	: std_logic := '0';
+	signal led2_debounced 	: std_logic := '0';
+	signal last_led1			: std_logic := '0';
+	signal last_led2			: std_logic := '0';
+	signal last_led1_owr		: std_logic := '0';
+	signal last_led2_owr		: std_logic := '0';
 	 
 begin
 
+	U_LED1: entity work.debounce
+	generic map(
+		clk_freq => 28_000_000,
+		stable_time => 100 -- ms
+	)
+	port map(
+		clk => CLK,
+		reset_n => N_RESET,
+		button => led1,
+		result => led1_debounced
+	);
+
+	U_LED2: entity work.debounce
+	generic map(
+		clk_freq => 28_000_000,
+		stable_time => 100 -- ms
+	)
+	port map(
+		clk => CLK,
+		reset_n => N_RESET,
+		button => led2,
+		result => led2_debounced
+	);
+	
 	U_SPI: entity work.spi_slave
 	generic map(
 			N             => 16 -- 2 bytes (cmd + data)       
@@ -290,7 +326,7 @@ begin
 		q			 => rtcr_do
 	);
 	
-	-- fifo for rtc write commands to send them on avr side 
+	-- fifo for write commands to send them on avr side 
 	UFIFO: entity work.queue 
 	port map (
 		data 		=> queue_di,
@@ -305,7 +341,7 @@ begin
 	);
 
 	-- mc146818a emulation	
-	process(CLK, RTC_A, a_reg, b_reg, c_reg, e_reg, f_reg, rtcr_do)
+	process(CLK, RTC_A, a_reg, b_reg, c_reg, e_reg, f_reg, rtcr_do, led1_debounced, led2_debounced)
 	begin
 		-- RTC register read
 		case RTC_A(5 downto 0) is
@@ -319,7 +355,7 @@ begin
 		end case;
 	end process;
 		
-	process(CLK, N_RESET, RTC_INIT, queue_wr_full, RTC_WR_N, RTC_CS, rtc_cmd, rtc_data)
+	process(CLK, N_RESET, RTC_INIT, queue_wr_full, RTC_WR_N, RTC_CS, rtc_cmd, rtc_data, led1_debounced, led2_debounced, led1_OWR, led2_OWR, queue_wr_req, last_led1, last_led2, last_led1_owr, last_led2_owr)
 	begin
 		if CLK'event and CLK = '1' then
 
@@ -364,25 +400,40 @@ begin
 						last_queue_di <= "10" & RTC_A & RTC_DI;
 						queue_wr_req <= '1';
 					end if;
+					
+				else
 				
-				-- RTC incoming time from atmega (every seconds)
-				elsif rtc_cmd(7 downto 6) = "01" then 
-					rtcw_wr <= '1';
-					rtcw_a <= rtc_cmd(5 downto 0);
-					case rtc_cmd(5 downto 0) is 
-						when "000000" => rtcw_di <= "00" & rtc_data(5 downto 0);     -- seconds
-						when "000010" => rtcw_di <= "00" & rtc_data(5 downto 0);		 -- minutes
-						when "000100" => rtcw_di <= "000" & rtc_data(4 downto 0);	 -- hours
-						when "000110" => rtcw_di <= "00000" & rtc_data(2 downto 0);	 -- weeks
-						when "000111" => rtcw_di <= "000" & rtc_data(4 downto 0);	 -- days
-						when "001000" => rtcw_di <= "0000" & rtc_data(3 downto 0);	 -- month
-						when "001001" => rtcw_di <= '0' & rtc_data(6 downto 0);		 -- year
-						when others   => rtcw_di <= rtc_data;
-					end case;
-				else 
-					rtcw_wr <= '0';
+					-- RTC incoming time from atmega (every seconds)
+					if rtc_cmd(7 downto 6) = "01" then 
+						rtcw_wr <= '1';
+						rtcw_a <= rtc_cmd(5 downto 0);
+						case rtc_cmd(5 downto 0) is 
+							when "000000" => rtcw_di <= "00" & rtc_data(5 downto 0);     -- seconds
+							when "000010" => rtcw_di <= "00" & rtc_data(5 downto 0);		 -- minutes
+							when "000100" => rtcw_di <= "000" & rtc_data(4 downto 0);	 -- hours
+							when "000110" => rtcw_di <= "00000" & rtc_data(2 downto 0);	 -- weeks
+							when "000111" => rtcw_di <= "000" & rtc_data(4 downto 0);	 -- days
+							when "001000" => rtcw_di <= "0000" & rtc_data(3 downto 0);	 -- month
+							when "001001" => rtcw_di <= '0' & rtc_data(6 downto 0);		 -- year
+							when others   => rtcw_di <= rtc_data;
+						end case;
+					else 
+						rtcw_wr <= '0';
+					end if;
+					
 				end if;
 			end if;
+			
+			-- sending led status
+			if queue_wr_req = '0' and queue_wr_full = '0' then -- and (last_led1 /= led1_debounced or last_led2 /= led2_debounced or last_led1_owr /= LED1_OWR or last_led2_owr /= LED2_OWR) then 
+				queue_di <= x"0E" & "0000" & LED2_OWR & LED1_OWR & led2_debounced & led1_debounced;
+				queue_wr_req <= '1';
+--				last_led1 <= led1_debounced;
+--				last_led2 <= led2_debounced;
+--				last_led1_owr <= LED1_OWR;
+--				last_led2_owr <= LED2_OWR;
+			end if;
+			
 		end if;
 	end process;
 

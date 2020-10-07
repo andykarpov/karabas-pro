@@ -191,6 +191,10 @@ set_location_assignment PIN_7 -to SW3[1]
 set_location_assignment PIN_10 -to SW3[2]
 set_location_assignment PIN_24 -to SW3[3]
 set_location_assignment PIN_25 -to SW3[4]
+
+
+
+set_global_assignment -name VHDL_FILE ../rtl/avr/debounce.vhd
 set_global_assignment -name VHDL_FILE ../rtl/t80se/T80aw.vhd
 set_global_assignment -name VHDL_FILE ../rtl/t80se/T80a.vhd
 set_global_assignment -name VHDL_FILE ../rtl/video/ram_scan.vhd
@@ -235,10 +239,7 @@ set_global_assignment -name QIP_FILE ../rtl/clock/clk_ctrl.qip
 set_global_assignment -name QIP_FILE ../rtl/avr/rtc.qip
 set_global_assignment -name QIP_FILE ../rtl/avr/queue.qip
 set_global_assignment -name CDF_FILE karabas_pro_video_ubus.cdf
-
 set_global_assignment -name VHDL_FILE ../rtl/mouse/serial_mouse.vhd
 set_global_assignment -name QIP_FILE ../rtl/mouse/mmux.qip
 set_global_assignment -name VHDL_FILE ../rtl/mouse/hw_int.vhd
-
-
 set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
