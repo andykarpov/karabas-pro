@@ -100,40 +100,10 @@ architecture RTL of cpld_kbd is
 	signal queue_do			: std_logic_vector(15 downto 0);
 	signal queue_rd_empty   : std_logic;
 	
-	signal last_queue_di 	: std_logic_vector(15 downto 0) := (others => '1');
-	
-	signal led1_debounced 	: std_logic := '0';
-	signal led2_debounced 	: std_logic := '0';
-	signal last_led1			: std_logic := '0';
-	signal last_led2			: std_logic := '0';
-	signal last_led1_owr		: std_logic := '0';
-	signal last_led2_owr		: std_logic := '0';
+	signal last_queue_di 	: std_logic_vector(15 downto 0) := (others => '1');	
+	signal cnt_led 			: unsigned(12 downto 0) := "0000000000000";
 	 
 begin
-
-	U_LED1: entity work.debounce
-	generic map(
-		clk_freq => 28_000_000,
-		stable_time => 100 -- ms
-	)
-	port map(
-		clk => CLK,
-		reset_n => N_RESET,
-		button => led1,
-		result => led1_debounced
-	);
-
-	U_LED2: entity work.debounce
-	generic map(
-		clk_freq => 28_000_000,
-		stable_time => 100 -- ms
-	)
-	port map(
-		clk => CLK,
-		reset_n => N_RESET,
-		button => led2,
-		result => led2_debounced
-	);
 	
 	U_SPI: entity work.spi_slave
 	generic map(
@@ -341,7 +311,7 @@ begin
 	);
 
 	-- mc146818a emulation	
-	process(CLK, RTC_A, a_reg, b_reg, c_reg, e_reg, f_reg, rtcr_do, led1_debounced, led2_debounced)
+	process(CLK, RTC_A, a_reg, b_reg, c_reg, e_reg, f_reg, rtcr_do)
 	begin
 		-- RTC register read
 		case RTC_A(5 downto 0) is
@@ -355,7 +325,7 @@ begin
 		end case;
 	end process;
 		
-	process(CLK, N_RESET, RTC_INIT, queue_wr_full, RTC_WR_N, RTC_CS, rtc_cmd, rtc_data, led1_debounced, led2_debounced, led1_OWR, led2_OWR, queue_wr_req, last_led1, last_led2, last_led1_owr, last_led2_owr)
+	process(CLK, N_RESET, RTC_INIT, queue_wr_full, RTC_WR_N, RTC_CS, rtc_cmd, rtc_data, led1, led2, led1_OWR, led2_OWR, queue_wr_req)
 	begin
 		if CLK'event and CLK = '1' then
 
@@ -373,7 +343,8 @@ begin
 			if N_RESET='0' then
 				a_reg <= "00100110";
 				b_reg <= (others => '0');
-				c_reg <= (others => '0');				
+				c_reg <= (others => '0');		
+				cnt_led <= (others => '0');
 			else 
 			
 				-- RTC register set by ZX
@@ -421,17 +392,15 @@ begin
 						rtcw_wr <= '0';
 					end if;
 					
+					cnt_led <= cnt_led + 1;
+					
+					-- sending led status on every 256th tick
+					if queue_wr_full = '0' and cnt_led = "0000000000000" then 
+						queue_di <= x"0E" & "0000" & LED2_OWR & LED1_OWR & LED2 & LED1;
+						queue_wr_req <= '1';
+					end if;
+					
 				end if;
-			end if;
-			
-			-- sending led status
-			if queue_wr_req = '0' and queue_wr_full = '0' then -- and (last_led1 /= led1_debounced or last_led2 /= led2_debounced or last_led1_owr /= LED1_OWR or last_led2_owr /= LED2_OWR) then 
-				queue_di <= x"0E" & "0000" & LED2_OWR & LED1_OWR & led2_debounced & led1_debounced;
-				queue_wr_req <= '1';
---				last_led1 <= led1_debounced;
---				last_led2 <= led2_debounced;
---				last_led1_owr <= LED1_OWR;
---				last_led2_owr <= LED2_OWR;
 			end if;
 			
 		end if;

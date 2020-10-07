@@ -194,7 +194,6 @@ set_location_assignment PIN_25 -to SW3[4]
 
 
 
-set_global_assignment -name VHDL_FILE ../rtl/avr/debounce.vhd
 set_global_assignment -name VHDL_FILE ../rtl/t80se/T80aw.vhd
 set_global_assignment -name VHDL_FILE ../rtl/t80se/T80a.vhd
 set_global_assignment -name VHDL_FILE ../rtl/video/ram_scan.vhd

@@ -196,7 +196,6 @@ set_location_assignment PIN_25 -to SW3[4]
 set_parameter -name dac_type 0
 set_parameter -name enable_switches false
 
-set_global_assignment -name VHDL_FILE ../rtl/avr/debounce.vhd
 set_global_assignment -name VHDL_FILE ../rtl/video/ram_scan.vhd
 set_global_assignment -name VHDL_FILE ../rtl/video/scan_converter.vhd
 set_global_assignment -name VHDL_FILE ../rtl/t80se/T80aw.vhd
