@@ -53,6 +53,8 @@
 
 #define EEPROM_TURBO_ADDRESS 0x00
 #define EEPROM_MODE_ADDRESS 0x01
+#define EEPROM_SW1_ADDRESS 0x02
+#define EEPROM_SW2_ADDRESS 0x03
 #define EEPROM_RTC_OFFSET 0x10
 
 #define EEPROM_VALUE_TRUE 10
@@ -66,6 +68,8 @@ bool matrix[ZX_MATRIX_FULL_SIZE]; // matrix of pressed keys + mouse reports to b
 bool joy[6]; // joystic states
 bool profi_mode = true; // false = zx spectrum mode (switched by PrtSrc button in run-time)
 bool is_turbo = false; // turbo toggle (switched by ScrollLock button)
+bool is_sw1 = false; // SW1 state
+bool is_sw2 = false; // SW2 state
 bool is_wait = false; // wait mode
 bool mouse_present = false; // mouse present flag (detected by signal change on CLKM pin)
 bool blink_state = false;
@@ -545,8 +549,24 @@ void fill_kbd_matrix(int sc)
 
 
     // Fn keys
-    case PS2_F1: matrix[ZX_K_A] = !is_up; matrix[ZX_K_BIT6] = !is_up; break;
-    case PS2_F2: matrix[ZX_K_B] = !is_up; matrix[ZX_K_BIT6] = !is_up; break;
+    case PS2_F1:
+      if (is_menu && !is_up) {
+        // menu + F1 = SW1
+        is_sw1 = !is_sw1;
+        eeprom_store_value(EEPROM_SW1_ADDRESS, is_sw1);
+        matrix[ZX_K_SW1] = is_sw1;
+      } else {
+        matrix[ZX_K_A] = !is_up; matrix[ZX_K_BIT6] = !is_up; break;
+      }    
+    case PS2_F2: 
+      if (is_menu && !is_up) {
+        // menu + F2 = SW2
+        is_sw2 = !is_sw2;
+        eeprom_store_value(EEPROM_SW2_ADDRESS, is_sw2);
+        matrix[ZX_K_SW2] = is_sw2;
+      } else {
+        matrix[ZX_K_B] = !is_up; matrix[ZX_K_BIT6] = !is_up; break;
+      }
     case PS2_F3: matrix[ZX_K_C] = !is_up; matrix[ZX_K_BIT6] = !is_up; break;
     case PS2_F4: matrix[ZX_K_D] = !is_up; matrix[ZX_K_BIT6] = !is_up; break;
     case PS2_F5: matrix[ZX_K_E] = !is_up; matrix[ZX_K_BIT6] = !is_up; break;
@@ -955,14 +975,20 @@ void eeprom_restore_values()
 {
   is_turbo = eeprom_restore_value(EEPROM_TURBO_ADDRESS, is_turbo);
   profi_mode = eeprom_restore_value(EEPROM_MODE_ADDRESS, profi_mode);
+  is_sw1 = eeprom_restore_value(EEPROM_SW1_ADDRESS, is_sw1);
+  is_sw2 = eeprom_restore_value(EEPROM_SW2_ADDRESS, is_sw2);
   // apply restored values
   matrix[ZX_K_TURBO] = is_turbo;
+  matrix[ZX_K_SW1] = is_sw1;
+  matrix[ZX_K_SW2] = is_sw2;
 }
 
 void eeprom_store_values()
 {
   eeprom_store_value(EEPROM_TURBO_ADDRESS, is_turbo);
   eeprom_store_value(EEPROM_MODE_ADDRESS, profi_mode);
+  eeprom_store_value(EEPROM_SW1_ADDRESS, is_sw1);
+  eeprom_store_value(EEPROM_SW2_ADDRESS, is_sw2);  
 }
 
 void checkSerialInput()

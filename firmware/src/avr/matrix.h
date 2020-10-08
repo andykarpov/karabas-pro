@@ -81,6 +81,10 @@
 // WAIT signal
 #define ZX_K_WAIT 45
 
+// Soft Switches
+#define ZX_K_SW1 46
+#define ZX_K_SW2 47
+
 #define ZX_K_SCANCODE0 48
 #define ZX_K_SCANCODE1 49
 #define ZX_K_SCANCODE2 50

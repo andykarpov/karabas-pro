@@ -334,6 +334,10 @@ signal led2				: std_logic := '0';
 signal led1_overwrite: std_logic := '0';
 signal led2_overwrite: std_logic := '0';
 
+-- avr soft switches (Menu+F1, Menu+F2)
+signal soft_sw1 		: std_logic := '0';
+signal soft_sw2 		: std_logic := '0';
+
 -- debug 
 signal fdd_oe_n 		: std_logic := '1';
 signal hdd_oe_n 		: std_logic := '1';
@@ -688,6 +692,9 @@ port map (
 	 LED2				=> led2,
 	 LED1_OWR 		=> led1_overwrite,
 	 LED2_OWR 		=> led2_overwrite,
+	 
+	 SOFT_SW1 		=> soft_sw1,
+	 SOFT_SW2		=> soft_sw2,
 
 	 RESET 			=> kb_reset,
 	 TURBO 			=> kb_turbo,
@@ -857,7 +864,7 @@ cpu_nmi_n <= '0' when kb_magic = '1' else '1'; -- NMI
 cpu_wait_n <= '0' when kb_wait = '1' else '1'; -- WAIT
 cpuclk <= clk_bus and ena_div8;
 
-vid_scandoubler_enable <= '0' when enable_switches and SW3(1) = '0' else '1'; -- enable scandoubler by default for older revisions and switchable by SW3(1) for a newer ones
+vid_scandoubler_enable <= '0' when enable_switches and SW3(1) = '0' else not(soft_sw1); -- enable scandoubler by default for older revisions and switchable by SW3(1) for a newer ones
 audio_dac_type <= '0' when ((enable_switches and SW3(2) = '1') or (not(enable_switches) and dac_type = 0)) else '1'; -- default is dac_type for older revisions and switchable by SW3(2) for a newer ones
 ext_rom_bank <= not SW3(4 downto 3) when enable_switches else "00"; -- SW3 and SW4 switches a 4 external rom banks for newer revisions, otherwise - the only one ROM used 
 

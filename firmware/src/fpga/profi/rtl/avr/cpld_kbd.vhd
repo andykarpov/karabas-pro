@@ -36,6 +36,9 @@ entity cpld_kbd is
 	 LED1_OWR	: in std_logic := '0';
 	 LED2_OWR 	: in std_logic := '0';
 	 
+	 SOFT_SW1 	: out std_logic := '0';
+	 SOFT_SW2 	: out std_logic := '0';
+	 
 	 RESET		: out std_logic := '0';
 	 TURBO		: out std_logic := '0';
 	 MAGICK		: out std_logic := '0';
@@ -147,8 +150,11 @@ begin
 									  RESET <= spi_do(1);
 									  TURBO <= spi_do(2);
 									  MAGICK <= spi_do(3);
+									  -- is_up <= spi_do(4);
 									  WAIT_CPU <= spi_do(5);
-					-- when X"06" (4 - is_up), X"07", X"08" - scancode
+									  SOFT_SW1 <= spi_do(6);
+									  SOFT_SW2 <= spi_do(7);
+					-- when X"07", X"08" - scancode
 					-- mouse data
 					when X"0A" => mouse_x(7 downto 0) <= signed(spi_do(7 downto 0));
 					when X"0B" => mouse_y(7 downto 0) <= signed(spi_do(7 downto 0));
