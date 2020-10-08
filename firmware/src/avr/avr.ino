@@ -550,20 +550,24 @@ void fill_kbd_matrix(int sc)
 
     // Fn keys
     case PS2_F1:
-      if (is_menu && !is_up) {
-        // menu + F1 = SW1
-        is_sw1 = !is_sw1;
-        eeprom_store_value(EEPROM_SW1_ADDRESS, is_sw1);
-        matrix[ZX_K_SW1] = is_sw1;
+      if (is_menu) {
+        if (!is_up) {
+          // menu + F1 = SW1
+          is_sw1 = !is_sw1;
+          eeprom_store_value(EEPROM_SW1_ADDRESS, is_sw1);
+          matrix[ZX_K_SW1] = is_sw1;
+        }
       } else {
         matrix[ZX_K_A] = !is_up; matrix[ZX_K_BIT6] = !is_up; break;
       }    
     case PS2_F2: 
-      if (is_menu && !is_up) {
-        // menu + F2 = SW2
-        is_sw2 = !is_sw2;
-        eeprom_store_value(EEPROM_SW2_ADDRESS, is_sw2);
-        matrix[ZX_K_SW2] = is_sw2;
+      if (is_menu) {
+        if (!is_up) {
+          // menu + F2 = SW2
+          is_sw2 = !is_sw2;
+          eeprom_store_value(EEPROM_SW2_ADDRESS, is_sw2);
+          matrix[ZX_K_SW2] = is_sw2;
+        }
       } else {
         matrix[ZX_K_B] = !is_up; matrix[ZX_K_BIT6] = !is_up; break;
       }
@@ -576,19 +580,23 @@ void fill_kbd_matrix(int sc)
     case PS2_F9: matrix[ZX_K_I] = !is_up; matrix[ZX_K_BIT6] = !is_up; break;
     case PS2_F10: matrix[ZX_K_J] = !is_up; matrix[ZX_K_BIT6] = !is_up; break;
     case PS2_F11: 
-      if (is_menu && !is_up) {
-        // menu + F11 = turbo
-        is_turbo = !is_turbo;
-        eeprom_store_value(EEPROM_TURBO_ADDRESS, is_turbo);
-        matrix[ZX_K_TURBO] = is_turbo;
+      if (is_menu) {
+        if (!is_up) {
+          // menu + F11 = turbo
+          is_turbo = !is_turbo;
+          eeprom_store_value(EEPROM_TURBO_ADDRESS, is_turbo);
+          matrix[ZX_K_TURBO] = is_turbo;
+        }
       } else {
         matrix[ZX_K_Q] = !is_up; matrix[ZX_K_SS] = !is_up; 
       }
     break;
     case PS2_F12: 
-      if (is_menu && !is_up) {
-        // menu + F12 = magic
-        do_magic();
+      if (is_menu) {
+        if (!is_up) {
+          // menu + F12 = magic
+          do_magic();
+        }
       } else {
         matrix[ZX_K_W] = !is_up; matrix[ZX_K_SS] = !is_up; 
       }
