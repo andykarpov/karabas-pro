@@ -131,7 +131,7 @@ begin
 	end process;
 	
 	-- vv51 data / status register logic
-	process (N_RESET, CLK, MS_EVENT, prev_event, state, new_data, status_reg, ctl_reg, MS_X, MS_Y, MS_BTNS, vv51_read, cnt_wait)
+	process (N_RESET, CLK, CLKEN, MS_EVENT, prev_event, state, new_data, status_reg, ctl_reg, MS_X, MS_Y, MS_BTNS, vv51_read, cnt_wait)
 	begin
 		if N_RESET = '0' then
 			status_reg <= "00000101"; -- 5 = TxRdy + TxEmpty

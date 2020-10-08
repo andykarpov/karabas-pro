@@ -20,6 +20,8 @@ entity pentagon_video is
 		TURBO 	: in std_logic := '0'; -- 1 = turbo mode, 0 = normal mode
 		INTA		: in std_logic := '0'; -- int request for turbo mode
 		INT		: out std_logic; -- int output
+		MODE60	: in std_logic := '0'; -- 
+		pFF_CS	: out std_logic; -- port FF select
 		ATTR_O	: out std_logic_vector(7 downto 0); -- attribute register output
 		A			: out std_logic_vector(13 downto 0); -- video address
 		RGB		: out std_logic_vector(2 downto 0);	-- RGB
@@ -239,11 +241,14 @@ begin
 		std_logic_vector( '0' & ver_cnt(4 downto 3) & chr_row_cnt & ver_cnt(2 downto 0) & hor_cnt(4 downto 0)) when VBUS_MODE = '1' and VID_RD = '0' else 
 		-- standard attribute address
 		std_logic_vector( '0' & "110" & ver_cnt(4 downto 0) & hor_cnt(4 downto 0));
-
-	RGB <= VIDEO_R & VIDEO_G & VIDEO_B;
-	I <= VIDEO_I;			
-	ATTR_O	<= attr_r;
+		
 	paper <= '0' when hor_cnt(5) = '0' and ver_cnt(5) = '0' and ( ver_cnt(4) = '0' or ver_cnt(3) = '0' ) else '1';
+	
+	RGB <= VIDEO_R & VIDEO_G & VIDEO_B;
+	I <= VIDEO_I;
+	pFF_CS	<= not paper;
+	ATTR_O	<= attr_r;
+
 	INT <= int_sig;
 	
 	HCNT <= '0' & std_logic_vector(hor_cnt) & std_logic_vector(chr_col_cnt);

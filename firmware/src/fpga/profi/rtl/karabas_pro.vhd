@@ -77,8 +77,8 @@ port (
 	VGA_R 		: out std_logic_vector(2 downto 0);
 	VGA_G 		: out std_logic_vector(2 downto 0);
 	VGA_B 		: out std_logic_vector(2 downto 0);
-	VGA_HS 		: buffer std_logic;
-	VGA_VS 		: buffer std_logic;
+	VGA_HS 		: out std_logic;
+	VGA_VS 		: out std_logic;
 		
 	-- AVR SPI slave
 	AVR_SCK 		: in std_logic;
@@ -177,6 +177,7 @@ signal vid_di_bus		: std_logic_vector(7 downto 0);
 signal vid_hsync		: std_logic;
 signal vid_vsync		: std_logic;
 signal vid_int			: std_logic;
+signal vid_pff_cs		: std_logic;
 signal vid_attr		: std_logic_vector(7 downto 0);
 signal vid_rgb			: std_logic_vector(8 downto 0);
 signal vid_rgb_osd 	: std_logic_vector(8 downto 0);
@@ -286,7 +287,6 @@ signal ram_do_bus 	: std_logic_vector(7 downto 0);
 signal ram_oe_n 		: std_logic := '1';
 signal vbus_mode 		: std_logic := '0';
 signal vid_rd 			: std_logic := '0';
-signal palette_en 	: std_logic := '1';
 signal ext_rom_bank  : std_logic_vector(1 downto 0) := "00";
 
 -- Loader
@@ -492,11 +492,12 @@ port map (
 	TURBO 			=> '0',
 	INTA 				=> cpu_inta_n,
 	INT 				=> cpu_int_n,
-	ATTR_O 			=> vid_attr, 
+	pFF_CS			=> vid_pff_cs, -- port FF select
+	ATTR_O 			=> vid_attr,  -- attribute register output
 	A 					=> vid_a_bus,
 	
+	MODE60			=> soft_sw2,
 	DS80 				=> ds80,
-	PALETTE_EN 		=> palette_en,
 	CS7E				=> cs_xx7e,
 	BUS_A 			=> cpu_a_bus(15 downto 8),
 	BUS_D 			=> cpu_do_bus,
@@ -509,7 +510,6 @@ port map (
 	
 	HSYNC 			=> vid_hsync,
 	VSYNC 			=> vid_vsync,
-	CSYNC 			=> open,
 
 	VBUS_MODE 		=> vbus_mode,
 	VID_RD 			=> vid_rd,
@@ -1053,6 +1053,7 @@ begin
 		when x"0B" => cpu_di_bus <= ms_y;
 		when x"0C" => cpu_di_bus <= uart_do_bus;
 		when x"0D" => cpu_di_bus <= serial_ms_do_bus;
+		when x"0E" => cpu_di_bus <= vid_attr;
 		when others => cpu_di_bus <= cpld_do;
 	end case;
 end process;
@@ -1072,23 +1073,22 @@ selector <=
 	x"0B" when (cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_a_bus = X"FFDF" and ms_present = '1' and cpm='0') else	-- Mouse0 port y 																
 	x"0C" when (cpu_iorq_n = '0' and cpu_rd_n = '0' and uart_oe_n = '0') else -- AY UART
 	x"0D" when (serial_ms_oe_n = '0') else -- Serial mouse
+	x"0E" when (vid_pff_cs = '1' and cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_a_bus( 7 downto 0) = X"FF") else -- Port FF select
 	(others => '1');
 	
 -- debug 
---PIN_141 <= vid_rgb(2);
---PIN_138 <= vid_rgb(5);
---PIN_121 <= vid_rgb(8);
---PIN_120 <= vid_hsync xor (not vid_vsync);
---PIN_119 <= cpu_int_n;
---PIN_115 <= VGA_VS;
-
+--	PIN_141 <= cpu_int_n;
+--	PIN_138 <= VGA_R(2);
+--	PIN_121 <= VGA_G(2);
+--	PIN_120 <= VGA_B(2);
+--	PIN_119 <= VGA_VS;
+--	PIN_115 <= VGA_HS;
+	
 --PIN_141 <= cpuclk;  -- CH8
 --PIN_138 <= serial_ms_do_bus(4);  -- CH7
 --PIN_121 <= serial_ms_do_bus(5);  -- CH6 / d bit5
 --PIN_120 <= serial_ms_do_bus(6);  -- CH5 / d bit6
 --PIN_119 <= serial_ms_debug4(5);	-- CH4 / read from VV51
 --PIN_115 <= serial_ms_debug2(1); 	-- CH3 / RxRDY status
-
-palette_en <= '1'; 
 	
 end rtl;
