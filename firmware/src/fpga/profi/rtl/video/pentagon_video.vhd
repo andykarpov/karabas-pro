@@ -20,7 +20,7 @@ entity pentagon_video is
 		TURBO 	: in std_logic := '0'; -- 1 = turbo mode, 0 = normal mode
 		INTA		: in std_logic := '0'; -- int request for turbo mode
 		INT		: out std_logic; -- int output
-		MODE60	: in std_logic := '0'; -- 
+		MODE60	: in std_logic := '0'; -- '0'
 		pFF_CS	: out std_logic; -- port FF select
 		ATTR_O	: out std_logic_vector(7 downto 0); -- attribute register output
 		A			: out std_logic_vector(13 downto 0); -- video address
@@ -37,7 +37,7 @@ end entity;
 
 architecture rtl of pentagon_video is
 
-	signal invert   : unsigned(4 downto 0) := "00000";
+	signal invert   : unsigned(4 downto 0) := "00000";	-- Flash counter
 
 	signal chr_col_cnt : unsigned(2 downto 0) := "000"; -- Character column counter
 	signal chr_row_cnt : unsigned(2 downto 0) := "000"; -- Character row counter
@@ -83,7 +83,7 @@ begin
 					
 					if hor_cnt = 39 then
 						if chr_row_cnt = 7 then
-							if ver_cnt = 39 then
+							if (ver_cnt = 39 and MODE60 = '0') or (ver_cnt = 32 and MODE60 = '1')then
 								ver_cnt <= (others => '0');
 								invert <= invert + 1;
 							else
@@ -188,7 +188,7 @@ begin
 			if CLK = '1' then		
 				if ENA = '1' then
 					if chr_col_cnt = 7 then
-						if ((hor_cnt(5 downto 0) > 38 and hor_cnt(5 downto 0) < 48) or ver_cnt(5 downto 1) = 15) then
+						if ((hor_cnt(5 downto 0) > 38 and hor_cnt(5 downto 0) < 48) or ((ver_cnt(5 downto 1) = 15 and MODE60 = '0') or (ver_cnt(5 downto 1) = 13 and MODE60 = '1'))) then	-- 15 = for 320 lines, 13 = for 264 lines
 							blank_r <= '0';
 						else 
 							blank_r <= '1';
