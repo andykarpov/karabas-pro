@@ -1074,7 +1074,7 @@ selector <=
 	x"0B" when (cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_a_bus = X"FFDF" and ms_present = '1' and cpm='0') else	-- Mouse0 port y 																
 	x"0C" when (cpu_iorq_n = '0' and cpu_rd_n = '0' and uart_oe_n = '0') else -- AY UART
 	x"0D" when (serial_ms_oe_n = '0') else -- Serial mouse
-	x"0E" when (vid_pff_cs = '1' and cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_a_bus( 7 downto 0) = X"FF") else -- Port FF select
+	x"0E" when (vid_pff_cs = '1' and cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_a_bus( 7 downto 0) = X"FF") and dos_act='0' else -- Port FF select
 	(others => '1');
 	
 -- debug 
