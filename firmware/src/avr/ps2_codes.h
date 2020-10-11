@@ -83,6 +83,10 @@
 #define PS2_RIGHT	0x174
 #define PS2_PSCR1 0x112
 #define PS2_PSCR2 0x17c
+#define PS2_L_WIN 0x11f
+#define PS2_R_WIN 0x127
+#define PS2_MENU  0x12f
+
 
 // F1..F12
 #define PS2_F1		0x05
@@ -118,4 +122,3 @@
 #define PS2_KP_9	0x7D
 
 #endif
-

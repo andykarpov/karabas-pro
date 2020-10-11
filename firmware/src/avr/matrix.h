@@ -25,7 +25,8 @@
 
 // Key position in output array
 
-#define ZX_MATRIX_SIZE 64 // 40 keys + bit6 + reset + turbo + magic + keyboard is_up + 000 +  16 bit scancode
+#define ZX_MATRIX_FULL_SIZE 64 // 40 keys + bit6 + reset + turbo + magic + keyboard is_up + 000 +  16 bit scancode
+#define ZX_MATRIX_SIZE 41 // only mechanical keys state + bit6
 
 #define ZX_K_CS  0
 #define ZX_K_A   1
@@ -77,6 +78,13 @@
 #define ZX_K_MAGICK 43
 #define ZX_K_IS_UP 44
 
+// WAIT signal
+#define ZX_K_WAIT 45
+
+// Soft Switches
+#define ZX_K_SW1 46
+#define ZX_K_SW2 47
+
 #define ZX_K_SCANCODE0 48
 #define ZX_K_SCANCODE1 49
 #define ZX_K_SCANCODE2 50
@@ -102,6 +110,8 @@
 #define ZX_JOY_LEFT 4
 #define ZX_JOY_RIGHT 5
 
+// Outgoing commands:
+
 // kbd commands
 #define CMD_KBD_BYTE1 0x01
 #define CMD_KBD_BYTE2 0x02
@@ -120,13 +130,18 @@
 // joystick commands
 #define CMD_JOY 0x0D
 
-// RTC commands
+// RTC RD command
 #define CMD_RTC_READ 0x40 // + regnum 0e-3f (64 ... 127)
-#define CMD_RTC_WRITE 0x80 // + regnum 0e-3f (128 ... 191)
 
+// Incoming commands:
+
+// LED command
+#define CMD_LED_WRITE 0x0E
+// RTC WR command 
+#define CMD_RTC_WRITE 0x80 // + regnum 0e-3f (128 ... 191)
+// RTC INIT command
 #define CMD_RTC_INIT_REQ 0xFC // rtc init request
-#define CMD_RTC_WRITE_OK 0xFD // write done
-#define CMD_RTC_READY 0xFE // ready for next write
+// NOP command
 #define CMD_NONE 0xFF
 
 #endif

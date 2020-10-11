@@ -23,14 +23,14 @@ The idea was to make a smaller Profi (Профи) ZX Spectrum clone, with real F
 7) VGA output (requires a monitor with 50Hz support)
 8) Turbosound (2 x AY-3-8912), Soundrive and SAA1099
 9) Kempston joystick support
-10) RTC (profi), emulated read-only yet, set time via atmega UART
+10) RTC (profi), emulated read/write support
 11) SD card access via Z-Controller emulation
 
 **The things that should be implemented (means a TODO list):**
 
 1) Wi-Fi support in TR-DOS and CP/M modes
-2) RTC ports read/write to set time from the profi interface
-3) Simple UART via Atmega
+2) Simple UART via Atmega
+3) Turbo 7 MHz
 
 ## More info
 

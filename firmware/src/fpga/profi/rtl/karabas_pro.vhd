@@ -72,14 +72,14 @@ port (
 	ASDO			: out std_logic; -- MOSI
 	
 	-- SD/MMC Card
-	SD_NCS		: out std_logic; -- /CS
+	SD_NCS		: buffer std_logic; -- /CS
 	
 	-- VGA 
 	VGA_R 		: out std_logic_vector(2 downto 0);
 	VGA_G 		: out std_logic_vector(2 downto 0);
 	VGA_B 		: out std_logic_vector(2 downto 0);
-	VGA_HS 		: buffer std_logic;
-	VGA_VS 		: buffer std_logic;
+	VGA_HS 		: out std_logic;
+	VGA_VS 		: out std_logic;
 		
 	-- AVR SPI slave
 	AVR_SCK 		: in std_logic;
@@ -91,7 +91,7 @@ port (
 	NRESET 		: out std_logic;
 	CPLD_CLK 	: out std_logic;
 	CPLD_CLK2 	: out std_logic;
-	SDIR 			: out std_logic;
+	SDIR 			: in std_logic;
 	SA				: out std_logic_vector(1 downto 0);
 	SD				: inout std_logic_vector(15 downto 0) := "ZZZZZZZZZZZZZZZZ";
 	
@@ -157,6 +157,7 @@ signal kb_reset 		: std_logic := '0';
 signal kb_magic 		: std_logic := '0';
 signal kb_special 	: std_logic := '0';
 signal kb_turbo 		: std_logic := '0';
+signal kb_wait 		: std_logic := '0';
 
 -- Joy
 signal joy_bus 		: std_logic_vector(4 downto 0) := "11111";
@@ -177,6 +178,7 @@ signal vid_di_bus		: std_logic_vector(7 downto 0);
 signal vid_hsync		: std_logic;
 signal vid_vsync		: std_logic;
 signal vid_int			: std_logic;
+signal vid_pff_cs		: std_logic;
 signal vid_attr		: std_logic_vector(7 downto 0);
 signal vid_rgb			: std_logic_vector(8 downto 0);
 signal vid_rgb_osd 	: std_logic_vector(8 downto 0);
@@ -286,7 +288,6 @@ signal ram_do_bus 	: std_logic_vector(7 downto 0);
 signal ram_oe_n 		: std_logic := '1';
 signal vbus_mode 		: std_logic := '0';
 signal vid_rd 			: std_logic := '0';
-signal palette_en 	: std_logic := '1';
 signal ext_rom_bank  : std_logic_vector(1 downto 0) := "00";
 
 -- Loader
@@ -335,6 +336,16 @@ signal scr 				: std_logic := '0';
 signal sco 				: std_logic := '0';
 signal rom14 			: std_logic := '0';
 signal gx0 				: std_logic := '0';
+
+-- avr leds
+signal led1				: std_logic := '0';
+signal led2				: std_logic := '0';
+signal led1_overwrite: std_logic := '0';
+signal led2_overwrite: std_logic := '0';
+
+-- avr soft switches (Menu+F1, Menu+F2)
+signal soft_sw1 		: std_logic := '0';
+signal soft_sw2 		: std_logic := '0';
 
 -- debug 
 signal fdd_oe_n 		: std_logic := '1';
@@ -516,7 +527,7 @@ port map (
 	TRDOS 			=> dos_act,
 	
 	-- rom
-	ROM_BANK 		=> port_7ffd_reg(4),
+	ROM_BANK 		=> rom14,
 	EXT_ROM_BANK   => ext_rom_bank
 );	
 
@@ -536,11 +547,12 @@ port map (
 	TURBO 			=> '0',
 	INTA 				=> cpu_inta_n,
 	INT 				=> cpu_int_n,
-	ATTR_O 			=> vid_attr, 
+	pFF_CS			=> vid_pff_cs, -- port FF select
+	ATTR_O 			=> vid_attr,  -- attribute register output
 	A 					=> vid_a_bus,
 	
+	MODE60			=> soft_sw2,
 	DS80 				=> ds80,
-	PALETTE_EN 		=> palette_en,
 	CS7E				=> cs_xx7e,
 	BUS_A 			=> cpu_a_bus(15 downto 8),
 	BUS_D 			=> cpu_do_bus,
@@ -553,7 +565,6 @@ port map (
 	
 	HSYNC 			=> vid_hsync,
 	VSYNC 			=> vid_vsync,
-	CSYNC 			=> open,
 
 	VBUS_MODE 		=> vbus_mode,
 	VID_RD 			=> vid_rd,
@@ -708,6 +719,7 @@ port map(
 U14: entity work.cpld_kbd
 port map (
 	 CLK 				=> clk_bus,
+	 CLKEN 			=> cpuclk,
 	 N_RESET 		=> not areset,
     A       		=> cpu_a_bus(15 downto 8),
     KB				=> kb_do_bus,
@@ -731,10 +743,19 @@ port map (
 	 RTC_CS 			=> '1',
 	 RTC_WR_N 		=> not mc146818_wr,
 	 RTC_INIT 		=> loader_act,
+	 
+	 LED1 			=> led1,
+	 LED2				=> led2,
+	 LED1_OWR 		=> led1_overwrite,
+	 LED2_OWR 		=> led2_overwrite,
+	 
+	 SOFT_SW1 		=> soft_sw1,
+	 SOFT_SW2		=> soft_sw2,
 
 	 RESET 			=> kb_reset,
 	 TURBO 			=> kb_turbo,
 	 MAGICK 			=> kb_magic,
+	 WAIT_CPU 		=> kb_wait,
 	 
 	 JOY 				=> joy_bus
 );
@@ -768,7 +789,7 @@ port map (
 	
 	SD 				=> SD,
 	SA 				=> SA,
-	SDIR 				=> SDIR,
+--	SDIR 				=> SDIR,
 	CPLD_CLK 		=> CPLD_CLK,
 	CPLD_CLK2 		=> CPLD_CLK2,
 	NRESET 			=> NRESET,
@@ -926,18 +947,26 @@ vga_clko_2x <= clk_div2 when ds80 = '0' else clk_28;   -- 14/28
 -------------------------------------------------------------------------------
 -- Global signals
 
-areset <= not locked or kb_magic; -- global reset
+areset <= not locked; -- global reset
 reset <= areset or kb_reset or not(locked) or loader_reset or loader_act; -- hot reset
 
 cpu_reset_n <= not(reset) and not(loader_reset); -- CPU reset
 cpu_inta_n <= cpu_iorq_n or cpu_m1_n;	-- INTA
 cpu_nmi_n <= '0' when kb_magic = '1' else '1'; -- NMI
-cpu_wait_n <= '1'; -- WAIT
+cpu_wait_n <= '0' when kb_wait = '1' else '1'; -- WAIT
 cpuclk <= clk_bus and ena_div8;
 
-vid_scandoubler_enable <= '0' when enable_switches and SW3(1) = '0' else '1'; -- enable scandoubler by default for older revisions and switchable by SW3(1) for a newer ones
+vid_scandoubler_enable <= '0' when enable_switches and SW3(1) = '0' else not(soft_sw1); -- enable scandoubler by default for older revisions and switchable by SW3(1) for a newer ones
 audio_dac_type <= '0' when ((enable_switches and SW3(2) = '1') or (not(enable_switches) and dac_type = 0)) else '1'; -- default is dac_type for older revisions and switchable by SW3(2) for a newer ones
 ext_rom_bank <= not SW3(4 downto 3) when enable_switches else "00"; -- SW3 and SW4 switches a 4 external rom banks for newer revisions, otherwise - the only one ROM used 
+
+-- HDD access
+led1_overwrite <= '1';
+led1 <= '1' when SDIR = '1' else '0';
+
+-- SD access
+led2_overwrite <= '1';
+led2 <= '1' when SD_NCS = '0' else '0';
 
 -------------------------------------------------------------------------------
 -- SD
@@ -996,12 +1025,12 @@ cs_xxfd <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and cpu_a_bus(15) = '0' 
 
 -- регистр AS часов
 cs_rtc_as <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and
-							((cpu_a_bus(7 downto 0) = X"FF" or cpu_a_bus(7 downto 0) = X"BF") and cpm='1' and rom14='1') -- расширенная периферия
+							((cpu_a_bus(7 downto 0) = X"FF" or cpu_a_bus(7 downto 0) = X"BF") and cpm='1' and rom14='1' and dos_act='0') -- расширенная периферия
 				     else '0';
 --
 -- регистр DS часов					  
 cs_rtc_ds <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and 
-							((cpu_a_bus(7 downto 0) = X"DF" or cpu_a_bus(7 downto 0) = X"9F") and cpm='1' and rom14='1') -- расширенная периферия
+							((cpu_a_bus(7 downto 0) = X"DF" or cpu_a_bus(7 downto 0) = X"9F") and cpm='1' and rom14='1' and dos_act='0') -- расширенная периферия
 				     else '0';
 					  
 ---- Profi RTC
@@ -1072,8 +1101,8 @@ end process;
 -- Audio mixer
 
 speaker <= port_xxfe_reg(4);
-audio_l <= "0000000000000000" when loader_act = '1' else ("000" & speaker & "000000000000") + ("000" & ssg_cn0_a & "00000") + ("000" & ssg_cn0_b & "00000") + ("000" & ssg_cn1_a & "00000") + ("000" & ssg_cn1_b & "00000") + soundrive_l + ("000" & saa_out_l & "00000");
-audio_r <= "0000000000000000" when loader_act = '1' else ("000" & speaker & "000000000000") + ("000" & ssg_cn0_c & "00000") + ("000" & ssg_cn0_b & "00000") + ("000" & ssg_cn1_c & "00000") + ("000" & ssg_cn1_b & "00000") + soundrive_r + ("000" & saa_out_r & "00000");
+audio_l <= "0000000000000000" when loader_act = '1' or cpu_wait_n = '0' else ("000" & speaker & "000000000000") + ("000" & ssg_cn0_a & "00000") + ("000" & ssg_cn0_b & "00000") + ("000" & ssg_cn1_a & "00000") + ("000" & ssg_cn1_b & "00000") + soundrive_l + ("000" & saa_out_l & "00000");
+audio_r <= "0000000000000000" when loader_act = '1' or cpu_wait_n = '0' else ("000" & speaker & "000000000000") + ("000" & ssg_cn0_c & "00000") + ("000" & ssg_cn0_b & "00000") + ("000" & ssg_cn1_c & "00000") + ("000" & ssg_cn1_b & "00000") + soundrive_r + ("000" & saa_out_r & "00000");
 
 -- SAA1099
 saa_wr_n <= '0' when (cpu_iorq_n = '0' and cpu_wr_n = '0' and cpu_a_bus(7 downto 0) = "11111111" and dos_act = '0') else '1';
@@ -1081,7 +1110,7 @@ saa_wr_n <= '0' when (cpu_iorq_n = '0' and cpu_wr_n = '0' and cpu_a_bus(7 downto
 -------------------------------------------------------------------------------
 -- Port I/O
 
-mc146818_wr <= '1' when (cs_rtc_ds = '1' and cpu_iorq_n = '0' and cpu_wr_n = '0') else '0';
+mc146818_wr <= '1' when (cs_rtc_ds = '1' and cpu_iorq_n = '0' and cpu_wr_n = '0' and cpu_m1_n = '1') else '0';
 
 port_bff7 	<= '1' when (cpu_iorq_n = '0' and cpu_a_bus = X"BFF7" and cpu_m1_n = '1' and port_eff7_reg(7) = '1') else '0';
 zc_wr 		<= '1' when (cpu_iorq_n = '0' and cpu_wr_n = '0' and cpu_a_bus(7 downto 6) = "01" and cpu_a_bus(4 downto 0) = "10111") else '0';
@@ -1117,6 +1146,7 @@ begin
 		when x"0C" => cpu_di_bus <= uart_do_bus;
 		when x"0D" => cpu_di_bus <= serial_ms_do_bus;
 		when x"0E" => cpu_di_bus <= zxuno_addr_to_cpu;
+		when x"0F" => cpu_di_bus <= vid_attr;
 		when others => cpu_di_bus <= cpld_do;
 	end case;
 end process;
@@ -1137,23 +1167,22 @@ selector <=
 	x"0C" when (cpu_iorq_n = '0' and cpu_rd_n = '0' and uart_oe_n = '0') else -- AY UART
 	x"0D" when (serial_ms_oe_n = '0') else -- Serial mouse
 	x"0E" when (enable_zxuno_uart and cpu_iorq_n = '0' and cpu_rd_n = '0' and zxuno_addr_oe_n = '0') else -- ZX UNO UART
+	x"0F" when (vid_pff_cs = '1' and cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_a_bus( 7 downto 0) = X"FF") and dos_act='0' else -- Port FF select
 	(others => '1');
 	
 -- debug 
---PIN_141 <= vid_rgb(2);
---PIN_138 <= vid_rgb(5);
---PIN_121 <= vid_rgb(8);
---PIN_120 <= vid_hsync xor (not vid_vsync);
---PIN_119 <= cpu_int_n;
---PIN_115 <= VGA_VS;
-
+--	PIN_141 <= cpu_int_n;
+--	PIN_138 <= VGA_R(2);
+--	PIN_121 <= VGA_G(2);
+--	PIN_120 <= VGA_B(2);
+--	PIN_119 <= VGA_VS;
+--	PIN_115 <= VGA_HS;
+	
 --PIN_141 <= cpuclk;  -- CH8
 --PIN_138 <= serial_ms_do_bus(4);  -- CH7
 --PIN_121 <= serial_ms_do_bus(5);  -- CH6 / d bit5
 --PIN_120 <= serial_ms_do_bus(6);  -- CH5 / d bit6
 --PIN_119 <= serial_ms_debug4(5);	-- CH4 / read from VV51
 --PIN_115 <= serial_ms_debug2(1); 	-- CH3 / RxRDY status
-
-palette_en <= '1'; 
 	
 end rtl;
