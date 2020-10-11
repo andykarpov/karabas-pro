@@ -12,6 +12,7 @@ entity profi_video is
 		CLK2X		: in std_logic; -- 24
 		CLK		: in std_logic; -- 12					
 		ENA		: in std_logic; -- 6
+		TURBO 	: in std_logic := '0';
 		INTA		: in std_logic;
 		INT		: out std_logic;
 		BORDER	: in std_logic_vector(3 downto 0);	

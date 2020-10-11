@@ -957,7 +957,7 @@ cpu_reset_n <= not(reset) and not(loader_reset); -- CPU reset
 cpu_inta_n <= cpu_iorq_n or cpu_m1_n;	-- INTA
 cpu_nmi_n <= '0' when kb_magic = '1' else '1'; -- NMI
 cpu_wait_n <= '0' when kb_wait = '1' else '1'; -- WAIT
-cpuclk <= clk_bus and ena_div8;
+cpuclk <= clk_bus and ena_div8 when kb_turbo = '1' else clk_bus and ena_div4; -- 3.5 / 7 MHz
 
 process(board_revision)
 begin 
