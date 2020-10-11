@@ -134,6 +134,7 @@ begin
 		CLK => CLK, -- 14
 		CLK2x => CLK2x, -- 28
 		ENA => ENA, -- 7
+		TURBO => TURBO,
 		BORDER => BORDER,
 		DI => DI,
 		INTA => INTA,
