@@ -194,6 +194,9 @@ set_location_assignment PIN_25 -to SW3[4]
 
 
 
+set_global_assignment -name VERILOG_FILE ../rtl/uart/zxunouart.v
+set_global_assignment -name VERILOG_FILE ../rtl/uart/zxunoregs.v
+set_global_assignment -name VERILOG_FILE ../rtl/uart/uart.v
 set_global_assignment -name VHDL_FILE ../rtl/t80se/T80aw.vhd
 set_global_assignment -name VHDL_FILE ../rtl/t80se/T80a.vhd
 set_global_assignment -name VHDL_FILE ../rtl/video/ram_scan.vhd
