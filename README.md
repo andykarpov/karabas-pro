@@ -25,12 +25,12 @@ The idea was to make a smaller Profi (Профи) ZX Spectrum clone, with real F
 9) Kempston joystick support
 10) RTC (profi), emulated read/write support
 11) SD card access via Z-Controller emulation
+12) Turbo 7 MHz
 
 **The things that should be implemented (means a TODO list):**
 
 1) Wi-Fi support in TR-DOS and CP/M modes
 2) Simple UART via Atmega
-3) Turbo 7 MHz
 
 ## More info
 
