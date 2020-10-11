@@ -1164,7 +1164,8 @@ begin
 		when x"0C" => cpu_di_bus <= uart_do_bus;
 		when x"0D" => cpu_di_bus <= serial_ms_do_bus;
 		when x"0E" => cpu_di_bus <= zxuno_addr_to_cpu;
-		when x"0F" => cpu_di_bus <= vid_attr;
+		when x"0F" => cpu_di_bus <= uart_do_bus;
+		when x"10" => cpu_di_bus <= vid_attr;
 		when others => cpu_di_bus <= cpld_do;
 	end case;
 end process;
@@ -1184,8 +1185,9 @@ selector <=
 	x"0B" when (cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_a_bus = X"FFDF" and ms_present = '1' and cpm='0') else	-- Mouse0 port y 																
 	x"0C" when (cpu_iorq_n = '0' and cpu_rd_n = '0' and uart_oe_n = '0') else -- AY UART
 	x"0D" when (serial_ms_oe_n = '0') else -- Serial mouse
-	x"0E" when (enable_zxuno_uart and cpu_iorq_n = '0' and cpu_rd_n = '0' and zxuno_addr_oe_n = '0') else -- ZX UNO UART
-	x"0F" when (vid_pff_cs = '1' and cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_a_bus( 7 downto 0) = X"FF") and dos_act='0' else -- Port FF select
+	x"0E" when (enable_zxuno_uart and cpu_iorq_n = '0' and cpu_rd_n = '0' and zxuno_addr_oe_n = '0') else -- ZX UNO Register
+	x"0F" when (enable_zxuno_uart and cpu_iorq_n = '0' and cpu_rd_n = '0' and uart_oe_n = '0') else -- ZX UNO UART 
+	x"10" when (vid_pff_cs = '1' and cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_a_bus( 7 downto 0) = X"FF") and dos_act='0' else -- Port FF select
 	(others => '1');
 	
 -- debug 
