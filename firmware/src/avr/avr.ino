@@ -1,11 +1,11 @@
 /*
- * AVR keyboard & mouse firmware for Karabas-Pro
- * 
- * Designed to build on Arduino IDE.
- * 
- * @author Andy Karpov <andy.karpov@gmail.com>
- * Ukraine, 2020
- */
+   AVR keyboard & mouse firmware for Karabas-Pro
+
+   Designed to build on Arduino IDE.
+
+   @author Andy Karpov <andy.karpov@gmail.com>
+   Ukraine, 2020
+*/
 
 #include "ps2.h"
 #include "matrix.h"
@@ -15,50 +15,8 @@
 #include <EEPROM.h>
 #include <Wire.h>
 #include <SPI.h>
-
-#define DEBUG_MODE 0
-#define DEBUG_TIME 0
-
-// ---- Pins for Atmega328
-#define PIN_KBD_CLK 2 // pin 28 (CLKK)
-#define PIN_KBD_DAT 4 // pin 27 (DATK)
-
-#define PIN_MOUSE_CLK 3 // pin 26 (CLKM)
-#define PIN_MOUSE_DAT 5 // pin 25 (DATM)
-
-// 13,12,11 - hardware SPI
-#define PIN_SS 7 // SPI slave select
-
-// leds
-#define PIN_LED1 A2 // Busy LED
-#define PIN_LED2 A1 // Busy LED
-
-// buttons
-#define PIN_BTN1 A6
-#define PIN_BTN2 A7
-
-// i2c
-#define PIN_SDA A4 // pin 23 
-#define PIN_SCL A5 // ping 24
-
-// joystick
-#define PIN_JOY_UP 6
-#define PIN_JOY_DOWN 8
-#define PIN_JOY_LEFT 9
-#define PIN_JOY_RIGHT 10
-#define PIN_JOY_FIRE1 A0
-#define PIN_JOY_FIRE2 A3
-
-#define RTC_ADDRESS 0xA0
-
-#define EEPROM_TURBO_ADDRESS 0x00
-#define EEPROM_MODE_ADDRESS 0x01
-#define EEPROM_SW1_ADDRESS 0x02
-#define EEPROM_SW2_ADDRESS 0x03
-#define EEPROM_RTC_OFFSET 0x10
-
-#define EEPROM_VALUE_TRUE 10
-#define EEPROM_VALUE_FALSE 20
+#include "config.h"
+#include "utils.h"
 
 PS2KeyRaw kbd;
 PS2Mouse mouse(PIN_MOUSE_CLK, PIN_MOUSE_DAT);
@@ -98,7 +56,7 @@ bool mouse_new_packet = false; // new packet to send (toggle flag)
 
 int rtc_year = 0;
 uint8_t rtc_month = 0;
-uint8_t rtc_day = 0;
+uint8_t rtc_day = 1;
 uint8_t rtc_hours = 0;
 uint8_t rtc_minutes = 0;
 uint8_t rtc_seconds = 0;
@@ -106,26 +64,31 @@ uint8_t rtc_seconds = 0;
 uint8_t rtc_seconds_alarm = 0;
 uint8_t rtc_minutes_alarm = 0;
 uint8_t rtc_hours_alarm = 0;
-uint8_t rtc_week = 0;
+uint8_t rtc_week = 1;
 
 uint8_t rtc_last_write_reg = 0;
 uint8_t rtc_last_write_data = 0;
 
 bool rtc_init_done = false;
+bool rtc_is_bcd = false;
+bool rtc_is_24h = true;
 
-const int buf_len = 128; 
+const int buf_len = 128;
 char buf[buf_len];
 byte index = 0;
 bool buffering = true;
 
 SPISettings settingsA(8000000, MSBFIRST, SPI_MODE0); // SPI transmission settings
 
+
+
+
 // transform PS/2 scancodes into internal matrix of pressed keys
 void fill_kbd_matrix(int sc)
 {
 
-  static bool is_up=false, is_e=false, is_e1=false;
-  static bool is_ctrl=false, is_alt=false, is_del=false, is_win = false, is_menu = false, is_bksp = false, is_shift = false, is_esc = false, is_ss_used = false, is_cs_used = false;
+  static bool is_up = false, is_e = false, is_e1 = false;
+  static bool is_ctrl = false, is_alt = false, is_del = false, is_win = false, is_menu = false, is_bksp = false, is_shift = false, is_esc = false, is_ss_used = false, is_cs_used = false;
   static int scancode = 0;
 
   // is extended scancode prefix
@@ -134,7 +97,7 @@ void fill_kbd_matrix(int sc)
     return;
   }
 
- if (sc == 0xE1) {
+  if (sc == 0xE1) {
     is_e = 1;
     is_e1 = 1;
     return;
@@ -170,9 +133,9 @@ void fill_kbd_matrix(int sc)
   matrix[ZX_K_SCANCODE0] = bitRead(scancode, 0);
 
   switch (scancode) {
-  
+
     // Shift -> SS for Profi, CS for ZX
-    case PS2_L_SHIFT: 
+    case PS2_L_SHIFT:
     case PS2_R_SHIFT:
       matrix[profi_mode ? ZX_K_SS : ZX_K_CS] = !is_up;
       is_shift = !is_up;
@@ -208,25 +171,25 @@ void fill_kbd_matrix(int sc)
     // Del -> P+b6 for Profi, SS+C for ZX
     case PS2_DELETE:
       if (profi_mode) {
-         matrix[ZX_K_P] = !is_up;
-         matrix[ZX_K_BIT6] = !is_up;
+        matrix[ZX_K_P] = !is_up;
+        matrix[ZX_K_BIT6] = !is_up;
       } else {
         matrix[ZX_K_SS] = !is_up;
         matrix[ZX_K_C] =  !is_up;
       }
       is_del = !is_up;
-    break;
+      break;
 
     // Win
     case PS2_L_WIN:
     case PS2_R_WIN:
       is_win = !is_up;
-    break;
+      break;
 
     // Menu
     case PS2_MENU:
       is_menu = !is_up;
-    break;
+      break;
 
     // Ins -> O+b6 for Profi, SS+A for ZX
     case PS2_INSERT:
@@ -237,7 +200,7 @@ void fill_kbd_matrix(int sc)
         matrix[ZX_K_SS] = !is_up;
         matrix[ZX_K_A] =  !is_up;
       }
-    break;
+      break;
 
     // Cursor -> CS + 5,6,7,8
     case PS2_UP:
@@ -392,13 +355,13 @@ void fill_kbd_matrix(int sc)
           send_macros(is_shift ? ZX_K_F : ZX_K_Y);
         }
       } else {
-        matrix[ZX_K_SS] = !is_up;        
+        matrix[ZX_K_SS] = !is_up;
         matrix[is_shift ? ZX_K_F : ZX_K_Y] = !is_up;
         if (is_up) {
           matrix[ZX_K_F] = false;
           matrix[ZX_K_Y] = false;
         }
-      }  
+      }
       break;
 
     // ],} -> SS+U / SS+G
@@ -408,7 +371,7 @@ void fill_kbd_matrix(int sc)
           send_macros(is_shift ? ZX_K_G : ZX_K_U);
         }
       } else {
-        matrix[ZX_K_SS] = !is_up;        
+        matrix[ZX_K_SS] = !is_up;
         matrix[is_shift ? ZX_K_G : ZX_K_U] = !is_up;
         if (is_up) {
           matrix[ZX_K_G] = false;
@@ -436,7 +399,7 @@ void fill_kbd_matrix(int sc)
           send_macros(is_shift ? ZX_K_S : ZX_K_D);
         }
       } else {
-        matrix[ZX_K_SS] = !is_up;        
+        matrix[ZX_K_SS] = !is_up;
         matrix[is_shift ? ZX_K_S : ZX_K_D] = !is_up;
         if (is_up) {
           matrix[ZX_K_S] = false;
@@ -515,7 +478,7 @@ void fill_kbd_matrix(int sc)
     case PS2_PGUP:
       if (profi_mode) {
         matrix[ZX_K_M] = !is_up;
-        matrix[ZX_K_BIT6] = !is_up;        
+        matrix[ZX_K_BIT6] = !is_up;
       } else {
         matrix[ZX_K_CS] = !is_up;
         matrix[ZX_K_3] = !is_up;
@@ -527,7 +490,7 @@ void fill_kbd_matrix(int sc)
     case PS2_PGDN:
       if (profi_mode) {
         matrix[ZX_K_N] = !is_up;
-        matrix[ZX_K_BIT6] = !is_up;        
+        matrix[ZX_K_BIT6] = !is_up;
       } else {
         matrix[ZX_K_CS] = !is_up;
         matrix[ZX_K_4] = !is_up;
@@ -559,8 +522,8 @@ void fill_kbd_matrix(int sc)
         }
       } else {
         matrix[ZX_K_A] = !is_up; matrix[ZX_K_BIT6] = !is_up; break;
-      }    
-    case PS2_F2: 
+      }
+    case PS2_F2:
       if (is_menu) {
         if (!is_up) {
           // menu + F2 = SW2
@@ -579,7 +542,7 @@ void fill_kbd_matrix(int sc)
     case PS2_F8: matrix[ZX_K_H] = !is_up; matrix[ZX_K_BIT6] = !is_up; break;
     case PS2_F9: matrix[ZX_K_I] = !is_up; matrix[ZX_K_BIT6] = !is_up; break;
     case PS2_F10: matrix[ZX_K_J] = !is_up; matrix[ZX_K_BIT6] = !is_up; break;
-    case PS2_F11: 
+    case PS2_F11:
       if (is_menu) {
         if (!is_up) {
           // menu + F11 = turbo
@@ -588,27 +551,27 @@ void fill_kbd_matrix(int sc)
           matrix[ZX_K_TURBO] = is_turbo;
         }
       } else {
-        matrix[ZX_K_Q] = !is_up; matrix[ZX_K_SS] = !is_up; 
+        matrix[ZX_K_Q] = !is_up; matrix[ZX_K_SS] = !is_up;
       }
-    break;
-    case PS2_F12: 
+      break;
+    case PS2_F12:
       if (is_menu) {
         if (!is_up) {
           // menu + F12 = magic
           do_magic();
         }
       } else {
-        matrix[ZX_K_W] = !is_up; matrix[ZX_K_SS] = !is_up; 
+        matrix[ZX_K_W] = !is_up; matrix[ZX_K_SS] = !is_up;
       }
-    break;
+      break;
 
     // Scroll Lock -> Wait
     case PS2_SCROLL:
       if (is_up) {
         is_wait = !is_wait;
-        matrix[ZX_K_WAIT] = is_wait; 
+        matrix[ZX_K_WAIT] = is_wait;
       }
-    break;
+      break;
 
     // PrtScr -> Mode profi / zx
     case PS2_PSCR1:
@@ -616,16 +579,16 @@ void fill_kbd_matrix(int sc)
         profi_mode = !profi_mode;
         eeprom_store_value(EEPROM_MODE_ADDRESS, profi_mode);
       }
-    break;
+      break;
 
-    // TODO:
-    // Windows L / Home -> SS+F
-    // Windiws R / End -> SS+G
-  
+      // TODO:
+      // Windows L / Home -> SS+F
+      // Windiws R / End -> SS+G
+
   }
 
   if (is_ss_used and !is_cs_used) {
-      matrix[ZX_K_CS] = false;
+    matrix[ZX_K_CS] = false;
   }
 
   // Ctrl+Alt+Del -> RESET
@@ -635,7 +598,7 @@ void fill_kbd_matrix(int sc)
     is_del = false;
     is_shift = false;
     is_ss_used = false;
-    is_cs_used = false; 
+    is_cs_used = false;
     do_reset();
   }
   //digitalWrite(PIN_RESET, (is_ctrl && is_alt && is_del) ? LOW : HIGH);
@@ -647,38 +610,38 @@ void fill_kbd_matrix(int sc)
     is_esc = false;
     is_shift = false;
     is_ss_used = false;
-    is_cs_used = false;    
+    is_cs_used = false;
     do_magic();
-  }  
+  }
 
   // Ctrl+Alt+Bksp -> REINIT controller
   if (is_ctrl && is_alt && is_bksp) {
-      is_ctrl = false;
-      is_alt = false;
-      is_bksp = false;
-      is_shift = false;
-      is_ss_used = false;
-      is_cs_used = false;      
-      clear_matrix(ZX_MATRIX_SIZE);
-      matrix[ZX_K_RESET] = 1;
-      transmit_keyboard_matrix();
-      matrix[ZX_K_S] = 1;
-      transmit_keyboard_matrix();
-      delay(500);
-      matrix[ZX_K_RESET] = 0;
-      transmit_keyboard_matrix();
-      delay(500);
-      matrix[ZX_K_S] = 0;
-      //setup();
+    is_ctrl = false;
+    is_alt = false;
+    is_bksp = false;
+    is_shift = false;
+    is_ss_used = false;
+    is_cs_used = false;
+    clear_matrix(ZX_MATRIX_SIZE);
+    matrix[ZX_K_RESET] = 1;
+    transmit_keyboard_matrix();
+    matrix[ZX_K_S] = 1;
+    transmit_keyboard_matrix();
+    delay(500);
+    matrix[ZX_K_RESET] = 0;
+    transmit_keyboard_matrix();
+    delay(500);
+    matrix[ZX_K_S] = 0;
+    //setup();
   }
 
-   // clear flags
-   is_up = 0;
-   if (is_e1) {
+  // clear flags
+  is_up = 0;
+  if (is_e1) {
     is_e1 = 0;
-   } else {
-     is_e = 0;
-   }
+  } else {
+    is_e = 0;
+  }
 }
 
 // transmit keyboard macros (sequence of keyboard clicks) to emulate typing some special symbols [, ], {, }, ~, |, `
@@ -708,8 +671,8 @@ void send_macros(uint8_t pos)
 uint8_t get_matrix_byte(uint8_t pos)
 {
   uint8_t result = 0;
-  for (uint8_t i=0; i<8; i++) {
-    uint8_t k = pos*8 + i;
+  for (uint8_t i = 0; i < 8; i++) {
+    uint8_t k = pos * 8 + i;
     if (k < ZX_MATRIX_FULL_SIZE) {
       bitWrite(result, i, matrix[k]);
     }
@@ -720,33 +683,33 @@ uint8_t get_matrix_byte(uint8_t pos)
 uint8_t get_joy_byte()
 {
   uint8_t result = 0;
-  for (uint8_t i=0; i<6; i++) {
-      bitWrite(result, i, joy[i]);
+  for (uint8_t i = 0; i < 6; i++) {
+    bitWrite(result, i, joy[i]);
   }
   return result;
 }
 
-void spi_send(uint8_t addr, uint8_t data) 
+void spi_send(uint8_t addr, uint8_t data)
 {
-      SPI.beginTransaction(settingsA);
-      digitalWrite(PIN_SS, LOW);
-      uint8_t cmd = SPI.transfer(addr); // command (1...6)
-      uint8_t res = SPI.transfer(data); // data byte
-      digitalWrite(PIN_SS, HIGH);
-      SPI.endTransaction();
-      if (cmd > 0) {
-        process_in_cmd(cmd, res);
-      }  
+  SPI.beginTransaction(settingsA);
+  digitalWrite(PIN_SS, LOW);
+  uint8_t cmd = SPI.transfer(addr); // command (1...6)
+  uint8_t res = SPI.transfer(data); // data byte
+  digitalWrite(PIN_SS, HIGH);
+  SPI.endTransaction();
+  if (cmd > 0) {
+    process_in_cmd(cmd, res);
+  }
 }
 
 // transmit keyboard matrix from AVR to CPLD side via SPI
 void transmit_keyboard_matrix()
 {
-    uint8_t bytes = 8;
-    for (uint8_t i=0; i<bytes; i++) {
-      uint8_t data = get_matrix_byte(i);
-      spi_send(i+1, data);
-    }
+  uint8_t bytes = 8;
+  for (uint8_t i = 0; i < bytes; i++) {
+    uint8_t data = get_matrix_byte(i);
+    spi_send(i + 1, data);
+  }
 }
 
 void transmit_joy_data()
@@ -780,69 +743,52 @@ void rtc_send(uint8_t reg, uint8_t data) {
 
 #if DEBUG_MODE
 #if DEBUG_TIME
-    Serial.print(F("RTC send: "));
-    Serial.print(F("\treg="));
-    Serial.print(reg, HEX);
-    Serial.print(F("\tdata="));
-    Serial.print(data);
-    Serial.println();
+  Serial.print(F("RTC send: "));
+  Serial.print(F("\treg="));
+  Serial.print(reg, HEX);
+  Serial.print(F("\tdata="));
+  Serial.print(data);
+  Serial.println();
 #endif
 #endif
 
   spi_send(CMD_RTC_READ + reg, data);
 }
 
-uint8_t get_year(int year) {
-  int res = year % 100;
-  return lowByte(res);
-}
 
 void rtc_send_time() {
-  rtc_send(0, rtc_seconds);
-  rtc_send(2, rtc_minutes);
-  rtc_send(4, rtc_hours);
-  rtc_send(6, rtc_week+1);
-  rtc_send(7, rtc_day);
-  rtc_send(8, rtc_month);
-  rtc_send(9, get_year(rtc_year)); // TODO
+  uint8_t data;
+  //data = EEPROM.read(EEPROM_RTC_OFFSET + 0xA); bitClear(data, 7); rtc_send(0xA, data);
+  //data = EEPROM.read(EEPROM_RTC_OFFSET + 0xB); rtc_send(0xB, data);
+  rtc_send(0, rtc_is_bcd ? bin2bcd(rtc_seconds) : rtc_seconds);
+  rtc_send(2, rtc_is_bcd ? bin2bcd(rtc_minutes) : rtc_minutes);
+  rtc_send(4, rtc_is_24h ? (rtc_is_bcd ? bin2bcd(rtc_hours) : rtc_hours) : (rtc_is_bcd ? bin2bcd(time_to12h(rtc_hours)) : time_to12h(rtc_hours)));
+  rtc_send(6, rtc_is_bcd ? bin2bcd(rtc_week) : rtc_week);
+  rtc_send(7, rtc_is_bcd ? bin2bcd(rtc_day) : rtc_day);
+  rtc_send(8, rtc_is_bcd ? bin2bcd(rtc_month) : rtc_month);
+  rtc_send(9, rtc_is_bcd ? bin2bcd(get_year(rtc_year)) : get_year(rtc_year));
 }
 
 void rtc_send_all() {
-  for (uint8_t reg; reg<64; reg++) {
+  uint8_t data;
+  for (uint8_t reg = 0; reg < 64; reg++) {
     switch (reg) {
-      case 0:
-        rtc_send(reg, rtc_seconds);
-      break;
-      case 1:
-        rtc_send(reg, rtc_seconds_alarm);
-      break;
-      case 2:
-        rtc_send(reg, rtc_minutes);
-      break;
-      case 3:
-        rtc_send(reg, rtc_minutes_alarm);
-      break;
-      case 4:
-        rtc_send(reg, rtc_hours);
-      break;
-      case 5:
-        rtc_send(reg, rtc_hours_alarm);
-      break;
-      case 6:
-        rtc_send(reg, rtc_week+1);
-      break;
-      case 7:
-        rtc_send(reg, rtc_day);
-      break;
-      case 8:
-        rtc_send(reg, rtc_month);
-      break;
-      case 9:
-        rtc_send(reg, get_year(rtc_year)); // TODO
-      break;
-      default:
-        rtc_send(reg, EEPROM.read(EEPROM_RTC_OFFSET + reg));
-   } 
+      case 0: rtc_send(reg, rtc_is_bcd ? bin2bcd(rtc_seconds) : rtc_seconds); break;
+      case 1: rtc_send(reg, rtc_is_bcd ? bin2bcd(rtc_seconds_alarm) : rtc_seconds_alarm); break;
+      case 2: rtc_send(reg, rtc_is_bcd ? bin2bcd(rtc_minutes) : rtc_minutes); break;
+      case 3: rtc_send(reg, rtc_is_bcd ? bin2bcd(rtc_minutes_alarm) : rtc_minutes_alarm); break;
+      case 4: rtc_send(reg, rtc_is_24h ? (rtc_is_bcd ? bin2bcd(rtc_hours) : rtc_hours) : (rtc_is_bcd ? bin2bcd(time_to12h(rtc_hours)) : time_to12h(rtc_hours))); break;
+      case 5: rtc_send(reg, rtc_is_24h ? (rtc_is_bcd ? bin2bcd(rtc_hours_alarm) : rtc_hours_alarm) : (rtc_is_bcd ? bin2bcd(time_to12h(rtc_hours_alarm)) : time_to12h(rtc_hours_alarm))); break;
+      case 6: rtc_send(reg, rtc_is_bcd ? bin2bcd(rtc_week) : rtc_week); break;
+      case 7: rtc_send(reg, rtc_is_bcd ? bin2bcd(rtc_day) : rtc_day); break;
+      case 8: rtc_send(reg, rtc_is_bcd ? bin2bcd(rtc_month) : rtc_month); break;
+      case 9: rtc_send(reg, rtc_is_bcd ? bin2bcd(get_year(rtc_year)) : get_year(rtc_year)); break;
+      case 0xA: data = EEPROM.read(EEPROM_RTC_OFFSET + reg); bitClear(data, 7); rtc_send(reg, data); break;
+      case 0xB: data = EEPROM.read(EEPROM_RTC_OFFSET + reg); rtc_send(reg, data); break;
+      case 0xC: rtc_send(reg, 0x0); break;
+      case 0xD: rtc_send(reg, 0x80); break;
+      default: rtc_send(reg, EEPROM.read(EEPROM_RTC_OFFSET + reg));
+    }
   }
 }
 
@@ -850,15 +796,16 @@ void process_in_cmd(uint8_t cmd, uint8_t data)
 {
   uint8_t reg;
 
-//  if (cmd == CMD_RTC_INIT_REQ && !rtc_init_done) {
-//
-//#if DEBUG_MODE
-//    Serial.println(F("RTC INIT REQUEST"));
-//#endif
-//    
-//    rtc_send_all();
-//    rtc_init_done = true;
-//  }
+  if (cmd == CMD_RTC_INIT_REQ && !rtc_init_done) {
+
+    rtc_init_done = true;
+
+#if DEBUG_MODE
+    Serial.println(F("RTC INIT REQUEST"));
+#endif
+
+    rtc_send_all();
+  }
 
   if (cmd == CMD_LED_WRITE) {
     led1_state = bitRead(data, 0);
@@ -866,16 +813,16 @@ void process_in_cmd(uint8_t cmd, uint8_t data)
     led1_overwrite = bitRead(data, 2);
     led2_overwrite = bitRead(data, 3);
   }
-  
-  if (cmd >= CMD_RTC_WRITE && cmd < CMD_RTC_WRITE+64) {
+
+  if (cmd >= CMD_RTC_WRITE && cmd < CMD_RTC_WRITE + 64) {
     // write rtc register
-   reg = cmd - CMD_RTC_WRITE;
+    reg = cmd - CMD_RTC_WRITE;
 
-   // skip double write
-   if (rtc_last_write_reg == reg && rtc_last_write_data == data) return;
+    // skip double write
+    if (rtc_last_write_reg == reg && rtc_last_write_data == data) return;
 
-   rtc_last_write_reg = reg;
-   rtc_last_write_data = data;
+    rtc_last_write_reg = reg;
+    rtc_last_write_data = data;
 
 #if DEBUG_MODE
     Serial.print(F("RTC write: "));
@@ -885,42 +832,31 @@ void process_in_cmd(uint8_t cmd, uint8_t data)
     Serial.print(data);
     Serial.println();
 #endif
-   
-   switch (reg) {
-      case 2:
-        rtc_minutes = data;
-        rtc_save();
-      break;
-      case 4:
-        rtc_hours = data;
-        rtc_save();
-      break;
-      case 6:
-        rtc_week = data-1;
-        rtc_save();
-      break;
-      case 7:
-        rtc_day = data;
-        rtc_save();
-      break;
-      case 8:
-        rtc_month = data;
-        rtc_save();
-      break;
-      case 9:
-        rtc_year = 2000 + data; // TODO
-        rtc_save();
-      break;
-      default:
-        EEPROM.write(EEPROM_RTC_OFFSET + reg, data);
-   }
+
+    switch (reg) {
+      case 0: rtc_seconds = rtc_is_bcd ? bcd2bin(data) : data; rtc.setSeconds(rtc_seconds); break;
+      case 1: rtc_seconds_alarm = rtc_is_bcd ? bcd2bin(data) : data; break;
+      case 2: rtc_minutes = rtc_is_bcd ? bcd2bin(data) : data; rtc.setMinutes(rtc_minutes); break;
+      case 3: rtc_minutes_alarm = rtc_is_bcd ? bcd2bin(data) : data;  break;
+      case 4: rtc_hours = rtc_is_bcd ? bcd2bin(data) : data; rtc.setHourMode(CLOCK_H24); rtc.setHours(rtc_hours); break;
+      case 5: rtc_hours_alarm = rtc_is_bcd ? bcd2bin(data) : data; break;
+      case 6: rtc_week = rtc_is_bcd ? bcd2bin(data) : data; rtc.setWeek(rtc_week); break;
+      case 7: rtc_day = rtc_is_bcd ? bcd2bin(data) : data; rtc.setDay(rtc_day); break;
+      case 8: rtc_month = rtc_is_bcd ? bcd2bin(data) : data; rtc.setMonth(rtc_month); break;
+      case 9: rtc_year = 2000 + (rtc_is_bcd ? bcd2bin(data) : data); rtc.setYear(rtc_year); break;
+      case 0xA: bitClear(data, 7); EEPROM.write(EEPROM_RTC_OFFSET + reg, data); break;
+      case 0xB: rtc_is_bcd = !bitRead(data, 2); rtc_is_24h = bitRead(data, 1); EEPROM.write(EEPROM_RTC_OFFSET + reg, data); break;
+      case 0xC: // C and D are read-only registers
+      case 0xD: break;
+      default: EEPROM.write(EEPROM_RTC_OFFSET + reg, data);
+    }
   }
 }
 
 void init_mouse()
 {
-    mouse_present = mouse.initialize();
-  
+  mouse_present = mouse.initialize();
+
 #if DEBUG_MODE
   if (!mouse_present) {
     Serial.println(F("Mouse does not exists"));
@@ -955,15 +891,15 @@ void do_magic()
 
 void clear_matrix(int clear_size)
 {
-    // all keys up
-  for (int i=0; i<clear_size; i++) {
-      matrix[i] = false;
+  // all keys up
+  for (int i = 0; i < clear_size; i++) {
+    matrix[i] = false;
   }
 }
 
 bool eeprom_restore_value(int addr, bool default_value)
 {
-  byte val;  
+  byte val;
   val = EEPROM.read(addr);
   if ((val == EEPROM_VALUE_TRUE) || (val == EEPROM_VALUE_FALSE)) {
     return (val == EEPROM_VALUE_TRUE) ? true : false;
@@ -996,84 +932,84 @@ void eeprom_store_values()
   eeprom_store_value(EEPROM_TURBO_ADDRESS, is_turbo);
   eeprom_store_value(EEPROM_MODE_ADDRESS, profi_mode);
   eeprom_store_value(EEPROM_SW1_ADDRESS, is_sw1);
-  eeprom_store_value(EEPROM_SW2_ADDRESS, is_sw2);  
+  eeprom_store_value(EEPROM_SW2_ADDRESS, is_sw2);
 }
 
 void checkSerialInput()
 {
   readLine();
-   if (!buffering) {
-     processInput();
-     index = 0;
-     buf[index] = '\0';
-     buffering = true;
-   }
+  if (!buffering) {
+    processInput();
+    index = 0;
+    buf[index] = '\0';
+    buffering = true;
+  }
 }
 
 void readLine() {
-   if (Serial.available())  {
-     while (Serial.available()) {
-         char c = Serial.read();
-         if (c == '\n' || c == '\r' || index >= buf_len) {
-           buffering = false;
-         } else {
-           buffering = true;
-           buf[index] = c;
-           index++;
-           buf[index] = '\0';
-         }
-     }
-   }
- }
-
- void processInput() {
-     String content = String(buf);
-
-    if (content.compareTo("HELP") == 0) {
-      Serial.println(F("HELP:"));
-      Serial.println(F("GET - will print a current date/time"));
-      Serial.println(F("SET YYYY MM DD HH II SS W - will set RTC to the given arguments"));
-      Serial.println();
-      return;
-    }
-
-    if (content.compareTo("GET") == 0) {
-      Serial.println(F("GET:"));
-      Serial.println(F("Current time is:"));
-      printTime();
-      Serial.println();
-      return;
-    }
-
-    if (content.indexOf("SET") == 0) {
-      if (content.length() == 25) {
-
-        String s_year = content.substring(4, 8);
-        String s_month = content.substring(9, 11);
-        String s_day = content.substring(12, 14);
-        String s_hour = content.substring(15, 17);
-        String s_min = content.substring(18, 20);
-        String s_sec = content.substring(21, 23);
-        String s_week = content.substring(24,25);
-
-        rtc_year = stringToInt(s_year);
-        rtc_month = stringToByte(s_month);
-        rtc_day = stringToByte(s_day);
-        rtc_hours = stringToByte(s_hour);
-        rtc_minutes = stringToByte(s_min);
-        rtc_seconds = stringToByte(s_sec);
-        rtc_week = stringToByte(s_week);
-        rtc_save();
-
-        printTime();        
-        Serial.println(F("Set time OK"));
-        Serial.println();
+  if (Serial.available())  {
+    while (Serial.available()) {
+      char c = Serial.read();
+      if (c == '\n' || c == '\r' || index >= buf_len) {
+        buffering = false;
       } else {
-        Serial.println(F("Invalid format given. Please use the command to set date time: SET YYYY MM DD HH II SS W"));
-        Serial.println();
+        buffering = true;
+        buf[index] = c;
+        index++;
+        buf[index] = '\0';
       }
     }
- }
+  }
+}
+
+void processInput() {
+  String content = String(buf);
+
+  if (content.compareTo("HELP") == 0) {
+    Serial.println(F("HELP:"));
+    Serial.println(F("GET - will print a current date/time"));
+    Serial.println(F("SET YYYY MM DD HH II SS W - will set RTC to the given arguments"));
+    Serial.println();
+    return;
+  }
+
+  if (content.compareTo("GET") == 0) {
+    Serial.println(F("GET:"));
+    Serial.println(F("Current time is:"));
+    printTime();
+    Serial.println();
+    return;
+  }
+
+  if (content.indexOf("SET") == 0) {
+    if (content.length() == 25) {
+
+      String s_year = content.substring(4, 8);
+      String s_month = content.substring(9, 11);
+      String s_day = content.substring(12, 14);
+      String s_hour = content.substring(15, 17);
+      String s_min = content.substring(18, 20);
+      String s_sec = content.substring(21, 23);
+      String s_week = content.substring(24, 25);
+
+      rtc_year = stringToInt(s_year);
+      rtc_month = stringToByte(s_month);
+      rtc_day = stringToByte(s_day);
+      rtc_hours = stringToByte(s_hour);
+      rtc_minutes = stringToByte(s_min);
+      rtc_seconds = stringToByte(s_sec);
+      rtc_week = stringToByte(s_week);
+      rtc_save();
+
+      printTime();
+      Serial.println(F("Set time OK"));
+      Serial.println();
+    } else {
+      Serial.println(F("Invalid format given. Please use the command to set date time: SET YYYY MM DD HH II SS W"));
+      Serial.println();
+    }
+  }
+}
 
 void printTime() {
   Serial.print(rtc_year);
@@ -1093,19 +1029,6 @@ void printTime() {
   Serial.println();
 }
 
-int stringToInt(String s) {
-     char this_char[s.length() + 1];
-     s.toCharArray(this_char, sizeof(this_char));
-     int result = atoi(this_char);     
-     return result;
-}
-
-uint8_t stringToByte(String s) {
-     char this_char[s.length() + 1];
-     s.toCharArray(this_char, sizeof(this_char));
-     int result = atoi(this_char);
-     return lowByte(result);
-}
 
 // initial setup
 void setup()
@@ -1142,14 +1065,14 @@ void setup()
   pinMode(PIN_JOY_RIGHT, INPUT_PULLUP);
   pinMode(PIN_JOY_FIRE1, INPUT_PULLUP);
   pinMode(PIN_JOY_FIRE2, INPUT_PULLUP);
-  
+
   // clear full matrix
   clear_matrix(ZX_MATRIX_FULL_SIZE);
 
   // restore saved modes from EEPROM
   eeprom_restore_values();
 
-Serial.println(F("ZX Keyboard / mouse / rtc controller v1.0"));
+  Serial.println(F("ZX Keyboard / mouse / rtc controller v1.0"));
 
 #if DEBUG_MODE
   Serial.println(F("Reset on boot..."));
@@ -1185,6 +1108,11 @@ Serial.println(F("ZX Keyboard / mouse / rtc controller v1.0"));
   rtc_minutes = rtc.getMinutes();
   rtc_seconds = rtc.getSeconds();
 
+  // read is_bcd, is_24h
+  uint8_t reg_b = EEPROM.read(EEPROM_RTC_OFFSET + 0xB);
+  rtc_is_bcd = !bitRead(reg_b, 2);
+  rtc_is_24h = bitRead(reg_b, 1);
+
   rtc_send_time();
 
 #if DEBUG_MODE
@@ -1193,18 +1121,18 @@ Serial.println(F("ZX Keyboard / mouse / rtc controller v1.0"));
 
   if (!rtc_init_done) {
 #if DEBUG_MODE
-  Serial.println(F("RTC send all registers on boot"));
+    Serial.println(F("RTC send all registers on boot"));
 #endif
-     rtc_send_all();
+    rtc_send_all();
 #if DEBUG_MODE
-  Serial.println(F("done"));
-#endif     
+    Serial.println(F("done"));
+#endif
   }
 
   Serial.println(F("Builtin commands: HELP, SET, GET"));
 
   digitalWrite(PIN_LED1, LOW);
-  
+
 }
 
 
@@ -1212,7 +1140,7 @@ Serial.println(F("ZX Keyboard / mouse / rtc controller v1.0"));
 void loop()
 {
   unsigned long n = millis();
-  
+
   if (kbd.available()) {
     int c = kbd.read();
     blink_state = true;
@@ -1220,7 +1148,7 @@ void loop()
     if (!led1_overwrite) {
       digitalWrite(PIN_LED1, HIGH);
     }
-#if DEBUG_MODE    
+#if DEBUG_MODE
     Serial.print(F("Scancode: "));
     Serial.println(c, HEX);
 #endif
@@ -1231,20 +1159,20 @@ void loop()
   transmit_keyboard_matrix();
 
   // react on hardware buttons every 200ms
-//  if (n - tb >= 200) {
-//    if (analogRead(PIN_BTN1) < 100) {
-//      digitalWrite(PIN_LED2, LOW);
-//      do_reset();
-//      digitalWrite(PIN_LED2, HIGH);
-//    }
-//  
-//    if (analogRead(PIN_BTN2) < 100) {
-//      digitalWrite(PIN_LED1, LOW);
-//      do_magic();
-//      digitalWrite(PIN_LED1, HIGH);
-//    }
-//    tb = n;
-//  }
+  //  if (n - tb >= 200) {
+  //    if (analogRead(PIN_BTN1) < 100) {
+  //      digitalWrite(PIN_LED2, LOW);
+  //      do_reset();
+  //      digitalWrite(PIN_LED2, HIGH);
+  //    }
+  //
+  //    if (analogRead(PIN_BTN2) < 100) {
+  //      digitalWrite(PIN_LED1, LOW);
+  //      do_magic();
+  //      digitalWrite(PIN_LED1, HIGH);
+  //    }
+  //    tb = n;
+  //  }
 
   // read joystick
   joy[ZX_JOY_UP] = digitalRead(PIN_JOY_UP) == LOW;
@@ -1273,7 +1201,7 @@ void loop()
   }
 
   // read time from rtc
-  if (n - tr >= 1000) {
+  if (n - tr >= 500) {
 
     rtc_year = rtc.getYear();
     rtc_month = rtc.getMonth();
@@ -1285,6 +1213,7 @@ void loop()
     rtc_seconds = rtc.getSeconds();
 
 #if DEBUG_MODE
+#if DEBUG_TIME
     Serial.print(F("RTC: "));
     Serial.print(rtc_hours);
     Serial.print(F(":"));
@@ -1292,6 +1221,7 @@ void loop()
     Serial.print(F(":"));
     Serial.print(rtc_seconds);
     Serial.println();
+#endif
 #endif
 
     rtc_send_time();
@@ -1318,7 +1248,7 @@ void loop()
 
     bool btn1 = bitRead(m.status, 0);
     bool btn2 = bitRead(m.status, 1);
-    bool btn3 = bitRead(m.status, 2);    
+    bool btn3 = bitRead(m.status, 2);
     bitWrite(mouse_z, 4, btn1);
     bitWrite(mouse_z, 5, btn2);
     bitWrite(mouse_z, 6, btn3);
@@ -1372,5 +1302,5 @@ void loop()
       }
     }
   }
-  
+
 }
