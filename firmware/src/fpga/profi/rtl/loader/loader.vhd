@@ -20,12 +20,10 @@ USE ieee.std_logic_unsigned.all;
 
 entity loader is
 generic (
-	FLASH_ADDR_START	: std_logic_vector(23 downto 0) := "000010111000000000000000"; -- 753664; -- 24bit address
-	RAM_ADDR_START		: std_logic_vector(20 downto 0) := "100000000000000000000"; -- 21 bit address
-	SIZE_TO_READ		: integer := 262144; -- count of bytes to read (4x 64KB rom)
-	
-	RAM_CLEAR_ADDR_START	: std_logic_vector(20 downto 0) := "000000000000000000000"; 
-	SIZE_TO_CLEAR 		: integer := 131072; -- count of bytes to clear (128 KB)
+	FLASH_ADDR_START	: std_logic_vector(23 downto 0) := "000010111000000000000000"; -- 753664; -- 24bit address / ROM image start at
+	RAM_ADDR_START		: std_logic_vector(20 downto 0) := "100000000000000000000"; -- 21 bit address / RAM address to copy ROM image to
+	SIZE_TO_READ		: integer := 262144; -- count of bytes to read (4x 64KB rom) / count of bytes to read
+	CFG_ADDR 			: std_logic_vector(23 downto 0) := "000011111000000000000000"; -- 1015808; -- 24bit address / config byte address
 	
 	SPI_CMD_READ  		: std_logic_vector(7 downto 0) := X"03"; -- W25Q16 read command
 	SPI_CMD_POWERON 	: std_logic_vector(7 downto 0) := X"AB" -- W25Q16 power on command
@@ -42,6 +40,9 @@ port (
 	RAM_DO 			: out std_logic_vector(7 downto 0);
 	RAM_WR			: out std_logic;
 	RAM_RD			: out std_logic;
+	
+	-- Config byte 
+	CFG 				: out std_logic_vector(7 downto 0) := "00000010";
 
 	-- SPI FLASH (M25P16)
 	DATA0				: in std_logic;
@@ -83,9 +84,9 @@ signal clear_cnt 		: std_logic_vector(20 downto 0) := (others => '0');
 
 type machine IS(init, release_init, wait_init, 
 					 ready, cmd_read, cmd_end_read, do_read, do_next, finish, 
-					 clear, do_clear, do_next_clear, 
+					 cmd_read_cfg, cmd_end_read_cfg, do_read_cfg, finish_cfg,
 					 finish2);     --state machine datatype
-signal state 			: machine; --current state
+signal state : machine; --current state
 
 begin
 	
@@ -187,23 +188,27 @@ begin
 				spi_a_bus <= spi_a_bus + 1; -- increment flash address 
 				sdr_a_bus <= sdr_a_bus + 1; -- increment ram address
 				state <= ready;
-			when finish => -- finish of reading flash to ram
-				-- state <= clear;
-				state <= finish2;
-			when clear => -- clear ready state
-				if (clear_cnt < SIZE_TO_CLEAR) then 
-					state <= do_clear;
+			when finish => -- finish of reading rom images fro flash to ram
+				state <= cmd_read_cfg;
+			
+			-- read cfg byte from spi flash
+			when cmd_read_cfg => 
+				spi_ena <= '1';
+				spi_di_bus <= spi_cmd_read & CFG_ADDR & "00000000";
+				state <= cmd_end_read_cfg;
+			when cmd_end_read_cfg => 
+				spi_ena <= '0';
+				state <= do_read_cfg;
+			when do_read_cfg => -- wait for spi transfer
+				if (spi_busy = '0') then 
+					CFG <= spi_do_bus(7 downto 0);
+					state <= finish_cfg;
 				else 
-					state <= finish2;
+					state <= do_read_cfg;
 				end if;
-			when do_clear => 
-				sdr_wr <= '1'; -- begin ram write
-				sdr_di_bus <= "00000000"; 
-				state <= do_next_clear;
-			when do_next_clear => 
-				sdr_wr <= '0'; -- end ram write
-				clear_cnt <= clear_cnt + 1; -- increment read counter
-				state <= clear;		
+			when finish_cfg => 
+				state <= finish2;
+			
 			when finish2 => -- read all the required data from SPI flash
 				state <= finish2; -- infinite loop here
 				loader_act <= '0'; -- loader finished

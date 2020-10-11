@@ -46,14 +46,10 @@ use IEEE.numeric_std.all;
 
 entity karabas_pro is
 	generic (
-		-- Warning! The following 2 parameters are assigned on the project level:
-		enable_switches 	 : boolean := true; -- rev.C has SW3 with 4 dip switches
-		dac_type 			 : integer range 0 to 1 := 0; -- 0 - TDA1543, 1 - TDA1543A (only has effect when enable_switches = false)
-		
 		enable_ay_uart 	 : boolean := false; -- Enable ESP8266 module on AY I/O port A
-		enable_zxuno_uart  : boolean := true;  -- enable ZXUNO UART
+		enable_zxuno_uart  : boolean := true;  -- Enable ZXUNO UART for ESP8266 module
 		enable_diag_rom	 : boolean := false; -- Retroleum diagrom
-		enable_turbo 		 : boolean := false -- enable Turbo mode 7MHz
+		enable_turbo 		 : boolean := false -- enable Turbo mode 7MHz // TODO!!!
 	);
 port (
 	-- Clock (50MHz)
@@ -120,6 +116,11 @@ port (
 end karabas_pro;
 
 architecture rtl of karabas_pro is
+
+-- Board revision 
+signal board_revision : std_logic_vector(7 downto 0);
+signal enable_switches : std_logic := '1'; -- rev.C has SW3 with 4 dip switches
+signal dac_type : std_logic := '0'; -- 0 - TDA1543, 1 - TDA1543A (only has effect when enable_switches = false)
 
 -- CPU
 signal cpu_reset_n	: std_logic;
@@ -635,6 +636,8 @@ port map(
 	RAM_DO 			=> loader_ram_do,
 	RAM_WR 			=> loader_ram_wr,
 	RAM_RD 			=> loader_ram_rd,
+	
+	CFG 				=> board_revision,
 
 	DATA0				=> DATA0,
 	NCSO				=> flash_ncs,
@@ -956,9 +959,24 @@ cpu_nmi_n <= '0' when kb_magic = '1' else '1'; -- NMI
 cpu_wait_n <= '0' when kb_wait = '1' else '1'; -- WAIT
 cpuclk <= clk_bus and ena_div8;
 
-vid_scandoubler_enable <= '0' when enable_switches and SW3(1) = '0' else not(soft_sw1); -- enable scandoubler by default for older revisions and switchable by SW3(1) for a newer ones
-audio_dac_type <= '0' when ((enable_switches and SW3(2) = '1') or (not(enable_switches) and dac_type = 0)) else '1'; -- default is dac_type for older revisions and switchable by SW3(2) for a newer ones
-ext_rom_bank <= not SW3(4 downto 3) when enable_switches else "00"; -- SW3 and SW4 switches a 4 external rom banks for newer revisions, otherwise - the only one ROM used 
+process(board_revision)
+begin 
+	case board_revision is 
+		when x"00" => -- revA with TDA1543 
+			enable_switches <= '0';
+			dac_type <= '0';
+		when x"01" => -- revA with TDA1543A
+			enable_switches <= '0';
+			dac_type <= '1';
+		when others => --revC with DIP switches
+			enable_switches <= '1';
+			dac_type <= '0';
+	end case;
+end process;
+
+vid_scandoubler_enable <= '0' when enable_switches='1' and SW3(1) = '0' else not(soft_sw1); -- enable scandoubler by default for older revisions and switchable by SW3(1) for a newer ones
+audio_dac_type <= '0' when ((enable_switches='1' and SW3(2) = '1') or (enable_switches='0' and dac_type = '0')) else '1'; -- default is dac_type for older revisions and switchable by SW3(2) for a newer ones
+ext_rom_bank <= not SW3(4 downto 3) when enable_switches='1' else "00"; -- SW3 and SW4 switches a 4 external rom banks for newer revisions, otherwise - the only one ROM used 
 
 -- HDD access
 led1_overwrite <= '1';
