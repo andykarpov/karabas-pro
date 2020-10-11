@@ -19,6 +19,9 @@ entity profi_video is
 		DI			: in std_logic_vector(7 downto 0);
 		RGB		: out std_logic_vector(2 downto 0);	-- RGB
 		I 			: out std_logic;
+		MODE60	: in std_logic := '0'; -- 
+		pFF_CS	: out std_logic; -- port FF select
+		ATTR_O	: out std_logic_vector(7 downto 0); -- attribute register output
 		BLANK 	: out std_logic;
 		HSYNC		: out std_logic;
 		VSYNC		: out std_logic;		
@@ -40,11 +43,17 @@ architecture rtl of profi_video is
 	constant pcpm_brd_left		: natural :=  48;	-- 32 для выравнивания из-за задержки на чтение vid_reg и attr_reg задано на 8 точек меньше
 
 	constant pcpm_scr_v			: natural := 240;
-	constant pcpm_brd_bot		: natural :=  16;--16
-	constant pcpm_blk_down		: natural :=  8;--8
+	constant pcpm_brd_bot		: natural :=  0;--16
+	constant pcpm_blk_down		: natural :=  24;--8
 	constant pcpm_sync_v			: natural :=  16;--16
-	constant pcpm_blk_up			: natural :=  16;--16
-	constant pcpm_brd_top		: natural :=  16;--16
+	constant pcpm_blk_up			: natural :=  32;--16
+	constant pcpm_brd_top		: natural :=  0;--16
+	
+	constant pcpm_brd_bot_60	: natural :=  0;--16
+	constant pcpm_blk_down_60	: natural :=  8;--8
+	constant pcpm_sync_v_60		: natural :=  8;--16
+	constant pcpm_blk_up_60		: natural :=  8;--16
+	constant pcpm_brd_top_60	: natural :=  0;--16
 
 	constant pcpm_h_blk_on		: natural := (pcpm_scr_h + pcpm_brd_right) - 1;
 	constant pcpm_h_sync_on		: natural := (pcpm_scr_h + pcpm_brd_right + pcpm_blk_front) - 1;
@@ -57,6 +66,11 @@ architecture rtl of profi_video is
 	constant pcpm_v_sync_off	: natural := (pcpm_scr_v + pcpm_brd_bot + pcpm_blk_down + pcpm_sync_v);
 	constant pcpm_v_blk_off		: natural := (pcpm_scr_v + pcpm_brd_bot + pcpm_blk_down + pcpm_sync_v + pcpm_blk_up);
 	constant pcpm_v_end			: natural := 311;
+	constant pcpm_v_blk_on_60	: natural := (pcpm_scr_v + pcpm_brd_bot_60) - 1;
+	constant pcpm_v_sync_on_60	: natural := (pcpm_scr_v + pcpm_brd_bot_60 + pcpm_blk_down_60) - 1;
+	constant pcpm_v_sync_off_60: natural := (pcpm_scr_v + pcpm_brd_bot_60 + pcpm_blk_down_60 + pcpm_sync_v_60);
+	constant pcpm_v_blk_off_60	: natural := (pcpm_scr_v + pcpm_brd_bot_60 + pcpm_blk_down_60 + pcpm_sync_v_60 + pcpm_blk_up_60);
+	constant pcpm_v_end_60		: natural := 263;
 
 	constant pcpm_h_int_on		: natural := 656; --pspec_sync_h+8;
 	constant pcpm_v_int_on		: natural := 241; --pspec_v_blk_off - 1;
@@ -80,8 +94,6 @@ architecture rtl of profi_video is
 	signal v_sync			: std_logic;
 	signal int_sig			: std_logic;
 	signal blank_sig		: std_logic;
-	signal scan_cnt		: std_logic_vector(9 downto 0);
-	signal scan_cnt1		: std_logic_vector(9 downto 0);
 	signal rgbi				: std_logic_vector(3 downto 0);
 	signal bl_int 			: std_logic;
 	signal infp 			: std_logic;
@@ -103,20 +115,16 @@ begin
 				end if;
 			
 				if (h_cnt = pcpm_h_sync_on) then
-					if (v_cnt = pcpm_v_end) then
+					if (v_cnt = pcpm_v_end and mode60 = '0') or (v_cnt = pcpm_v_end_60 and mode60 = '1') then
 						v_cnt <= (others => '0');
 					else
 						v_cnt <= v_cnt + 1;
 					end if;
 				end if;
-				if (h_cnt = pcpm_h_sync_on) then
-					scan_cnt1 <= (others => '0');
-				else
-					scan_cnt1 <= scan_cnt1 + 1;
-				end if;
-				if (v_cnt = pcpm_v_sync_on) then
+
+				if (v_cnt = pcpm_v_sync_on and mode60 = '0') or (v_cnt = pcpm_v_sync_on_60 and mode60 = '1') then
 					v_sync <= '0';
-				elsif (v_cnt = pcpm_v_sync_off) then
+				elsif (v_cnt = pcpm_v_sync_off and mode60 = '0') or (v_cnt = pcpm_v_sync_off_60 and mode60 = '1') then
 					v_sync <= '1';
 				end if;
 
@@ -128,8 +136,18 @@ begin
 
 				
 				if (h_cnt > pcpm_h_int_on  and v_cnt = pcpm_v_int_on) then -- or (h_cnt < pcpm_h_int_off and v_cnt = pcpm_v_int_off) then
-					int_sig <= '0'; else	int_sig <= '1';
-				end if;				
+					int_sig <= '0';
+				else
+					int_sig <= '1';
+				end if;
+				
+				--BL_INT
+				if INTA = '0' then
+					bl_int <= '1';
+				elsif h_cnt(4)= '1' then
+					bl_int <= not int_sig;
+				end if;
+				
 			end if;
 	end if;
 end process;
@@ -176,8 +194,7 @@ begin
 			elsif paper1 = '1' and (pixel_reg(7 - to_integer(h_cnt(2 downto 0)))) = '1' then 
 				rgbi <= attr_reg(1) & attr_reg(2) & attr_reg(0) & attr_reg(6);
 			else
-				rgbi <= not BORDER(1) & not BORDER(2) & not BORDER(0) & '0';
-				--rgbi <= BORDER(1) & BORDER(2) & BORDER(0) & '0';
+				rgbi <= not BORDER(1) & not BORDER(2) & not BORDER(0) & (not BORDER(3) and bl_int);
 			end if;
 		end if;
 	end if;
@@ -187,11 +204,12 @@ i78 <= attr_reg(7) when ds80 = '1' else attr_reg(6);
 		
 A <= std_logic_vector((not h_cnt(3)) & v_cnt(7 downto 6)) & std_logic_vector(v_cnt(2 downto 0)) & std_logic_vector(v_cnt(5 downto 3)) & std_logic_vector(h_cnt(8 downto 4));		
 		
-blank_sig	<= '1' when (((h_cnt > pcpm_h_blk_on and h_cnt < pcpm_h_blk_off) or (v_cnt > pcpm_v_blk_on and v_cnt < pcpm_v_blk_off))) else '0';
+blank_sig	<= '1' when (((h_cnt > pcpm_h_blk_on and h_cnt < pcpm_h_blk_off) or ((v_cnt > pcpm_v_blk_on and v_cnt < pcpm_v_blk_off and mode60 = '0') or (v_cnt > pcpm_v_blk_on_60 and v_cnt < pcpm_v_blk_off_60 and mode60 = '1')))) else '0';
 paper			<= '1' when ((h_cnt < pcpm_scr_h and v_cnt < pcpm_scr_v)) else '0';
 
+pFF_CS		<= paper;
+ATTR_O		<= attr_reg;
 INT			<= int_sig;
-bl_int 		<= int_sig;
 RGB 			<= rgbi(3 downto 1);
 I 				<= rgbi(0);
 HSYNC 		<= h_sync;
