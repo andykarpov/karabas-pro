@@ -102,10 +102,10 @@ BEGIN
 		lpm_width => 16,
 		lpm_widthu => 8,
 		overflow_checking => "ON",
-		rdsync_delaypipe => 4,
+		rdsync_delaypipe => 3,
 		underflow_checking => "ON",
 		use_eab => "ON",
-		wrsync_delaypipe => 4
+		wrsync_delaypipe => 3
 	)
 	PORT MAP (
 		data => data,
@@ -165,10 +165,10 @@ END SYN;
 -- Retrieval info: CONSTANT: LPM_WIDTH NUMERIC "16"
 -- Retrieval info: CONSTANT: LPM_WIDTHU NUMERIC "8"
 -- Retrieval info: CONSTANT: OVERFLOW_CHECKING STRING "ON"
--- Retrieval info: CONSTANT: RDSYNC_DELAYPIPE NUMERIC "4"
+-- Retrieval info: CONSTANT: RDSYNC_DELAYPIPE NUMERIC "3"
 -- Retrieval info: CONSTANT: UNDERFLOW_CHECKING STRING "ON"
 -- Retrieval info: CONSTANT: USE_EAB STRING "ON"
--- Retrieval info: CONSTANT: WRSYNC_DELAYPIPE NUMERIC "4"
+-- Retrieval info: CONSTANT: WRSYNC_DELAYPIPE NUMERIC "3"
 -- Retrieval info: USED_PORT: data 0 0 16 0 INPUT NODEFVAL "data[15..0]"
 -- Retrieval info: USED_PORT: q 0 0 16 0 OUTPUT NODEFVAL "q[15..0]"
 -- Retrieval info: USED_PORT: rdclk 0 0 0 0 INPUT NODEFVAL "rdclk"

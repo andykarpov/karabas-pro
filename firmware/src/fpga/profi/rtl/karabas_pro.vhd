@@ -472,7 +472,7 @@ port map (
 	TRDOS 			=> dos_act,
 	
 	-- rom
-	ROM_BANK 		=> port_7ffd_reg(4),
+	ROM_BANK 		=> rom14,
 	EXT_ROM_BANK   => ext_rom_bank
 );	
 
@@ -664,6 +664,7 @@ port map(
 U14: entity work.cpld_kbd
 port map (
 	 CLK 				=> clk_bus,
+	 CLKEN 			=> cpuclk,
 	 N_RESET 		=> not areset,
     A       		=> cpu_a_bus(15 downto 8),
     KB				=> kb_do_bus,
@@ -933,12 +934,12 @@ cs_xxfd <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and cpu_a_bus(15) = '0' 
 
 -- регистр AS часов
 cs_rtc_as <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and
-							((cpu_a_bus(7 downto 0) = X"FF" or cpu_a_bus(7 downto 0) = X"BF") and cpm='1' and rom14='1') -- расширенная периферия
+							((cpu_a_bus(7 downto 0) = X"FF" or cpu_a_bus(7 downto 0) = X"BF") and cpm='1' and rom14='1' and dos_act='0') -- расширенная периферия
 				     else '0';
 --
 -- регистр DS часов					  
 cs_rtc_ds <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and 
-							((cpu_a_bus(7 downto 0) = X"DF" or cpu_a_bus(7 downto 0) = X"9F") and cpm='1' and rom14='1') -- расширенная периферия
+							((cpu_a_bus(7 downto 0) = X"DF" or cpu_a_bus(7 downto 0) = X"9F") and cpm='1' and rom14='1' and dos_act='0') -- расширенная периферия
 				     else '0';
 					  
 ---- Profi RTC
@@ -1009,8 +1010,8 @@ end process;
 -- Audio mixer
 
 speaker <= port_xxfe_reg(4);
-audio_l <= "0000000000000000" when loader_act = '1' else ("000" & speaker & "000000000000") + ("000" & ssg_cn0_a & "00000") + ("000" & ssg_cn0_b & "00000") + ("000" & ssg_cn1_a & "00000") + ("000" & ssg_cn1_b & "00000") + soundrive_l + ("000" & saa_out_l & "00000");
-audio_r <= "0000000000000000" when loader_act = '1' else ("000" & speaker & "000000000000") + ("000" & ssg_cn0_c & "00000") + ("000" & ssg_cn0_b & "00000") + ("000" & ssg_cn1_c & "00000") + ("000" & ssg_cn1_b & "00000") + soundrive_r + ("000" & saa_out_r & "00000");
+audio_l <= "0000000000000000" when loader_act = '1' or cpu_wait_n = '0' else ("000" & speaker & "000000000000") + ("000" & ssg_cn0_a & "00000") + ("000" & ssg_cn0_b & "00000") + ("000" & ssg_cn1_a & "00000") + ("000" & ssg_cn1_b & "00000") + soundrive_l + ("000" & saa_out_l & "00000");
+audio_r <= "0000000000000000" when loader_act = '1' or cpu_wait_n = '0' else ("000" & speaker & "000000000000") + ("000" & ssg_cn0_c & "00000") + ("000" & ssg_cn0_b & "00000") + ("000" & ssg_cn1_c & "00000") + ("000" & ssg_cn1_b & "00000") + soundrive_r + ("000" & saa_out_r & "00000");
 
 -- SAA1099
 saa_wr_n <= '0' when (cpu_iorq_n = '0' and cpu_wr_n = '0' and cpu_a_bus(7 downto 0) = "11111111" and dos_act = '0') else '1';
@@ -1018,7 +1019,7 @@ saa_wr_n <= '0' when (cpu_iorq_n = '0' and cpu_wr_n = '0' and cpu_a_bus(7 downto
 -------------------------------------------------------------------------------
 -- Port I/O
 
-mc146818_wr <= '1' when (cs_rtc_ds = '1' and cpu_iorq_n = '0' and cpu_wr_n = '0') else '0';
+mc146818_wr <= '1' when (cs_rtc_ds = '1' and cpu_iorq_n = '0' and cpu_wr_n = '0' and cpu_m1_n = '1') else '0';
 
 port_bff7 	<= '1' when (cpu_iorq_n = '0' and cpu_a_bus = X"BFF7" and cpu_m1_n = '1' and port_eff7_reg(7) = '1') else '0';
 zc_wr 		<= '1' when (cpu_iorq_n = '0' and cpu_wr_n = '0' and cpu_a_bus(7 downto 6) = "01" and cpu_a_bus(4 downto 0) = "10111") else '0';

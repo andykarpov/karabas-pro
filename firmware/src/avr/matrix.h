@@ -110,6 +110,8 @@
 #define ZX_JOY_LEFT 4
 #define ZX_JOY_RIGHT 5
 
+// Outgoing commands:
+
 // kbd commands
 #define CMD_KBD_BYTE1 0x01
 #define CMD_KBD_BYTE2 0x02
@@ -128,16 +130,18 @@
 // joystick commands
 #define CMD_JOY 0x0D
 
-// led command
-#define CMD_LED_WRITE 0x0E
-
-// RTC commands
+// RTC RD command
 #define CMD_RTC_READ 0x40 // + regnum 0e-3f (64 ... 127)
-#define CMD_RTC_WRITE 0x80 // + regnum 0e-3f (128 ... 191)
 
+// Incoming commands:
+
+// LED command
+#define CMD_LED_WRITE 0x0E
+// RTC WR command 
+#define CMD_RTC_WRITE 0x80 // + regnum 0e-3f (128 ... 191)
+// RTC INIT command
 #define CMD_RTC_INIT_REQ 0xFC // rtc init request
-#define CMD_RTC_WRITE_OK 0xFD // write done
-#define CMD_RTC_READY 0xFE // ready for next write
+// NOP command
 #define CMD_NONE 0xFF
 
 #endif
