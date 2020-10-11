@@ -7,6 +7,7 @@ entity cpld_kbd is
 	port
 	(
 	 CLK			 : in std_logic;
+	 CLKEN 		 : in std_logic;
 	 N_RESET 	 : in std_logic := '1';
     A           : in std_logic_vector(15 downto 8);     -- address bus for kbd
     KB          : out std_logic_vector(5 downto 0) := "111111";     -- data bus for kbd + extended bit (b6)
@@ -72,9 +73,9 @@ architecture RTL of cpld_kbd is
 	 
 	 -- spi
 	 signal spi_do_valid 	: std_logic := '0';
+	 signal spi_di 			: std_logic_vector(15 downto 0);
 	 signal spi_do 			: std_logic_vector(15 downto 0);
 	 signal spi_di_req 		: std_logic;
---	 signal spi_di 			: std_logic_vector(15 downto 0);
 	 
 	 -- rtc rx spi data
 	 signal rtc_cmd 			: std_logic_vector(7 downto 0);  -- spi cmd
@@ -85,14 +86,6 @@ architecture RTL of cpld_kbd is
 	 signal rtcw_a 			: std_logic_vector(5 downto 0);
 	 signal rtcw_wr 			: std_logic := '0';
 	 signal rtcr_do 			: std_logic_vector(7 downto 0);
-	 
-	 -- rtc dedicated registers
-	signal a_reg				: std_logic_vector(7 downto 0); -- 0A
-	signal b_reg				: std_logic_vector(7 downto 0); -- 0B
-	signal c_reg				: std_logic_vector(7 downto 0); -- 0C
---	signal d_reg				: std_logic_vector(7 downto 0); -- 0D
-	signal e_reg				: std_logic_vector(7 downto 0); -- 0E
-	signal f_reg				: std_logic_vector(7 downto 0); -- 0F	 
 	
 	-- rtc fifo 
 	signal queue_di			: std_logic_vector(15 downto 0);
@@ -104,9 +97,18 @@ architecture RTL of cpld_kbd is
 	signal queue_rd_empty   : std_logic;
 	
 	signal last_queue_di 	: std_logic_vector(15 downto 0) := (others => '1');	
-	signal cnt_led 			: unsigned(12 downto 0) := "0000000000000";
-	 
+	signal rtc_init_ack 		: std_logic := '0';
+	signal cnt_led 			: unsigned(10 downto 0) := (others=> '0');
+	
+	type qmachine IS(q_idle, q_init, q_init_done, q_rtcw, q_rtcw_done, q_avrw, q_avrw_done, q_led, q_led_done, q_nop, q_nop_done); --state machine for queue writes
+	signal qstate : qmachine := q_idle;
+
+		 
 begin
+	
+	--------------------------------------------------------------------------
+	-- AVR SPI communication
+	--------------------------------------------------------------------------		  
 	
 	U_SPI: entity work.spi_slave
 	generic map(
@@ -120,7 +122,7 @@ begin
 		  spi_miso_o     => AVR_MISO,
 
 		  di_req_o       => spi_di_req,
-		  di_i           => queue_do,
+		  di_i           => spi_di,
 		  wren_i         => not queue_rd_empty,
 		  
 		  do_valid_o     => spi_do_valid,
@@ -132,8 +134,9 @@ begin
 		  rx_bit_reg_o   => open,
 		  state_dbg_o    => open
 	);
-	
-	queue_rd_req <= '1' when spi_di_req = '1' and queue_rd_empty = '0' else '0';
+
+	spi_di <= queue_do;
+	queue_rd_req <= spi_di_req;	  
 		  
 	process (CLK, spi_do_valid, spi_do)
 	begin
@@ -147,6 +150,7 @@ begin
 					when X"04" => kb_data(31 downto 24) <= spi_do (7 downto 0);
 					when X"05" => kb_data(39 downto 32) <= spi_do (7 downto 0);
 					when X"06" => kb_data(40) <= spi_do (0); 
+									  -- misc signals
 									  RESET <= spi_do(1);
 									  TURBO <= spi_do(2);
 									  MAGICK <= spi_do(3);
@@ -154,23 +158,26 @@ begin
 									  WAIT_CPU <= spi_do(5);
 									  SOFT_SW1 <= spi_do(6);
 									  SOFT_SW2 <= spi_do(7);
-					-- when X"07", X"08" - scancode
+					when X"07" => null; -- scancode (15...8)
+					when X"08" => null; -- scancode (7...0)
 					-- mouse data
 					when X"0A" => mouse_x(7 downto 0) <= signed(spi_do(7 downto 0));
 					when X"0B" => mouse_y(7 downto 0) <= signed(spi_do(7 downto 0));
-					when X"0C" => mouse_z(3 downto 0) <= signed(spi_do(3 downto 0)); buttons(2 downto 0) <= spi_do(6 downto 4); newPacket <= spi_do(7);
-					
+					when X"0C" => mouse_z(3 downto 0) <= signed(spi_do(3 downto 0)); buttons(2 downto 0) <= spi_do(6 downto 4); newPacket <= spi_do(7);					
 					-- joy data
-					when X"0D" => joy(4 downto 0) <= spi_do(5 downto 2) & spi_do(0); -- right, left,  down, up, fire2, fire
-					
+					when X"0D" => joy(4 downto 0) <= spi_do(5 downto 2) & spi_do(0); -- right, left,  down, up, fire2, fire					
 					when others => 
 							rtc_cmd <= spi_do(15 downto 8);
 							rtc_data <= spi_do(7 downto 0);
-				end case;	
+				end case;
 			end if;
 		end if;
 	end process;		  
 		      
+	--------------------------------------------------------------------------
+	-- Keyboard
+	--------------------------------------------------------------------------
+				
 	process( kb_data, A)
 	begin
 
@@ -247,6 +254,10 @@ begin
 
 	end process;
 
+	--------------------------------------------------------------------------
+	-- Mouse 
+	--------------------------------------------------------------------------
+	
 	process (CLK, kb_data) 
 	begin
 			if (rising_edge(CLK)) then
@@ -289,6 +300,29 @@ begin
 	MS_Y 		<= std_logic_vector(cursorY);
 	MS_Z		<= std_logic_vector(deltaZ);	
 
+	--------------------------------------------------------------------------
+	-- mc146818a emulation	
+	-- http://web.stanford.edu/class/cs140/projects/pintos/specs/mc146818a.pdf
+	--------------------------------------------------------------------------
+	-- 
+	-- 000000 = 00 = Seconds       bin/bcd (0-59)
+	-- 000001 = 01 = Seconds Alarm bin/bcd (0-59)
+	-- 000010 = 02 = Minutes       bin/bcd (0-59)
+	-- 000011 = 03 = Minutes Alarm bin/bcd (0-59)
+	-- 000100 = 04 = Hours         bin/bcd (1-12 or 0-23)
+   -- 000101 = 05 = Hours Alarm   bin/bcd (1-12 or 0-23)
+   -- 000110 = 06 = Day of Week   bin/bcd (1-7, sunday = 1)
+   -- 000111 = 07 = Date of Month bin/bcd (1-31)
+   -- 001000 = 08 = Month         bin/bcd (1-12)
+	-- 001001 = 09 = Year          bin/bcd (0-99)
+	-- 001010 = 0A = Register A RW 7-UIP, 6-DV2, 5-DV1, 4-DV0, 3-RS3, 2-RS2, 1-RS1, 0-RS0. (uip = update in progress, dv-dividers, rs-rate selection)
+	-- 001011 = 0B = Register B RW 7-SET, 6-PIE, 5-AIE, 4-UIE, 3-SQWE, 2-DM, 1-24/12. 0-DSE (SET=update mode,PIE=int en,AIE=alarm int en,UIE=update int en, SQWE, DM 1=bcd, 0=bin, 24/12 1=24,0=12, DSE=daylight saving mode 1/0)
+	-- 001100 = 0C = Register C RO 7-IRFQ, 6-PF, 5-AF, 4-UF, 0000
+	-- 001101 = 0D = Register D RO 7-VRT, 0000000 (VRT = valid ram and time)
+	-- 001110 = 0E = Register E - memory, 50 bytes
+	-- ...
+	-- 011111 = 3F = Register 3F
+	
 	-- memory for rtc registers
 	URTC: entity work.rtc 
 	port map (
@@ -301,6 +335,7 @@ begin
 		rdaddress => RTC_A,
 		q			 => rtcr_do
 	);
+	RTC_DO <= rtcr_do;
 	
 	-- fifo for write commands to send them on avr side 
 	UFIFO: entity work.queue 
@@ -315,100 +350,56 @@ begin
 		q 			=> queue_do,
 		rdempty 	=> queue_rd_empty
 	);
-
-	-- mc146818a emulation	
-	process(CLK, RTC_A, a_reg, b_reg, c_reg, e_reg, f_reg, rtcr_do)
-	begin
-		-- RTC register read
-		case RTC_A(5 downto 0) is
-			when "001010" => RTC_DO <= a_reg;
-			when "001011" => RTC_DO <= b_reg;
-			when "001100" => RTC_DO <= c_reg;
-			when "001101" => RTC_DO <= "10000000"; -- (not is_busy) & "0000000";
-			when "001110" => RTC_DO <= e_reg;
-			when "001111" => RTC_DO <= f_reg;
-			when others => RTC_DO <= rtcr_do;
-		end case;
-	end process;
 		
-	process(CLK, N_RESET, RTC_INIT, queue_wr_full, RTC_WR_N, RTC_CS, rtc_cmd, rtc_data, led1, led2, led1_OWR, led2_OWR, queue_wr_req)
+	-- fifo handling / queue commands to avr side
+	process(CLK, CLKEN, N_RESET, RTC_INIT, rtc_init_ack, RTC_WR_N, RTC_CS, last_queue_di, queue_wr_full, RTC_A, RTC_DI, cnt_led, LED1, LED2, LED1_OWR, LED2_OWR, queue_wr_req, queue_rd_empty)
 	begin
 		if CLK'event and CLK = '1' then
-
-			queue_wr_req <= '0';
-			queue_di <= x"FFFF"; -- nop
-		
---			-- init request to avr rtc
---			if RTC_INIT = '1' and last_queue_di /= x"FC" & "00000000" and queue_wr_full = '0' then 
---		
---				queue_di <= x"FC" & "00000000";
---				last_queue_di <= x"FC" & "00000000";
---				queue_wr_req <= '1';
-		
-			-- host reset
-			if N_RESET='0' then
-				a_reg <= "00100110";
-				b_reg <= (others => '0');
-				c_reg <= (others => '0');		
-				cnt_led <= (others => '0');
-			else 
 			
-				-- RTC register set by ZX
-				if RTC_WR_N = '0' AND RTC_CS = '1' then
-
-					-- mem write signals
-					rtcw_wr <= '1';
-					rtcw_a <= RTC_A;
-					rtcw_di <= RTC_DI;
-					
-					case RTC_A is 
-						when "001010" => a_reg <= RTC_DI;
-						when "001011" => b_reg <= RTC_DI;
-	--					when "001100" => c_reg <= RTC_DI;
-	--					when "001101" => d_reg <= RTC_DI;
-						when "001110" => e_reg <= RTC_DI;
-						when "001111" => f_reg <= RTC_DI;
-						when others => null;
-					end case;
-					
-					-- push address and data into the FIFO queue to send via SPI
-					if queue_wr_full = '0' and last_queue_di /= ("10" & RTC_A & RTC_DI) then 
-						queue_di <= "10" & RTC_A & RTC_DI;
-						last_queue_di <= "10" & RTC_A & RTC_DI;
-						queue_wr_req <= '1';
-					end if;
-					
-				else
-				
-					-- RTC incoming time from atmega (every seconds)
-					if rtc_cmd(7 downto 6) = "01" then 
-						rtcw_wr <= '1';
-						rtcw_a <= rtc_cmd(5 downto 0);
-						case rtc_cmd(5 downto 0) is 
-							when "000000" => rtcw_di <= "00" & rtc_data(5 downto 0);     -- seconds
-							when "000010" => rtcw_di <= "00" & rtc_data(5 downto 0);		 -- minutes
-							when "000100" => rtcw_di <= "000" & rtc_data(4 downto 0);	 -- hours
-							when "000110" => rtcw_di <= "00000" & rtc_data(2 downto 0);	 -- weeks
-							when "000111" => rtcw_di <= "000" & rtc_data(4 downto 0);	 -- days
-							when "001000" => rtcw_di <= "0000" & rtc_data(3 downto 0);	 -- month
-							when "001001" => rtcw_di <= '0' & rtc_data(6 downto 0);		 -- year
-							when others   => rtcw_di <= rtc_data;
-						end case;
-					else 
-						rtcw_wr <= '0';
-					end if;
-					
-					cnt_led <= cnt_led + 1;
-					
-					-- sending led status on every 256th tick
-					if queue_wr_full = '0' and cnt_led = "0000000000000" then 
-						queue_di <= x"0E" & "0000" & LED2_OWR & LED1_OWR & LED2 & LED1;
-						queue_wr_req <= '1';
-					end if;
-					
+			if RTC_INIT = '1' and rtc_init_ack = '0' then -- and last_queue_di /= x"FC00" then 
+				rtc_init_ack <= '1';
+				queue_di <= x"FC00";
+				last_queue_di <= x"FC00";
+				queue_wr_req <= '1';
+			elsif CLKEN = '0' and RTC_WR_N = '0' AND RTC_CS = '1' then -- and last_queue_di /= ("10" & RTC_A & RTC_DI) then 
+				-- push address and data into the FIFO queue to send via SPI
+				queue_di <= "10" & RTC_A & RTC_DI;
+				last_queue_di <= "10" & RTC_A & RTC_DI;
+				queue_wr_req <= '1';
+			else
+				cnt_led <= cnt_led + 1;
+				if queue_wr_full = '0' and cnt_led = "00000000000" then -- and last_queue_di /= x"0E" & "0000" & LED2_OWR & LED1_OWR & LED2 & LED1 then
+					queue_di <= x"0E" & "0000" & LED2_OWR & LED1_OWR & LED2 & LED1;
+					last_queue_di <= x"0E" & "0000" & LED2_OWR & LED1_OWR & LED2 & LED1;
+					queue_wr_req <= '1';
+				elsif queue_rd_empty = '1' then 
+					queue_di <= x"FFFF"; -- nop
+					last_queue_di <= x"FFFF";
+					queue_wr_req <= '1';
+				else 
+					queue_wr_req <= '0';
+					queue_di <= x"FFFF"; -- nop
 				end if;
 			end if;
-			
+		end if;
+	end process;
+	
+	-- write RTC registers into ram from host / atmega
+	process (N_RESET, CLK, RTC_WR_N, RTC_CS, RTC_A, RTC_DI, rtc_cmd, rtc_data) 
+	begin 
+		if rising_edge(CLK) then
+			rtcw_wr <= '0';
+			if RTC_INIT = '0' and RTC_WR_N = '0' AND RTC_CS = '1' then
+				-- rtc mem write by host
+				rtcw_wr <= '1';
+				rtcw_a <= RTC_A;
+				rtcw_di <= RTC_DI;								
+			elsif rtc_cmd(7 downto 6) = "01" then
+				-- rtc from avr
+				rtcw_wr <= '1';
+				rtcw_a <= rtc_cmd(5 downto 0);
+				rtcw_di <= rtc_data;
+			end if;
 		end if;
 	end process;
 
