@@ -42,7 +42,7 @@ module karabas_pro_rk86(
 	output 			NRESET,
 	output 			CPLD_CLK,
 	output 			CPLD_CLK2,
-	output 			SDIR,
+	input 			SDIR,
 	output[1:0] 	SA,
 	inout[15:0] 	SD,
 	
@@ -56,6 +56,8 @@ module karabas_pro_rk86(
 	output 			PIN_120,
 	output 			PIN_119,
 	output 			PIN_115,
+	
+	input[4:1]		SW3,
 		
 	input 			UART_RX,
 	output 			UART_TX,
@@ -64,11 +66,9 @@ module karabas_pro_rk86(
 
 assign UART_TX = 0;
 assign UART_CTS = 0;
-assign SDIR = 0;
 assign NRESET = 1;
 assign CPLD_CLK = 0;
 assign CPLD_CLK2 = 0;
-assign NCSO = 1;
 
 ////////////////////   RESET   ////////////////////
 reg[3:0] reset_cnt;
@@ -219,6 +219,7 @@ altpll0 clock(
 tda1543 sound(
 	.RESET(reset),
 	.CLK(clk_8),
+	.DAC_TYPE(audio_dac_type),
 	.CS(1'b1),
 	.DATA_L(audio_l),
 	.DATA_R(audio_r),
@@ -226,6 +227,35 @@ tda1543 sound(
 	.WS(SND_WS),
 	.DATA(SND_DAT)
 );
+
+loader ldr(
+	.CLK(CLK_50MHZ),
+	.RESET(reset),
+	.CFG(board_revision),
+	.DATA0(DATA0),
+	.NCSO(NCSO),
+	.DCLK(loader_dclk),
+	.ASDO(loader_asdo),
+	.BUSY(loader_act)
+);
+
+wire loader_act;
+wire loader_asdo;
+wire loader_dclk;
+
+reg[7:0] board_revision = {8'b00000000};
+reg enable_switches = 1'b1;
+reg dac_type = 1'b0;
+
+always @(*) begin 
+   casex (board_revision[7:0])
+	8'b00000000: begin enable_switches <= 1'b0; dac_type <= 1'b0; end
+	8'b00000001: begin enable_switches <= 1'b0; dac_type <= 1'b1; end
+	8'b00000010: begin enable_switches <= 1'b1; dac_type <= 1'b0; end
+	endcase
+end
+
+wire audio_dac_type = ~((enable_switches && SW3[2]) || (~enable_switches && ~dac_type)); // default is dac_type for older revisions and switchable by SW3(2) for a newer ones
 
 wire[15:0] audio_l = {3'b000,ppa1_c[0]^inte,12'b0000000000000};
 wire[15:0] audio_r = {3'b000,ppa1_c[0]^inte,12'b0000000000000};
@@ -237,9 +267,9 @@ reg sdcmd;
 reg[6:0] sddata;
 wire[7:0] sd_o = {sddata, DATA0};
 
-assign SD_NCS = ~sdcs;
-assign ASDO = sdcmd;
-assign DCLS = sdclk;
+assign SD_NCS = (loader_act) ? 1'b1 : ~sdcs;
+assign ASDO = (loader_act) ? loader_asdo : sdcmd;
+assign DCLK = (loader_act) ? loader_dclk : sdclk;
 
 always @(posedge CLK_50MHZ or posedge reset) begin
 	if (reset) begin
