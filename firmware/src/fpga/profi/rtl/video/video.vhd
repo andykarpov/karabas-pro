@@ -8,9 +8,6 @@ use IEEE.numeric_std.ALL;
 use IEEE.std_logic_unsigned.all;
 
 entity video is
-	generic (
-			enable_turbo 		 : boolean := true
-	);
 	port (
 		CLK2X 	: in std_logic; -- 28 MHz
 		CLK		: in std_logic; -- 14 MHz
@@ -99,9 +96,6 @@ architecture rtl of video is
 begin
 
 	U_PENT: entity work.pentagon_video 
-	generic map (
-		enable_turbo => enable_turbo
-	)
 	port map (
 		CLK => CLK, -- 14
 		CLK2x => CLK2x, -- 28

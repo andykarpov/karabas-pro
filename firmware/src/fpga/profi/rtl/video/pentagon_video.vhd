@@ -8,9 +8,6 @@ use IEEE.numeric_std.ALL;
 use IEEE.std_logic_unsigned.all;
 
 entity pentagon_video is
-	generic (
-			enable_turbo 		 : boolean := true
-	);
 	port (
 		CLK2X 	: in std_logic; -- 28 MHz
 		CLK		: in std_logic; -- 14 MHz
@@ -121,7 +118,7 @@ begin
 				end if;
 			
 				-- int
-				if enable_turbo and TURBO = '1' then
+				if TURBO = '1' then
 					-- TURBO int
 					if hor_cnt & chr_col_cnt = 318 and ver_cnt & chr_row_cnt = 239 then
 						int_sig <= '0';

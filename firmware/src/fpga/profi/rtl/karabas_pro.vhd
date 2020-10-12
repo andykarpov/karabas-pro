@@ -46,10 +46,9 @@ use IEEE.numeric_std.all;
 
 entity karabas_pro is
 	generic (
-		enable_ay_uart 	 : boolean := false; -- Enable ESP8266 module on AY I/O port A
-		enable_zxuno_uart  : boolean := true;  -- Enable ZXUNO UART for ESP8266 module
-		enable_diag_rom	 : boolean := false; -- Retroleum diagrom
-		enable_turbo 		 : boolean := false -- enable Turbo mode 7MHz // TODO!!!
+		enable_ay_uart 	 : boolean := false;
+		enable_zxuno_uart  : boolean := true;
+		enable_diag_rom	 : boolean := false -- Retroleum diagrom (blockram based)
 	);
 port (
 	-- Clock (50MHz)
@@ -306,8 +305,8 @@ signal sd_clk 			: std_logic;
 signal sd_si 			: std_logic;
 
 -- AY UART 
-signal uart_do_bus 	: std_logic_vector(7 downto 0);
-signal uart_oe_n 		: std_logic;
+signal ay_uart_do_bus 	: std_logic_vector(7 downto 0);
+signal ay_uart_oe_n 		: std_logic;
 
 -- ZXUNO regs / UART ports
 signal zxuno_regrd : std_logic;
@@ -316,6 +315,8 @@ signal zxuno_addr : std_logic_vector(7 downto 0);
 signal zxuno_regaddr_changed : std_logic;
 signal zxuno_addr_oe_n : std_logic;
 signal zxuno_addr_to_cpu : std_logic_vector(7 downto 0);
+signal zxuno_uart_do_bus 	: std_logic_vector(7 downto 0);
+signal zxuno_uart_oe_n 		: std_logic;
 
 -- cpld port
 signal cpld_oe_n 		: std_logic := '1';
@@ -417,7 +418,7 @@ begin
 -- PLL
 U1: entity work.altpll0
 port map (
-	inclk0			=> CLK_50MHZ,	--  50.0 MHz
+	inclk0			=> CLK_50MHZ,
 	locked			=> locked,
 	c0 				=> clk_28,
 	c1 				=> clk_24
@@ -426,20 +427,12 @@ port map (
 -- PLL2
 U2: entity work.altpll1
 port map (
-	inclk0			=> CLK_50MHZ,	--  50.0 MHz
+	inclk0			=> CLK_50MHZ,
 	locked 			=> open,
-	c0 				=> open, -- 24
+	c0 				=> open,
 	c1 				=> clk_8);
 		
 -- main clock selector
---U3: entity work.clk_mux
---port map(
---	data0 			=> clk_28,
---	data1 			=> clk_24,
---	sel 				=> ds80,
---	result 			=> clk_bus
---);
-
 U3: entity work.clk_ctrl
 port map(
 	clkselect 	=> ds80,
@@ -450,11 +443,6 @@ port map(
 
 -- Zilog Z80A CPU
 U4: entity work.T80aw
---generic map (
---	Mode				=> 0,		-- 0 => Z80, 1 => Fast Z80, 2 => 8080, 3 => GB
---	T2Write			=> 1,		-- 0 => WR_n active in T3, /=0 => WR_n active in T2
---	IOWait			=> 1 )	-- 0 => Single cycle I/O, 1 => Std I/O cycle
-
 port map (
 	RESET_n			=> cpu_reset_n,
 	CLK_n				=> clk_bus,
@@ -473,7 +461,8 @@ port map (
 	BUSAK_n			=> open,--cpu_basak_n,
 	A					=> cpu_a_bus,
 	DI					=> cpu_di_bus,
-	DO					=> cpu_do_bus);
+	DO					=> cpu_do_bus
+);
 	
 -- memory manager
 U5: entity work.memory 
@@ -481,7 +470,6 @@ port map (
 	CLK2X 			=> clk_bus,
 	CLKX 				=> clk_div2,
 	CLK_CPU 			=> cpuclk,
-	
 	-- cpu signals
 	A 					=> cpu_a_bus,
 	D 					=> cpu_do_bus,
@@ -490,27 +478,22 @@ port map (
 	N_WR 				=> cpu_wr_n,
 	N_RD 				=> cpu_rd_n,
 	N_M1 				=> cpu_m1_n,
-	
 	-- loader signals
 	loader_act 		=> loader_act,
 	loader_ram_a 	=> loader_ram_a,
 	loader_ram_do 	=> loader_ram_do,
 	loader_ram_wr 	=> loader_ram_wr,
-
 	-- ram 
 	MA 				=> SRAM_A,
 	MD 				=> SRAM_D,
 	N_MRD 			=> SRAM_NRD,
 	N_MWR 			=> SRAM_NWR,
-	
 	-- ram out to cpu
 	DO 				=> ram_do_bus,
-	N_OE 				=> ram_oe_n,
-	
+	N_OE 				=> ram_oe_n,	
 	-- ram pages
 	RAM_BANK 		=> port_7ffd_reg(2 downto 0),
 	RAM_EXT 			=> ram_ext, -- seg A3 - seg A5
-
 	-- video
 	VA 				=> vid_a_bus,
 	VID_PAGE 		=> port_7ffd_reg(3), -- seg A0 - seg A2
@@ -519,14 +502,11 @@ port map (
 	SCO 				=> sco,
 	SCR 				=> scr,
 	WOROM 			=> worom,
-
 	-- video bus control signals
 	VBUS_MODE_O 	=> vbus_mode, 	-- video bus mode: 0 - ram, 1 - vram
-	VID_RD_O 		=> vid_rd, 		-- read attribute or pixel
-	
+	VID_RD_O 		=> vid_rd, 		-- read attribute or pixel	
 	-- TRDOS 
-	TRDOS 			=> dos_act,
-	
+	TRDOS 			=> dos_act,	
 	-- rom
 	ROM_BANK 		=> rom14,
 	EXT_ROM_BANK   => ext_rom_bank
@@ -534,15 +514,11 @@ port map (
 
 -- Video Spectrum/Pentagon
 U6: entity work.video
-generic map (
-	enable_turbo 	=> enable_turbo
-)
 port map (
 	CLK 				=> clk_div2, 	-- 14 / 12
 	CLK2x 			=> clk_bus, 	-- 28 / 24
 	ENA 				=> clk_div4, 	-- 7 / 6
-	RESET 			=> reset,
-	
+	RESET 			=> reset,	
 	BORDER 			=> port_xxfe_reg(3 downto 0),
 	DI 				=> SRAM_D,
 	TURBO 			=> '0',
@@ -550,26 +526,21 @@ port map (
 	INT 				=> cpu_int_n,
 	pFF_CS			=> vid_pff_cs, -- port FF select
 	ATTR_O 			=> vid_attr,  -- attribute register output
-	A 					=> vid_a_bus,
-	
+	A 					=> vid_a_bus,	
 	MODE60			=> soft_sw2,
 	DS80 				=> ds80,
 	CS7E				=> cs_xx7e,
 	BUS_A 			=> cpu_a_bus(15 downto 8),
 	BUS_D 			=> cpu_do_bus,
 	BUS_WR_N 		=> cpu_wr_n,
-	GX0 				=> gx0,
-	
+	GX0 				=> gx0,	
 	VIDEO_R 			=> vid_rgb(8 downto 6),
 	VIDEO_G 			=> vid_rgb(5 downto 3),
-	VIDEO_B 			=> vid_rgb(2 downto 0),
-	
+	VIDEO_B 			=> vid_rgb(2 downto 0),	
 	HSYNC 			=> vid_hsync,
 	VSYNC 			=> vid_vsync,
-
 	VBUS_MODE 		=> vbus_mode,
-	VID_RD 			=> vid_rd,
-	
+	VID_RD 			=> vid_rd,	
 	HCNT 				=> vid_hcnt,
 	VCNT 				=> vid_vcnt
 );
@@ -584,31 +555,14 @@ port map (
 --	RGB_O 			=> vid_rgb_osd,
 --	HCNT_I 			=> vid_hcnt,
 --	VCNT_I 			=> vid_vcnt,
---
 --	PORT_1 			=> serial_ms_debug1,
 --	PORT_2 			=> serial_ms_debug2,
 --	PORT_3 			=> serial_ms_debug3,
 --	PORT_4 			=> serial_ms_debug4
---	
 --);
 vid_rgb_osd <= vid_rgb;
-	
----- Scan doubler
---U8 : entity work.scan_convert
---port map (
---	I_VIDEO			=> vid_rgb_osd,
---	I_HSYNC			=> vid_hsync,
---	I_VSYNC			=> vid_vsync,
---	O_VIDEO(8 downto 6)	=> VGA_R,
---	O_VIDEO(5 downto 3)	=> VGA_G,
---	O_VIDEO(2 downto 0)	=> VGA_B,
---	O_HSYNC			=> VGA_HS,
---	O_VSYNC			=> VGA_VS,
---	MODE				=> ds80,
---	CLK				=> vga_clk_x,
---	CLK2 				=> vga_clk_2x,
---	CLK_x2			=> vga_clko_2x);
-	
+
+-- Scandoubler	
 U8: entity work.vga_pal 
 port map (
 	RGB_IN 			=> vid_rgb_osd,
@@ -617,8 +571,7 @@ port map (
 	CLK 				=> clk_div2,
 	CLK2 				=> clk_bus,
 	EN 				=> vid_scandoubler_enable,
-	DS80				=> ds80,
-		
+	DS80				=> ds80,		
 	RGB_O(8 downto 6)	=> VGA_R,
 	RGB_O(5 downto 3)	=> VGA_G,
 	RGB_O(2 downto 0)	=> VGA_B,
@@ -631,19 +584,15 @@ U9: entity work.loader
 port map(
 	CLK 				=> clk_bus,
 	RESET 			=> areset,
-
 	RAM_A 			=> loader_ram_a,
 	RAM_DO 			=> loader_ram_do,
 	RAM_WR 			=> loader_ram_wr,
-	RAM_RD 			=> loader_ram_rd,
-	
+	RAM_RD 			=> loader_ram_rd,	
 	CFG 				=> board_revision,
-
 	DATA0				=> DATA0,
 	NCSO				=> flash_ncs,
 	DCLK				=> flash_clk,
 	ASDO				=> flash_do,
-
 	LOADER_ACTIVE 	=> loader_act,
 	LOADER_RESET 	=> loader_reset
 );	
@@ -716,9 +665,7 @@ port map(
 	out_l				=> saa_out_l,
 	out_r				=> saa_out_r);
 
--------------------------------------------------------------------------------
 -- AVR Keyboard / mouse / rtc
-
 U14: entity work.cpld_kbd
 port map (
 	 CLK 				=> clk_bus,
@@ -763,9 +710,6 @@ port map (
 	 JOY 				=> joy_bus
 );
 	
--------------------------------------------------------------------------------
--- I2S sound
-
 -- TDA1543
 U15: entity work.tda1543
 port map (
@@ -779,9 +723,8 @@ port map (
 	WS  				=> SND_WS,
 	DATA 				=> SND_DAT
 );
--------------------------------------------------------------------------------
--- FDD / HDD controllers
 
+-- FDD / HDD controllers
 U16: entity work.bus_port
 port map (
 	CLK 				=> clk_bus,
@@ -792,7 +735,6 @@ port map (
 	
 	SD 				=> SD,
 	SA 				=> SA,
---	SDIR 				=> SDIR,
 	CPLD_CLK 		=> CPLD_CLK,
 	CPLD_CLK2 		=> CPLD_CLK2,
 	NRESET 			=> NRESET,
@@ -822,14 +764,15 @@ port map(
 	BC_I 				=> ay_bc1,			
 	CS_I 				=> ay_port,
 	DATA_I 			=> cpu_do_bus,
-	DATA_O 			=> uart_do_bus,
-	OE_N 				=> uart_oe_n,
+	DATA_O 			=> ay_uart_do_bus,
+	OE_N 				=> ay_uart_oe_n,
 	UART_TX 			=> UART_TX,
 	UART_RX 			=> UART_RX,
 	UART_RTS 		=> UART_CTS
 );
 end generate G_AY_UART;
 
+-- Diag ROM
 U18: entity work.altrom0
 port map(
 	clock => clk_bus,
@@ -866,37 +809,37 @@ port map(
 
 -- UART (via ZX UNO ports #FC3B / #FD3B) 	
 G_UNO_UART: if enable_zxuno_uart generate
-	U20: zxunoregs 
-	port map(
-		clk => clk_bus,
-		rst_n => not(reset),
-		a => cpu_a_bus,
-		iorq_n => cpu_iorq_n,
-		rd_n => cpu_rd_n,
-		wr_n => cpu_wr_n,
-		din => cpu_do_bus,
-		dout => zxuno_addr_to_cpu,
-		oe_n => zxuno_addr_oe_n,
-		addr => zxuno_addr,
-		read_from_reg => zxuno_regrd,
-		write_to_reg => zxuno_regwr,
-		regaddr_changed => zxuno_regaddr_changed
+U20: zxunoregs 
+port map(
+	clk => clk_bus,
+	rst_n => not(reset),
+	a => cpu_a_bus,
+	iorq_n => cpu_iorq_n,
+	rd_n => cpu_rd_n,
+	wr_n => cpu_wr_n,
+	din => cpu_do_bus,
+	dout => zxuno_addr_to_cpu,
+	oe_n => zxuno_addr_oe_n,
+	addr => zxuno_addr,
+	read_from_reg => zxuno_regrd,
+	write_to_reg => zxuno_regwr,
+	regaddr_changed => zxuno_regaddr_changed
 );
 
-	U21: zxunouart 
-	port map(
-		clk => clk_div4, -- 7 or 6 mhz
-		ds80 => ds80,
-		zxuno_addr => zxuno_addr,
-		zxuno_regrd => zxuno_regrd,
-		zxuno_regwr => zxuno_regwr,
-		din => cpu_do_bus,
-		dout => uart_do_bus,
-		oe_n => uart_oe_n,
-		uart_tx => UART_TX,
-		uart_rx => UART_RX,
-		uart_rts => UART_CTS
-	);	
+U21: zxunouart 
+port map(
+	clk => clk_div4, -- 7 or 6 mhz
+	ds80 => ds80,
+	zxuno_addr => zxuno_addr,
+	zxuno_regrd => zxuno_regrd,
+	zxuno_regwr => zxuno_regwr,
+	din => cpu_do_bus,
+	dout => zxuno_uart_do_bus,
+	oe_n => zxuno_uart_oe_n,
+	uart_tx => UART_TX,
+	uart_rx => UART_RX,
+	uart_rts => UART_CTS
+);	
 end generate G_UNO_UART;
 	
 -------------------------------------------------------------------------------
@@ -1008,7 +951,6 @@ fd_sel <= '0' when (
 	(cpu_do_bus(7 downto 4) = "1101" and cpu_do_bus(2 downto 0) = "011") or 
 	(cpu_di_bus(7 downto 4) = "1101" and cpu_di_bus(2 downto 0) = "011")) else '1'; 
 
--- TODO
 process(fd_sel, reset, cpu_m1_n)
 begin
 	if reset='1' then
@@ -1029,7 +971,6 @@ sco 	<= port_dffd_reg(3); -- Выбор положения окна проеци
 
 ram_ext <= port_dffd_reg(2 downto 0);
 
---cs_xxfe <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and cpu_a_bus(0) = '0' else '0';
 cs_xxfe <= '1' when cpu_iorq_n = '0' and cpu_a_bus(0) = '0' else '0';
 cs_xx7e <= '1' when cs_xxfe = '1' and cpu_a_bus(7) = '0' else '0';
 cs_xxff <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and cpu_a_bus(7 downto 0) = X"FF" else '0';
@@ -1051,15 +992,8 @@ cs_rtc_ds <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and
 							((cpu_a_bus(7 downto 0) = X"DF" or cpu_a_bus(7 downto 0) = X"9F") and cpm='1' and rom14='1' and dos_act='0') -- расширенная периферия
 				     else '0';
 					  
----- Profi RTC
---cs_rtc_as <= '1' when cpu_a_bus(9)='0' and cpu_a_bus(7)='1' and cpu_a_bus(5)='1' and cpu_a_bus(3 downto 0)=X"F" and cpu_m1_n = '1' and cpu_iorq_n='0' and cpm='1' and rom14='1' else '0';
---cs_rtc_ds <= '1' when cpu_a_bus(9)='0' and cpu_a_bus(7)='1' and cpu_a_bus(5)='0' and cpu_a_bus(3 downto 0)=X"F" and cpu_m1_n = '1' and cpu_iorq_n='0' and cpm='1' and rom14='1' else '0';
-
 -- порты #7e - пишутся по фронту /wr
---port_xx7e_reg <= cpu_do_bus when (cs_xx7e = '1' and (cpu_wr_n'event and cpu_wr_n = '0'));
---port_xx7e_a <= cpu_a_bus(15 downto 8) when (cs_xx7e = '1' and (cpu_wr_n'event and cpu_wr_n = '0'));
-
-	port_xxfe_reg <= cpu_do_bus when cs_xxfe = '1' and (cpu_wr_n'event and cpu_wr_n = '1');
+port_xxfe_reg <= cpu_do_bus when cs_xxfe = '1' and (cpu_wr_n'event and cpu_wr_n = '1');
 
 process (reset, areset, clk_bus, cpu_a_bus, dos_act, cs_xxfe, cs_eff7, cs_dff7, cs_7ffd, cs_1ffd, cs_xxfd, port_7ffd_reg, port_1ffd_reg, cpu_mreq_n, cpu_m1_n, cpu_wr_n, cpu_do_bus, fd_port)
 begin
@@ -1071,13 +1005,6 @@ begin
 		dos_act <= '1';
 	elsif clk_bus'event and clk_bus = '1' then
 
-		--if ena_div2 = '1' then -- захват портов при 14МГц ena
-			
-			-- #FE
---			if cs_xxfe = '1' and cpu_wr_n = '0' then 
---				port_xxfe_reg <= cpu_do_bus; 
---			end if;
-			
 			-- #EFF7
 			if cs_eff7 = '1' and cpu_wr_n = '0' then 
 				port_eff7_reg <= cpu_do_bus; 
@@ -1109,8 +1036,6 @@ begin
 			-- TR-DOS FLAG
 			if cpu_m1_n = '0' and cpu_mreq_n = '0' and cpu_a_bus(15 downto 8) = X"3D" and rom14 = '1' and port_dffd_reg(5) = '0' then dos_act <= '1';
 			elsif ((cpu_m1_n = '0' and cpu_mreq_n = '0' and cpu_a_bus(15 downto 14) /= "00") or (port_dffd_reg(5) = '1')) then dos_act <= '0'; end if;
-			
-		--end if;
 				
 	end if;
 end process;
@@ -1134,14 +1059,14 @@ port_bff7 	<= '1' when (cpu_iorq_n = '0' and cpu_a_bus = X"BFF7" and cpu_m1_n = 
 zc_wr 		<= '1' when (cpu_iorq_n = '0' and cpu_wr_n = '0' and cpu_a_bus(7 downto 6) = "01" and cpu_a_bus(4 downto 0) = "10111") else '0';
 zc_rd 		<= '1' when (cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_a_bus(7 downto 6) = "01" and cpu_a_bus(4 downto 0) = "10111") else '0';
 
-ay_port 		<= '1' when enable_ay_uart and cpu_a_bus(7 downto 0) = x"FD" and cpu_a_bus(15)='1' and fd_port = '1' else '0';
+ay_port 		<= '1' when cpu_a_bus(7 downto 0) = x"FD" and cpu_a_bus(15)='1' and fd_port = '1' else '0';
 ay_bdir 		<= '1' when ay_port = '1' and cpu_iorq_n = '0' and cpu_wr_n = '0' else '0';
 ay_bc1 		<= '1' when ay_port = '1' and cpu_a_bus(14) = '1' and cpu_iorq_n = '0' and (cpu_wr_n='0' or cpu_rd_n='0') else '0';
 
 -------------------------------------------------------------------------------
 -- CPU0 Data bus
 
-process (selector, cpu_a_bus, gx0, serial_ms_do_bus, ram_do_bus, mc146818_do_bus, kb_do_bus, zc_do_bus, ssg_cn0_bus, ssg_cn1_bus, port_7ffd_reg, port_dffd_reg, uart_do_bus, cpld_do, vid_attr, port_eff7_reg, port_1ffd_reg, joy_bus, ms_z, ms_b, ms_x, ms_y)
+process (selector, cpu_a_bus, gx0, serial_ms_do_bus, ram_do_bus, mc146818_do_bus, kb_do_bus, zc_do_bus, ssg_cn0_bus, ssg_cn1_bus, port_7ffd_reg, port_dffd_reg, ay_uart_do_bus, zxuno_uart_do_bus, cpld_do, vid_attr, port_eff7_reg, port_1ffd_reg, joy_bus, ms_z, ms_b, ms_x, ms_y)
 begin
 	case selector is
 		when x"00" => 
@@ -1161,10 +1086,10 @@ begin
 		when x"09" => cpu_di_bus <= ms_z(3 downto 0) & '1' & not(ms_b(2)) & not(ms_b(0)) & not(ms_b(1));
 		when x"0A" => cpu_di_bus <= ms_x;
 		when x"0B" => cpu_di_bus <= ms_y;
-		when x"0C" => cpu_di_bus <= uart_do_bus;
+		when x"0C" => cpu_di_bus <= ay_uart_do_bus;
 		when x"0D" => cpu_di_bus <= serial_ms_do_bus;
 		when x"0E" => cpu_di_bus <= zxuno_addr_to_cpu;
-		when x"0F" => cpu_di_bus <= uart_do_bus;
+		when x"0F" => cpu_di_bus <= zxuno_uart_do_bus;
 		when x"10" => cpu_di_bus <= vid_attr;
 		when others => cpu_di_bus <= cpld_do;
 	end case;
@@ -1183,10 +1108,10 @@ selector <=
 	x"09" when (cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_a_bus = X"FADF" and ms_present = '1' and cpm='0') else	-- Mouse0 port key, z
 	x"0A" when (cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_a_bus = X"FBDF" and ms_present = '1' and cpm='0') else	-- Mouse0 port x
 	x"0B" when (cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_a_bus = X"FFDF" and ms_present = '1' and cpm='0') else	-- Mouse0 port y 																
-	x"0C" when (cpu_iorq_n = '0' and cpu_rd_n = '0' and uart_oe_n = '0') else -- AY UART
+	x"0C" when (enable_ay_uart and cpu_iorq_n = '0' and cpu_rd_n = '0' and ay_uart_oe_n = '0') else -- AY UART
 	x"0D" when (serial_ms_oe_n = '0') else -- Serial mouse
 	x"0E" when (enable_zxuno_uart and cpu_iorq_n = '0' and cpu_rd_n = '0' and zxuno_addr_oe_n = '0') else -- ZX UNO Register
-	x"0F" when (enable_zxuno_uart and cpu_iorq_n = '0' and cpu_rd_n = '0' and uart_oe_n = '0') else -- ZX UNO UART 
+	x"0F" when (enable_zxuno_uart and cpu_iorq_n = '0' and cpu_rd_n = '0' and zxuno_uart_oe_n = '0') else -- ZX UNO UART
 	x"10" when (vid_pff_cs = '1' and cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_a_bus( 7 downto 0) = X"FF") and dos_act='0' else -- Port FF select
 	(others => '1');
 	
@@ -1196,13 +1121,6 @@ selector <=
 --	PIN_121 <= VGA_G(2);
 --	PIN_120 <= VGA_B(2);
 --	PIN_119 <= VGA_VS;
---	PIN_115 <= VGA_HS;
-	
---PIN_141 <= cpuclk;  -- CH8
---PIN_138 <= serial_ms_do_bus(4);  -- CH7
---PIN_121 <= serial_ms_do_bus(5);  -- CH6 / d bit5
---PIN_120 <= serial_ms_do_bus(6);  -- CH5 / d bit6
---PIN_119 <= serial_ms_debug4(5);	-- CH4 / read from VV51
---PIN_115 <= serial_ms_debug2(1); 	-- CH3 / RxRDY status
+--	PIN_115 <= VGA_HS;	
 	
 end rtl;
