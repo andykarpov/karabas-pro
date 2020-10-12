@@ -46,7 +46,7 @@ architecture soundrive_unit of soundrive is
 	signal outb3_reg : std_logic_vector (7 downto 0);
 begin
 
-	process (I_CLK, I_RESET, I_CS, I_DOS)
+	process (I_CLK, I_RESET, I_CS, I_DOS, I_CPM, I_IORQ_N, I_WR_N)
 	begin
 		if I_RESET = '1' or I_CS = '0' then
 			out0f_reg <= (others => '0');

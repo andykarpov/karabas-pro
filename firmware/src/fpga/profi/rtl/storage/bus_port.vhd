@@ -16,7 +16,7 @@ entity bus_port is
 	-- physical interface with CPLD
 	SD : inout std_logic_vector(15 downto 0) := "ZZZZZZZZZZZZZZZZ";
 	SA : out std_logic_vector(1 downto 0);
-	SDIR : out std_logic;
+--	SDIR : out std_logic;
 	CPLD_CLK : out std_logic;
 	CPLD_CLK2 : out std_logic;
 	NRESET : out std_logic;
@@ -49,7 +49,7 @@ begin
 	CPLD_CLK <= CLK;
 	CPLD_CLK2 <= CLK2;
 	NRESET <= not reset;
-	SDIR <= CLK_BUS;
+	--SDIR <= CLK_BUS;
 	SA <= cnt;	
 	BUS_DO <= SD(15 downto 8);
 

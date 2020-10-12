@@ -5,11 +5,12 @@ profi_mainrom_fatall.hex		0x000B8000		0x000C7FFF
 profi-2.2.hex		0x000C8000		0x000D7FFF
 profi_rage_fix.hex		0x000D8000		0x000E7FFF
 DiagROM.v50.hex		0x000E8000		0x000EBFFF
+cfg_revC.hex		0x000F8000		0x000F8000
 
 
 
 Notes:
 
-- Data checksum for this conversion is 0x18E832CE
+- Data checksum for this conversion is 0x18F0694B
 
 - All the addresses in this file are byte addresses

@@ -20,6 +20,8 @@ entity pentagon_video is
 		TURBO 	: in std_logic := '0'; -- 1 = turbo mode, 0 = normal mode
 		INTA		: in std_logic := '0'; -- int request for turbo mode
 		INT		: out std_logic; -- int output
+		MODE60	: in std_logic := '0'; -- '0'
+		pFF_CS	: out std_logic; -- port FF select
 		ATTR_O	: out std_logic_vector(7 downto 0); -- attribute register output
 		A			: out std_logic_vector(13 downto 0); -- video address
 		RGB		: out std_logic_vector(2 downto 0);	-- RGB
@@ -35,7 +37,7 @@ end entity;
 
 architecture rtl of pentagon_video is
 
-	signal invert   : unsigned(4 downto 0) := "00000";
+	signal invert   : unsigned(4 downto 0) := "00000";	-- Flash counter
 
 	signal chr_col_cnt : unsigned(2 downto 0) := "000"; -- Character column counter
 	signal chr_row_cnt : unsigned(2 downto 0) := "000"; -- Character row counter
@@ -81,7 +83,7 @@ begin
 					
 					if hor_cnt = 39 then
 						if chr_row_cnt = 7 then
-							if ver_cnt = 39 then
+							if (ver_cnt = 39 and MODE60 = '0') or (ver_cnt = 32 and MODE60 = '1')then
 								ver_cnt <= (others => '0');
 								invert <= invert + 1;
 							else
@@ -144,10 +146,10 @@ begin
 	end process;
 
 	-- r/g/b/i
-	process( CLK2X, CLK, ENA, paper_r, shift_r, attr_r, invert, blank_r, BORDER )
+	process( CLK2X, CLK, TURBO, ENA, paper_r, shift_r, attr_r, invert, blank_r, BORDER )
 	begin
 		if CLK2X'event and CLK2X = '1' then
-		if CLK = '1' and ENA = '1' then
+		if CLK = '1' and (TURBO = '1' or ENA = '1') then
 			if paper_r = '0' then -- paper
 					-- standard RGB
 					if( shift_r(7) xor ( attr_r(7) and invert(4) ) ) = '1' then -- fg pixel
@@ -186,7 +188,7 @@ begin
 			if CLK = '1' then		
 				if ENA = '1' then
 					if chr_col_cnt = 7 then
-						if ((hor_cnt(5 downto 0) > 38 and hor_cnt(5 downto 0) < 48) or ver_cnt(5 downto 1) = 15) then
+						if ((hor_cnt(5 downto 0) > 38 and hor_cnt(5 downto 0) < 48) or ((ver_cnt(5 downto 1) = 15 and MODE60 = '0') or (ver_cnt(5 downto 1) = 13 and MODE60 = '1'))) then	-- 15 = for 320 lines, 13 = for 264 lines
 							blank_r <= '0';
 						else 
 							blank_r <= '1';
@@ -205,7 +207,7 @@ begin
 
 			if CLK = '1' then
 					-- standard shift register 
-					if ENA = '1' then
+					if TURBO = '1' or ENA = '1' then
 						if chr_col_cnt = 7 then
 							attr_r <= attr;
 							shift_r <= bitmap;
@@ -239,11 +241,14 @@ begin
 		std_logic_vector( '0' & ver_cnt(4 downto 3) & chr_row_cnt & ver_cnt(2 downto 0) & hor_cnt(4 downto 0)) when VBUS_MODE = '1' and VID_RD = '0' else 
 		-- standard attribute address
 		std_logic_vector( '0' & "110" & ver_cnt(4 downto 0) & hor_cnt(4 downto 0));
-
-	RGB <= VIDEO_R & VIDEO_G & VIDEO_B;
-	I <= VIDEO_I;			
-	ATTR_O	<= attr_r;
+		
 	paper <= '0' when hor_cnt(5) = '0' and ver_cnt(5) = '0' and ( ver_cnt(4) = '0' or ver_cnt(3) = '0' ) else '1';
+	
+	RGB <= VIDEO_R & VIDEO_G & VIDEO_B;
+	I <= VIDEO_I;
+	pFF_CS	<= not paper;
+	ATTR_O	<= attr_r;
+
 	INT <= int_sig;
 	
 	HCNT <= '0' & std_logic_vector(hor_cnt) & std_logic_vector(chr_col_cnt);

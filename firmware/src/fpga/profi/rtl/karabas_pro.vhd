@@ -46,13 +46,10 @@ use IEEE.numeric_std.all;
 
 entity karabas_pro is
 	generic (
-		-- Warning! The following 2 parameters are assigned on the project level:
-		enable_switches 	 : boolean := true; -- rev.C has SW3 with 4 dip switches
-		dac_type 			 : integer range 0 to 1 := 0; -- 0 - TDA1543, 1 - TDA1543A (only has effect when enable_switches = false)
-		
 		enable_ay_uart 	 : boolean := false; -- Enable ESP8266 module on AY I/O port A
+		enable_zxuno_uart  : boolean := true;  -- Enable ZXUNO UART for ESP8266 module
 		enable_diag_rom	 : boolean := false; -- Retroleum diagrom
-		enable_turbo 		 : boolean := false -- enable Turbo mode 7MHz
+		enable_turbo 		 : boolean := false -- enable Turbo mode 7MHz // TODO!!!
 	);
 port (
 	-- Clock (50MHz)
@@ -71,14 +68,14 @@ port (
 	ASDO			: out std_logic; -- MOSI
 	
 	-- SD/MMC Card
-	SD_NCS		: out std_logic; -- /CS
+	SD_NCS		: buffer std_logic; -- /CS
 	
 	-- VGA 
 	VGA_R 		: out std_logic_vector(2 downto 0);
 	VGA_G 		: out std_logic_vector(2 downto 0);
 	VGA_B 		: out std_logic_vector(2 downto 0);
-	VGA_HS 		: buffer std_logic;
-	VGA_VS 		: buffer std_logic;
+	VGA_HS 		: out std_logic;
+	VGA_VS 		: out std_logic;
 		
 	-- AVR SPI slave
 	AVR_SCK 		: in std_logic;
@@ -90,7 +87,7 @@ port (
 	NRESET 		: out std_logic;
 	CPLD_CLK 	: out std_logic;
 	CPLD_CLK2 	: out std_logic;
-	SDIR 			: out std_logic;
+	SDIR 			: in std_logic;
 	SA				: out std_logic_vector(1 downto 0);
 	SD				: inout std_logic_vector(15 downto 0) := "ZZZZZZZZZZZZZZZZ";
 	
@@ -119,6 +116,11 @@ port (
 end karabas_pro;
 
 architecture rtl of karabas_pro is
+
+-- Board revision 
+signal board_revision : std_logic_vector(7 downto 0);
+signal enable_switches : std_logic := '1'; -- rev.C has SW3 with 4 dip switches
+signal dac_type : std_logic := '0'; -- 0 - TDA1543, 1 - TDA1543A (only has effect when enable_switches = false)
 
 -- CPU
 signal cpu_reset_n	: std_logic;
@@ -156,6 +158,7 @@ signal kb_reset 		: std_logic := '0';
 signal kb_magic 		: std_logic := '0';
 signal kb_special 	: std_logic := '0';
 signal kb_turbo 		: std_logic := '0';
+signal kb_wait 		: std_logic := '0';
 
 -- Joy
 signal joy_bus 		: std_logic_vector(4 downto 0) := "11111";
@@ -166,6 +169,9 @@ signal ms_y				: std_logic_vector(7 downto 0);
 signal ms_z				: std_logic_vector(3 downto 0);
 signal ms_b				: std_logic_vector(2 downto 0);
 signal ms_present 	: std_logic := '0';
+signal ms_event		: std_logic := '0';
+signal ms_delta_x		: signed(7 downto 0);
+signal ms_delta_y		: signed(7 downto 0);
 
 -- Video
 signal vid_a_bus		: std_logic_vector(13 downto 0);
@@ -173,6 +179,7 @@ signal vid_di_bus		: std_logic_vector(7 downto 0);
 signal vid_hsync		: std_logic;
 signal vid_vsync		: std_logic;
 signal vid_int			: std_logic;
+signal vid_pff_cs		: std_logic;
 signal vid_attr		: std_logic_vector(7 downto 0);
 signal vid_rgb			: std_logic_vector(8 downto 0);
 signal vid_rgb_osd 	: std_logic_vector(8 downto 0);
@@ -282,7 +289,6 @@ signal ram_do_bus 	: std_logic_vector(7 downto 0);
 signal ram_oe_n 		: std_logic := '1';
 signal vbus_mode 		: std_logic := '0';
 signal vid_rd 			: std_logic := '0';
-signal palette_en 	: std_logic := '1';
 signal ext_rom_bank  : std_logic_vector(1 downto 0) := "00";
 
 -- Loader
@@ -299,13 +305,26 @@ signal flash_do 		: std_logic;
 signal sd_clk 			: std_logic;
 signal sd_si 			: std_logic;
 
--- uart 
+-- AY UART 
 signal uart_do_bus 	: std_logic_vector(7 downto 0);
 signal uart_oe_n 		: std_logic;
+
+-- ZXUNO regs / UART ports
+signal zxuno_regrd : std_logic;
+signal zxuno_regwr : std_logic;
+signal zxuno_addr : std_logic_vector(7 downto 0);
+signal zxuno_regaddr_changed : std_logic;
+signal zxuno_addr_oe_n : std_logic;
+signal zxuno_addr_to_cpu : std_logic_vector(7 downto 0);
 
 -- cpld port
 signal cpld_oe_n 		: std_logic := '1';
 signal cpld_do 		: std_logic_vector(7 downto 0);
+
+-- serial mouse 
+signal serial_ms_do_bus : std_logic_vector(7 downto 0);
+signal serial_ms_oe_n : std_logic := '1';
+signal serial_ms_int : std_logic := '1';
 
 -- test rom 
 signal rom_do_bus 	: std_logic_vector(7 downto 0);
@@ -318,6 +337,16 @@ signal scr 				: std_logic := '0';
 signal sco 				: std_logic := '0';
 signal rom14 			: std_logic := '0';
 signal gx0 				: std_logic := '0';
+
+-- avr leds
+signal led1				: std_logic := '0';
+signal led2				: std_logic := '0';
+signal led1_overwrite: std_logic := '0';
+signal led2_overwrite: std_logic := '0';
+
+-- avr soft switches (Menu+F1, Menu+F2)
+signal soft_sw1 		: std_logic := '0';
+signal soft_sw2 		: std_logic := '0';
 
 -- debug 
 signal fdd_oe_n 		: std_logic := '1';
@@ -335,6 +364,52 @@ port (
 	din		: in std_logic_vector(7 downto 0);
 	out_l		: out std_logic_vector(7 downto 0);
 	out_r		: out std_logic_vector(7 downto 0));
+end component;
+
+component zxunoregs
+port (
+	clk: in std_logic;
+	rst_n : in std_logic;
+	a : in std_logic_vector(15 downto 0);
+	iorq_n : in std_logic;
+	rd_n : in std_logic;
+	wr_n : in std_logic;
+	din : in std_logic_vector(7 downto 0);
+	dout : out std_logic_vector(7 downto 0);
+	oe_n : out std_logic;
+	addr : out std_logic_vector(7 downto 0);
+	read_from_reg: out std_logic;
+	write_to_reg: out std_logic;
+	regaddr_changed: out std_logic);
+end component;
+
+component zxunouart
+port (
+	clk : in std_logic;
+	ds80 : in std_logic;
+	zxuno_addr : in std_logic_vector(7 downto 0);
+	zxuno_regrd : in std_logic;
+	zxuno_regwr : in std_logic;
+	din : in std_logic_vector(7 downto 0);
+	dout : out std_logic_vector(7 downto 0);
+	oe_n : out std_logic;
+	uart_tx : out std_logic;
+	uart_rx : in std_logic;
+	uart_rts : out std_logic);
+end component;
+
+component uart 
+port ( 
+	clk: in std_logic;
+	txdata: in std_logic_vector(7 downto 0);
+	txbegin: in std_logic;
+	txbusy : out std_logic;
+	rxdata : out std_logic_vector(7 downto 0);
+	rxrecv : out std_logic;
+	data_read : in std_logic;
+	rx : in std_logic;
+	tx : out std_logic;
+	rts: out std_logic);
 end component;
 
 begin
@@ -385,7 +460,7 @@ port map (
 	CLK_n				=> clk_bus,
 	ENA				=> cpuclk,
 	WAIT_n			=> cpu_wait_n,
-	INT_n				=> cpu_int_n,
+	INT_n				=> cpu_int_n and serial_ms_int,
 	NMI_n				=> cpu_nmi_n,
 	BUSRQ_n			=> '1',
 	M1_n				=> cpu_m1_n,
@@ -453,7 +528,7 @@ port map (
 	TRDOS 			=> dos_act,
 	
 	-- rom
-	ROM_BANK 		=> port_7ffd_reg(4),
+	ROM_BANK 		=> rom14,
 	EXT_ROM_BANK   => ext_rom_bank
 );	
 
@@ -473,11 +548,12 @@ port map (
 	TURBO 			=> '0',
 	INTA 				=> cpu_inta_n,
 	INT 				=> cpu_int_n,
-	ATTR_O 			=> vid_attr, 
+	pFF_CS			=> vid_pff_cs, -- port FF select
+	ATTR_O 			=> vid_attr,  -- attribute register output
 	A 					=> vid_a_bus,
 	
+	MODE60			=> soft_sw2,
 	DS80 				=> ds80,
-	PALETTE_EN 		=> palette_en,
 	CS7E				=> cs_xx7e,
 	BUS_A 			=> cpu_a_bus(15 downto 8),
 	BUS_D 			=> cpu_do_bus,
@@ -490,7 +566,6 @@ port map (
 	
 	HSYNC 			=> vid_hsync,
 	VSYNC 			=> vid_vsync,
-	CSYNC 			=> open,
 
 	VBUS_MODE 		=> vbus_mode,
 	VID_RD 			=> vid_rd,
@@ -499,22 +574,23 @@ port map (
 	VCNT 				=> vid_vcnt
 );
 	
----- osd (debug)
+-- osd (debug)
 --U7: entity work.osd
 --port map (
 --	CLK 				=> clk_bus,
---	EN 				=> '0',
+--	EN 				=> not kb_turbo,
+--	DS80				=> ds80,
 --	RGB_I 			=> vid_rgb,
 --	RGB_O 			=> vid_rgb_osd,
 --	HCNT_I 			=> vid_hcnt,
 --	VCNT_I 			=> vid_vcnt,
 --
---	PORT_1 			=> cpld_do,
---	PORT_2 			=> port_7ffd_reg,
---	PORT_3 			=> cpu_rd_n & cpu_wr_n & cpu_iorq_n & cpu_mreq_n & vbus_mode & vid_rd & SRAM_NRD & SRAM_NWR,
---	PORT_4 			=> cpld_oe_n & ds80 & cpm & rom14 & fdd_oe_n & hdd_oe_n & port_nreset & '0' --cpld_do	
+--	PORT_1 			=> serial_ms_debug1,
+--	PORT_2 			=> serial_ms_debug2,
+--	PORT_3 			=> serial_ms_debug3,
+--	PORT_4 			=> serial_ms_debug4
+--	
 --);
-
 vid_rgb_osd <= vid_rgb;
 	
 ---- Scan doubler
@@ -560,6 +636,8 @@ port map(
 	RAM_DO 			=> loader_ram_do,
 	RAM_WR 			=> loader_ram_wr,
 	RAM_RD 			=> loader_ram_rd,
+	
+	CFG 				=> board_revision,
 
 	DATA0				=> DATA0,
 	NCSO				=> flash_ncs,
@@ -644,6 +722,7 @@ port map(
 U14: entity work.cpld_kbd
 port map (
 	 CLK 				=> clk_bus,
+	 CLKEN 			=> cpuclk,
 	 N_RESET 		=> not areset,
     A       		=> cpu_a_bus(15 downto 8),
     KB				=> kb_do_bus,
@@ -657,6 +736,9 @@ port map (
 	 MS_BTNS 		=> ms_b,
 	 MS_Z 			=> ms_z,
 	 MS_PRESET 		=> ms_present,
+	 MS_EVENT 		=> ms_event,
+	 MS_DELTA_X 	=> ms_delta_x,
+	 MS_DELTA_Y 	=> ms_delta_y,
 	 
 	 RTC_A 			=> mc146818_a_bus,
 	 RTC_DI 			=>	cpu_do_bus,
@@ -664,10 +746,19 @@ port map (
 	 RTC_CS 			=> '1',
 	 RTC_WR_N 		=> not mc146818_wr,
 	 RTC_INIT 		=> loader_act,
+	 
+	 LED1 			=> led1,
+	 LED2				=> led2,
+	 LED1_OWR 		=> led1_overwrite,
+	 LED2_OWR 		=> led2_overwrite,
+	 
+	 SOFT_SW1 		=> soft_sw1,
+	 SOFT_SW2		=> soft_sw2,
 
 	 RESET 			=> kb_reset,
 	 TURBO 			=> kb_turbo,
 	 MAGICK 			=> kb_magic,
+	 WAIT_CPU 		=> kb_wait,
 	 
 	 JOY 				=> joy_bus
 );
@@ -701,7 +792,7 @@ port map (
 	
 	SD 				=> SD,
 	SA 				=> SA,
-	SDIR 				=> SDIR,
+--	SDIR 				=> SDIR,
 	CPLD_CLK 		=> CPLD_CLK,
 	CPLD_CLK2 		=> CPLD_CLK2,
 	NRESET 			=> NRESET,
@@ -721,6 +812,7 @@ port map (
 );
 
 -- UART (via AY port A)
+G_AY_UART: if enable_ay_uart generate
 U17: entity work.ay_uart 
 port map(
 	CLK_I 			=> clk_bus,
@@ -736,6 +828,7 @@ port map(
 	UART_RX 			=> UART_RX,
 	UART_RTS 		=> UART_CTS
 );
+end generate G_AY_UART;
 
 U18: entity work.altrom0
 port map(
@@ -743,6 +836,68 @@ port map(
 	address => cpu_a_bus(13 downto 0),
 	q => rom_do_bus
 );
+
+-- Serial mouse emulation
+U19: entity work.serial_mouse
+port map(
+	CLK 				=> clk_bus,
+	CLKEN 			=> cpuclk,
+	N_RESET 			=> not(reset),
+	A 					=> cpu_a_bus,
+	DI					=> cpu_do_bus,
+	WR_N 				=> cpu_wr_n,
+	RD_N 				=> cpu_rd_n,
+	IORQ_N 			=> cpu_iorq_n,
+	M1_N 				=> cpu_m1_n,
+	CPM 				=> cpm,
+	DOS 				=> dos_act,
+	ROM14 			=> rom14,
+	
+	MS_X 				=> ms_delta_x,
+	MS_Y				=> -ms_delta_y,
+	MS_BTNS 			=> ms_b,
+	MS_PRESET 		=> ms_present,
+	MS_EVENT 		=> ms_event,
+	
+	DO 				=> serial_ms_do_bus,
+	INT_N 			=> serial_ms_int,
+	OE_N 				=> serial_ms_oe_n
+);
+
+-- UART (via ZX UNO ports #FC3B / #FD3B) 	
+G_UNO_UART: if enable_zxuno_uart generate
+	U20: zxunoregs 
+	port map(
+		clk => clk_bus,
+		rst_n => not(reset),
+		a => cpu_a_bus,
+		iorq_n => cpu_iorq_n,
+		rd_n => cpu_rd_n,
+		wr_n => cpu_wr_n,
+		din => cpu_do_bus,
+		dout => zxuno_addr_to_cpu,
+		oe_n => zxuno_addr_oe_n,
+		addr => zxuno_addr,
+		read_from_reg => zxuno_regrd,
+		write_to_reg => zxuno_regwr,
+		regaddr_changed => zxuno_regaddr_changed
+);
+
+	U21: zxunouart 
+	port map(
+		clk => clk_div4, -- 7 or 6 mhz
+		ds80 => ds80,
+		zxuno_addr => zxuno_addr,
+		zxuno_regrd => zxuno_regrd,
+		zxuno_regwr => zxuno_regwr,
+		din => cpu_do_bus,
+		dout => uart_do_bus,
+		oe_n => uart_oe_n,
+		uart_tx => UART_TX,
+		uart_rx => UART_RX,
+		uart_rts => UART_CTS
+	);	
+end generate G_UNO_UART;
 	
 -------------------------------------------------------------------------------
 -- clocks
@@ -795,18 +950,41 @@ vga_clko_2x <= clk_div2 when ds80 = '0' else clk_28;   -- 14/28
 -------------------------------------------------------------------------------
 -- Global signals
 
-areset <= not locked or kb_magic; -- global reset
+areset <= not locked; -- global reset
 reset <= areset or kb_reset or not(locked) or loader_reset or loader_act; -- hot reset
 
 cpu_reset_n <= not(reset) and not(loader_reset); -- CPU reset
 cpu_inta_n <= cpu_iorq_n or cpu_m1_n;	-- INTA
 cpu_nmi_n <= '0' when kb_magic = '1' else '1'; -- NMI
-cpu_wait_n <= '1'; -- WAIT
-cpuclk <= clk_bus and ena_div8;
+cpu_wait_n <= '0' when kb_wait = '1' else '1'; -- WAIT
+cpuclk <= clk_bus and ena_div8 when kb_turbo = '1' else clk_bus and ena_div4; -- 3.5 / 7 MHz
 
-vid_scandoubler_enable <= '0' when enable_switches and SW3(1) = '0' else '1'; -- enable scandoubler by default for older revisions and switchable by SW3(1) for a newer ones
-audio_dac_type <= '0' when ((enable_switches and SW3(2) = '1') or (not(enable_switches) and dac_type = 0)) else '1'; -- default is dac_type for older revisions and switchable by SW3(2) for a newer ones
-ext_rom_bank <= not SW3(4 downto 3) when enable_switches else "00"; -- SW3 and SW4 switches a 4 external rom banks for newer revisions, otherwise - the only one ROM used 
+process(board_revision)
+begin 
+	case board_revision is 
+		when x"00" => -- revA with TDA1543 
+			enable_switches <= '0';
+			dac_type <= '0';
+		when x"01" => -- revA with TDA1543A
+			enable_switches <= '0';
+			dac_type <= '1';
+		when others => --revC with DIP switches
+			enable_switches <= '1';
+			dac_type <= '0';
+	end case;
+end process;
+
+vid_scandoubler_enable <= '0' when enable_switches='1' and SW3(1) = '0' else not(soft_sw1); -- enable scandoubler by default for older revisions and switchable by SW3(1) for a newer ones
+audio_dac_type <= '0' when ((enable_switches='1' and SW3(2) = '1') or (enable_switches='0' and dac_type = '0')) else '1'; -- default is dac_type for older revisions and switchable by SW3(2) for a newer ones
+ext_rom_bank <= not SW3(4 downto 3) when enable_switches='1' else "00"; -- SW3 and SW4 switches a 4 external rom banks for newer revisions, otherwise - the only one ROM used 
+
+-- HDD access
+led1_overwrite <= '1';
+led1 <= '1' when SDIR = '1' else '0';
+
+-- SD access
+led2_overwrite <= '1';
+led2 <= '1' when SD_NCS = '0' else '0';
 
 -------------------------------------------------------------------------------
 -- SD
@@ -865,12 +1043,12 @@ cs_xxfd <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and cpu_a_bus(15) = '0' 
 
 -- регистр AS часов
 cs_rtc_as <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and
-							((cpu_a_bus(7 downto 0) = X"FF" or cpu_a_bus(7 downto 0) = X"BF") and cpm='1' and rom14='1') -- расширенная периферия
+							((cpu_a_bus(7 downto 0) = X"FF" or cpu_a_bus(7 downto 0) = X"BF") and cpm='1' and rom14='1' and dos_act='0') -- расширенная периферия
 				     else '0';
 --
 -- регистр DS часов					  
 cs_rtc_ds <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and 
-							((cpu_a_bus(7 downto 0) = X"DF" or cpu_a_bus(7 downto 0) = X"9F") and cpm='1' and rom14='1') -- расширенная периферия
+							((cpu_a_bus(7 downto 0) = X"DF" or cpu_a_bus(7 downto 0) = X"9F") and cpm='1' and rom14='1' and dos_act='0') -- расширенная периферия
 				     else '0';
 					  
 ---- Profi RTC
@@ -941,8 +1119,8 @@ end process;
 -- Audio mixer
 
 speaker <= port_xxfe_reg(4);
-audio_l <= "0000000000000000" when loader_act = '1' else ("000" & speaker & "000000000000") + ("000" & ssg_cn0_a & "00000") + ("000" & ssg_cn0_b & "00000") + ("000" & ssg_cn1_a & "00000") + ("000" & ssg_cn1_b & "00000") + soundrive_l + ("000" & saa_out_l & "00000");
-audio_r <= "0000000000000000" when loader_act = '1' else ("000" & speaker & "000000000000") + ("000" & ssg_cn0_c & "00000") + ("000" & ssg_cn0_b & "00000") + ("000" & ssg_cn1_c & "00000") + ("000" & ssg_cn1_b & "00000") + soundrive_r + ("000" & saa_out_r & "00000");
+audio_l <= "0000000000000000" when loader_act = '1' or cpu_wait_n = '0' else ("000" & speaker & "000000000000") + ("000" & ssg_cn0_a & "00000") + ("000" & ssg_cn0_b & "00000") + ("000" & ssg_cn1_a & "00000") + ("000" & ssg_cn1_b & "00000") + soundrive_l + ("000" & saa_out_l & "00000");
+audio_r <= "0000000000000000" when loader_act = '1' or cpu_wait_n = '0' else ("000" & speaker & "000000000000") + ("000" & ssg_cn0_c & "00000") + ("000" & ssg_cn0_b & "00000") + ("000" & ssg_cn1_c & "00000") + ("000" & ssg_cn1_b & "00000") + soundrive_r + ("000" & saa_out_r & "00000");
 
 -- SAA1099
 saa_wr_n <= '0' when (cpu_iorq_n = '0' and cpu_wr_n = '0' and cpu_a_bus(7 downto 0) = "11111111" and dos_act = '0') else '1';
@@ -950,7 +1128,7 @@ saa_wr_n <= '0' when (cpu_iorq_n = '0' and cpu_wr_n = '0' and cpu_a_bus(7 downto
 -------------------------------------------------------------------------------
 -- Port I/O
 
-mc146818_wr <= '1' when (cs_rtc_ds = '1' and cpu_iorq_n = '0' and cpu_wr_n = '0') else '0';
+mc146818_wr <= '1' when (cs_rtc_ds = '1' and cpu_iorq_n = '0' and cpu_wr_n = '0' and cpu_m1_n = '1') else '0';
 
 port_bff7 	<= '1' when (cpu_iorq_n = '0' and cpu_a_bus = X"BFF7" and cpu_m1_n = '1' and port_eff7_reg(7) = '1') else '0';
 zc_wr 		<= '1' when (cpu_iorq_n = '0' and cpu_wr_n = '0' and cpu_a_bus(7 downto 6) = "01" and cpu_a_bus(4 downto 0) = "10111") else '0';
@@ -963,7 +1141,7 @@ ay_bc1 		<= '1' when ay_port = '1' and cpu_a_bus(14) = '1' and cpu_iorq_n = '0' 
 -------------------------------------------------------------------------------
 -- CPU0 Data bus
 
-process (selector, cpu_a_bus, gx0, ram_do_bus, mc146818_do_bus, kb_do_bus, zc_do_bus, ssg_cn0_bus, ssg_cn1_bus, port_7ffd_reg, port_dffd_reg, uart_do_bus, cpld_do, vid_attr, port_eff7_reg, port_1ffd_reg, joy_bus, ms_z, ms_b, ms_x, ms_y)
+process (selector, cpu_a_bus, gx0, serial_ms_do_bus, ram_do_bus, mc146818_do_bus, kb_do_bus, zc_do_bus, ssg_cn0_bus, ssg_cn1_bus, port_7ffd_reg, port_dffd_reg, uart_do_bus, cpld_do, vid_attr, port_eff7_reg, port_1ffd_reg, joy_bus, ms_z, ms_b, ms_x, ms_y)
 begin
 	case selector is
 		when x"00" => 
@@ -984,12 +1162,15 @@ begin
 		when x"0A" => cpu_di_bus <= ms_x;
 		when x"0B" => cpu_di_bus <= ms_y;
 		when x"0C" => cpu_di_bus <= uart_do_bus;
---		when x"0D" => cpu_di_bus <= vid_attr;
+		when x"0D" => cpu_di_bus <= serial_ms_do_bus;
+		when x"0E" => cpu_di_bus <= zxuno_addr_to_cpu;
+		when x"0F" => cpu_di_bus <= uart_do_bus;
+		when x"10" => cpu_di_bus <= vid_attr;
 		when others => cpu_di_bus <= cpld_do;
 	end case;
 end process;
 
-selector <= 
+selector <= 	
 	x"00" when (ram_oe_n = '0') else -- ram / rom
 	x"01" when (cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_m1_n = '1' and cs_rtc_ds = '1') else -- RTC MC146818A
 	x"02" when (cs_xxfe = '1' and cpu_rd_n = '0') else 									-- Keyboard, port #FE
@@ -1001,20 +1182,27 @@ selector <=
 	x"08" when (cs_7ffd = '1' and cpu_rd_n = '0') else										-- port #7FFD
 	x"09" when (cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_a_bus = X"FADF" and ms_present = '1' and cpm='0') else	-- Mouse0 port key, z
 	x"0A" when (cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_a_bus = X"FBDF" and ms_present = '1' and cpm='0') else	-- Mouse0 port x
-	x"0B" when (cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_a_bus = X"FFDF" and ms_present = '1' and cpm='0') else	-- Mouse0 port y 
-	x"0C" when (cpu_iorq_n = '0' and cpu_rd_n = '0' and uart_oe_n = '0') else 																-- AY UART
---	x"0D" when (cs_xxff = '1' and cpu_rd_n = '0' and dos_act = '0' and cpm = '0') else 			-- port #FF
+	x"0B" when (cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_a_bus = X"FFDF" and ms_present = '1' and cpm='0') else	-- Mouse0 port y 																
+	x"0C" when (cpu_iorq_n = '0' and cpu_rd_n = '0' and uart_oe_n = '0') else -- AY UART
+	x"0D" when (serial_ms_oe_n = '0') else -- Serial mouse
+	x"0E" when (enable_zxuno_uart and cpu_iorq_n = '0' and cpu_rd_n = '0' and zxuno_addr_oe_n = '0') else -- ZX UNO Register
+	x"0F" when (enable_zxuno_uart and cpu_iorq_n = '0' and cpu_rd_n = '0' and uart_oe_n = '0') else -- ZX UNO UART 
+	x"10" when (vid_pff_cs = '1' and cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_a_bus( 7 downto 0) = X"FF") and dos_act='0' else -- Port FF select
 	(others => '1');
 	
 -- debug 
---PIN_141 <= vid_rgb(2);
---PIN_138 <= vid_rgb(5);
---PIN_121 <= vid_rgb(8);
---PIN_120 <= vid_hsync xor (not vid_vsync);
---PIN_119 <= cpu_int_n;
---PIN_115 <= VGA_VS;
-
--- временно включаем-выключаем палитру по кнопке ScrollLock. Потом сделаем включенной постоянно
-palette_en <= not kb_turbo;
+--	PIN_141 <= cpu_int_n;
+--	PIN_138 <= VGA_R(2);
+--	PIN_121 <= VGA_G(2);
+--	PIN_120 <= VGA_B(2);
+--	PIN_119 <= VGA_VS;
+--	PIN_115 <= VGA_HS;
+	
+--PIN_141 <= cpuclk;  -- CH8
+--PIN_138 <= serial_ms_do_bus(4);  -- CH7
+--PIN_121 <= serial_ms_do_bus(5);  -- CH6 / d bit5
+--PIN_120 <= serial_ms_do_bus(6);  -- CH5 / d bit6
+--PIN_119 <= serial_ms_debug4(5);	-- CH4 / read from VV51
+--PIN_115 <= serial_ms_debug2(1); 	-- CH3 / RxRDY status
 	
 end rtl;

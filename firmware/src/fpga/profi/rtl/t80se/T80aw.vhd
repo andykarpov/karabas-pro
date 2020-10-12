@@ -62,7 +62,7 @@ begin
     );
 
     DO <= d;
-    d <= DI when RD_n = '0' and (MREQ_n = '0' or IORQ_n = '0') else 
+    d <= DI when WR_n = '1' and (MREQ_n = '0' or IORQ_n = '0') else 
         "ZZZZZZZZ" when WR_n = '0' and (MREQ_n = '0' or IORQ_n = '0') else 
         "11111111";
 

@@ -21,20 +21,20 @@ entity video is
 		DI			: in std_logic_vector(7 downto 0);	-- video data from memory
 		TURBO 	: in std_logic := '0'; -- 1 = turbo mode, 0 = normal mode
 		INTA		: in std_logic := '0'; -- int request for turbo mode
+		MODE60	: in std_logic := '0'; -- 
 		INT		: out std_logic; -- int output
 		ATTR_O	: out std_logic_vector(7 downto 0); -- attribute register output
+		pFF_CS	: out std_logic; -- port FF select
 		A			: out std_logic_vector(13 downto 0); -- video address
 
 		VIDEO_R	: out std_logic_vector(2 downto 0);
 		VIDEO_G	: out std_logic_vector(2 downto 0);
 		VIDEO_B	: out std_logic_vector(2 downto 0);
 		
-		HSYNC		: buffer std_logic;
-		VSYNC		: buffer std_logic;
-		CSYNC		: out std_logic;
+		HSYNC		: out std_logic;
+		VSYNC		: out std_logic;
 		
 		DS80		: in std_logic; -- 1 = Profi CP/M mode. 0 = standard mode
-		PALETTE_EN: in std_logic := '1';
 		CS7E 		: in std_logic := '0';
 		BUS_A 	: in std_logic_vector(15 downto 8);
 		BUS_D 	: in std_logic_vector(7 downto 0);
@@ -77,6 +77,8 @@ architecture rtl of video is
 	signal hsync_profi : std_logic;
 	signal vsync_profi : std_logic;
 	signal blank_profi : std_logic;
+	signal pFF_CS_profi : std_logic;
+	signal attr_o_profi : std_logic_vector(7 downto 0);
 	
 	signal hcnt_profi : std_logic_vector(9 downto 0);
 	signal vcnt_profi : std_logic_vector(8 downto 0);
@@ -88,6 +90,8 @@ architecture rtl of video is
 	signal i_spec : std_logic;
 	signal hsync_spec : std_logic;
 	signal vsync_spec : std_logic;
+	signal pFF_CS_spec : std_logic;
+	signal attr_o_spec : std_logic_vector(7 downto 0);
 
 	signal hcnt_spec : std_logic_vector(9 downto 0);
 	signal vcnt_spec : std_logic_vector(8 downto 0);
@@ -107,7 +111,9 @@ begin
 		TURBO => TURBO,
 		INTA => INTA,
 		INT => int_spec,
-		ATTR_O => ATTR_O, 
+		MODE60 => MODE60,
+		pFF_CS => pFF_CS_spec,
+		ATTR_O => attr_o_spec, 
 		A => vid_a_spec,
 
 		RGB => rgb_spec,
@@ -125,16 +131,19 @@ begin
 
 	U_PROFI: entity work.profi_video 
 	port map (
-		CLK => CLK, -- 12
-		CLK2x => CLK2x, -- 24
-		ENA => ENA, -- 6
+		CLK => CLK, -- 14
+		CLK2x => CLK2x, -- 28
+		ENA => ENA, -- 7
+		TURBO => TURBO,
 		BORDER => BORDER,
 		DI => DI,
 		INTA => INTA,
 		INT => int_profi,
+		MODE60 => MODE60,
+		pFF_CS => pFF_CS_profi,
+		ATTR_O => attr_o_profi,
 		A => vid_a_profi,
 		DS80 => DS80,
-		MODE60 => palette_en,
 
 		RGB => rgb_profi,
 		I 	 => i_profi,
@@ -163,6 +172,9 @@ begin
 	HCNT <= hcnt_profi when ds80 = '1' else hcnt_spec;
 	VCNT <= vcnt_profi when ds80 = '1' else vcnt_spec;
 	
+ATTR_O <= attr_o_profi when ds80 = '1' else attr_o_spec;
+pFF_CS <= pFF_CS_profi when ds80 = '1' else pFF_CS_spec;
+	
 	-- Палитра profi:
 
 	-- 1) палитра - это память на 16 ячеек. каждая ячейка - 8-битное значение цвета в виде GGGRRRBB
@@ -181,12 +193,7 @@ begin
 			);
 		elsif rising_edge(CLK2x) then 
 			if palette_wr = '1' then
---				-- это костыль для проверки теории, что первый цвет пишется криво
---				if (BORDER(3 downto 0) = X"F") then -- первый цвет в палитре (неяркий черный)
---					palette(to_integer(unsigned(BORDER(3 downto 0) xor X"F"))) <= (others => '0');
---				else 
 					palette(to_integer(unsigned(BORDER(3 downto 0) xor X"F"))) <= (not BUS_A) & '0';
---				end if;
 			end if;
 		end if;
 	end process;
@@ -198,7 +205,7 @@ begin
 	palette_grb <= palette(to_integer(unsigned(palette_a)));
 	
 	-- возвращаем наверх (top level) значение младшего разряда зеленого компонента палитры, это служит для отпределения наличия палитры в системе
-	GX0 <= palette_grb(6);
+	GX0 <= palette_grb(6) when ds80 = '1' else '1';
 	
 	-- применяем blank для профи, ибо в видеоконтроллере он после палитры
 	process(CLK2x, CLK, blank_profi, palette_grb) 
@@ -209,31 +216,9 @@ begin
 			palette_grb_reg <= palette_grb;
 		end if;
 	end process;
-
-	-- преобразование стандартного цвета RGBI в RGB 3:3:3 
---	U9BIT: entity work.rgbi_9bit
---	port map(
---		I_RED		=> rgb(2),
---		I_GREEN	=> rgb(1),
---		I_BLUE	=> rgb(0),
---		I_BRIGHT => i,
---		O_RGB		=> o_rgb
---	);
 	
---	-- переключение видео вывода с палитрой или без по сигналу palette_en
---	process(ds80, palette_en, palette_grb_reg, o_rgb)
---	begin
---		if (ds80 = '1' and palette_en = '1') then 
-			VIDEO_R <= palette_grb_reg(5 downto 3);
-			VIDEO_G <= palette_grb_reg(8 downto 6);
-			VIDEO_B <= palette_grb_reg(2 downto 0);
---		else
---			VIDEO_R <= o_rgb(8 downto 6);
---			VIDEO_G <= o_rgb(5 downto 3);
---			VIDEO_B <= o_rgb(2 downto 0);
---		end if;
---	end process;
-	
-	CSYNC <= not (vsync xor hsync);
+	VIDEO_R <= palette_grb_reg(5 downto 3);
+	VIDEO_G <= palette_grb_reg(8 downto 6);
+	VIDEO_B <= palette_grb_reg(2 downto 0);
 
 end architecture;

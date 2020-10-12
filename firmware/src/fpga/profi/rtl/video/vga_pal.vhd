@@ -456,7 +456,7 @@ if (rising_edge(CLK)) then  -- если фронт тактового импул
 			HSYNC_VGA <= VGA_SSI;      -- строчные синхроимпульсы для VGA
 		else 
 			VSYNC_VGA <= KSI_IN;
-			HSYNC_VGA <= SSI_IN;
+			HSYNC_VGA <= SSI_IN xor (not KSI_IN);
 		end if;
   end if;
 end process;
