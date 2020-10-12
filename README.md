@@ -26,11 +26,11 @@ The idea was to make a smaller Profi (Профи) ZX Spectrum clone, with real F
 10) RTC (profi), emulated read/write support
 11) SD card access via Z-Controller emulation
 12) Turbo 7 MHz
+13) ZX UNO simple UART @115200 for ESP8266 module
 
 **The things that should be implemented (means a TODO list):**
 
-1) Wi-Fi support in TR-DOS and CP/M modes
-2) Simple UART via Atmega
+1) Simple UART via Atmega
 
 ## More info
 
