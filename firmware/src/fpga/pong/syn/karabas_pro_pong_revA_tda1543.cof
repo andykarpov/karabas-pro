@@ -2,12 +2,12 @@
 <cof>
 	<eprom_name>EPCQ16</eprom_name>
 	<flash_loader_device>EP4CE6</flash_loader_device>
-	<output_filename>karabas_pro_pong.jic</output_filename>
+	<output_filename>karabas_pro_pong_revA_tda1543.jic</output_filename>
 	<n_pages>1</n_pages>
 	<width>1</width>
 	<mode>7</mode>
 	<hex_block>
-		<hex_filename>/home/andy/Documents/Projects/Retrocomp/ZX-Spectrum/karabas-pro/firmware/src/fpga/pong/rom/cfg_revC.hex</hex_filename>
+		<hex_filename>../rom/cfg_revA_tda1543.hex</hex_filename>
 		<hex_addressing>relative</hex_addressing>
 		<hex_offset>1015808</hex_offset>
 	</hex_block>

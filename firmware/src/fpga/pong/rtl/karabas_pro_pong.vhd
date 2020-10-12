@@ -81,7 +81,7 @@ port (
 	NRESET 		: out std_logic;
 	CPLD_CLK 	: out std_logic;
 	CPLD_CLK2 	: out std_logic;
-	SDIR 			: out std_logic;
+	SDIR 			: in std_logic;
 	SA				: out std_logic_vector(1 downto 0);
 	SD				: inout std_logic_vector(15 downto 0) := "ZZZZZZZZZZZZZZZZ";
 	
@@ -97,6 +97,9 @@ port (
 	PIN_120		: inout std_logic;
 	PIN_119		: inout std_logic;
 	PIN_115		: inout std_logic;
+	
+	-- Dip Switches 
+	SW3 			: in std_logic_vector(4 downto 1) := "1111";
 		
 	-- UART / ESP8266
 	UART_RX 		: in std_logic;
@@ -151,6 +154,12 @@ signal sound 			: std_logic;
 signal sel 				: std_logic_vector(3 downto 0) := "0000";
 signal rgb 				: std_logic_vector(8 downto 0) := "000000000";
 
+-- Board revision 
+signal board_revision 	: std_logic_vector(7 downto 0);
+signal enable_switches 	: std_logic := '1'; -- rev.C has SW3 with 4 dip switches
+signal dac_type 			: std_logic := '0'; -- 0 - TDA1543, 1 - TDA1543A (only has effect when enable_switches = false)
+signal audio_dac_type 	: std_logic := '0';
+
 component altpll0 
 port (
 	inclk0 				: in std_logic;
@@ -195,10 +204,24 @@ port map (
 	c0 				=> clk_28,
 	c1 				=> clk_8);
 
+-------------------------------------------------------------------------------	
+-- Loader
+
+U2: entity work.loader
+port map(
+	CLK 				=> clk_28,
+	RESET 			=> areset,
+	CFG 				=> board_revision,
+	DATA0				=> DATA0,
+	NCSO				=> NCSO,
+	DCLK				=> DCLK,
+	ASDO				=> ASDO
+);	
+	
 -------------------------------------------------------------------------------
 -- AVR keyboard
 
-U2: entity work.cpld_kbd
+U3: entity work.cpld_kbd
 port map (
 	 CLK 				=> clk_28,
 	 N_RESET 		=> not areset,
@@ -217,10 +240,11 @@ port map (
 -------------------------------------------------------------------------------
 -- i2s sound
 
-U3: entity work.tda1543
+U4: entity work.tda1543
 port map (
 	RESET				=> reset,
 	CLK 				=> clk_8,
+	DAC_TYPE			=> audio_dac_type,
 	CS 				=> '1',
 	DATA_L 			=> audio_l,
 	DATA_R 			=> audio_r,
@@ -231,7 +255,7 @@ port map (
 -------------------------------------------------------------------------------
 -- game logic
 
-U4: tennis 
+U5: tennis 
 port map (
 	glb_clk 			=> clk_28,
 	pixtick 			=> pixtick,
@@ -261,12 +285,10 @@ reset <= areset or kb_reset; -- hot reset
 -- Disabled hw
 
 SD_NCS	<= '1'; 
-NCSO 		<= '1';
 SRAM_NWR <= '1';
 SRAM_NRD <= '1';
 CPLD_CLK <= '0';
 CPLD_CLK2 <='0';
-SDIR <= '0';
 SA <= "00";
 
 -------------------------------------------------------------------------------
@@ -274,6 +296,26 @@ SA <= "00";
 
 audio_l <= "0000000000000000" when reset = '1' else ("000" & speaker & "000000000000");
 audio_r <= "0000000000000000" when reset = '1' else ("000" & speaker & "000000000000");
+
+-------------------------------------------------------------------------------
+-- Board revision / DAC type
+
+process(board_revision)
+begin 
+	case board_revision is 
+		when x"00" => -- revA with TDA1543 
+			enable_switches <= '0';
+			dac_type <= '0';
+		when x"01" => -- revA with TDA1543A
+			enable_switches <= '0';
+			dac_type <= '1';
+		when others => --revC with DIP switches
+			enable_switches <= '1';
+			dac_type <= '0';
+	end case;
+end process;
+
+audio_dac_type <= '0' when ((enable_switches='1' and SW3(2) = '1') or (enable_switches='0' and dac_type = '0')) else '1'; -- default is dac_type for older revisions and switchable by SW3(2) for a newer ones
 
 -------------------------------------------------------------------------------
 -- Game
