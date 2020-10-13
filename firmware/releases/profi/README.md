@@ -16,6 +16,9 @@
 
 Use any available programmer, like avrdude.
 
+Please flash karabas_pro.hex only on PCBs rev.C or rev.A/rev.B with additional pullup resistors on SW1, SW2 buttons.
+Instead of this please flash karabas_pro_revA.hex with hardware buttons disabled.
+
 **Fusebits**
 
 - Low: 0xFF

@@ -39,13 +39,12 @@ bool led1_overwrite = false;
 bool led2_overwrite = false;
 
 unsigned long t = 0;  // current time
-unsigned long tl1 = 0; // led1 time
-unsigned long tl2 = 0; // led1 time
+unsigned long tl1, tl2 = 0; // led1/2 time
 unsigned long tm = 0; // mouse poll time
 unsigned long tl = 0; // blink poll time
 unsigned long tr = 0; // rtc poll time
 unsigned long te = 0; // eeprom store time
-unsigned long tb = 0; // hw buttons poll time
+unsigned long tb, tb1, tb2 = 0; // hw buttons poll time
 int mouse_tries = 2; // number of triers to init mouse
 
 uint8_t mouse_x = 0; // current mouse X
@@ -73,14 +72,7 @@ bool rtc_init_done = false;
 bool rtc_is_bcd = false;
 bool rtc_is_24h = true;
 
-const int buf_len = 128;
-char buf[buf_len];
-byte index = 0;
-bool buffering = true;
-
 SPISettings settingsA(8000000, MSBFIRST, SPI_MODE0); // SPI transmission settings
-
-
 
 
 // transform PS/2 scancodes into internal matrix of pressed keys
@@ -622,17 +614,7 @@ void fill_kbd_matrix(int sc)
     is_shift = false;
     is_ss_used = false;
     is_cs_used = false;
-    clear_matrix(ZX_MATRIX_SIZE);
-    matrix[ZX_K_RESET] = 1;
-    transmit_keyboard_matrix();
-    matrix[ZX_K_S] = 1;
-    transmit_keyboard_matrix();
-    delay(500);
-    matrix[ZX_K_RESET] = 0;
-    transmit_keyboard_matrix();
-    delay(500);
-    matrix[ZX_K_S] = 0;
-    //setup();
+    do_full_reset();
   }
 
   // clear flags
@@ -740,18 +722,6 @@ void rtc_save() {
 }
 
 void rtc_send(uint8_t reg, uint8_t data) {
-
-#if DEBUG_MODE
-#if DEBUG_TIME
-  Serial.print(F("RTC send: "));
-  Serial.print(F("\treg="));
-  Serial.print(reg, HEX);
-  Serial.print(F("\tdata="));
-  Serial.print(data);
-  Serial.println();
-#endif
-#endif
-
   spi_send(CMD_RTC_READ + reg, data);
 }
 
@@ -797,13 +767,7 @@ void process_in_cmd(uint8_t cmd, uint8_t data)
   uint8_t reg;
 
   if (cmd == CMD_RTC_INIT_REQ && !rtc_init_done) {
-
     rtc_init_done = true;
-
-#if DEBUG_MODE
-    Serial.println(F("RTC INIT REQUEST"));
-#endif
-
     rtc_send_all();
   }
 
@@ -823,15 +787,6 @@ void process_in_cmd(uint8_t cmd, uint8_t data)
 
     rtc_last_write_reg = reg;
     rtc_last_write_data = data;
-
-#if DEBUG_MODE
-    Serial.print(F("RTC write: "));
-    Serial.print(F("\treg="));
-    Serial.print(reg, HEX);
-    Serial.print(F("\tdata="));
-    Serial.print(data);
-    Serial.println();
-#endif
 
     switch (reg) {
       case 0: rtc_seconds = rtc_is_bcd ? bcd2bin(data) : data; rtc.setSeconds(rtc_seconds); break;
@@ -856,15 +811,6 @@ void process_in_cmd(uint8_t cmd, uint8_t data)
 void init_mouse()
 {
   mouse_present = mouse.initialize();
-
-#if DEBUG_MODE
-  if (!mouse_present) {
-    Serial.println(F("Mouse does not exists"));
-  } else {
-    Serial.println(F("Mouse present"));
-  }
-#endif
-
 }
 
 void do_reset()
@@ -876,6 +822,21 @@ void do_reset()
   clear_matrix(ZX_MATRIX_SIZE);
   matrix[ZX_K_RESET] = 0;
   transmit_keyboard_matrix();
+}
+
+void do_full_reset()
+{
+  clear_matrix(ZX_MATRIX_SIZE);
+  matrix[ZX_K_RESET] = 1;
+  transmit_keyboard_matrix();
+  matrix[ZX_K_S] = 1;
+  transmit_keyboard_matrix();
+  delay(500);
+  matrix[ZX_K_RESET] = 0;
+  transmit_keyboard_matrix();
+  delay(500);
+  matrix[ZX_K_S] = 0;
+  //setup();
 }
 
 void do_magic()
@@ -935,101 +896,6 @@ void eeprom_store_values()
   eeprom_store_value(EEPROM_SW2_ADDRESS, is_sw2);
 }
 
-void checkSerialInput()
-{
-  readLine();
-  if (!buffering) {
-    processInput();
-    index = 0;
-    buf[index] = '\0';
-    buffering = true;
-  }
-}
-
-void readLine() {
-  if (Serial.available())  {
-    while (Serial.available()) {
-      char c = Serial.read();
-      if (c == '\n' || c == '\r' || index >= buf_len) {
-        buffering = false;
-      } else {
-        buffering = true;
-        buf[index] = c;
-        index++;
-        buf[index] = '\0';
-      }
-    }
-  }
-}
-
-void processInput() {
-  String content = String(buf);
-
-  if (content.compareTo("HELP") == 0) {
-    Serial.println(F("HELP:"));
-    Serial.println(F("GET - will print a current date/time"));
-    Serial.println(F("SET YYYY MM DD HH II SS W - will set RTC to the given arguments"));
-    Serial.println();
-    return;
-  }
-
-  if (content.compareTo("GET") == 0) {
-    Serial.println(F("GET:"));
-    Serial.println(F("Current time is:"));
-    printTime();
-    Serial.println();
-    return;
-  }
-
-  if (content.indexOf("SET") == 0) {
-    if (content.length() == 25) {
-
-      String s_year = content.substring(4, 8);
-      String s_month = content.substring(9, 11);
-      String s_day = content.substring(12, 14);
-      String s_hour = content.substring(15, 17);
-      String s_min = content.substring(18, 20);
-      String s_sec = content.substring(21, 23);
-      String s_week = content.substring(24, 25);
-
-      rtc_year = stringToInt(s_year);
-      rtc_month = stringToByte(s_month);
-      rtc_day = stringToByte(s_day);
-      rtc_hours = stringToByte(s_hour);
-      rtc_minutes = stringToByte(s_min);
-      rtc_seconds = stringToByte(s_sec);
-      rtc_week = stringToByte(s_week);
-      rtc_save();
-
-      printTime();
-      Serial.println(F("Set time OK"));
-      Serial.println();
-    } else {
-      Serial.println(F("Invalid format given. Please use the command to set date time: SET YYYY MM DD HH II SS W"));
-      Serial.println();
-    }
-  }
-}
-
-void printTime() {
-  Serial.print(rtc_year);
-  Serial.print(F("-"));
-  Serial.print(rtc_month);
-  Serial.print(F("-"));
-  Serial.print(rtc_day);
-  Serial.print(F(" "));
-  Serial.print(rtc_hours);
-  Serial.print(F(":"));
-  Serial.print(rtc_minutes);
-  Serial.print(F(":"));
-  Serial.print(rtc_seconds);
-  Serial.print(F(" ("));
-  Serial.print(rtc_week);
-  Serial.print(F(")"));
-  Serial.println();
-}
-
-
 // initial setup
 void setup()
 {
@@ -1037,6 +903,15 @@ void setup()
   Serial.flush();
   rtc.begin();
   SPI.begin();
+
+  // set up fast ADC
+  // Bit 7 - ADEN: ADC Enable
+  // Bit 6 - ADSC: ADC Start Conversion
+  // Bit 5 - ADATE: ADC Auto Trigger Enable
+  // Bit 4 - ADIF: ADC Interrupt Flag
+  // Bit 3 - ADIE: ADC Interrupt Enable
+  // Bits 2:0 - ADPS[2:0]: ADC Prescaler Select Bits
+  ADCSRA = (ADCSRA & B11111000) | 4;
 
   pinMode(PIN_SS, OUTPUT);
   digitalWrite(PIN_SS, HIGH);
@@ -1074,30 +949,11 @@ void setup()
 
   Serial.println(F("ZX Keyboard / mouse / rtc controller v1.0"));
 
-#if DEBUG_MODE
-  Serial.println(F("Reset on boot..."));
-#endif
-
   do_reset();
-
-#if DEBUG_MODE
-  Serial.println(F("done"));
-  Serial.println(F("Keyboard init..."));
-#endif
 
   kbd.begin(PIN_KBD_DAT, PIN_KBD_CLK);
 
-#if DEBUG_MODE
-  Serial.println(F("done"));
-  Serial.println(F("Mouse init..."));
-#endif
-
   init_mouse();
-
-#if DEBUG_MODE
-  Serial.println(F("done"));
-  Serial.println(F("RTC init..."));
-#endif
 
   rtc_year = rtc.getYear();
   rtc_month = rtc.getMonth();
@@ -1115,21 +971,9 @@ void setup()
 
   rtc_send_time();
 
-#if DEBUG_MODE
-  Serial.println(F("done"));
-#endif
-
   if (!rtc_init_done) {
-#if DEBUG_MODE
-    Serial.println(F("RTC send all registers on boot"));
-#endif
     rtc_send_all();
-#if DEBUG_MODE
-    Serial.println(F("done"));
-#endif
   }
-
-  Serial.println(F("Builtin commands: HELP, SET, GET"));
 
   digitalWrite(PIN_LED1, LOW);
 
@@ -1148,31 +992,31 @@ void loop()
     if (!led1_overwrite) {
       digitalWrite(PIN_LED1, HIGH);
     }
-#if DEBUG_MODE
-    Serial.print(F("Scancode: "));
-    Serial.println(c, HEX);
-#endif
     fill_kbd_matrix(c);
   }
 
   // transmit kbd always
   transmit_keyboard_matrix();
 
-  // react on hardware buttons every 200ms
-  //  if (n - tb >= 200) {
-  //    if (analogRead(PIN_BTN1) < 100) {
-  //      digitalWrite(PIN_LED2, LOW);
-  //      do_reset();
-  //      digitalWrite(PIN_LED2, HIGH);
-  //    }
-  //
-  //    if (analogRead(PIN_BTN2) < 100) {
-  //      digitalWrite(PIN_LED1, LOW);
-  //      do_magic();
-  //      digitalWrite(PIN_LED1, HIGH);
-  //    }
-  //    tb = n;
-  //  }
+  // react on hardware buttons every 100ms
+#if USE_HW_BUTTONS
+  if (n - tb >= 100) {
+    if (analogRead(PIN_BTN1) < 3 && (n - tb1 >= 500) ) {
+       tb1 = n;
+      digitalWrite(PIN_LED2, HIGH);
+      do_full_reset();
+      digitalWrite(PIN_LED2, LOW);      
+    }
+
+    if (analogRead(PIN_BTN2) < 3 && (n - tb2 >= 500) ) {
+      tb2 = n;
+      digitalWrite(PIN_LED1, HIGH);
+      do_reset();
+      digitalWrite(PIN_LED1, LOW);
+    }
+    tb = n;
+  }
+#endif
 
   // read joystick
   joy[ZX_JOY_UP] = digitalRead(PIN_JOY_UP) == LOW;
@@ -1212,18 +1056,6 @@ void loop()
     rtc_minutes = rtc.getMinutes();
     rtc_seconds = rtc.getSeconds();
 
-#if DEBUG_MODE
-#if DEBUG_TIME
-    Serial.print(F("RTC: "));
-    Serial.print(rtc_hours);
-    Serial.print(F(":"));
-    Serial.print(rtc_minutes);
-    Serial.print(F(":"));
-    Serial.print(rtc_seconds);
-    Serial.println();
-#endif
-#endif
-
     rtc_send_time();
 
     tr = n;
@@ -1258,24 +1090,7 @@ void loop()
     transmit_mouse_data();
 
     t = n;
-
-#if DEBUG_MODE
-    if (mouse_x != 0 && mouse_y != 0) {
-      Serial.print(F("Mouse: "));
-      Serial.print(m.status, BIN);
-      Serial.print(F("\tx="));
-      Serial.print(m.position.x);
-      Serial.print(F("\ty="));
-      Serial.print(m.position.y);
-      Serial.print(F("\tw="));
-      Serial.print(m.wheel);
-      Serial.println();
-    }
-#endif
-
   }
-
-  checkSerialInput();
 
   // control led1
   if (led1_overwrite) {
