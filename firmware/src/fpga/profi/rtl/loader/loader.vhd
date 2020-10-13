@@ -39,7 +39,6 @@ port (
 	RAM_A 			: out std_logic_vector(20 downto 0);
 	RAM_DO 			: out std_logic_vector(7 downto 0);
 	RAM_WR			: out std_logic;
-	RAM_RD			: out std_logic;
 	
 	-- Config byte 
 	CFG 				: out std_logic_vector(7 downto 0) := "00000010";
@@ -125,7 +124,6 @@ DCLK <= spi_clk;
 RAM_A <= sdr_a_bus;
 RAM_DO <= sdr_di_bus;
 RAM_WR <= sdr_wr;
-RAM_RD <= '0';
 
 -- loading state machine
 process (RESET, CLK, loader_act)

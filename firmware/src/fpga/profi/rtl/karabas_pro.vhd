@@ -48,6 +48,7 @@ entity karabas_pro is
 	generic (
 		enable_ay_uart 	 : boolean := false;
 		enable_zxuno_uart  : boolean := true;
+		enable_saa1099 	 : boolean := false;
 		enable_diag_rom	 : boolean := false -- Retroleum diagrom (blockram based)
 	);
 port (
@@ -143,7 +144,6 @@ signal cpu_wait_n 	: std_logic := '1';
 -- Port
 signal port_xxfe_reg	: std_logic_vector(7 downto 0) := "00000000";
 signal port_7ffd_reg	: std_logic_vector(7 downto 0) := "00000000";
-signal port_1ffd_reg	: std_logic_vector(7 downto 0) := "00000000";
 signal port_dffd_reg : std_logic_vector(7 downto 0) := "00000000";
 signal port_xx7e_reg : std_logic_vector(7 downto 0) := "00000000";
 signal port_xx7e_a   : std_logic_vector(15 downto 8) := "00000000";
@@ -200,18 +200,14 @@ signal mc146818_rd		: std_logic;
 signal mc146818_a_bus	: std_logic_vector(5 downto 0);
 signal mc146818_do_bus	: std_logic_vector(7 downto 0);
 signal mc146818_busy		: std_logic;
-signal port_bff7			: std_logic;
 signal port_eff7_reg		: std_logic_vector(7 downto 0);
 
 -- Port selectors
 signal fd_port 		: std_logic;
 signal fd_sel 			: std_logic;
 signal cs_xxfe 		: std_logic := '0'; 
-signal cs_xxff 		: std_logic := '0';
 signal cs_eff7 		: std_logic := '0';
-signal cs_dff7 		: std_logic := '0';
 signal cs_7ffd 		: std_logic := '0';
-signal cs_1ffd 		: std_logic := '0';
 signal cs_dffd 		: std_logic := '0';
 signal cs_fffd 		: std_logic := '0';
 signal cs_xxfd 		: std_logic := '0';
@@ -258,9 +254,6 @@ signal clk_div4		: std_logic := '0';
 signal clk_div8		: std_logic := '0';
 signal clk_div16		: std_logic := '0';
 signal clk_i2s 		: std_logic := '0';
-signal vga_clk_x 		: std_logic := '0';
-signal vga_clk_2x 	: std_logic := '0';
-signal vga_clko_2x 	: std_logic := '0';
 
 signal ena_div2	: std_logic := '0';
 signal ena_div4	: std_logic := '0';
@@ -293,7 +286,6 @@ signal loader_ram_di	: std_logic_vector(7 downto 0);
 signal loader_ram_do	: std_logic_vector(7 downto 0);
 signal loader_ram_a	: std_logic_vector(20 downto 0);
 signal loader_ram_wr : std_logic;
-signal loader_ram_rd : std_logic;
 
 -- SPI flash / SD
 signal flash_ncs 		: std_logic;
@@ -303,8 +295,8 @@ signal sd_clk 			: std_logic;
 signal sd_si 			: std_logic;
 
 -- AY UART 
-signal ay_uart_do_bus 	: std_logic_vector(7 downto 0);
-signal ay_uart_oe_n 		: std_logic;
+signal ay_uart_do_bus 	: std_logic_vector(7 downto 0) := "00000000";
+signal ay_uart_oe_n 		: std_logic := '1';
 
 -- ZXUNO regs / UART ports
 signal zxuno_regrd : std_logic;
@@ -317,7 +309,6 @@ signal zxuno_uart_do_bus 	: std_logic_vector(7 downto 0);
 signal zxuno_uart_oe_n 		: std_logic;
 
 -- cpld port
-signal cpld_oe_n 		: std_logic := '1';
 signal cpld_do 		: std_logic_vector(7 downto 0);
 
 -- serial mouse 
@@ -585,7 +576,6 @@ port map(
 	RAM_A 			=> loader_ram_a,
 	RAM_DO 			=> loader_ram_do,
 	RAM_WR 			=> loader_ram_wr,
-	RAM_RD 			=> loader_ram_rd,	
 	CFG 				=> board_revision,
 	DATA0				=> DATA0,
 	NCSO				=> flash_ncs,
@@ -651,6 +641,7 @@ port map (
 	O_LEFT			=> soundrive_l,
 	O_RIGHT			=> soundrive_r);
 	 
+G_SAA1099: if enable_saa1099 generate
 U13: saa1099
 port map(
 	clk_sys			=> clk_8,
@@ -662,9 +653,10 @@ port map(
 	din				=> cpu_do_bus,
 	out_l				=> saa_out_l,
 	out_r				=> saa_out_r);
+end generate G_SAA1099;
 
 -- AVR Keyboard / mouse / rtc
-U14: entity work.cpld_kbd
+U14: entity work.avr
 port map (
 	 CLK 				=> clk_bus,
 	 CLKEN 			=> cpuclk,
@@ -740,7 +732,6 @@ port map (
 	BUS_A 			=> cpu_a_bus,
 	BUS_DI 			=> cpu_do_bus,
 	BUS_DO 			=> cpld_do,
-	OE_N 				=> cpld_oe_n,
 	BUS_RD_N 		=> cpu_rd_n,
 	BUS_WR_N 		=> cpu_wr_n,
 	BUS_MREQ_N 		=> cpu_mreq_n,
@@ -896,10 +887,6 @@ ena_div4 <= ena_cnt(1) and ena_cnt(0);
 ena_div8 <= ena_cnt(2) and ena_cnt(1) and ena_cnt(0);
 ena_div16 <= ena_cnt(3) and ena_cnt(2) and ena_cnt(1) and ena_cnt(0);
 ena_div32 <= ena_cnt(5) and ena_cnt(4) and ena_cnt(3) and ena_cnt(2) and ena_cnt(1) and ena_cnt(0);
-
-vga_clk_x 	<= clk_div4 when ds80 = '0' else clk_div2; -- 7/12
-vga_clk_2x 	<= clk_div2 when ds80 = '0' else clk_bus;	 -- 14/24
-vga_clko_2x <= clk_div2 when ds80 = '0' else clk_28;   -- 14/28
 	
 -------------------------------------------------------------------------------
 -- Global signals
@@ -965,11 +952,8 @@ ram_ext <= port_dffd_reg(2 downto 0);
 
 cs_xxfe <= '1' when cpu_iorq_n = '0' and cpu_a_bus(0) = '0' else '0';
 cs_xx7e <= '1' when cs_xxfe = '1' and cpu_a_bus(7) = '0' else '0';
-cs_xxff <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and cpu_a_bus(7 downto 0) = X"FF" else '0';
 cs_eff7 <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and cpu_a_bus = X"EFF7" else '0';
-cs_dff7 <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and cpu_a_bus = X"DFF7" and port_eff7_reg(7) = '1' else '0';
 cs_fffd <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and cpu_a_bus = X"FFFD" and fd_port = '1' else '0';
-cs_1ffd <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and cpu_a_bus = X"1FFD" and fd_port = '1' else '0';
 cs_dffd <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and cpu_a_bus = X"DFFD" and fd_port = '1' else '0';
 cs_7ffd <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and cpu_a_bus = X"7FFD" else '0';
 cs_xxfd <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and cpu_a_bus(15) = '0' and cpu_a_bus(1) = '0' and fd_port = '0' else '0';
@@ -987,13 +971,12 @@ cs_rtc_ds <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and
 -- порты #7e - пишутся по фронту /wr
 port_xxfe_reg <= cpu_do_bus when cs_xxfe = '1' and (cpu_wr_n'event and cpu_wr_n = '1');
 
-process (reset, areset, clk_bus, cpu_a_bus, dos_act, cs_xxfe, cs_eff7, cs_dff7, cs_7ffd, cs_1ffd, cs_xxfd, port_7ffd_reg, port_1ffd_reg, cpu_mreq_n, cpu_m1_n, cpu_wr_n, cpu_do_bus, fd_port)
+process (reset, areset, clk_bus, cpu_a_bus, dos_act, cs_xxfe, cs_eff7, cs_7ffd, cs_xxfd, port_7ffd_reg, cpu_mreq_n, cpu_m1_n, cpu_wr_n, cpu_do_bus, fd_port)
 begin
 	if reset = '1' then
 		port_eff7_reg <= (others => '0');
 		port_7ffd_reg <= (others => '0');
 		port_dffd_reg <= (others => '0');
-		port_1ffd_reg <= (others => '0');
 		dos_act <= '1';
 	elsif clk_bus'event and clk_bus = '1' then
 
@@ -1005,11 +988,6 @@ begin
 			-- profi RTC #BF / #FF
 			if cs_rtc_as = '1' and cpu_wr_n = '0' then 
 				mc146818_a_bus <= cpu_do_bus(5 downto 0); 
-			end if;
-
-			-- #1FFD
-			if cs_1ffd = '1' and cpu_wr_n = '0' then
-				port_1ffd_reg <= cpu_do_bus;
 			end if;
 
 			-- #DFFD
@@ -1047,7 +1025,6 @@ saa_wr_n <= '0' when (cpu_iorq_n = '0' and cpu_wr_n = '0' and cpu_a_bus(7 downto
 
 mc146818_wr <= '1' when (cs_rtc_ds = '1' and cpu_iorq_n = '0' and cpu_wr_n = '0' and cpu_m1_n = '1') else '0';
 
-port_bff7 	<= '1' when (cpu_iorq_n = '0' and cpu_a_bus = X"BFF7" and cpu_m1_n = '1' and port_eff7_reg(7) = '1') else '0';
 zc_wr 		<= '1' when (cpu_iorq_n = '0' and cpu_wr_n = '0' and cpu_a_bus(7 downto 6) = "01" and cpu_a_bus(4 downto 0) = "10111") else '0';
 zc_rd 		<= '1' when (cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_a_bus(7 downto 6) = "01" and cpu_a_bus(4 downto 0) = "10111") else '0';
 
@@ -1058,7 +1035,7 @@ ay_bc1 		<= '1' when ay_port = '1' and cpu_a_bus(14) = '1' and cpu_iorq_n = '0' 
 -------------------------------------------------------------------------------
 -- CPU0 Data bus
 
-process (selector, cpu_a_bus, gx0, serial_ms_do_bus, ram_do_bus, mc146818_do_bus, kb_do_bus, zc_do_bus, ssg_cn0_bus, ssg_cn1_bus, port_7ffd_reg, port_dffd_reg, ay_uart_do_bus, zxuno_uart_do_bus, cpld_do, vid_attr, port_eff7_reg, port_1ffd_reg, joy_bus, ms_z, ms_b, ms_x, ms_y)
+process (selector, cpu_a_bus, gx0, serial_ms_do_bus, ram_do_bus, mc146818_do_bus, kb_do_bus, zc_do_bus, ssg_cn0_bus, ssg_cn1_bus, port_7ffd_reg, port_dffd_reg, ay_uart_do_bus, zxuno_uart_do_bus, cpld_do, vid_attr, port_eff7_reg, joy_bus, ms_z, ms_b, ms_x, ms_y, zxuno_addr_to_cpu)
 begin
 	case selector is
 		when x"00" => 

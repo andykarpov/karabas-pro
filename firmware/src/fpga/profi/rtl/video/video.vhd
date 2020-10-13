@@ -202,7 +202,7 @@ pFF_CS <= pFF_CS_profi when ds80 = '1' else pFF_CS_spec;
 	GX0 <= palette_grb(6) when ds80 = '1' else '1';
 	
 	-- применяем blank для профи, ибо в видеоконтроллере он после палитры
-	process(CLK2x, CLK, blank_profi, palette_grb) 
+	process(CLK2x, CLK, blank_profi, palette_grb, ds80) 
 	begin 
 		if (blank_profi = '1' and ds80='1') then
 			palette_grb_reg <= (others => '0');
