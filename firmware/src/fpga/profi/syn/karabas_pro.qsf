@@ -218,7 +218,9 @@ set_global_assignment -name QIP_FILE ../rtl/video/linebuf.qip
 set_global_assignment -name SYSTEMVERILOG_FILE ../rtl/sound/turbosound/ym2149.sv
 set_global_assignment -name VHDL_FILE ../rtl/sound/turbosound/turbosound.vhd
 set_global_assignment -name SYSTEMVERILOG_FILE ../rtl/sound/turbosound/saa1099.sv
-set_global_assignment -name VHDL_FILE ../rtl/sound/soundrive/soundrive.vhd
+set_global_assignment -name VHDL_FILE ../rtl/sound/covox/covox.vhd
+set_global_assignment -name VHDL_FILE ../rtl/sound/compressor.vhd
+set_global_assignment -name VERILOG_FILE ../rtl/sound/compr.v
 set_global_assignment -name VHDL_FILE ../rtl/dac/tda1543.vhd
 set_global_assignment -name VHDL_FILE ../rtl/uart/ay_uart.vhd
 set_global_assignment -name VERILOG_FILE ../rtl/uart/zxunouart.v
