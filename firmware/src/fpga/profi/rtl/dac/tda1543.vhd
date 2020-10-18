@@ -54,53 +54,85 @@ entity tda1543 is
 end tda1543;
  
 architecture tda1543_arch of tda1543 is
-	signal shift_reg : std_logic_vector (31 downto 0) := "00000000000000000000000000000000";
-	signal bit_cnt : std_logic_vector (4 downto 0) := "00000"; -- counter for TDA1543
-	signal bit_cnt2 : std_logic_vector (5 downto 0) := "000000"; -- counter for TDA1543A
-	signal data1 : std_logic := '0';
+
+signal shift_reg : std_logic_vector(47 downto 0) := (others => '0');
+signal cnt : std_logic_vector(5 downto 0) := (others => '0');
+
 begin
-	process (RESET, CLK, CS, DAC_TYPE)
-	begin
-		if (RESET = '1' or CS = '0') then
-			shift_reg <= (others => '0');
-			bit_cnt <= (others => '0');
-			bit_cnt2 <= (others => '0');
-		elsif (CLK'event and CLK = '0') then
-			if dac_type = '0' then
-				-- TDA1543
-				bit_cnt <= bit_cnt + "00001";
-				shift_reg <= shift_reg(30 downto 0) & '0';
-				DATA1 <= shift_reg(31);
-				if bit_cnt = "00000" then
+
+-- counter
+process (RESET, CS, CLK, cnt, DAC_TYPE)
+begin 
+	if (RESET = '1' or CS = '0') then 
+		cnt <= (others => '0');
+	elsif (CLK'event and CLK = '0') then
+		case DAC_TYPE is 
+			when '0' => 
+				if (cnt < 31) then 
+					cnt <= cnt + 1;
+				else
+					cnt <= (others => '0');
+				end if;
+			when '1' =>
+				if (cnt < 47) then 
+					cnt <= cnt + 1;
+				else
+					cnt <= (others => '0');
+				end if;
+			when others => null;
+		end case;
+	end if;
+end process;
+
+-- WS
+process (RESET, CS, CLK, cnt, DAC_TYPE)
+begin 
+	if (RESET = '1' or CS = '0') then 
+		WS <= '0';		
+	elsif (CLK'event and CLK = '0') then
+		case DAC_TYPE is 
+			when '0' => 
+				if cnt = 0 then 
 					WS <= '0';
-					shift_reg <= DATA_L & DATA_R;
-				elsif bit_cnt = "10000" then		
+				elsif cnt = 16 then 
 					WS <= '1';
 				end if;
-			else 
-				-- TDA1543A
-				if (bit_cnt2 = "000000") then
-					shift_reg <= DATA_L & DATA_R;
+			when '1' =>
+				if cnt = 0 then 
 					WS <= '1';
-				elsif (bit_cnt2(5 downto 3) = "001" or bit_cnt2(5 downto 3) = "010" or bit_cnt2(5 downto 3) = "100" or bit_cnt2(5 downto 3) = "101") then
-					shift_reg <= shift_reg(30 downto 0) & '0';
-				elsif bit_cnt2 = "011000" then	-- 024
+				elsif cnt = 24 then 
 					WS <= '0';
 				end if;
-				bit_cnt2 <= bit_cnt2 + 1;
-			end if;
-		end if;
-	end process;
-	
-	process (dac_type, shift_reg, data1)
-	begin
-		if (dac_type = '1') then 
-			DATA <= shift_reg(31);
-		else 
-			DATA <= data1;
-		end if;
-	end process;
-	
- 	BCK <= CLK when CS = '1' else '1';
- 	
+			when others => null;
+		end case;
+	end if;
+end process;
+
+-- shift register
+process (RESET, CLK, CS, DAC_TYPE, shift_reg, DATA_L, DATA_R)
+begin
+	if (RESET = '1' or CS = '0') then
+		shift_reg <= (others => '0');
+	elsif (CLK'event and CLK = '0') then
+		case DAC_TYPE is 
+			when '0' =>
+				if cnt = 0 then 
+					shift_reg(47 downto 16) <= DATA_R(0) & DATA_L(15 downto 1) & DATA_L(0) & DATA_R(15 downto 1); -- LSB R + L + LSB L + R
+				else 
+					shift_reg <= shift_reg(46 downto 0) & '0';
+				end if;
+			when '1' => 
+				if cnt = 0 then 
+					shift_reg <= DATA_L(15 downto 8) & DATA_L & DATA_R(15 downto 8) & DATA_R; -- MSB L + L + MSB R + R
+				else 
+					shift_reg <= shift_reg(46 downto 0) & '0';
+				end if;			
+			when others => null;
+		end case;
+	end if;
+end process;
+
+DATA <= shift_reg(47);
+BCK <= CLK when CS = '1' else '1';
+
 end tda1543_arch;
