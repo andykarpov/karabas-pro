@@ -225,19 +225,23 @@ signal ssg_cn1_bus	: std_logic_vector(7 downto 0);
 signal ssg_cn1_a		: std_logic_vector(7 downto 0);
 signal ssg_cn1_b		: std_logic_vector(7 downto 0);
 signal ssg_cn1_c		: std_logic_vector(7 downto 0);
-signal audio_l			: std_logic_vector(15 downto 0);
-signal audio_r			: std_logic_vector(15 downto 0);
-signal sound			: std_logic_vector(7 downto 0);
-signal audio_dac_type: std_logic := '0'; -- 0 = TDA1543, 1 = TDA1543A
 
 -- AY UART signals
 signal ay_bdir 		: std_logic;
 signal ay_bc1			: std_logic;
 signal ay_port 		: std_logic := '0';
 
--- Soundrive
-signal soundrive_l			: std_logic_vector(15 downto 0);
-signal soundrive_r			: std_logic_vector(15 downto 0);
+-- Covox
+signal covox_l			: std_logic_vector(7 downto 0);
+signal covox_r			: std_logic_vector(7 downto 0);
+signal covox_fb		: std_logic_vector(7 downto 0);
+
+-- Output audio
+signal mix_l			: std_logic_vector(15 downto 0);
+signal mix_r			: std_logic_vector(15 downto 0);
+signal audio_l			: std_logic_vector(15 downto 0);
+signal audio_r			: std_logic_vector(15 downto 0);
+signal audio_dac_type: std_logic := '0'; -- 0 = TDA1543, 1 = TDA1543A
 
 -- SAA1099
 signal saa_wr_n		: std_logic;
@@ -625,8 +629,8 @@ port map (
 	O_SSG1_AUDIO_B	=> ssg_cn1_b,
 	O_SSG1_AUDIO_C	=> ssg_cn1_c);
 
--- Soundrive
-U12: entity work.soundrive
+-- Covox
+U12: entity work.covox
 port map (
 	I_RESET			=> reset,
 	I_CLK				=> clk_bus,
@@ -638,8 +642,10 @@ port map (
 	I_DOS				=> dos_act,
 	I_CPM 			=> cpm,
 	I_ROM14 			=> rom14,
-	O_LEFT			=> soundrive_l,
-	O_RIGHT			=> soundrive_r);
+	O_LEFT			=> covox_l,
+	O_RIGHT			=> covox_r,
+	O_FB 				=> covox_fb
+);
 	 
 G_SAA1099: if enable_saa1099 generate
 U13: saa1099
@@ -843,6 +849,21 @@ port map(
 	ROM_BANK => ext_rom_bank,
 	SCANDOUBLER_EN => vid_scandoubler_enable
 );
+
+--U23 : entity work.compressor
+--port map(
+--	DI => mix_l,
+--	DO => audio_l
+--);
+--
+--U24 : entity work.compressor
+--port map(
+--	DI => mix_r,
+--	DO => audio_r
+--);
+	
+audio_l <= mix_l;
+audio_r <= mix_r;
 	
 -------------------------------------------------------------------------------
 -- clocks
@@ -1014,9 +1035,25 @@ end process;
 -- Audio mixer
 
 speaker <= port_xxfe_reg(4);
-audio_l <= "0000000000000000" when loader_act = '1' or cpu_wait_n = '0' else ("000" & speaker & "000000000000") + ("000" & ssg_cn0_a & "00000") + ("000" & ssg_cn0_b & "00000") + ("000" & ssg_cn1_a & "00000") + ("000" & ssg_cn1_b & "00000") + soundrive_l + ("000" & saa_out_l & "00000");
-audio_r <= "0000000000000000" when loader_act = '1' or cpu_wait_n = '0' else ("000" & speaker & "000000000000") + ("000" & ssg_cn0_c & "00000") + ("000" & ssg_cn0_b & "00000") + ("000" & ssg_cn1_c & "00000") + ("000" & ssg_cn1_b & "00000") + soundrive_r + ("000" & saa_out_r & "00000");
-
+mix_l <= "0000000000000000" when loader_act = '1' or cpu_wait_n = '0' else 
+				("000" & speaker & "000000000000") + 
+				("000"  & ssg_cn0_a &     "00000") + 
+				("000"  & ssg_cn0_b &     "00000") + 
+				("000"  & ssg_cn1_a &     "00000") + 
+				("000"  & ssg_cn1_b &     "00000") + 
+				("00" & covox_l & covox_l(7 downto 4) & "00") + 
+				("000"  & covox_fb &      "00000") + 
+				("000"  & saa_out_l  &    "00000");
+mix_r <= "0000000000000000" when loader_act = '1' or cpu_wait_n = '0' else 
+				("000" & speaker & "000000000000") + 
+				("000"  & ssg_cn0_c &     "00000") + 
+				("000"  & ssg_cn0_b &     "00000") + 
+				("000"  & ssg_cn1_c &     "00000") + 
+				("000"  & ssg_cn1_b &     "00000") + 
+				("00" & covox_r & covox_r(7 downto 4) & "00") + 
+				("000"  & covox_fb &      "00000") + 
+				("000"  & saa_out_r &     "00000");
+				
 -- SAA1099
 saa_wr_n <= '0' when (cpu_iorq_n = '0' and cpu_wr_n = '0' and cpu_a_bus(7 downto 0) = "11111111" and dos_act = '0') else '1';
 
