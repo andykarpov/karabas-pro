@@ -171,6 +171,18 @@ begin
 	P0 <='0' when BUS_A(7)='1' and BUS_A(4 downto 0)="00011" and BUS_IORQ_N='0' and CPM='0' and DOS='1' and ROM14='1' else '1';
 
 	FDC_NCS <= RT_F1 and P0;
+	
+---- CS_VG93
+--RT_F1_1 <= '0' when adress(7)='0' and adress(1 downto 0)="11" and iorq='0' and CPM='0' and dos='1' and rom14='0' else '1';	-- CPM=1 & ROM14=0 BAS=1 ПЗУ 128 1F-7F
+--RT_F1_2 <= '0' when adress(7)='0' and adress(1 downto 0)="11" and iorq='0' and CPM='1' and rom14='1' and dos='0' else '1';	-- CPM=0 & ROM14=1 BAS=0 ПЗУ DOS / SOS 1F-7F
+--RT_F1 <= RT_F1_1 and RT_F1_2;
+--
+--P0 <='0' when (adress(7)='1' and adress(4 downto 0)="00011" and iorq='0' and dos='0' and rom14='0') or			-- ROM14=0 BAS=0 ПЗУ SYS 83-E3
+--					(adress(7)='1' and adress(4 downto 0)="00011" and iorq='0' and CPM='0' and rom14='1') else '1'; -- CPM=1 & ROM14=1 ПЗУ DOS/ SOS 83-E3
+--
+--cswg <= RT_F1 and P0;
+	
+
 	FDC_DS0 <= not pff(0); --'1' when pff(1 downto 0) = "00" else '0';
 	FDC_DS1 <= pff(0) and not pff(1); --'1' when pff(1 downto 0) = "01" else '0';
 
