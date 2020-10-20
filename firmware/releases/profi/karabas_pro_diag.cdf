@@ -4,9 +4,9 @@ JedecChain;
 	DefaultMfr(6E);
 
 	P ActionCode(Cfg)
-		Device PartName(EPM3128AT100) Path("") File("karabas_pro_cpld.pof") MfrSpec(OpMask(1));
+		Device PartName(EPM3128AT100) Path("./") File("karabas_pro_cpld.pof") MfrSpec(OpMask(1));
 	P ActionCode(Cfg)
-		Device PartName(EP4CE6F17) Path("") File("") MfrSpec(OpMask(1) SEC_Device(EPCS16) Child_OpMask(1 1) SFLPath("karabas_pro_diag.jic"));
+		Device PartName(EP4CE6F17) Path("./") File("") MfrSpec(OpMask(1) SEC_Device(EPCS16) Child_OpMask(1 1) SFLPath("karabas_pro_diag.jic"));
 
 ChainEnd;
 

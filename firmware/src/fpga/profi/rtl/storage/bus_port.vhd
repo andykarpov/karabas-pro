@@ -25,7 +25,6 @@ entity bus_port is
 	BUS_A : in std_logic_vector(15 downto 0);
 	BUS_DI : in std_logic_vector(7 downto 0);
 	BUS_DO : out std_logic_vector(7 downto 0);
-	OE_N : out std_logic := '1';
 	BUS_RD_N : in std_logic;
 	BUS_WR_N : in std_logic;
 	BUS_MREQ_N : in std_logic;

@@ -8,9 +8,6 @@ use IEEE.numeric_std.ALL;
 use IEEE.std_logic_unsigned.all;
 
 entity video is
-	generic (
-			enable_turbo 		 : boolean := true
-	);
 	port (
 		CLK2X 	: in std_logic; -- 28 MHz
 		CLK		: in std_logic; -- 14 MHz
@@ -99,9 +96,6 @@ architecture rtl of video is
 begin
 
 	U_PENT: entity work.pentagon_video 
-	generic map (
-		enable_turbo => enable_turbo
-	)
 	port map (
 		CLK => CLK, -- 14
 		CLK2x => CLK2x, -- 28
@@ -208,7 +202,7 @@ pFF_CS <= pFF_CS_profi when ds80 = '1' else pFF_CS_spec;
 	GX0 <= palette_grb(6) when ds80 = '1' else '1';
 	
 	-- применяем blank для профи, ибо в видеоконтроллере он после палитры
-	process(CLK2x, CLK, blank_profi, palette_grb) 
+	process(CLK2x, CLK, blank_profi, palette_grb, ds80) 
 	begin 
 		if (blank_profi = '1' and ds80='1') then
 			palette_grb_reg <= (others => '0');

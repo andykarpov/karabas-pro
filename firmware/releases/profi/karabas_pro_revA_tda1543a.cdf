@@ -3,10 +3,10 @@ JedecChain;
 	FileRevision(JESD32A);
 	DefaultMfr(6E);
 
-	P ActionCode(Ign)
-		Device PartName(EPM3128AT100) MfrSpec(OpMask(0) Path("") File("karabas_pro_cpld.pof"));
 	P ActionCode(Cfg)
-		Device PartName(EP4CE6) Path("") File("karabas_pro_revA_tda1543a.jic") MfrSpec(OpMask(1) SEC_Device(EPCS16) Child_OpMask(1 1));
+		Device PartName(EPM3128AT100) Path("./") File("karabas_pro_cpld.pof") MfrSpec(OpMask(1));
+	P ActionCode(Cfg)
+		Device PartName(EP4CE6E22) Path("./") File("") MfrSpec(OpMask(1) SEC_Device(EPCS16) Child_OpMask(1 1) SFLPath("karabas_pro_revA_tda1543a.jic"));
 
 ChainEnd;
 

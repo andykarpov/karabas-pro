@@ -14,7 +14,7 @@
 
 **Global keys:**
 - Space or Ctrl+Alt+Del - restart game
-- Scroll lock - toggle the scanlines effect
+- Menu+F11 - toggle the scanlines effect
 
 
 ## How to flash FPGA and CPLD things

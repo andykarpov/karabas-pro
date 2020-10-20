@@ -88,10 +88,6 @@ begin
 	-- 11 - bank 3, Basic-48
 	rom_page <= (not(TRDOS)) & ROM_BANK;
 		
---	ROM_A14 <= rom_page(0);
---	ROM_A15 <= rom_page(1);
---	N_ROMCS <= '0' when is_rom = '1' and N_RD = '0' and ((enable_bus_n_romcs and BUS_N_ROMCS = '0') or not(enable_romcs)) else '1';
-
 	vbus_req <= '0' when ( N_MREQ = '0' or N_IORQ = '0' ) and ( N_WR = '0' or N_RD = '0' ) else '1';
 	vbus_rdy <= '0' when (CLKX = '0' or CLK_CPU = '0')  else '1';
 
@@ -119,7 +115,7 @@ begin
 	process (mux, RAM_EXT, RAM_BANK, SCR, SCO)
 	begin
 		case mux is
-			when "00" => ram_page <= "0000000";                                       						                         -- Seg0 ROM 0000-3FFF or Seg0 RAM 0000-3FFF	
+			when "00" => ram_page <= "0000000";                 -- Seg0 ROM 0000-3FFF or Seg0 RAM 0000-3FFF	
 			when "01" => if SCO='0' then 
 								ram_page <= "0000101";
 							 else 
@@ -129,11 +125,11 @@ begin
 								ram_page <= "0000010"; 	
 							 else 
 								ram_page <= "0000110"; 
-							 end if;                                                                                   -- Seg2 RAM 8000-BFFF
+							 end if;                                -- Seg2 RAM 8000-BFFF
 			when "11" => if SCO='0' then 
 								ram_page <= "0" & RAM_EXT(2 downto 0) & RAM_BANK(2 downto 0);	
 							 else 
-								ram_page <= "0000111";                                               									          -- Seg3 RAM C000-FFFF	
+								ram_page <= "0000111";               -- Seg3 RAM C000-FFFF	
 							 end if;
 			when others => null;
 		end case;
