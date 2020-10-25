@@ -51,9 +51,9 @@ architecture rtl of profi_video is
 	constant pcpm_brd_top		: natural :=  0;--16
 	
 	constant pcpm_brd_bot_60	: natural :=  0;--16
-	constant pcpm_blk_down_60	: natural :=  8;--8
+	constant pcpm_blk_down_60	: natural :=  7;--8
 	constant pcpm_sync_v_60		: natural :=  8;--16
-	constant pcpm_blk_up_60		: natural :=  8;--16
+	constant pcpm_blk_up_60		: natural :=  9;--16
 	constant pcpm_brd_top_60	: natural :=  0;--16
 
 	constant pcpm_h_blk_on		: natural := (pcpm_scr_h + pcpm_brd_right) - 1;
