@@ -101,7 +101,7 @@ begin
 						HSYNC <= '1';
 					end if;
 					
-					if ver_cnt /= 31 then
+					if (ver_cnt /= 31 and MODE60 = '0') or (ver_cnt /= 27 and MODE60 = '1') then
 						VSYNC <= '1';
 					elsif chr_row_cnt = 3 or chr_row_cnt = 4 or ( chr_row_cnt = 5 and ( hor_cnt >= 40 or hor_cnt < 12 ) ) then
 						VSYNC<= '0';
@@ -185,7 +185,7 @@ begin
 			if CLK = '1' then		
 				if ENA = '1' then
 					if chr_col_cnt = 7 then
-						if ((hor_cnt(5 downto 0) > 38 and hor_cnt(5 downto 0) < 48) or ((ver_cnt(5 downto 1) = 15 and MODE60 = '0') or (ver_cnt(5 downto 1) = 13 and MODE60 = '1'))) then	-- 15 = for 320 lines, 13 = for 264 lines
+						if ((hor_cnt(5 downto 0) > 38 and hor_cnt(5 downto 0) < 48) or ((ver_cnt(5 downto 1) = 15 and MODE60 = '0') or (ver_cnt(5 downto 1) = 14 and MODE60 = '1'))) then	-- 15 = for 320 lines, 13 = for 264 lines
 							blank_r <= '0';
 						else 
 							blank_r <= '1';
