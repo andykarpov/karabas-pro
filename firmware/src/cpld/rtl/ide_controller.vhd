@@ -54,16 +54,15 @@ begin
 
 -----------------HDD------------------
 	-- Profi
-wwc <='0' when BUS_WR_N='0' and BUS_A(7 downto 0)="11001011" and BUS_IORQ_N='0' and CPM='0' and dos='1' and rom14='1' else '1'; -- Write High byte from Data bus to "Write register"
-wwe <='0' when BUS_WR_N='0' and BUS_A(7 downto 0)="11101011" and BUS_IORQ_N='0' and CPM='0' and dos='1' and rom14='1' else '1'; -- Read High byte from "Write register" to HDD bus
-rww <='0' when BUS_WR_N='1' and BUS_A(7 downto 0)="11001011" and BUS_IORQ_N='0' and CPM='0' and dos='1' and rom14='1' else '1'; -- Selector Low byte Data bus Buffer Direction: 1 - to HDD bus, 0 - to Data bus
-rwe <='0' when BUS_WR_N='1' and BUS_A(7 downto 0)="11101011" and BUS_IORQ_N='0' and CPM='0' and dos='1' and rom14='1' else '1'; -- Read High byte from "Read register" to Data bus
+wwc 	<='0' when BUS_WR_N='0' and BUS_A(7 downto 0)="11001011" and BUS_IORQ_N='0' and CPM='0' and dos='1' and rom14='1' else '1'; -- Write High byte from Data bus to "Write register"
+wwe 	<='0' when BUS_WR_N='0' and BUS_A(7 downto 0)="11101011" and BUS_IORQ_N='0' and CPM='0' and dos='1' and rom14='1' else '1'; -- Read High byte from "Write register" to HDD bus
+rww 	<='0' when BUS_WR_N='1' and BUS_A(7 downto 0)="11001011" and BUS_IORQ_N='0' and CPM='0' and dos='1' and rom14='1' else '1'; -- Selector Low byte Data bus Buffer Direction: 1 - to HDD bus, 0 - to Data bus
+rwe 	<='0' when BUS_WR_N='1' and BUS_A(7 downto 0)="11101011" and BUS_IORQ_N='0' and CPM='0' and dos='1' and rom14='1' else '1'; -- Read High byte from "Read register" to Data bus
 cs3fx <='0' when BUS_WR_N='0' and BUS_A(7 downto 0)="10101011" and BUS_IORQ_N='0' and CPM='0' and dos='1' and rom14='1' else '1';
 cs1fx <= rww and wwe; -- Write High byte from HDD bus to "Read register"
 cs_hdd_wr <= cs3fx and wwe and wwc;
 cs_hdd_rd <= rww and rwe;
-IDE_RESET_N <= NRESET;
-profi_ebl <= wwc and wwe and rww and rwe and cs3fx;
+profi_ebl <= cs_hdd_wr and cs_hdd_rd;
 
 process (CLK,BUS_A,BUS_WR_N,BUS_RD_N,cs1fx,cs3fx)
 begin
@@ -122,9 +121,11 @@ end process;
 
 IDE_D (15 downto 8) <= WD_reg_in (15 downto 8) when wwe='0' else "ZZZZZZZZ";
 
-BUS_DO <= wd_reg_out (7 downto 0) when rww='0' and cs_hdd_rd='0' else
+BUS_DO <= wd_reg_out (7 downto 0) when rww='0' else --and cs_hdd_rd='0' else
 			wd_reg_out (15 downto 8) when rwe='0' else "11111111";
 	
-OE_N <= '0' when (rww='0' and cs_hdd_rd='0') or rwe='0' else '1';
+OE_N <= cs_hdd_rd; --'0' when (rww='0' and cs_hdd_rd='0') or rwe='0' else '1';
+
+IDE_RESET_N <= NRESET;
 
 end rtl;

@@ -64,7 +64,7 @@ signal P0				:std_logic;
 signal pff				:std_logic_vector(7 downto 0);
 
 ------------FAPCH-------------
-signal f					:std_logic_vector(6 downto 0);
+signal f					:std_logic_vector(2 downto 0);
 signal f1				:std_logic;
 signal f4				:std_logic;
 signal fa				:std_logic_vector(4 downto 0);
@@ -128,14 +128,16 @@ begin
 	end if;
 	end process;
 
-	process(CLK8,FDC_RCLK,FDC_WF_DE,fa)
-		begin
-			if FDC_WF_DE='0' then -- RCLK disabled if there is no access to the floppy (and the same for RAWR)
-				FDC_RCLK <= not fa(4);
-			else 
-				FDC_RCLK <= '1';
-			end if;
-	end process;
+--	process(CLK8,FDC_RCLK,FDC_WF_DE,fa)
+--		begin
+--			if FDC_WF_DE='0' then -- RCLK disabled if there is no access to the floppy (and the same for RAWR)
+--				FDC_RCLK <= not fa(4);
+--			else 
+--				FDC_RCLK <= '1';
+--			end if;
+--	end process;
+
+	FDC_RCLK <= not fa(4) or FDC_WF_DE; -- RCLK disabled if there is no access to the floppy (and the same for RAWR)
 
 	---------------- Write pre-compensation --------------------
 	FDC_WDATA <= wdata(3);
@@ -159,11 +161,11 @@ begin
 	
 	----
 	
-	RT_F2_1 <='1' when BUS_A(7 downto 5)="001" and BUS_A(1 downto 0)="11" and BUS_IORQ_N='0' and CPM='0' and DOS='1' and ROM14='1' else '0'; --6D
-	RT_F2_2 <='1' when BUS_A(7 downto 5)="101" and BUS_A(1 downto 0)="11" and BUS_IORQ_N='0' and CPM='0' and DOS='1' and ROM14='0' else '0'; --75
-	RT_F2_3 <='1' when BUS_A(7 downto 5)="111" and BUS_A(1 downto 0)="11" and BUS_IORQ_N='0' and CPM='1' and DOS='0' else '0'; --F3 and FB
+	RT_F2_1 <='0' when BUS_A(7 downto 5)="001" and BUS_A(1 downto 0)="11" and BUS_IORQ_N='0' and CPM='0' and DOS='1' and ROM14='1' else '1'; --6D
+	RT_F2_2 <='0' when BUS_A(7 downto 5)="101" and BUS_A(1 downto 0)="11" and BUS_IORQ_N='0' and CPM='0' and DOS='1' and ROM14='0' else '1'; --75
+	RT_F2_3 <='0' when BUS_A(7 downto 5)="111" and BUS_A(1 downto 0)="11" and BUS_IORQ_N='0' and CPM='1' and DOS='0' else '1'; --F3 and FB
 
-	csff <= RT_F2_1 or RT_F2_2 or RT_F2_3;
+	csff <= RT_F2_1 and RT_F2_2 and RT_F2_3;
 
 	RT_F1_1 <= '0' when BUS_A(7)='0' and BUS_A(1 downto 0)="11" and BUS_IORQ_N='0' and CPM='0' and DOS='1' and ROM14='0' else '1';
 	RT_F1_2 <= '0' when BUS_A(7)='0' and BUS_A(1 downto 0)="11" and BUS_IORQ_N='0' and CPM='1' and DOS='0' else '1';
@@ -171,17 +173,6 @@ begin
 	P0 <='0' when BUS_A(7)='1' and BUS_A(4 downto 0)="00011" and BUS_IORQ_N='0' and CPM='0' and DOS='1' and ROM14='1' else '1';
 
 	FDC_NCS <= RT_F1 and P0;
-	
----- CS_VG93
---RT_F1_1 <= '0' when adress(7)='0' and adress(1 downto 0)="11" and iorq='0' and CPM='0' and dos='1' and rom14='0' else '1';	-- CPM=1 & ROM14=0 BAS=1 ПЗУ 128 1F-7F
---RT_F1_2 <= '0' when adress(7)='0' and adress(1 downto 0)="11" and iorq='0' and CPM='1' and rom14='1' and dos='0' else '1';	-- CPM=0 & ROM14=1 BAS=0 ПЗУ DOS / SOS 1F-7F
---RT_F1 <= RT_F1_1 and RT_F1_2;
---
---P0 <='0' when (adress(7)='1' and adress(4 downto 0)="00011" and iorq='0' and dos='0' and rom14='0') or			-- ROM14=0 BAS=0 ПЗУ SYS 83-E3
---					(adress(7)='1' and adress(4 downto 0)="00011" and iorq='0' and CPM='0' and rom14='1') else '1'; -- CPM=1 & ROM14=1 ПЗУ DOS/ SOS 83-E3
---
---cswg <= RT_F1 and P0;
-	
 
 	FDC_DS0 <= not pff(0); --'1' when pff(1 downto 0) = "00" else '0';
 	FDC_DS1 <= pff(0) and not pff(1); --'1' when pff(1 downto 0) = "01" else '0';
@@ -192,7 +183,7 @@ begin
 		if NRESET='0' then
 			pff(7 downto 0) <= "00000000";
 		elsif (CLK'event and CLK='1') then
-			if csff='1' and BUS_WR_N='0' then
+			if csff='0' and BUS_WR_N='0' then
 				pff <= BUS_DI;
 			end if;
 		end if;
@@ -207,8 +198,8 @@ begin
 	FDC_A <= BUS_A(6 downto 5);
 	FDC_D <= BUS_DI when BUS_WR_N = '0' else (others => 'Z');
 	BUS_DO <= FDC_D when FDC_NCS = '0' and BUS_RD_N = '0' else 
-				 FDC_INTRQ & FDC_DRQ & "111111" when csff = '1' and BUS_RD_N = '0' else 
+				 FDC_INTRQ & FDC_DRQ & "111111" when csff = '0' and BUS_RD_N = '0' else 
 				 "11111111";
-	OE_N <= '0' when (csff = '1' or FDC_NCS = '0') and BUS_RD_N = '0' else '1';
+	OE_N <= '0' when (csff = '0' or FDC_NCS = '0') and BUS_RD_N = '0' else '1';
 
 end rtl;
