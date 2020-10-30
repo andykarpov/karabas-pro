@@ -213,7 +213,25 @@ signal cs_fffd 		: std_logic := '0';
 signal cs_xxfd 		: std_logic := '0';
 signal cs_xx7e 		: std_logic := '0';
 signal cs_rtc_ds 		: std_logic := '0';
-signal cs_rtc_as 		: std_logic := '0'; 			
+signal cs_rtc_as 		: std_logic := '0';
+
+-- Profi HDD ports
+signal hdd_wwc_n		:std_logic; -- Write High byte from Data bus to "Write register"
+signal hdd_wwe_n		:std_logic; -- Read High byte from "Write register" to HDD bus
+signal hdd_rww_n		:std_logic; -- Selector Low byte Data bus Buffer Direction: 1 - to HDD bus, 0 - to Data bus
+signal hdd_rwe_n		:std_logic; -- Read High byte from "Read register" to Data bus
+signal hdd_cs3fx_n	:std_logic;
+
+-- Profi FDD ports
+signal RT_F2_1			:std_logic;
+signal RT_F2_2			:std_logic;
+signal RT_F2_3			:std_logic;
+signal fdd_cs_pff_n	:std_logic;
+signal RT_F1_1			:std_logic;
+signal RT_F1_2			:std_logic;
+signal RT_F1			:std_logic;
+signal P0				:std_logic;
+signal fdd_cs_n		:std_logic;
 
 -- TurboSound
 signal ssg_sel			: std_logic;
@@ -735,17 +753,19 @@ port map (
 	CPLD_CLK2 		=> CPLD_CLK2,
 	NRESET 			=> NRESET,
 
-	BUS_A 			=> cpu_a_bus,
+	BUS_A 			=> cpu_a_bus(10 downto 8) & cpu_a_bus(6 downto 5),
 	BUS_DI 			=> cpu_do_bus,
 	BUS_DO 			=> cpld_do,
 	BUS_RD_N 		=> cpu_rd_n,
 	BUS_WR_N 		=> cpu_wr_n,
-	BUS_MREQ_N 		=> cpu_mreq_n,
-	BUS_IORQ_N 		=> cpu_iorq_n,
-	BUS_M1_N 		=> cpu_m1_n,
-	BUS_CPM 			=> cpm,
-	BUS_DOS 			=> dos_act,
-	BUS_ROM14 		=> rom14	
+	BUS_WWC			=> hdd_wwc_n,
+	BUS_WWE			=> hdd_wwe_n,
+	BUS_RWW			=> hdd_rww_n,
+	BUS_RWE			=> hdd_rwe_n,
+	BUS_CS3FX		=> hdd_cs3fx_n,
+	BUS_CSFF			=> fdd_cs_pff_n,
+	BUS_FDC_NCS		=> fdd_cs_n
+
 );
 
 -- UART (via AY port A)
@@ -991,6 +1011,26 @@ cs_rtc_ds <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and
 					  
 -- порты #7e - пишутся по фронту /wr
 port_xxfe_reg <= cpu_do_bus when cs_xxfe = '1' and (cpu_wr_n'event and cpu_wr_n = '1');
+
+-- порты Profi HDD
+hdd_wwc_n 	<='0' when cpu_wr_n='0' and cpu_a_bus(7 downto 0)="11001011" and cpu_iorq_n='0' and cpm='1' and dos_act='0' and rom14='1' else '1'; -- Write High byte from Data bus to "Write register"
+hdd_wwe_n 	<='0' when cpu_wr_n='0' and cpu_a_bus(7 downto 0)="11101011" and cpu_iorq_n='0' and cpm='1' and dos_act='0' and rom14='1' else '1'; -- Read High byte from "Write register" to HDD bus
+hdd_rww_n 	<='0' when cpu_wr_n='1' and cpu_a_bus(7 downto 0)="11001011" and cpu_iorq_n='0' and cpm='1' and dos_act='0' and rom14='1' else '1'; -- Selector Low byte Data bus Buffer Direction: 1 - to HDD bus, 0 - to Data bus
+hdd_rwe_n 	<='0' when cpu_wr_n='1' and cpu_a_bus(7 downto 0)="11101011" and cpu_iorq_n='0' and cpm='1' and dos_act='0' and rom14='1' else '1'; -- Read High byte from "Read register" to Data bus
+hdd_cs3fx_n <='0' when cpu_wr_n='0' and cpu_a_bus(7 downto 0)="10101011" and cpu_iorq_n='0' and cpm='1' and dos_act='0' and rom14='1' else '1';
+
+-- порты Profi FDD
+RT_F2_1 <='0' when cpu_a_bus(7 downto 5)="001" and cpu_a_bus(1 downto 0)="11" and cpu_iorq_n='0' and cpm='1' and dos_act='0' and rom14='1' else '1'; --6D
+RT_F2_2 <='0' when cpu_a_bus(7 downto 5)="101" and cpu_a_bus(1 downto 0)="11" and cpu_iorq_n='0' and cpm='1' and dos_act='0' and rom14='0' else '1'; --75
+RT_F2_3 <='0' when cpu_a_bus(7 downto 5)="111" and cpu_a_bus(1 downto 0)="11" and cpu_iorq_n='0' and cpm='0' and dos_act='1' else '1'; --F3 and FB
+fdd_cs_pff_n <= RT_F2_1 and RT_F2_2 and RT_F2_3;
+
+RT_F1_1 <= '0' when cpu_a_bus(7)='0' and cpu_a_bus(1 downto 0)="11" and cpu_iorq_n='0' and cpm='1' and dos_act='0' and rom14='0' else '1';
+RT_F1_2 <= '0' when cpu_a_bus(7)='0' and cpu_a_bus(1 downto 0)="11" and cpu_iorq_n='0' and cpm='0' and dos_act='1' else '1';
+RT_F1 <= RT_F1_1 and RT_F1_2;
+P0 <='0' when cpu_a_bus(7)='1' and cpu_a_bus(4 downto 0)="00011" and cpu_iorq_n='0' and cpm='1' and dos_act='0' and rom14='1' else '1';
+fdd_cs_n <= RT_F1 and P0;
+
 
 process (reset, areset, clk_bus, cpu_a_bus, dos_act, cs_xxfe, cs_eff7, cs_7ffd, cs_xxfd, port_7ffd_reg, cpu_mreq_n, cpu_m1_n, cpu_wr_n, cpu_do_bus, fd_port)
 begin

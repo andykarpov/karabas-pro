@@ -59,15 +59,6 @@ signal bus_di: std_logic_vector(7 downto 0);
 signal bus_do: std_logic_vector(7 downto 0);
 signal bus_wr_n : std_logic := '1';
 signal bus_rd_n : std_logic := '1';
-signal bus_mreq_n : std_logic := '1';
-signal bus_iorq_n : std_logic := '1';
-signal bus_m1_n : std_logic := '1';
-signal bus_nmi_n : std_logic := '1';
-signal bus_wait_n : std_logic := '1';
-signal bus_cpm : std_logic;
-signal bus_dos : std_logic;
-signal bus_rom14 : std_logic;
-
 signal ide_oe_n : std_logic := '1';
 signal fdd_oe_n : std_logic := '1';
 signal fdd_bus_do : std_logic_vector(7 downto 0);
@@ -90,15 +81,15 @@ begin
 				bus_a(7 downto 0) <= SD(7 downto 0);
 			when "10" =>
 				bus_di <= SD(7 downto 0);
-			when "11" =>
-				bus_rd_n <= SD(7); -- rx
-				bus_wr_n <= SD(6);
-				bus_mreq_n <= SD(5);
-				bus_iorq_n <= SD(4);
-				bus_m1_n <= SD(3);
-				bus_cpm <= not SD(2);
-				bus_dos <= not SD(1);
-				bus_rom14 <= SD(0);
+--			when "11" =>
+--				bus_rd_n <= SD(7); -- rx
+--				bus_wr_n <= SD(6);
+--				bus_mreq_n <= SD(5);
+--				bus_iorq_n <= SD(4);
+--				bus_m1_n <= SD(3);
+--				bus_cpm <= not SD(2);
+--				bus_dos <= not SD(1);
+--				bus_rom14 <= SD(0);
 			when others => null;
 		end case;
 		--end if;
@@ -110,18 +101,17 @@ begin
 		CLK => clk,
 		NRESET => NRESET,
 		
-		CPM => bus_cpm,
-		DOS => bus_dos,
-		ROM14 => bus_rom14,
-		
 		BUS_DI => bus_di,
 		BUS_DO => ide_bus_do,
-		BUS_A => bus_a,
-		BUS_RD_N => bus_rd_n,
-		BUS_WR_N => bus_wr_n,
-		BUS_MREQ_N => bus_mreq_n,
-		BUS_IORQ_N => bus_iorq_n,
-		BUS_M1_N => bus_m1_n,
+		BUS_A => bus_a(4 downto 2),
+		BUS_RD_N => bus_a(6),
+		BUS_WR_N => bus_a(5),
+		cs3fx => bus_a(12),
+		wwc => bus_a(8),
+		wwe => bus_a(9),
+		rwe => bus_a(11),
+		rww => bus_a(10),
+		
 		OE_N => ide_oe_n,
 		
 		IDE_A => HDD_A,
@@ -139,25 +129,19 @@ begin
 		CLK8 => CLK2,
 		NRESET => NRESET,
 		
-		CPM => bus_cpm,
-		DOS => bus_dos,
-		ROM14 => bus_rom14,
-		
 		BUS_DI => bus_di,
 		BUS_DO => fdd_bus_do,
-		BUS_A => bus_a,
-		BUS_RD_N => bus_rd_n,
-		BUS_WR_N => bus_wr_n,
-		BUS_MREQ_N => bus_mreq_n,
-		BUS_IORQ_N => bus_iorq_n,
-		BUS_M1_N => bus_m1_n,
+		BUS_A => bus_a(1 downto 0),
+		BUS_RD_N => bus_a(6),
+		BUS_WR_N => bus_a(5),
+		csff => bus_a(13),
+		FDC_NCS => bus_a(14),		
 
 		OE_N => fdd_oe_n,
 		
 		FDC_NWR => FDC_NWR,
 		FDC_NRD => FDC_NRD,
 		FDC_D => FDC_D,	
-		FDC_NCS => FDC_NCS,
 		FDC_A => FDC_A,
 		FDC_SL => FDC_SL,
 		FDC_SR => FDC_SR,
@@ -180,6 +164,8 @@ begin
 	
 SDIR <= '1' when HDD_NCS0 = '0' else '0';
 --HDD_NCS1 <= '1';
+
+FDC_NCS <= bus_a(14);
 
 bus_do <= 
 			fdd_bus_do when fdd_oe_n = '0' else 	

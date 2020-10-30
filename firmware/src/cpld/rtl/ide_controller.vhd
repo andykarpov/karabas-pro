@@ -5,30 +5,28 @@ use IEEE.numeric_std.all;
 
 entity ide_controller is 
 port (
-	CLK : in std_logic;
-	NRESET : in std_logic := '1';
+	CLK 			: in std_logic;
+	NRESET 		: in std_logic := '1';
 	
-	BUS_DI : in std_logic_vector(7 downto 0);
-	BUS_DO : out std_logic_vector(7 downto 0);
-	BUS_A : in std_logic_vector(15 downto 0);
-	BUS_RD_N : in std_logic;
-	BUS_WR_N : in std_logic;
-	BUS_MREQ_N : in std_logic;
-	BUS_IORQ_N : in std_logic;
-	BUS_M1_N : in std_logic;
+	BUS_DI 		: in std_logic_vector(7 downto 0);
+	BUS_DO 		: out std_logic_vector(7 downto 0);
+	BUS_A			: in std_logic_vector(2 downto 0);
+	BUS_RD_N 	: in std_logic;
+	BUS_WR_N 	: in std_logic;
+	cs3fx			: in std_logic;
+	wwc			: in std_logic;
+	wwe			: in std_logic;
+	rwe			: in std_logic;
+	rww			: in std_logic;
 
-	CPM : in std_logic;
-	DOS : in std_logic;
-	ROM14 : in std_logic;
+	OE_N 			: out std_logic;
 	
-	OE_N : out std_logic;
-	
-	IDE_A : out std_logic_vector(2 downto 0);
-	IDE_D : inout std_logic_vector(15 downto 0);
-	IDE_CS0_N : out std_logic;
-	IDE_CS1_N : out std_logic;
-	IDE_RD_N : out std_logic;
-	IDE_WR_N : out std_logic;
+	IDE_A 		: out std_logic_vector(2 downto 0);
+	IDE_D 		: inout std_logic_vector(15 downto 0);
+	IDE_CS0_N 	: out std_logic;
+	IDE_CS1_N 	: out std_logic;
+	IDE_RD_N 	: out std_logic;
+	IDE_WR_N 	: out std_logic;
 	IDE_RESET_N : out std_logic
 	
 );
@@ -37,16 +35,12 @@ end ide_controller;
 architecture rtl of ide_controller is 
 
 --------------------HDD-NEMO/PROFI-----------------------
-signal cs3fx		: std_logic;
+
 signal cs_hdd_wr	: std_logic;
 signal cs_hdd_rd	: std_logic;
 signal hdd_iorqge	: std_logic;
 signal profi_ebl	: std_logic;
-signal rwe			: std_logic;
 signal cs1fx		: std_logic;
-signal wwe			: std_logic;
-signal wwc			: std_logic;
-signal rww			: std_logic;
 signal WD_reg_in	: std_logic_vector(15 downto 0);
 signal WD_reg_out	: std_logic_vector(15 downto 0);
 
@@ -54,11 +48,11 @@ begin
 
 -----------------HDD------------------
 	-- Profi
-wwc 	<='0' when BUS_WR_N='0' and BUS_A(7 downto 0)="11001011" and BUS_IORQ_N='0' and CPM='0' and dos='1' and rom14='1' else '1'; -- Write High byte from Data bus to "Write register"
-wwe 	<='0' when BUS_WR_N='0' and BUS_A(7 downto 0)="11101011" and BUS_IORQ_N='0' and CPM='0' and dos='1' and rom14='1' else '1'; -- Read High byte from "Write register" to HDD bus
-rww 	<='0' when BUS_WR_N='1' and BUS_A(7 downto 0)="11001011" and BUS_IORQ_N='0' and CPM='0' and dos='1' and rom14='1' else '1'; -- Selector Low byte Data bus Buffer Direction: 1 - to HDD bus, 0 - to Data bus
-rwe 	<='0' when BUS_WR_N='1' and BUS_A(7 downto 0)="11101011" and BUS_IORQ_N='0' and CPM='0' and dos='1' and rom14='1' else '1'; -- Read High byte from "Read register" to Data bus
-cs3fx <='0' when BUS_WR_N='0' and BUS_A(7 downto 0)="10101011" and BUS_IORQ_N='0' and CPM='0' and dos='1' and rom14='1' else '1';
+--wwc 	<='0' when BUS_WR_N='0' and BUS_A(7 downto 0)="11001011" and BUS_IORQ_N='0' and CPM='0' and dos='1' and rom14='1' else '1'; -- Write High byte from Data bus to "Write register"
+--wwe 	<='0' when BUS_WR_N='0' and BUS_A(7 downto 0)="11101011" and BUS_IORQ_N='0' and CPM='0' and dos='1' and rom14='1' else '1'; -- Read High byte from "Write register" to HDD bus
+--rww 	<='0' when BUS_WR_N='1' and BUS_A(7 downto 0)="11001011" and BUS_IORQ_N='0' and CPM='0' and dos='1' and rom14='1' else '1'; -- Selector Low byte Data bus Buffer Direction: 1 - to HDD bus, 0 - to Data bus
+--rwe 	<='0' when BUS_WR_N='1' and BUS_A(7 downto 0)="11101011" and BUS_IORQ_N='0' and CPM='0' and dos='1' and rom14='1' else '1'; -- Read High byte from "Read register" to Data bus
+--cs3fx <='0' when BUS_WR_N='0' and BUS_A(7 downto 0)="10101011" and BUS_IORQ_N='0' and CPM='0' and dos='1' and rom14='1' else '1';
 cs1fx <= rww and wwe; -- Write High byte from HDD bus to "Read register"
 cs_hdd_wr <= cs3fx and wwe and wwc;
 cs_hdd_rd <= rww and rwe;
@@ -68,7 +62,7 @@ process (CLK,BUS_A,BUS_WR_N,BUS_RD_N,cs1fx,cs3fx)
 begin
 	if CLK'event and CLK='1' then
 		if profi_ebl = '0' then	
-			IDE_A <= BUS_A(10 downto 8);
+			IDE_A <= BUS_A(2 downto 0);
 			IDE_WR_N <=BUS_WR_N;
 			IDE_RD_N <=BUS_RD_N;
 			IDE_CS0_N <=cs1fx;
