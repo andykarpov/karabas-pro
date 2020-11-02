@@ -1,8 +1,8 @@
 BLOCK		START ADDRESS		END ADDRESS
 
 Page_0		0x00000000		0x00059D8A
-profi_vadim.hex		0x000B8000		0x000C7FFF
-profi_vadim.hex		0x000C8000		0x000D7FFF
+profi_vadim_bios_0.34_tr-dos_5.041_stable.hex		0x000B8000		0x000C7FFF
+profi_vadim_bios_0.34_tr-dos_5.041_stable.hex		0x000C8000		0x000D7FFF
 profi_rage_fix.hex		0x000D8000		0x000E7FFF
 DiagROM.v50.hex		0x000E8000		0x000EBFFF
 cfg_revA_tda1543a.hex		0x000F8000		0x000F8000
@@ -11,6 +11,6 @@ cfg_revA_tda1543a.hex		0x000F8000		0x000F8000
 
 Notes:
 
-- Data checksum for this conversion is 0x1911B080
+- Data checksum for this conversion is 0x190FA5A5
 
 - All the addresses in this file are byte addresses

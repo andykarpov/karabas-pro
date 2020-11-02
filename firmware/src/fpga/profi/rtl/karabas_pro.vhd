@@ -216,11 +216,12 @@ signal cs_rtc_ds 		: std_logic := '0';
 signal cs_rtc_as 		: std_logic := '0';
 
 -- Profi HDD ports
-signal hdd_wwc_n		:std_logic; -- Write High byte from Data bus to "Write register"
-signal hdd_wwe_n		:std_logic; -- Read High byte from "Write register" to HDD bus
-signal hdd_rww_n		:std_logic; -- Selector Low byte Data bus Buffer Direction: 1 - to HDD bus, 0 - to Data bus
-signal hdd_rwe_n		:std_logic; -- Read High byte from "Read register" to Data bus
-signal hdd_cs3fx_n	:std_logic;
+signal hdd_profi_ebl_n	:std_logic;
+signal hdd_wwc_n			:std_logic; -- Write High byte from Data bus to "Write register"
+signal hdd_wwe_n			:std_logic; -- Read High byte from "Write register" to HDD bus
+signal hdd_rww_n			:std_logic; -- Selector Low byte Data bus Buffer Direction: 1 - to HDD bus, 0 - to Data bus
+signal hdd_rwe_n			:std_logic; -- Read High byte from "Read register" to Data bus
+signal hdd_cs3fx_n		:std_logic;
 
 -- Profi FDD ports
 signal RT_F2_1			:std_logic;
@@ -758,6 +759,7 @@ port map (
 	BUS_DO 			=> cpld_do,
 	BUS_RD_N 		=> cpu_rd_n,
 	BUS_WR_N 		=> cpu_wr_n,
+	BUS_HDD_CS_N	=> hdd_profi_ebl_n,
 	BUS_WWC			=> hdd_wwc_n,
 	BUS_WWE			=> hdd_wwe_n,
 	BUS_RWW			=> hdd_rww_n,
@@ -1013,23 +1015,46 @@ cs_rtc_ds <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and
 port_xxfe_reg <= cpu_do_bus when cs_xxfe = '1' and (cpu_wr_n'event and cpu_wr_n = '1');
 
 -- порты Profi HDD
-hdd_wwc_n 	<='0' when cpu_wr_n='0' and cpu_a_bus(7 downto 0)="11001011" and cpu_iorq_n='0' and cpm='1' and dos_act='0' and rom14='1' else '1'; -- Write High byte from Data bus to "Write register"
-hdd_wwe_n 	<='0' when cpu_wr_n='0' and cpu_a_bus(7 downto 0)="11101011" and cpu_iorq_n='0' and cpm='1' and dos_act='0' and rom14='1' else '1'; -- Read High byte from "Write register" to HDD bus
-hdd_rww_n 	<='0' when cpu_wr_n='1' and cpu_a_bus(7 downto 0)="11001011" and cpu_iorq_n='0' and cpm='1' and dos_act='0' and rom14='1' else '1'; -- Selector Low byte Data bus Buffer Direction: 1 - to HDD bus, 0 - to Data bus
-hdd_rwe_n 	<='0' when cpu_wr_n='1' and cpu_a_bus(7 downto 0)="11101011" and cpu_iorq_n='0' and cpm='1' and dos_act='0' and rom14='1' else '1'; -- Read High byte from "Read register" to Data bus
-hdd_cs3fx_n <='0' when cpu_wr_n='0' and cpu_a_bus(7 downto 0)="10101011" and cpu_iorq_n='0' and cpm='1' and dos_act='0' and rom14='1' else '1';
+hdd_profi_ebl_n	<='0' when (cpu_a_bus(7)='1' and cpu_a_bus(4 downto 0)="01011" and cpu_iorq_n='0') and ((cpm='1' and rom14='1') or (dos_act='1' and rom14='0')) else '1';	-- ROM14=0 BAS=0 ПЗУ SYS
+hdd_wwc_n 	<='0' when (cpu_wr_n='0' and cpu_a_bus(7 downto 0)="11001011" and cpu_iorq_n='0') and ((cpm='1' and rom14='1') or (dos_act='1' and rom14='0')) else '1'; -- Write High byte from Data bus to "Write register"
+hdd_wwe_n 	<='0' when (cpu_wr_n='0' and cpu_a_bus(7 downto 0)="11101011" and cpu_iorq_n='0') and ((cpm='1' and rom14='1') or (dos_act='1' and rom14='0')) else '1'; -- Read High byte from "Write register" to HDD bus
+hdd_rww_n 	<='0' when (cpu_wr_n='1' and cpu_a_bus(7 downto 0)="11001011" and cpu_iorq_n='0') and ((cpm='1' and rom14='1') or (dos_act='1' and rom14='0')) else '1'; -- Selector Low byte Data bus Buffer Direction: 1 - to HDD bus, 0 - to Data bus
+hdd_rwe_n 	<='0' when (cpu_wr_n='1' and cpu_a_bus(7 downto 0)="11101011" and cpu_iorq_n='0') and ((cpm='1' and rom14='1') or (dos_act='1' and rom14='0')) else '1'; -- Read High byte from "Read register" to Data bus
+hdd_cs3fx_n <='0' when (cpu_wr_n='0' and cpu_a_bus(7 downto 0)="10101011" and cpu_iorq_n='0') and ((cpm='1' and rom14='1') or (dos_act='1' and rom14='0')) else '1';
 
 -- порты Profi FDD
-RT_F2_1 <='0' when cpu_a_bus(7 downto 5)="001" and cpu_a_bus(1 downto 0)="11" and cpu_iorq_n='0' and cpm='1' and dos_act='0' and rom14='1' else '1'; --6D
+RT_F2_1 <='0' when (cpu_a_bus(7 downto 5)="001" and cpu_a_bus(1 downto 0)="11" and cpu_iorq_n='0') and ((cpm='1' and rom14='1') or (dos_act='1' and rom14='0')) else '1'; --6D
 RT_F2_2 <='0' when cpu_a_bus(7 downto 5)="101" and cpu_a_bus(1 downto 0)="11" and cpu_iorq_n='0' and cpm='1' and dos_act='0' and rom14='0' else '1'; --75
-RT_F2_3 <='0' when cpu_a_bus(7 downto 5)="111" and cpu_a_bus(1 downto 0)="11" and cpu_iorq_n='0' and cpm='0' and dos_act='1' else '1'; --F3 and FB
+RT_F2_3 <='0' when cpu_a_bus(7 downto 5)="111" and cpu_a_bus(1 downto 0)="11" and cpu_iorq_n='0' and cpm='0' and dos_act='1' and rom14='1' else '1'; --F3 and FB
 fdd_cs_pff_n <= RT_F2_1 and RT_F2_2 and RT_F2_3;
 
 RT_F1_1 <= '0' when cpu_a_bus(7)='0' and cpu_a_bus(1 downto 0)="11" and cpu_iorq_n='0' and cpm='1' and dos_act='0' and rom14='0' else '1';
-RT_F1_2 <= '0' when cpu_a_bus(7)='0' and cpu_a_bus(1 downto 0)="11" and cpu_iorq_n='0' and cpm='0' and dos_act='1' else '1';
+RT_F1_2 <= '0' when cpu_a_bus(7)='0' and cpu_a_bus(1 downto 0)="11" and cpu_iorq_n='0' and cpm='0' and dos_act='1' and rom14='1' else '1';
 RT_F1 <= RT_F1_1 and RT_F1_2;
-P0 <='0' when cpu_a_bus(7)='1' and cpu_a_bus(4 downto 0)="00011" and cpu_iorq_n='0' and cpm='1' and dos_act='0' and rom14='1' else '1';
+P0 <='0' when (cpu_a_bus(7)='1' and cpu_a_bus(4 downto 0)="00011" and cpu_iorq_n='0') and ((cpm='1' and rom14='1') or (dos_act='1' and rom14='0')) else '1';
 fdd_cs_n <= RT_F1 and P0;
+
+-- Serial
+
+--vi53_cs <= '0' when (adress(7)='1' and adress(4 downto 0)="01111" and iorq='0' and dos='0' and rom14='0') or			-- ROM14=0 BAS=0 ПЗУ SYS
+--							(adress(7)='1' and adress(4 downto 0)="01111" and iorq='0' and CPM='0' and rom14='1') else '1';	-- CPM=1 & ROM14=1 ПЗУ DOS/ SOS
+--ladr5 <= adress(5);
+--ladr6 <= adress(6);
+--P4 <= '0' when (adress(7)='1' and adress(4 downto 0)="10011" and iorq='0' and dos='0' and rom14='0') or			-- ROM14=0 BAS=0 ПЗУ SYS
+--					(adress(7)='1' and adress(4 downto 0)="10011" and iorq='0' and CPM='0' and rom14='1') else '1';	-- CPM=1 & ROM14=1 ПЗУ DOS/ SOS
+--vv51_cs <= not adress(6) or P4;
+--P4I <= adress(6) or P4;
+
+------------------VV55------------------------
+--RT_F5 <='0' when adress(7)='0' and adress(1 downto 0)="11" and iorq='0' and CPM='1' and dos='1' else '1';		-- CPM=0 & BAS=1 ПЗУ 128 1F-7F
+--P1_1 <='0' when adress(7)='1' and adress(4 downto 0)="00111" and iorq='0' and CPM='0' and rom14='1' else '1';	-- CPM=1 & ROM14=1 ПЗУ DOS/ SOS 87-E7
+--P1_2 <='0' when adress(7)='1' and adress(4 downto 0)="00111" and iorq='0' and dos='0' and rom14='0' else '1';	-- ROM14=0 BAS=0 ПЗУ SYS 87-E7
+--vv55_cs <= RT_F5 and P1_1 and P1_2;
+
+---- Profi RTC
+--portAS <= '1' when adress(9)='0' and adress(7)='1' and adress(5)='1' and adress(3 downto 0)=X"F" and iorq='0' and cpm='0' and rom14='1' else '0';
+--portDS <= '1' when adress(9)='0' and adress(7)='1' and adress(5)='0' and adress(3 downto 0)=X"F" and iorq='0' and cpm='0' and rom14='1' else '0';
+
 
 
 process (reset, areset, clk_bus, cpu_a_bus, dos_act, cs_xxfe, cs_eff7, cs_7ffd, cs_xxfd, port_7ffd_reg, cpu_mreq_n, cpu_m1_n, cpu_wr_n, cpu_do_bus, fd_port)
@@ -1065,8 +1090,8 @@ begin
 			end if;
 			
 			-- TR-DOS FLAG
-			if cpu_m1_n = '0' and cpu_mreq_n = '0' and cpu_a_bus(15 downto 8) = X"3D" and rom14 = '1' and port_dffd_reg(5) = '0' then dos_act <= '1';
-			elsif ((cpu_m1_n = '0' and cpu_mreq_n = '0' and cpu_a_bus(15 downto 14) /= "00") or (port_dffd_reg(5) = '1')) then dos_act <= '0'; end if;
+			if cpu_m1_n = '0' and cpu_mreq_n = '0' and cpu_a_bus(15 downto 8) = X"3D" and rom14 = '1' and port_dffd_reg(4) = '0' then dos_act <= '1';
+			elsif ((cpu_m1_n = '0' and cpu_mreq_n = '0' and cpu_a_bus(15 downto 14) /= "00") or (port_dffd_reg(4) = '1')) then dos_act <= '0'; end if;
 				
 	end if;
 end process;
