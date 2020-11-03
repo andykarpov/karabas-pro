@@ -47,14 +47,6 @@ end fdd_controller;
 architecture rtl of fdd_controller is 
 
 -------------DOS-------------
---signal RT_F2_1			:std_logic;
---signal RT_F2_2			:std_logic;
---signal RT_F2_3			:std_logic;
---signal csff				:std_logic;
---signal RT_F1_1			:std_logic;
---signal RT_F1_2			:std_logic;
---signal RT_F1			:std_logic;
---signal P0				:std_logic;
 signal pff				:std_logic_vector(7 downto 0);
 
 ------------FAPCH-------------
@@ -143,24 +135,9 @@ begin
 			end if;
 		end if;
 	end process;
-	
---	----
---	
---	RT_F2_1 <='0' when BUS_A(7 downto 5)="001" and BUS_A(1 downto 0)="11" and BUS_IORQ_N='0' and CPM='0' and DOS='1' and ROM14='1' else '1'; --6D
---	RT_F2_2 <='0' when BUS_A(7 downto 5)="101" and BUS_A(1 downto 0)="11" and BUS_IORQ_N='0' and CPM='0' and DOS='1' and ROM14='0' else '1'; --75
---	RT_F2_3 <='0' when BUS_A(7 downto 5)="111" and BUS_A(1 downto 0)="11" and BUS_IORQ_N='0' and CPM='1' and DOS='0' else '1'; --F3 and FB
---
---	csff <= RT_F2_1 and RT_F2_2 and RT_F2_3;
---
---	RT_F1_1 <= '0' when BUS_A(7)='0' and BUS_A(1 downto 0)="11" and BUS_IORQ_N='0' and CPM='0' and DOS='1' and ROM14='0' else '1';
---	RT_F1_2 <= '0' when BUS_A(7)='0' and BUS_A(1 downto 0)="11" and BUS_IORQ_N='0' and CPM='1' and DOS='0' else '1';
---	RT_F1 <= RT_F1_1 and RT_F1_2;
---	P0 <='0' when BUS_A(7)='1' and BUS_A(4 downto 0)="00011" and BUS_IORQ_N='0' and CPM='0' and DOS='1' and ROM14='1' else '1';
---
---	FDC_NCS <= RT_F1 and P0;
 
-	FDC_DS0 <= not pff(0); --'1' when pff(1 downto 0) = "00" else '0';
-	FDC_DS1 <= pff(0) and not pff(1); --'1' when pff(1 downto 0) = "01" else '0';
+	FDC_DS0 <= '1' when pff(1 downto 0) = "00" else '0';
+	FDC_DS1 <= '1' when pff(1 downto 0) = "01" else '0';
 
 	----------------port ff to WG93------------------------------
 	process(CLK,pff,BUS_DI,BUS_WR_N,csff,NRESET)

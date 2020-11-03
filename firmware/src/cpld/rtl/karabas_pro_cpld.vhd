@@ -107,7 +107,7 @@ begin
 		BUS_RD_N => bus_a(6),
 		BUS_WR_N => bus_a(5),
 		cs3fx => bus_a(12),
-		profi_ebl => bus_a(15),
+--		profi_ebl => bus_a(15),
 		wwc => bus_a(8),
 		wwe => bus_a(9),
 		rwe => bus_a(11),

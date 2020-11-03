@@ -759,7 +759,7 @@ port map (
 	BUS_DO 			=> cpld_do,
 	BUS_RD_N 		=> cpu_rd_n,
 	BUS_WR_N 		=> cpu_wr_n,
-	BUS_HDD_CS_N	=> hdd_profi_ebl_n,
+--	BUS_HDD_CS_N	=> hdd_profi_ebl_n,
 	BUS_WWC			=> hdd_wwc_n,
 	BUS_WWE			=> hdd_wwe_n,
 	BUS_RWW			=> hdd_rww_n,
@@ -1003,12 +1003,12 @@ cs_xxfd <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and cpu_a_bus(15) = '0' 
 
 -- регистр AS часов
 cs_rtc_as <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and
-							((cpu_a_bus(7 downto 0) = X"FF" or cpu_a_bus(7 downto 0) = X"BF") and cpm='1' and rom14='1' and dos_act='0') -- расширенная периферия
+							((cpu_a_bus(7 downto 0) = X"FF" or cpu_a_bus(7 downto 0) = X"BF") and ((cpm='1' and rom14='1') or (dos_act='1' and rom14='0'))) -- расширенная периферия
 				     else '0';
 --
 -- регистр DS часов					  
 cs_rtc_ds <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and 
-							((cpu_a_bus(7 downto 0) = X"DF" or cpu_a_bus(7 downto 0) = X"9F") and cpm='1' and rom14='1' and dos_act='0') -- расширенная периферия
+							((cpu_a_bus(7 downto 0) = X"DF" or cpu_a_bus(7 downto 0) = X"9F") and ((cpm='1' and rom14='1') or (dos_act='1' and rom14='0'))) -- расширенная периферия
 				     else '0';
 					  
 -- порты #7e - пишутся по фронту /wr
@@ -1033,17 +1033,6 @@ RT_F1_2 <= '0' when cpu_a_bus(7)='0' and cpu_a_bus(1 downto 0)="11" and cpu_iorq
 RT_F1 <= RT_F1_1 and RT_F1_2;
 P0 <='0' when (cpu_a_bus(7)='1' and cpu_a_bus(4 downto 0)="00011" and cpu_iorq_n='0') and ((cpm='1' and rom14='1') or (dos_act='1' and rom14='0')) else '1';
 fdd_cs_n <= RT_F1 and P0;
-
--- Serial
-
---vi53_cs <= '0' when (adress(7)='1' and adress(4 downto 0)="01111" and iorq='0' and dos='0' and rom14='0') or			-- ROM14=0 BAS=0 ПЗУ SYS
---							(adress(7)='1' and adress(4 downto 0)="01111" and iorq='0' and CPM='0' and rom14='1') else '1';	-- CPM=1 & ROM14=1 ПЗУ DOS/ SOS
---ladr5 <= adress(5);
---ladr6 <= adress(6);
---P4 <= '0' when (adress(7)='1' and adress(4 downto 0)="10011" and iorq='0' and dos='0' and rom14='0') or			-- ROM14=0 BAS=0 ПЗУ SYS
---					(adress(7)='1' and adress(4 downto 0)="10011" and iorq='0' and CPM='0' and rom14='1') else '1';	-- CPM=1 & ROM14=1 ПЗУ DOS/ SOS
---vv51_cs <= not adress(6) or P4;
---P4I <= adress(6) or P4;
 
 ------------------VV55------------------------
 --RT_F5 <='0' when adress(7)='0' and adress(1 downto 0)="11" and iorq='0' and CPM='1' and dos='1' else '1';		-- CPM=0 & BAS=1 ПЗУ 128 1F-7F
