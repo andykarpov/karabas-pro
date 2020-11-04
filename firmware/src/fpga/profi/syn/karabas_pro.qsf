@@ -199,8 +199,10 @@ set_global_assignment -name VHDL_FILE ../rtl/karabas_pro.vhd
 set_global_assignment -name QIP_FILE ../rtl/pll/altpll0.qip
 set_global_assignment -name QIP_FILE ../rtl/pll/altpll1.qip
 set_global_assignment -name QIP_FILE ../rtl/clock/clk_ctrl.qip
+set_global_assignment -name VHDL_FILE ../rtl/flash/flash.vhd
 set_global_assignment -name VHDL_FILE ../rtl/loader/loader.vhd
-set_global_assignment -name VHDL_FILE ../rtl/loader/loader_spi.vhd
+set_global_assignment -name VHDL_FILE ../rtl/spi/spi_slave.vhd
+set_global_assignment -name VHDL_FILE ../rtl/spi/spi_master.vhd
 set_global_assignment -name VHDL_FILE ../rtl/memory/memory.vhd
 set_global_assignment -name VHDL_FILE ../rtl/t80se/T80aw.vhd
 set_global_assignment -name VHDL_FILE ../rtl/t80se/T80a.vhd

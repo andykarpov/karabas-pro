@@ -290,6 +290,30 @@ signal loader_ram_di	: std_logic_vector(7 downto 0);
 signal loader_ram_do	: std_logic_vector(7 downto 0);
 signal loader_ram_a	: std_logic_vector(20 downto 0);
 signal loader_ram_wr : std_logic;
+signal loader_flash_di : std_logic_vector(7 downto 0);
+signal loader_flash_do : std_logic_vector(7 downto 0);
+signal loader_flash_a : std_logic_vector(23 downto 0);
+signal loader_flash_rd_n : std_logic;
+signal loader_flash_wr_n : std_logic;
+signal loader_flash_busy : std_logic;
+signal loader_flash_rdy : std_logic;
+
+-- Parallel flash interface
+signal flash_a_bus: std_logic_vector(23 downto 0);
+signal flash_di_bus : std_logic_vector(7 downto 0);
+signal flash_do_bus: std_logic_vector(7 downto 0);
+signal flash_wr_n : std_logic := '1';
+signal flash_rd_n : std_logic := '1';
+signal flash_busy : std_logic := '1';
+signal flash_rdy : std_logic := '0';
+
+signal host_flash_a_bus : std_logic_vector(23 downto 0);
+signal host_flash_di_bus : std_logic_vector(7 downto 0);
+signal host_flash_rd_n : std_logic := '1';
+signal host_flash_wr_n : std_logic := '1';
+
+-- SD / SPI flash selector
+signal is_flash_not_sd : std_logic := '0';
 
 -- SPI flash / SD
 signal flash_ncs 		: std_logic;
@@ -572,19 +596,45 @@ port map (
 	HSYNC_VGA		=> VGA_HS
 );
 
--- Loader
-U9: entity work.loader
+-- SPI flash parallel interface
+U9F: entity work.flash
 port map(
 	CLK 				=> clk_bus,
 	RESET 			=> areset,
-	RAM_A 			=> loader_ram_a,
-	RAM_DO 			=> loader_ram_do,
-	RAM_WR 			=> loader_ram_wr,
-	CFG 				=> board_revision,
+	
+	A 					=> flash_a_bus,
+	DI 				=> flash_di_bus,
+	DO 				=> flash_do_bus,
+	WR_N 				=> flash_wr_n,
+	RD_N 				=> flash_rd_n,
+
 	DATA0				=> DATA0,
 	NCSO				=> flash_ncs,
 	DCLK				=> flash_clk,
 	ASDO				=> flash_do,
+
+	BUSY 				=> flash_busy,
+	DATA_READY 		=> flash_rdy
+);
+
+-- Loader
+U9L: entity work.loader
+port map(
+	CLK 				=> clk_bus,
+	RESET 			=> areset,
+	
+	RAM_A 			=> loader_ram_a,
+	RAM_DO 			=> loader_ram_do,
+	RAM_WR 			=> loader_ram_wr,
+	
+	CFG 				=> board_revision,
+
+	FLASH_A 			=> loader_flash_a,
+	FLASH_DO 		=> flash_do_bus,
+	FLASH_RD_N 		=> loader_flash_rd_n,	
+	FLASH_BUSY 		=> flash_busy,
+	FLASH_READY 	=> flash_rdy,
+	
 	LOADER_ACTIVE 	=> loader_act,
 	LOADER_RESET 	=> loader_reset
 );	
@@ -937,9 +987,39 @@ sd_clk 	<= zc_sclk;
 sd_si 	<= zc_mosi;
 
 -- share SPI between flash and SD
-DCLK <= flash_clk when loader_act = '1' else sd_clk;
-ASDO <= flash_do when loader_act = '1' else sd_si;
+DCLK <= flash_clk when loader_act = '1' or is_flash_not_sd = '1' else sd_clk;
+ASDO <= flash_do when loader_act = '1' or is_flash_not_sd = '1' else sd_si;
 NCSO <= flash_ncs;
+
+-- share flash between loader and host
+flash_a_bus <= loader_flash_a when loader_act = '1' else host_flash_a_bus;
+flash_di_bus <= "00000000" when loader_act = '1' else host_flash_di_bus;
+flash_wr_n <= '1' when loader_act = '1' else host_flash_wr_n;
+flash_rd_n <= loader_flash_rd_n when loader_act = '1' else host_flash_rd_n;
+
+-- TODO: реализовать на стороне спектрума:
+-- 1) порт статуса флешки: READ: flash_busy, flash_rdy, WRITE: host_flash_rd_n, host_flash_wr_n
+-- 2) 3 8-битных порта (24 бит) адреса флешки: host_flash_a_bus
+-- 3) порт данных: READ: регистр данных чтения, WRITE: регистр данных записи
+-- 4) порт (бит) переключения SPI между flash / SD картой (можно засунуть в порт статуса 1): is_flash_not_sd
+
+-- порядок работы с флешкой, чтение
+-- 1) выставляем is_flash_not_sd = 1 (забираем шину SPI у SD карты)
+-- 2) дожидаемся flash_busy = 0
+-- 3) выставляем host_flash_a_bus адресом чтения и сигнал host_flash_rd_n = 0
+-- 4) проверяем выставленность флага flash_busy = 1, отключаем flash_rd_n = 1
+-- 5) дожидаемся статуса flash_rdy = 1 - данные готовы для забора в регистре flash_do_bus
+-- 6) goto 2 сколько нужно, затем
+-- N) выставляем is_flash_not_sd = 0 - передаем SPI шину SD-карте 
+
+-- порядок работы с флешкой, запись
+-- 1) выставляем is_flash_not_sd = 1 (забираем шину SPI у SD карты)
+-- 2) дожидаемся flash_busy = 0
+-- 3) выставляем host_flash_a_bus адресом записи, host_flash_di_bus данными и сигнал host_flash_wr_n = 0
+-- 4) проверяем выставленность флага flash_busy = 1, отключаем flash_wr_n = 1
+-- 5) дожидаемся статуса flash_busy = 0
+-- 6) goto 2 сколько нужно, затем
+-- N) выставляем is_flash_not_sd = 0 - передаем SPI шину SD-карте 
 
 -------------------------------------------------------------------------------
 -- Ports
