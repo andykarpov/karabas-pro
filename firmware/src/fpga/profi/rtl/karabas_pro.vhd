@@ -759,7 +759,7 @@ port map (
 	BUS_DO 			=> cpld_do,
 	BUS_RD_N 		=> cpu_rd_n,
 	BUS_WR_N 		=> cpu_wr_n,
---	BUS_HDD_CS_N	=> hdd_profi_ebl_n,
+	BUS_HDD_CS_N	=> hdd_profi_ebl_n,
 	BUS_WWC			=> hdd_wwc_n,
 	BUS_WWE			=> hdd_wwe_n,
 	BUS_RWW			=> hdd_rww_n,

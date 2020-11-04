@@ -14,7 +14,7 @@ port (
 	BUS_RD_N 	: in std_logic;
 	BUS_WR_N 	: in std_logic;
 	cs3fx			: in std_logic;
---	profi_ebl	: in std_logic;
+	profi_ebl	: in std_logic;
 	wwc			: in std_logic;
 	wwe			: in std_logic;
 	rwe			: in std_logic;
@@ -40,7 +40,7 @@ architecture rtl of ide_controller is
 signal cs_hdd_wr	: std_logic;
 signal cs_hdd_rd	: std_logic;
 signal hdd_iorqge	: std_logic;
-signal profi_ebl	: std_logic;
+--signal profi_ebl	: std_logic;
 signal cs1fx		: std_logic;
 signal WD_reg_in	: std_logic_vector(15 downto 0);
 signal WD_reg_out	: std_logic_vector(15 downto 0);
@@ -57,7 +57,7 @@ begin
 cs1fx <= rww and wwe; -- Write High byte from HDD bus to "Read register"
 cs_hdd_wr <= cs3fx and wwe and wwc;
 cs_hdd_rd <= rww and rwe;
-profi_ebl <= cs_hdd_wr and cs_hdd_rd;
+--profi_ebl <= cs_hdd_wr and cs_hdd_rd;
 
 process (CLK,BUS_A,BUS_WR_N,BUS_RD_N,cs1fx,cs3fx)
 begin
