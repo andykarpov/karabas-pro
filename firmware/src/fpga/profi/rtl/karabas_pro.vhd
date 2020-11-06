@@ -212,6 +212,10 @@ signal cs_dffd 		: std_logic := '0';
 signal cs_fffd 		: std_logic := '0';
 signal cs_xxfd 		: std_logic := '0';
 signal cs_xx7e 		: std_logic := '0';
+signal cs_xx87 		: std_logic := '0';
+signal cs_xxA7 		: std_logic := '0';
+signal cs_xxC7 		: std_logic := '0';
+signal cs_xxE7 		: std_logic := '0';
 signal cs_rtc_ds 		: std_logic := '0';
 signal cs_rtc_as 		: std_logic := '0'; 			
 
@@ -306,11 +310,17 @@ signal flash_wr_n : std_logic := '1';
 signal flash_rd_n : std_logic := '1';
 signal flash_busy : std_logic := '1';
 signal flash_rdy : std_logic := '0';
+signal fw_update_mode : std_logic := '0';
 
 signal host_flash_a_bus : std_logic_vector(23 downto 0);
 signal host_flash_di_bus : std_logic_vector(7 downto 0);
 signal host_flash_rd_n : std_logic := '1';
 signal host_flash_wr_n : std_logic := '1';
+
+signal port_xx87_reg : std_logic_vector(7 downto 0);
+signal port_xxA7_reg : std_logic_vector(7 downto 0);
+signal port_xxC7_reg : std_logic_vector(7 downto 0);
+signal port_xxE7_reg : std_logic_vector(7 downto 0);
 
 -- SD / SPI flash selector
 signal is_flash_not_sd : std_logic := '0';
@@ -997,6 +1007,13 @@ flash_di_bus <= "00000000" when loader_act = '1' else host_flash_di_bus;
 flash_wr_n <= '1' when loader_act = '1' else host_flash_wr_n;
 flash_rd_n <= loader_flash_rd_n when loader_act = '1' else host_flash_rd_n;
 
+host_flash_rd_n <= not port_xxC7_reg(0);
+host_flash_wr_n <= not port_xxC7_reg(1);
+is_flash_not_sd <= port_xxC7_reg(2);
+fw_update_mode <= port_xxC7_reg (3);
+host_flash_di_bus <= port_xxE7_reg;
+host_flash_a_bus <= port_xxA7_reg & port_xx87_reg & not (cpu_a_bus (15 downto 8));
+
 -- TODO: реализовать на стороне спектрума:
 -- 1) порт статуса флешки: READ: flash_busy, flash_rdy, WRITE: host_flash_rd_n, host_flash_wr_n
 -- 2) 3 8-битных порта (24 бит) адреса флешки: host_flash_a_bus
@@ -1059,6 +1076,12 @@ cs_dffd <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and cpu_a_bus = X"DFFD" 
 cs_7ffd <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and cpu_a_bus = X"7FFD" else '0';
 cs_xxfd <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and cpu_a_bus(15) = '0' and cpu_a_bus(1) = '0' and fd_port = '0' else '0';
 
+-- Регистры SPI-FLASH
+cs_xxC7 <= '1' when cpu_iorq_n = '0' and cpu_a_bus (7 downto 0) = X"C7" and cpm='1' and rom14='1' and ds80='1' else '0';
+cs_xx87 <= '1' when cpu_iorq_n = '0' and cpu_a_bus (7 downto 0) = X"87" and cpm='1' and rom14='1' and ds80='1' and fw_update_mode='1' else '0';
+cs_xxA7 <= '1' when cpu_iorq_n = '0' and cpu_a_bus (7 downto 0) = X"A7" and cpm='1' and rom14='1' and ds80='1' and fw_update_mode='1' else '0';
+cs_xxE7 <= '1' when cpu_iorq_n = '0' and cpu_a_bus (7 downto 0) = X"E7" and cpm='1' and rom14='1' and ds80='1' and fw_update_mode='1' else '0';
+
 -- регистр AS часов
 cs_rtc_as <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and
 							((cpu_a_bus(7 downto 0) = X"FF" or cpu_a_bus(7 downto 0) = X"BF") and cpm='1' and rom14='1' and dos_act='0') -- расширенная периферия
@@ -1078,6 +1101,10 @@ begin
 		port_eff7_reg <= (others => '0');
 		port_7ffd_reg <= (others => '0');
 		port_dffd_reg <= (others => '0');
+		port_xxC7_reg <= (others => '0');
+		port_xx87_reg <= (others => '0');
+		port_xxA7_reg <= (others => '0');
+		port_xxE7_reg <= (others => '0');
 		dos_act <= '1';
 	elsif clk_bus'event and clk_bus = '1' then
 
@@ -1102,6 +1129,26 @@ begin
 			-- #FD
 			elsif cs_xxfd = '1' and cpu_wr_n = '0' and (port_7ffd_reg(5) = '0' or port_dffd_reg(4)='1') then -- short #FD
 				port_7ffd_reg <= cpu_do_bus;
+			end if;
+			
+			-- #xxC7
+			if cs_xxC7 = '1' and cpu_wr_n = '0' then
+				port_xxC7_reg <= cpu_do_bus;
+			end if;
+
+			-- #xx87
+			if cs_xx87 = '1' and cpu_wr_n = '0' then
+				port_xx87_reg <= cpu_do_bus;
+			end if;
+
+			-- #xxA7
+			if cs_xxA7 = '1' and cpu_wr_n = '0' then
+				port_xxA7_reg <= cpu_do_bus;
+			end if;
+
+			-- #xxE7
+			if cs_xxE7 = '1' and cpu_wr_n = '0' then
+				port_xxE7_reg <= cpu_do_bus;
 			end if;
 			
 			-- TR-DOS FLAG
@@ -1152,7 +1199,7 @@ ay_bc1 		<= '1' when ay_port = '1' and cpu_a_bus(14) = '1' and cpu_iorq_n = '0' 
 -------------------------------------------------------------------------------
 -- CPU0 Data bus
 
-process (selector, cpu_a_bus, gx0, serial_ms_do_bus, ram_do_bus, mc146818_do_bus, kb_do_bus, zc_do_bus, ssg_cn0_bus, ssg_cn1_bus, port_7ffd_reg, port_dffd_reg, ay_uart_do_bus, zxuno_uart_do_bus, cpld_do, vid_attr, port_eff7_reg, joy_bus, ms_z, ms_b, ms_x, ms_y, zxuno_addr_to_cpu)
+process (selector, cpu_a_bus, gx0, serial_ms_do_bus, ram_do_bus, mc146818_do_bus, kb_do_bus, zc_do_bus, ssg_cn0_bus, ssg_cn1_bus, port_7ffd_reg, port_dffd_reg, ay_uart_do_bus, zxuno_uart_do_bus, cpld_do, vid_attr, port_eff7_reg, joy_bus, ms_z, ms_b, ms_x, ms_y, zxuno_addr_to_cpu, port_xxC7_reg, flash_rdy, flash_busy, flash_do_bus)
 begin
 	case selector is
 		when x"00" => 
@@ -1176,7 +1223,9 @@ begin
 		when x"0D" => cpu_di_bus <= serial_ms_do_bus;
 		when x"0E" => cpu_di_bus <= zxuno_addr_to_cpu;
 		when x"0F" => cpu_di_bus <= zxuno_uart_do_bus;
-		when x"10" => cpu_di_bus <= vid_attr;
+		when x"10" => cpu_di_bus <= "0000" & port_xxC7_reg(3) & port_xxC7_reg(2) & flash_rdy & flash_busy;
+		when x"11" => cpu_di_bus <= flash_do_bus;
+		when x"12" => cpu_di_bus <= vid_attr;
 		when others => cpu_di_bus <= cpld_do;
 	end case;
 end process;
@@ -1198,7 +1247,9 @@ selector <=
 	x"0D" when (serial_ms_oe_n = '0') else -- Serial mouse
 	x"0E" when (enable_zxuno_uart and cpu_iorq_n = '0' and cpu_rd_n = '0' and zxuno_addr_oe_n = '0') else -- ZX UNO Register
 	x"0F" when (enable_zxuno_uart and cpu_iorq_n = '0' and cpu_rd_n = '0' and zxuno_uart_oe_n = '0') else -- ZX UNO UART
-	x"10" when (vid_pff_cs = '1' and cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_a_bus( 7 downto 0) = X"FF") and dos_act='0' else -- Port FF select
+	x"10" when (cs_xxC7 = '1' and cpu_rd_n = '0') else
+	x"11" when (cs_xxE7 = '1' and cpu_rd_n = '0') else
+	x"12" when (vid_pff_cs = '1' and cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_a_bus( 7 downto 0) = X"FF") and dos_act='0' else -- Port FF select
 	(others => '1');
 	
 -- debug 
