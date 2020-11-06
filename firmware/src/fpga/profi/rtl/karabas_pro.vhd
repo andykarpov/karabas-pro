@@ -216,6 +216,7 @@ signal cs_xx87 		: std_logic := '0';
 signal cs_xxA7 		: std_logic := '0';
 signal cs_xxC7 		: std_logic := '0';
 signal cs_xxE7 		: std_logic := '0';
+signal cs_xx67 		: std_logic := '0';
 signal cs_rtc_ds 		: std_logic := '0';
 signal cs_rtc_as 		: std_logic := '0'; 			
 
@@ -321,6 +322,7 @@ signal port_xx87_reg : std_logic_vector(7 downto 0);
 signal port_xxA7_reg : std_logic_vector(7 downto 0);
 signal port_xxC7_reg : std_logic_vector(7 downto 0);
 signal port_xxE7_reg : std_logic_vector(7 downto 0);
+signal port_xx67_reg : std_logic_vector(7 downto 0);
 
 -- SD / SPI flash selector
 signal is_flash_not_sd : std_logic := '0';
@@ -1012,27 +1014,27 @@ host_flash_wr_n <= not port_xxC7_reg(1);	-- бит записи в SPI-Flash
 is_flash_not_sd <= port_xxC7_reg(2);		-- бит переключения SPI между flash / SD картой
 fw_update_mode <= port_xxC7_reg (3);		-- бит разрешения обновления SPI-Flash
 host_flash_di_bus <= port_xxE7_reg;			-- Регистр со значением шины данных на вывод в SPI-Flash
-host_flash_a_bus <= port_xxA7_reg & port_xx87_reg & not (cpu_a_bus (15 downto 8));	-- Шина адреса для SPI-Flash
+host_flash_a_bus <= port_xxA7_reg & port_xx87_reg & port_xx67_reg;	-- Шина адреса для SPI-Flash
 
 --Доступен, если бит ROM14=1 (7FFD), бит CPM=1 (DFFD), 80DS=1 (DFFD)
 --Порт С7 - статус регистр R/W:
 --	На чтение:
---		0 бит - flash_busy
---		1 бит - flash_rdy
---		3 бит - is_flash_not_sd
---		4 бит - fw_update_mode
+--		0 бит - flash_busy (1 - устройство занято, 0 - свободно)
+--		1 бит - flash_rdy (1 - данные готовы для чтения, 0 - данные не готовы)
+--		3 бит - is_flash_not_sd (1 - flash, 0 - SD)
+--		4 бит - fw_update_mode (1 - разрешены операции с флешкой, 0 - запрещены)
 --
 --	На запись:
---		0 бит - host_flash_rd_n
---		1 бит - host_flash_wr_n
+--		0 бит - flash_rd (1 - инициациирование режима чтения)
+--		1 бит - flash_wr (1 - инициациирование режима записи)
 --		3 бит - is_flash_not_sd
 --		4 бит - fw_update_mode
 --
 --Доступны, если бит ROM14=1 (7FFD), бит CPM=1 (DFFD), 80DS=1 (DFFD), fw_update_mode=1 (xxC7)
 --Порт 87 - младший байт выбора страниц spi-flash /W
 --Порт A7 - старший байт выбора страниц spi-flash /W
---Порт xxE7 - Порт для записи и чтения данных из страницы spi-flash,
---      где - хх номер байта в странице. В реальности старший адрес порта ххЕ7 инвертирован.
+--Порт E7 - Порт данных для записи и чтения данных из страницы spi-flash
+--Порт 67 - адрес байта в странице /W
 
 -- TODO: реализовать на стороне спектрума:
 -- 1) порт статуса флешки: READ: flash_busy, flash_rdy, WRITE: host_flash_rd_n, host_flash_wr_n
@@ -1105,6 +1107,7 @@ cs_xxC7 <= '1' when cpu_iorq_n = '0' and cpu_a_bus (7 downto 0) = X"C7" and cpm=
 cs_xx87 <= '1' when cpu_iorq_n = '0' and cpu_a_bus (7 downto 0) = X"87" and cpm='1' and rom14='1' and fw_update_mode='1' else '0';
 cs_xxA7 <= '1' when cpu_iorq_n = '0' and cpu_a_bus (7 downto 0) = X"A7" and cpm='1' and rom14='1' and fw_update_mode='1' else '0';
 cs_xxE7 <= '1' when cpu_iorq_n = '0' and cpu_a_bus (7 downto 0) = X"E7" and cpm='1' and rom14='1' and fw_update_mode='1' else '0';
+cs_xx67 <= '1' when cpu_iorq_n = '0' and cpu_a_bus (7 downto 0) = X"67" and cpm='1' and rom14='1' and fw_update_mode='1' else '0';
 
 -- регистр AS часов
 cs_rtc_as <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and
@@ -1129,6 +1132,7 @@ begin
 		port_xx87_reg <= (others => '0');
 		port_xxA7_reg <= (others => '0');
 		port_xxE7_reg <= (others => '0');
+		port_xx67_reg <= (others => '0');
 		dos_act <= '1';
 	elsif clk_bus'event and clk_bus = '1' then
 
@@ -1173,6 +1177,11 @@ begin
 			-- #xxE7
 			if cs_xxE7 = '1' and cpu_wr_n = '0' then
 				port_xxE7_reg <= cpu_do_bus;
+			end if;
+
+			-- #xx67
+			if cs_xx67 = '1' and cpu_wr_n = '0' then
+				port_xx67_reg <= cpu_do_bus;
 			end if;
 			
 			-- TR-DOS FLAG

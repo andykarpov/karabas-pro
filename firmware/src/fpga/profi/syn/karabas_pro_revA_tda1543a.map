@@ -11,6 +11,6 @@ cfg_revA_tda1543a.hex		0x000F8000		0x000F8000
 
 Notes:
 
-- Data checksum for this conversion is 0x18DFC217
+- Data checksum for this conversion is 0x18EA0371
 
 - All the addresses in this file are byte addresses
