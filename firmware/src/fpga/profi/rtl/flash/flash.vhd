@@ -5,6 +5,7 @@
 --
 -- Datasheets:
 -- 	https://www.winbond.com/resource-files/w25q16dv_revi_nov1714_web.pdf
+--    https://www.micron.com/-/media/client/global/documents/products/data-sheet/nor-flash/serial-nor/m25p/m25p16.pdf
 --		https://www.digikey.com/eewiki/pages/viewpage.action?pageId=4096096
 -------------------------------------------------------------------------------
 
