@@ -15,12 +15,14 @@ USE ieee.std_logic_unsigned.all;
 
 entity flash is
 generic (
-	SPI_CMD_PAGEPRG	: std_logic_vector(7 downto 0) := X"02"; -- W25Q16 page program command
-	SPI_CMD_READ  		: std_logic_vector(7 downto 0) := X"03"; -- W25Q16 read command
-	SPI_CMD_WRITE_DIS : std_logic_vector(7 downto 0) := X"04"; -- W25Q16 write disable command
-	SPI_CMD_STATUSREG : std_logic_vector(7 downto 0) := X"05"; -- W25Q16 read status register command
-	SPI_CMD_WRITE_EN 	: std_logic_vector(7 downto 0) := X"06"; -- W25Q16 write enable command
-	SPI_CMD_POWERON 	: std_logic_vector(7 downto 0) := X"AB" -- W25Q16 power on command
+	SPI_CMD_SETSTATUS   : std_logic_vector(7 downto 0) := X"01"; -- W25Q16 set status register command
+	SPI_CMD_PAGEPRG	  : std_logic_vector(7 downto 0) := X"02"; -- W25Q16 page program command
+	SPI_CMD_READ  		  : std_logic_vector(7 downto 0) := X"03"; -- W25Q16 read command
+	SPI_CMD_WRITE_DIS   : std_logic_vector(7 downto 0) := X"04"; -- W25Q16 write disable command
+	SPI_CMD_STATUSREG   : std_logic_vector(7 downto 0) := X"05"; -- W25Q16 read status register command
+	SPI_CMD_WRITE_EN 	  : std_logic_vector(7 downto 0) := X"06"; -- W25Q16 write enable command
+	SPI_CMD_BLOCK_ERASE : std_logic_vector(7 downto 0) := X"D8"; -- W25Q16 64k block erase command
+	SPI_CMD_POWERON 	  : std_logic_vector(7 downto 0) := X"AB" -- W25Q16 power on command
 );
 port (
 	-- bus clock 28 MHz
@@ -35,6 +37,7 @@ port (
 	DO 				: out std_logic_vector(7 downto 0);
 	WR_N				: in std_logic := '1';
 	RD_N				: in std_logic := '1';
+	ER_N 				: in std_logic := '1';
 	
 	-- SPI FLASH physical interface (M25P16)
 	DATA0				: in std_logic;
@@ -51,27 +54,40 @@ end flash;
 architecture rtl of flash is
 
 -- SPI
-signal spi_di_bus		: std_logic_vector(39 downto 0);
-signal spi_do_bus		: std_logic_vector(39 downto 0);
+signal spi_di_bus		: std_logic_vector(7 downto 0);
+signal spi_do_bus		: std_logic_vector(7 downto 0);
+
 signal spi_busy		: std_logic;
+signal spi_busy_prev : std_logic;
 signal spi_ena 		: std_logic;
-signal spi_continue  : std_logic;
+signal spi_cont	   : std_logic;
+
 signal spi_si			: std_logic;
 signal spi_so			: std_logic;
 signal spi_clk			: std_logic;
 signal spi_ss_n 		: std_logic_vector(0 downto 0);
 
+signal prev_rd_n 		: std_logic;
+signal prev_wr_n 		: std_logic;
+signal prev_er_n 		: std_logic;
+
 -- System
-type machine IS(init, release_init, wait_init, 
-					 idle, 
-					 cmd_read, cmd_end_read, do_read, 
-					 cmd_write_en, cmd_end_write_en, do_write_en,
-					 cmd_write, cmd_end_write, do_write, 
-					 cmd_write_dis, end_write_dis, do_write_dis,
-					 cmd_erase, cmd_end_erase, do_erase,
-					 check_status, cmd_end_status, do_status
-);     --state machine datatype
-signal state : machine := init; --current state
+type machine IS( --state machine datatype
+	init, 
+	idle, 
+	cmd_read, 	 
+	cmd_wp_off, 
+	cmd_write_en,
+	cmd_erase_block,
+	cmd_write, 
+	cmd_check_status, 
+	cmd_write_dis, 
+	cmd_wp_on
+					 
+);
+
+signal state 			: machine := init; -- current state
+signal next_state 	: machine := init; -- state to return after some operations
 
 signal is_busy : std_logic := '1';
 signal is_ready : std_logic := '0';
@@ -82,7 +98,7 @@ begin
 U1: entity work.spi_master
 generic map (
 	slaves 	=> 1,
-	d_width 	=> 40
+	d_width 	=> 8
 )
 port map (
 	clock 	=> CLK, 
@@ -90,7 +106,7 @@ port map (
 	enable 	=> spi_ena,
 	cpol		=> '0', -- spi mode 0
 	cpha 		=> '0',
-	cont 		=> spi_continue,
+	cont 		=> spi_cont,
 	clk_div 	=> 2, -- CLK divider
 	addr 		=> 0,
 	tx_data 	=> spi_di_bus,
@@ -111,11 +127,13 @@ DCLK <= spi_clk;
 
 -- flash read / write state machine
 process (RESET, CLK)
-VARIABLE spi_busy_cnt : INTEGER := 0;
+VARIABLE count : INTEGER := 0;
 begin
 	if RESET = '1' then
 		spi_ena <= '0';
-		spi_continue <= '0';
+		spi_cont <= '0';
+		spi_di_bus <= (others => '0');
+		count := 0;
 		state <= init;
 		is_busy <= '1';
 		is_ready <= '0';
@@ -123,122 +141,200 @@ begin
 	elsif CLK'event and CLK = '1' then
 		
 		case state is 
+			
 			when init => -- power on command
-				spi_ena <='1'; -- spi ena pulse
-				spi_di_bus <= spi_cmd_poweron & "0000000000000000" & "00000000" & "00000000";
-				state <= release_init;
-
-			when release_init => -- end spi ena pulse
-				spi_ena <='0';
-				state <= wait_init;
-			
-			when wait_init => -- wait for power on command complete
-				if (spi_busy = '0') then 
-					state <= idle;
-				else 
-					state <= wait_init;
+				spi_busy_prev <= spi_busy;
+				if (spi_busy_prev = '1' and spi_busy = '0') then 
+					count := count + 1;
 				end if;
-			
+				case count is 
+					when 0 => 
+						spi_ena <= '1';
+						spi_di_bus <= SPI_CMD_POWERON;
+					when 1 => 
+						spi_ena <= '0';
+					when 2 =>
+						count := 0;
+						state <= idle;
+					when others => null;
+				end case;
+				
 			when idle => -- ready to begin read / write cycle
 				is_busy <= '0';
 				spi_ena <= '0';
+				spi_cont <= '0';
+				count := 0;
+				spi_busy_prev <= '0';
+				prev_wr_n <= WR_N;
+				prev_rd_n <= RD_N;
+				prev_er_n <= ER_N;
 				
 				if (RD_N = '0') then 
 					state <= cmd_read;
-				elsif (WR_N = '0') then 
+				elsif (WR_N = '0' and prev_wr_n = '1') then 
 					state <= cmd_write_en;
-				else 
-					state <= idle; -- loop here until a real command
+					next_state <= cmd_write;
+				elsif (ER_N = '0' and prev_er_n = '1') then
+					state <= cmd_write_en;
+					next_state <= cmd_erase_block;
 				end if;
 			
 			when cmd_read => -- read command
-				spi_ena <= '1';
+				is_busy <= '1';
+				spi_busy_prev <= spi_busy;
+				if (spi_busy_prev = '1' and spi_busy = '0') then 
+					count := count + 1;
+				end if;
+				case count is 
+					when 0 => 
+						if (spi_busy = '0') then 
+							spi_cont <= '1';
+							spi_ena <= '1';
+							is_ready <= '0';
+							spi_di_bus <= SPI_CMD_READ;
+						else
+							spi_di_bus <= A(23 downto 16);
+						end if;
+					when 1 => 
+						spi_di_bus <= A(15 downto 8);
+					when 2 => 
+						spi_di_bus <= A(7 downto 0);
+					when 3 => 
+						spi_di_bus <= "00000000";
+					when 4 =>
+						spi_cont <= '0';
+						spi_ena <= '0';
+					when 5 =>
+						count := 0;
+						is_ready <= '1';
+						DO <= spi_do_bus;
+						state <= idle;
+					when others => null;						
+				end case;
+				
+			when cmd_write_en => -- write enable
 				is_busy <= '1';
 				is_ready <= '0';
-				spi_di_bus <= spi_cmd_read & A & "00000000";
-				state <= cmd_end_read;
-			
-			when cmd_end_read => -- end of read command
-				spi_ena <= '0';
-				state <= do_read;
-			
-			when do_read => -- wait for spi transfer
-				if (spi_busy = '0') then 
-					is_ready <= '1';
-					DO <= spi_do_bus(7 downto 0); -- todo
-					state <= idle;
-				else 
-					state <= do_read;
+				spi_busy_prev <= spi_busy;
+				if (spi_busy_prev = '1' and spi_busy = '0') then 
+					count := count + 1;
 				end if;
+				case count is 
+					when 0 => 
+						spi_ena <= '1';
+						spi_cont <= '0';
+						spi_di_bus <= SPI_CMD_WRITE_EN;
+					when 1 => 
+						spi_ena <= '0';
+					when 2 =>
+						count := 0;
+						state <= next_state;
+					when others => null;
+				end case;
 				
-			when cmd_write_en => -- write enable command
-				spi_ena <= '1';
-				is_busy <= '1';
-				spi_di_bus <= spi_cmd_write_en & "0000000000000000" & "00000000" & "00000000";
-				state <= cmd_end_write_en;
-			
-			when cmd_end_write_en => -- end of write enable command
-				spi_ena <= '0';
-				state <= do_write_en;
-			
-			when do_write_en => -- wait for spi transfer
-				if (spi_busy = '0') then 
-					state <= cmd_write;
-				else 
-					state <= do_write_en;
+			when cmd_erase_block => -- erase 64k block command
+				spi_busy_prev <= spi_busy;
+				if (spi_busy_prev = '1' and spi_busy = '0') then 
+					count := count + 1;
 				end if;
+				case count is 
+					when 0 => 
+						if (spi_busy = '0') then 
+							spi_cont <= '1';
+							spi_ena <= '1';
+							spi_di_bus <= SPI_CMD_BLOCK_ERASE;
+						else
+							spi_di_bus <= A(23 downto 16);
+						end if;
+					when 1 => 
+						spi_di_bus <= A(15 downto 8);
+					when 2 => 
+						spi_di_bus <= A(7 downto 0);
+					when 3 =>
+						spi_cont <= '0';
+						spi_ena <= '0';
+					when 4 =>
+						count := 0;
+						state <= cmd_check_status;
+						next_state <= cmd_write_dis;
+					when others => null;					
+				end case;
 				
-			when cmd_write => -- page write command
-				spi_ena <= '1';
-				spi_di_bus <= spi_cmd_pageprg & A & DI;
-				state <= cmd_end_write;
-			
-			when cmd_end_write => -- end of page write command
-				spi_ena <= '0';
-				state <= do_write;
-			
-			when do_write => -- wait for spi transfer
-				if (spi_busy = '0') then 
-					state <= cmd_write_dis;
-				else 
-					state <= do_write;
+			when cmd_write => -- write command
+				spi_busy_prev <= spi_busy;
+				if (spi_busy_prev = '1' and spi_busy = '0') then 
+					count := count + 1;
 				end if;
+				case count is 
+					when 0 => 
+						if (spi_busy = '0') then 
+							spi_cont <= '1';
+							spi_ena <= '1';
+							spi_di_bus <= SPI_CMD_PAGEPRG;
+						else
+							spi_di_bus <= A(23 downto 16);
+						end if;
+					when 1 => 
+						spi_di_bus <= A(15 downto 8);
+					when 2 => 
+						spi_di_bus <= A(7 downto 0);
+					when 3 => 
+						spi_di_bus <= DI;
+					when 4 =>
+						spi_cont <= '0';
+						spi_ena <= '0';
+					when 5 =>
+						count := 0;
+						state <= cmd_check_status;
+						next_state <= cmd_write_dis;
+					when others => null;						
+				end case;
 				
-			when cmd_write_dis => -- write disable command
-				spi_ena <= '1';
-				spi_di_bus <= spi_cmd_write_dis & "0000000000000000" & "00000000" & "00000000";
-				state <= end_write_dis;
-			
-			when end_write_dis => -- end of write disable command
-				spi_ena <= '0';
-				state <= do_write_dis;
-			
-			when do_write_dis => -- wait for spi transfer
-				if (spi_busy = '0') then 
-					state <= idle;
-				else 
-					state <= do_write_dis;
+			when cmd_check_status => -- check status (after write or erase)
+				spi_busy_prev <= spi_busy;
+				if (spi_busy_prev = '1' and spi_busy = '0') then 
+					count := count + 1;
 				end if;
+				case count is 
+					when 0 => 
+						if (spi_busy = '0') then 
+							spi_cont <= '1';
+							spi_ena <= '1';
+							is_ready <= '0';
+							spi_di_bus <= SPI_CMD_STATUSREG;
+						else
+							spi_di_bus <= "00000000";
+						end if;
+					when 1 => 
+						spi_cont <= '0';
+						spi_ena <= '0';
+					when 2 =>
+						count := 0;
+						if spi_do_bus(0) = '1' then 
+							state <= cmd_check_status;
+						else 
+							state <= next_state;
+						end if;
+					when others => null;
+				end case;
 				
-			when check_status => -- check device status by reading it's status register
-				spi_ena <= '1';
-				spi_di_bus <= spi_cmd_statusreg & "0000000000000000" & "00000000" & "00000000";
-				state <= cmd_end_status;
-				
-			when cmd_end_status =>  -- end if status command
-				spi_ena <= '0';
-				state <= do_status;
-					
-			when do_status => -- wait for spi transfer
-				if (spi_busy = '0') then 
-					if (spi_do_bus(0) = '1') then -- device is busy with some long-running command
-						state <= check_status;
-					else 
+			when cmd_write_dis => -- write disable
+				spi_busy_prev <= spi_busy;
+				if (spi_busy_prev = '1' and spi_busy = '0') then 
+					count := count + 1;
+				end if;
+				case count is 
+					when 0 => 
+						spi_ena <= '1';
+						spi_cont <= '0';
+						spi_di_bus <= SPI_CMD_WRITE_DIS;
+					when 1 => 
+						spi_ena <= '0';
+					when 2 =>
+						count := 0;
 						state <= idle;
-					end if;
-				else 
-					state <= idle;
-				end if;
+					when others => null;
+				end case;
 				
 			when others => null;
 			
