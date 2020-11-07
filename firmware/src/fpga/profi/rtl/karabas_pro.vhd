@@ -309,6 +309,7 @@ signal flash_di_bus : std_logic_vector(7 downto 0);
 signal flash_do_bus: std_logic_vector(7 downto 0);
 signal flash_wr_n : std_logic := '1';
 signal flash_rd_n : std_logic := '1';
+signal flash_er_n : std_logic := '1';
 signal flash_busy : std_logic := '1';
 signal flash_rdy : std_logic := '0';
 signal fw_update_mode : std_logic := '0';
@@ -317,6 +318,7 @@ signal host_flash_a_bus : std_logic_vector(23 downto 0);
 signal host_flash_di_bus : std_logic_vector(7 downto 0);
 signal host_flash_rd_n : std_logic := '1';
 signal host_flash_wr_n : std_logic := '1';
+signal host_flash_er_n : std_logic := '1';
 
 signal port_xx87_reg : std_logic_vector(7 downto 0);
 signal port_xxA7_reg : std_logic_vector(7 downto 0);
@@ -619,6 +621,7 @@ port map(
 	DO 				=> flash_do_bus,
 	WR_N 				=> flash_wr_n,
 	RD_N 				=> flash_rd_n,
+	ER_N 				=> flash_er_n,
 
 	DATA0				=> DATA0,
 	NCSO				=> flash_ncs,
@@ -1008,9 +1011,11 @@ flash_a_bus <= loader_flash_a when loader_act = '1' else host_flash_a_bus;
 flash_di_bus <= "00000000" when loader_act = '1' else host_flash_di_bus;
 flash_wr_n <= '1' when loader_act = '1' else host_flash_wr_n;
 flash_rd_n <= loader_flash_rd_n when loader_act = '1' else host_flash_rd_n;
+flash_er_n <= '1' when loader_act = '1' else host_flash_er_n;
 
 host_flash_rd_n <= not port_xxC7_reg(0);	-- бит чтения из SPI-Flash
 host_flash_wr_n <= not port_xxC7_reg(1);	-- бит записи в SPI-Flash
+host_flash_er_n <= not port_xxC7_reg(4);  -- бит стирания 64-блока SPI-Flash
 is_flash_not_sd <= port_xxC7_reg(2);		-- бит переключения SPI между flash / SD картой
 fw_update_mode <= port_xxC7_reg (3);		-- бит разрешения обновления SPI-Flash
 host_flash_di_bus <= port_xxE7_reg;			-- Регистр со значением шины данных на вывод в SPI-Flash
@@ -1029,6 +1034,7 @@ host_flash_a_bus <= port_xxA7_reg & port_xx87_reg & port_xx67_reg;	-- Шина �
 --		1 бит - flash_wr (1 - инициациирование режима записи)
 --		3 бит - is_flash_not_sd
 --		4 бит - fw_update_mode
+--    5 бит - flash_er (1 - инициализирование режима стирания 64к блока)
 --
 --Доступны, если бит ROM14=1 (7FFD), бит CPM=1 (DFFD), 80DS=1 (DFFD), fw_update_mode=1 (xxC7)
 --Порт 87 - младший байт выбора страниц spi-flash /W

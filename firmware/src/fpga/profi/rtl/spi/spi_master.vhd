@@ -19,8 +19,6 @@
 --     Initial Public Release
 --   Version 1.1 4/11/2013 Scott Larson
 --     Corrected ModelSim simulation error (explicitly reset clk_toggles signal)
---
---   https://www.digikey.com/eewiki/pages/viewpage.action?pageId=4096096
 --    
 --------------------------------------------------------------------------------
 
