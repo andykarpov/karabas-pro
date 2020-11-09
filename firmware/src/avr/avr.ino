@@ -28,6 +28,10 @@ bool profi_mode = true; // false = zx spectrum mode (switched by PrtSrc button i
 bool is_turbo = false; // turbo toggle (switched by ScrollLock button)
 bool is_sw1 = false; // SW1 state
 bool is_sw2 = false; // SW2 state
+bool is_sw3 = false; // SW3 state
+bool is_sw4 = false; // SW4 state
+bool is_sw5 = false; // SW5 state
+
 bool is_wait = false; // wait mode
 bool mouse_present = false; // mouse present flag (detected by signal change on CLKM pin)
 bool blink_state = false;
@@ -107,14 +111,8 @@ void fill_kbd_matrix(int sc)
   is_cs_used = false;
 
   matrix[ZX_K_IS_UP] = is_up;
-  matrix[ZX_K_SCANCODE15] = bitRead(scancode, 15);
-  matrix[ZX_K_SCANCODE14] = bitRead(scancode, 14);
-  matrix[ZX_K_SCANCODE13] = bitRead(scancode, 13);
-  matrix[ZX_K_SCANCODE12] = bitRead(scancode, 12);
-  matrix[ZX_K_SCANCODE11] = bitRead(scancode, 11);
-  matrix[ZX_K_SCANCODE10] = bitRead(scancode, 10);
-  matrix[ZX_K_SCANCODE9] = bitRead(scancode, 9);
-  matrix[ZX_K_SCANCODE8] = bitRead(scancode, 8);
+  
+  matrix[ZX_K_SCANCODE8] = bitRead(scancode, 8); // extended bit e / e1
   matrix[ZX_K_SCANCODE7] = bitRead(scancode, 7);
   matrix[ZX_K_SCANCODE6] = bitRead(scancode, 6);
   matrix[ZX_K_SCANCODE5] = bitRead(scancode, 5);
@@ -513,8 +511,9 @@ void fill_kbd_matrix(int sc)
           matrix[ZX_K_SW1] = is_sw1;
         }
       } else {
-        matrix[ZX_K_A] = !is_up; matrix[ZX_K_BIT6] = !is_up; break;
+        matrix[ZX_K_A] = !is_up; matrix[ZX_K_BIT6] = !is_up;
       }
+      break;
     case PS2_F2:
       if (is_menu) {
         if (!is_up) {
@@ -524,16 +523,52 @@ void fill_kbd_matrix(int sc)
           matrix[ZX_K_SW2] = is_sw2;
         }
       } else {
-        matrix[ZX_K_B] = !is_up; matrix[ZX_K_BIT6] = !is_up; break;
+        matrix[ZX_K_B] = !is_up; matrix[ZX_K_BIT6] = !is_up; 
       }
-    case PS2_F3: matrix[ZX_K_C] = !is_up; matrix[ZX_K_BIT6] = !is_up; break;
-    case PS2_F4: matrix[ZX_K_D] = !is_up; matrix[ZX_K_BIT6] = !is_up; break;
-    case PS2_F5: matrix[ZX_K_E] = !is_up; matrix[ZX_K_BIT6] = !is_up; break;
+      break;
+    case PS2_F3:
+      if (is_menu) {
+        if (!is_up) {
+          // menu + F3 = SW3
+          is_sw3 = !is_sw3;
+          eeprom_store_value(EEPROM_SW3_ADDRESS, is_sw3);
+          matrix[ZX_K_SW3] = is_sw3;
+        }
+      } else {
+        matrix[ZX_K_C] = !is_up; matrix[ZX_K_BIT6] = !is_up; 
+      }
+      break;
+    case PS2_F4:
+      if (is_menu) {
+        if (!is_up) {
+          // menu + F4 = SW4
+          is_sw4 = !is_sw4;
+          eeprom_store_value(EEPROM_SW4_ADDRESS, is_sw4);
+          matrix[ZX_K_SW4] = is_sw4;
+        }
+      } else {
+        matrix[ZX_K_D] = !is_up; matrix[ZX_K_BIT6] = !is_up; 
+      }
+      break;
+    case PS2_F5:
+      if (is_menu) {
+        if (!is_up) {
+          // menu + F5 = SW5
+          is_sw5 = !is_sw5;
+          eeprom_store_value(EEPROM_SW5_ADDRESS, is_sw5);
+          matrix[ZX_K_SW5] = is_sw5;
+        }
+      } else {
+        matrix[ZX_K_E] = !is_up; matrix[ZX_K_BIT6] = !is_up; 
+      }
+      break;
+
     case PS2_F6: matrix[ZX_K_F] = !is_up; matrix[ZX_K_BIT6] = !is_up; break;
     case PS2_F7: matrix[ZX_K_G] = !is_up; matrix[ZX_K_BIT6] = !is_up; break;
     case PS2_F8: matrix[ZX_K_H] = !is_up; matrix[ZX_K_BIT6] = !is_up; break;
     case PS2_F9: matrix[ZX_K_I] = !is_up; matrix[ZX_K_BIT6] = !is_up; break;
     case PS2_F10: matrix[ZX_K_J] = !is_up; matrix[ZX_K_BIT6] = !is_up; break;
+    
     case PS2_F11:
       if (is_menu) {
         if (!is_up) {
@@ -882,10 +917,17 @@ void eeprom_restore_values()
   profi_mode = eeprom_restore_value(EEPROM_MODE_ADDRESS, profi_mode);
   is_sw1 = eeprom_restore_value(EEPROM_SW1_ADDRESS, is_sw1);
   is_sw2 = eeprom_restore_value(EEPROM_SW2_ADDRESS, is_sw2);
+  is_sw3 = eeprom_restore_value(EEPROM_SW3_ADDRESS, is_sw3);
+  is_sw4 = eeprom_restore_value(EEPROM_SW4_ADDRESS, is_sw4);
+  is_sw5 = eeprom_restore_value(EEPROM_SW5_ADDRESS, is_sw5);
+  
   // apply restored values
   matrix[ZX_K_TURBO] = is_turbo;
   matrix[ZX_K_SW1] = is_sw1;
   matrix[ZX_K_SW2] = is_sw2;
+  matrix[ZX_K_SW3] = is_sw3;
+  matrix[ZX_K_SW4] = is_sw4;
+  matrix[ZX_K_SW5] = is_sw5;
 }
 
 void eeprom_store_values()
@@ -894,6 +936,9 @@ void eeprom_store_values()
   eeprom_store_value(EEPROM_MODE_ADDRESS, profi_mode);
   eeprom_store_value(EEPROM_SW1_ADDRESS, is_sw1);
   eeprom_store_value(EEPROM_SW2_ADDRESS, is_sw2);
+  eeprom_store_value(EEPROM_SW3_ADDRESS, is_sw3);
+  eeprom_store_value(EEPROM_SW4_ADDRESS, is_sw4);
+  eeprom_store_value(EEPROM_SW5_ADDRESS, is_sw5);
 }
 
 // initial setup

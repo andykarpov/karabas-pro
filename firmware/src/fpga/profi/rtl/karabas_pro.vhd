@@ -380,9 +380,13 @@ signal led2				: std_logic := '0';
 signal led1_overwrite: std_logic := '0';
 signal led2_overwrite: std_logic := '0';
 
--- avr soft switches (Menu+F1, Menu+F2)
+-- avr soft switches (Menu+F1 .. Menu+F5)
 signal soft_sw1 		: std_logic := '0';
 signal soft_sw2 		: std_logic := '0';
+signal soft_sw3 		: std_logic := '0';
+signal soft_sw4 		: std_logic := '0';
+signal soft_sw5 		: std_logic := '0'; -- unused yet
+
 
 -- debug 
 signal fdd_oe_n 		: std_logic := '1';
@@ -750,6 +754,11 @@ port map (
 	 
 	 SOFT_SW1 		=> soft_sw1,
 	 SOFT_SW2		=> soft_sw2,
+	 SOFT_SW3 		=> soft_sw3,
+	 SOFT_SW4 		=> soft_sw4,
+	 SOFT_SW5 		=> soft_sw5,
+	 
+	 KB_SCANCODE 	=> open, 
 
 	 RESET 			=> kb_reset,
 	 TURBO 			=> kb_turbo,
@@ -897,6 +906,8 @@ port map(
 	SW3 => SW3,
 	SOFT_SW1 => soft_sw1,
 	SOFT_SW2 => soft_sw2,
+	SOFT_SW3 => soft_sw3,
+	SOFT_SW4 => soft_sw4,
 	
 	AUDIO_DAC_TYPE => audio_dac_type,
 	ROM_BANK => ext_rom_bank,
