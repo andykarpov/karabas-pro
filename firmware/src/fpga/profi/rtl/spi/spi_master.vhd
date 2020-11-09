@@ -19,8 +19,6 @@
 --     Initial Public Release
 --   Version 1.1 4/11/2013 Scott Larson
 --     Corrected ModelSim simulation error (explicitly reset clk_toggles signal)
---
---   https://www.digikey.com/eewiki/pages/viewpage.action?pageId=4096096
 --    
 --------------------------------------------------------------------------------
 
@@ -29,7 +27,7 @@ USE ieee.std_logic_1164.all;
 USE ieee.std_logic_arith.all;
 USE ieee.std_logic_unsigned.all;
 
-ENTITY loader_spi IS
+ENTITY spi_master IS
   GENERIC(
     slaves  : INTEGER := 4;  --number of spi slaves
     d_width : INTEGER := 2); --data bus width
@@ -49,9 +47,9 @@ ENTITY loader_spi IS
     mosi    : OUT    STD_LOGIC;                             --master out, slave in
     busy    : OUT    STD_LOGIC;                             --busy / data ready signal
     rx_data : OUT    STD_LOGIC_VECTOR(d_width-1 DOWNTO 0)); --data received
-END loader_spi;
+END spi_master;
 
-ARCHITECTURE logic OF loader_spi IS
+ARCHITECTURE logic OF spi_master IS
   TYPE machine IS(ready, execute);                           --state machine data type
   SIGNAL state       : machine;                              --current state
   SIGNAL slave       : INTEGER;                              --slave selected for current transaction
