@@ -185,6 +185,7 @@ signal vid_invert 	: std_logic;
 signal vid_hcnt 		: std_logic_vector(9 downto 0);
 signal vid_vcnt 		: std_logic_vector(8 downto 0);
 signal vid_scandoubler_enable : std_logic := '1';
+signal blink 			: std_logic;
 
 -- Z-Controller
 signal zc_do_bus		: std_logic_vector(7 downto 0);
@@ -576,7 +577,8 @@ port map (
 	VBUS_MODE 		=> vbus_mode,
 	VID_RD 			=> vid_rd,	
 	HCNT 				=> vid_hcnt,
-	VCNT 				=> vid_vcnt
+	VCNT 				=> vid_vcnt,
+	BLINK 			=> blink
 );
 	
 -- osd (debug)
@@ -972,13 +974,33 @@ cpu_nmi_n <= '0' when kb_magic = '1' else '1'; -- NMI
 cpu_wait_n <= '0' when kb_wait = '1' else '1'; -- WAIT
 cpuclk <= clk_bus and ena_div8 when kb_turbo = '1' else clk_bus and ena_div4; -- 3.5 / 7 MHz
 
--- HDD access
+-- HDD / SD access
 led1_overwrite <= '1';
-led1 <= '1' when SDIR = '1' else '0';
+process (clk_bus, SDIR, SD_NCS)
+begin
+	if rising_edge(clk_bus) then
+		if SDIR = '1' or SD_NCS = '0' then
+			led1 <= '1';
+		else 
+			led1 <= '0';
+		end if;
+	end if;
+end process;
 
--- SD access
+-- POWER UP / wait (blink)
 led2_overwrite <= '1';
-led2 <= '1' when SD_NCS = '0' else '0';
+process (clk_bus, loader_act, blink, kb_wait)
+begin
+	if rising_edge(clk_bus) then
+		if loader_act = '1' then 
+			led2 <= '0';
+		elsif kb_wait = '1' then 
+			led2 <= blink;
+		else 
+			led2 <= '1';
+		end if;
+	end if;
+end process;
 
 -------------------------------------------------------------------------------
 -- SD
