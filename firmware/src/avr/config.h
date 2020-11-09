@@ -4,7 +4,7 @@
 #define DEBUG_MODE 1
 #define DEBUG_TIME 0
 
-#define USE_HW_BUTTONS 0
+#define USE_HW_BUTTONS 1
 
 // ---- Pins for Atmega328
 #define PIN_KBD_CLK 2 // pin 28 (CLKK)

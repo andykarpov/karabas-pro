@@ -76,15 +76,68 @@ bool rtc_init_done = false;
 bool rtc_is_bcd = false;
 bool rtc_is_24h = true;
 
+int capsed_keys[20] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+int capsed_keys_size = 0;
+
 SPISettings settingsA(8000000, MSBFIRST, SPI_MODE0); // SPI transmission settings
 
+void push_capsed_key(int key)
+{
+  int i = 0;
+  bool found = false;
+  if (capsed_keys_size > 0) {
+    for (i=0; i<capsed_keys_size; i++) {
+      if (capsed_keys[i] == key) {
+        found = true;
+      }
+    }
+  }
+  if (!found && capsed_keys_size < 20) {
+    capsed_keys[capsed_keys_size] = key;
+    capsed_keys_size++;
+  }
+}
+
+void pop_capsed_key(int key)
+{
+  int i = 0;
+  int j = 0;
+  int tmp_array[20] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+  if (capsed_keys_size > 0) {
+    for (i=0; i<capsed_keys_size; i++) {
+      if (capsed_keys[i] != key) {
+        tmp_array[j] = capsed_keys[i];
+        j++;
+      }
+    }
+  }
+  if (j > 0) {
+    for (i=0; i<j; i++) {
+      capsed_keys[i] = tmp_array[i];
+    }
+  }
+  capsed_keys_size = j;
+}
+
+void process_capsed_key(int key, bool up)
+{
+  if (!up) {
+    push_capsed_key(key);
+  } else {
+    pop_capsed_key(key);
+  }
+  for (int i=0; i<capsed_keys_size; i++) {
+    Serial.print(capsed_keys[i]); Serial.print(", ");
+  }
+  Serial.println();
+}
 
 // transform PS/2 scancodes into internal matrix of pressed keys
 void fill_kbd_matrix(int sc)
 {
 
   static bool is_up = false, is_e = false, is_e1 = false;
-  static bool is_ctrl = false, is_alt = false, is_del = false, is_win = false, is_menu = false, is_bksp = false, is_shift = false, is_esc = false, is_ss_used = false, is_cs_used = false;
+  static bool is_ctrl = false, is_alt = false, is_del = false, is_win = false, is_menu = false, is_bksp = false, is_shift = false, is_esc = false, is_ss_used = false;
   static int scancode = 0;
 
   // is extended scancode prefix
@@ -108,7 +161,6 @@ void fill_kbd_matrix(int sc)
   scancode = sc + ((is_e || is_e1) ? 0x100 : 0);
 
   is_ss_used = false;
-  is_cs_used = false;
 
   matrix[ZX_K_IS_UP] = is_up;
   
@@ -143,7 +195,7 @@ void fill_kbd_matrix(int sc)
       matrix[ZX_K_SS] = !is_up;
       matrix[profi_mode ? ZX_K_ENT : ZX_K_CS] = !is_up;
       if (!profi_mode) {
-        is_cs_used = !is_up;
+        process_capsed_key(scancode, is_up);
       }
       is_alt = !is_up;
       break;
@@ -153,7 +205,7 @@ void fill_kbd_matrix(int sc)
       matrix[ZX_K_SS] = !is_up;
       matrix[profi_mode ? ZX_K_SP : ZX_K_CS] = !is_up;
       if (!profi_mode) {
-        is_cs_used = !is_up;
+        process_capsed_key(scancode, is_up);
       }
       is_alt = !is_up;
       break;
@@ -196,29 +248,29 @@ void fill_kbd_matrix(int sc)
     case PS2_UP:
       matrix[ZX_K_CS] = !is_up;
       matrix[ZX_K_7] = !is_up;
-      is_cs_used = !is_up;
+      process_capsed_key(scancode, is_up);
       break;
     case PS2_DOWN:
       matrix[ZX_K_CS] = !is_up;
       matrix[ZX_K_6] = !is_up;
-      is_cs_used = !is_up;
+      process_capsed_key(scancode, is_up);
       break;
     case PS2_LEFT:
       matrix[ZX_K_CS] = !is_up;
       matrix[ZX_K_5] = !is_up;
-      is_cs_used = !is_up;
+      process_capsed_key(scancode, is_up);
       break;
     case PS2_RIGHT:
       matrix[ZX_K_CS] = !is_up;
       matrix[ZX_K_8] = !is_up;
-      is_cs_used = !is_up;
+      process_capsed_key(scancode, is_up);
       break;
 
     // ESC -> CS+1 for Profi, CS+SPACE for ZX
     case PS2_ESC:
       matrix[ZX_K_CS] = !is_up;
       matrix[profi_mode ? ZX_K_1 : ZX_K_SP] = !is_up;
-      is_cs_used = !is_up;
+      process_capsed_key(scancode, is_up);
       is_esc = !is_up;
       break;
 
@@ -226,7 +278,7 @@ void fill_kbd_matrix(int sc)
     case PS2_BACKSPACE:
       matrix[ZX_K_CS] = !is_up;
       matrix[ZX_K_0] = !is_up;
-      is_cs_used = !is_up;
+      process_capsed_key(scancode, is_up);
       is_bksp = !is_up;
       break;
 
@@ -454,14 +506,14 @@ void fill_kbd_matrix(int sc)
     case PS2_TAB:
       matrix[ZX_K_CS] = !is_up;
       matrix[ZX_K_I] = !is_up;
-      is_cs_used = !is_up;
+      process_capsed_key(scancode, is_up);
       break;
 
     // CapsLock
     case PS2_CAPS:
       matrix[ZX_K_SS] = !is_up;
       matrix[ZX_K_CS] = !is_up;
-      is_cs_used = !is_up;
+      process_capsed_key(scancode, is_up);
       break;
 
     // PgUp -> M+BIT6 for Profi, CS+3 for ZX
@@ -472,7 +524,7 @@ void fill_kbd_matrix(int sc)
       } else {
         matrix[ZX_K_CS] = !is_up;
         matrix[ZX_K_3] = !is_up;
-        is_cs_used = !is_up;
+        process_capsed_key(scancode, is_up);
       }
       break;
 
@@ -484,7 +536,7 @@ void fill_kbd_matrix(int sc)
       } else {
         matrix[ZX_K_CS] = !is_up;
         matrix[ZX_K_4] = !is_up;
-        is_cs_used = !is_up;
+        process_capsed_key(scancode, is_up);
       }
       break;
 
@@ -614,8 +666,12 @@ void fill_kbd_matrix(int sc)
 
   }
 
-  if (is_ss_used and !is_cs_used) {
+  if (is_ss_used && capsed_keys_size == 0) {
     matrix[ZX_K_CS] = false;
+  }
+  
+  if (capsed_keys_size > 0) {
+    matrix[ZX_K_CS] = true;
   }
 
   // Ctrl+Alt+Del -> RESET
@@ -625,7 +681,7 @@ void fill_kbd_matrix(int sc)
     is_del = false;
     is_shift = false;
     is_ss_used = false;
-    is_cs_used = false;
+    capsed_keys_size = 0;
     do_reset();
   }
   //digitalWrite(PIN_RESET, (is_ctrl && is_alt && is_del) ? LOW : HIGH);
@@ -637,7 +693,7 @@ void fill_kbd_matrix(int sc)
     is_esc = false;
     is_shift = false;
     is_ss_used = false;
-    is_cs_used = false;
+    capsed_keys_size = 0;
     do_magic();
   }
 
@@ -648,7 +704,7 @@ void fill_kbd_matrix(int sc)
     is_bksp = false;
     is_shift = false;
     is_ss_used = false;
-    is_cs_used = false;
+    capsed_keys_size = 0;
     do_full_reset();
   }
 
