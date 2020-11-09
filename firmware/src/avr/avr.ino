@@ -503,9 +503,9 @@ void fill_kbd_matrix(int sc)
 
     // Fn keys
     case PS2_F1:
-      if (is_menu) {
+      if (is_menu || (is_ctrl && is_alt)) {
         if (!is_up) {
-          // menu + F1 = SW1
+          // menu + F1, ctrl+alt = SW1
           is_sw1 = !is_sw1;
           eeprom_store_value(EEPROM_SW1_ADDRESS, is_sw1);
           matrix[ZX_K_SW1] = is_sw1;
@@ -515,7 +515,7 @@ void fill_kbd_matrix(int sc)
       }
       break;
     case PS2_F2:
-      if (is_menu) {
+      if (is_menu || (is_ctrl && is_alt)) {
         if (!is_up) {
           // menu + F2 = SW2
           is_sw2 = !is_sw2;
@@ -527,7 +527,7 @@ void fill_kbd_matrix(int sc)
       }
       break;
     case PS2_F3:
-      if (is_menu) {
+      if (is_menu || (is_ctrl && is_alt)) {
         if (!is_up) {
           // menu + F3 = SW3
           is_sw3 = !is_sw3;
@@ -539,7 +539,7 @@ void fill_kbd_matrix(int sc)
       }
       break;
     case PS2_F4:
-      if (is_menu) {
+      if (is_menu || (is_ctrl && is_alt)) {
         if (!is_up) {
           // menu + F4 = SW4
           is_sw4 = !is_sw4;
@@ -551,7 +551,7 @@ void fill_kbd_matrix(int sc)
       }
       break;
     case PS2_F5:
-      if (is_menu) {
+      if (is_menu || (is_ctrl && is_alt)) {
         if (!is_up) {
           // menu + F5 = SW5
           is_sw5 = !is_sw5;
@@ -570,7 +570,7 @@ void fill_kbd_matrix(int sc)
     case PS2_F10: matrix[ZX_K_J] = !is_up; matrix[ZX_K_BIT6] = !is_up; break;
     
     case PS2_F11:
-      if (is_menu) {
+      if (is_menu || (is_ctrl && is_alt)) {
         if (!is_up) {
           // menu + F11 = turbo
           is_turbo = !is_turbo;
@@ -582,7 +582,7 @@ void fill_kbd_matrix(int sc)
       }
       break;
     case PS2_F12:
-      if (is_menu) {
+      if (is_menu || (is_ctrl && is_alt)) {
         if (!is_up) {
           // menu + F12 = magic
           do_magic();
