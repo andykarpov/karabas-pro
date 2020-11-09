@@ -126,10 +126,6 @@ void process_capsed_key(int key, bool up)
   } else {
     pop_capsed_key(key);
   }
-  for (int i=0; i<capsed_keys_size; i++) {
-    Serial.print(capsed_keys[i]); Serial.print(", ");
-  }
-  Serial.println();
 }
 
 // transform PS/2 scancodes into internal matrix of pressed keys
