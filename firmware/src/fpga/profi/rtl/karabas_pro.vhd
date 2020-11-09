@@ -69,6 +69,7 @@ port (
 	
 	-- SD/MMC Card
 	SD_NCS		: buffer std_logic; -- /CS
+	SD_NDET 		: in std_logic; 	  -- /DET
 	
 	-- VGA 
 	VGA_R 		: out std_logic_vector(2 downto 0);
@@ -187,8 +188,10 @@ signal vid_scandoubler_enable : std_logic := '1';
 
 -- Z-Controller
 signal zc_do_bus		: std_logic_vector(7 downto 0);
-signal zc_rd			: std_logic;
-signal zc_wr			: std_logic;
+signal zc_spi_start	: std_logic;
+signal zc_wr_en		: std_logic;
+signal port77_wr		: std_logic;
+
 signal zc_cs_n			: std_logic;
 signal zc_sclk			: std_logic;
 signal zc_mosi			: std_logic;
@@ -611,7 +614,7 @@ port map (
 );
 
 -- SPI flash parallel interface
-U9F: entity work.flash
+U9: entity work.flash
 port map(
 	CLK 				=> clk_bus,
 	RESET 			=> areset,
@@ -633,7 +636,7 @@ port map(
 );
 
 -- Loader
-U9L: entity work.loader
+U10: entity work.loader
 port map(
 	CLK 				=> clk_bus,
 	RESET 			=> areset,
@@ -653,24 +656,7 @@ port map(
 	LOADER_ACTIVE 	=> loader_act,
 	LOADER_RESET 	=> loader_reset
 );	
-	
--- Z-Controller
-U10: entity work.zcontroller
-port map (
-	RESET				=> not cpu_reset_n,
-	CLK				=> clk_div4,
-	A					=> cpu_a_bus(5),
-	DI					=> cpu_do_bus,
-	DO					=> zc_do_bus,
-	RD					=> zc_rd,
-	WR					=> zc_wr,
-	SDDET				=> '0',
-	SDPROT			=> '0',
-	CS_n				=> zc_cs_n,
-	SCLK				=> zc_sclk,
-	MOSI				=> zc_mosi,
-	MISO				=> DATA0);
-	
+		
 -- TurboSound
 U11: entity work.turbosound
 port map (
@@ -997,14 +983,15 @@ led2 <= '1' when SD_NCS = '0' else '0';
 -------------------------------------------------------------------------------
 -- SD
 
-SD_NCS	<= '1' when loader_act = '1' else zc_cs_n;
-sd_clk 	<= zc_sclk;
-sd_si 	<= zc_mosi;
+SD_NCS	<= '1' when loader_act = '1' or is_flash_not_sd = '1' else zc_cs_n;
+sd_clk 	<= '1' when loader_act = '1' or is_flash_not_sd = '1' else zc_sclk;
+sd_si 	<= '1' when loader_act = '1' or is_flash_not_sd = '1' else zc_mosi;
 
 -- share SPI between flash and SD
 DCLK <= flash_clk when loader_act = '1' or is_flash_not_sd = '1' else sd_clk;
 ASDO <= flash_do when loader_act = '1' or is_flash_not_sd = '1' else sd_si;
-NCSO <= flash_ncs;
+NCSO <= flash_ncs when loader_act = '1' or is_flash_not_sd = '1' else '1';
+PIN_115 <= sd_si;
 
 -- share flash between loader and host
 flash_a_bus <= loader_flash_a when loader_act = '1' else host_flash_a_bus;
@@ -1042,29 +1029,6 @@ host_flash_a_bus <= port_xxA7_reg & port_xx87_reg & port_xx67_reg;	-- Шина �
 --Порт E7 - Порт данных для записи и чтения данных из страницы spi-flash
 --Порт 67 - адрес байта в странице /W
 
--- TODO: реализовать на стороне спектрума:
--- 1) порт статуса флешки: READ: flash_busy, flash_rdy, WRITE: host_flash_rd_n, host_flash_wr_n
--- 2) 3 8-битных порта (24 бит) адреса флешки: host_flash_a_bus
--- 3) порт данных: READ: регистр данных чтения, WRITE: регистр данных записи
--- 4) порт (бит) переключения SPI между flash / SD картой (можно засунуть в порт статуса 1): is_flash_not_sd
-
--- порядок работы с флешкой, чтение
--- 1) выставляем is_flash_not_sd = 1 (забираем шину SPI у SD карты)
--- 2) дожидаемся flash_busy = 0
--- 3) выставляем host_flash_a_bus адресом чтения и сигнал host_flash_rd_n = 0
--- 4) проверяем выставленность флага flash_busy = 1, отключаем flash_rd_n = 1
--- 5) дожидаемся статуса flash_rdy = 1 - данные готовы для забора в регистре flash_do_bus
--- 6) goto 2 сколько нужно, затем
--- N) выставляем is_flash_not_sd = 0 - передаем SPI шину SD-карте 
-
--- порядок работы с флешкой, запись
--- 1) выставляем is_flash_not_sd = 1 (забираем шину SPI у SD карты)
--- 2) дожидаемся flash_busy = 0
--- 3) выставляем host_flash_a_bus адресом записи, host_flash_di_bus данными и сигнал host_flash_wr_n = 0
--- 4) проверяем выставленность флага flash_busy = 1, отключаем flash_wr_n = 1
--- 5) дожидаемся статуса flash_busy = 0
--- 6) goto 2 сколько нужно, затем
--- N) выставляем is_flash_not_sd = 0 - передаем SPI шину SD-карте 
 
 -------------------------------------------------------------------------------
 -- Ports
@@ -1105,15 +1069,11 @@ cs_7ffd <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and cpu_a_bus = X"7FFD" 
 cs_xxfd <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and cpu_a_bus(15) = '0' and cpu_a_bus(1) = '0' and fd_port = '0' else '0';
 
 -- Регистры SPI-FLASH
---cs_xxC7 <= '1' when cpu_iorq_n = '0' and cpu_a_bus (7 downto 0) = X"C7" and cpm='1' and rom14='1' and ds80='1' else '0';
---cs_xx87 <= '1' when cpu_iorq_n = '0' and cpu_a_bus (7 downto 0) = X"87" and cpm='1' and rom14='1' and ds80='1' and fw_update_mode='1' else '0';
---cs_xxA7 <= '1' when cpu_iorq_n = '0' and cpu_a_bus (7 downto 0) = X"A7" and cpm='1' and rom14='1' and ds80='1' and fw_update_mode='1' else '0';
---cs_xxE7 <= '1' when cpu_iorq_n = '0' and cpu_a_bus (7 downto 0) = X"E7" and cpm='1' and rom14='1' and ds80='1' and fw_update_mode='1' else '0';
-cs_xxC7 <= '1' when cpu_iorq_n = '0' and cpu_a_bus (7 downto 0) = X"C7" and cpm='1' and rom14='1' else '0';
-cs_xx87 <= '1' when cpu_iorq_n = '0' and cpu_a_bus (7 downto 0) = X"87" and cpm='1' and rom14='1' and fw_update_mode='1' else '0';
-cs_xxA7 <= '1' when cpu_iorq_n = '0' and cpu_a_bus (7 downto 0) = X"A7" and cpm='1' and rom14='1' and fw_update_mode='1' else '0';
-cs_xxE7 <= '1' when cpu_iorq_n = '0' and cpu_a_bus (7 downto 0) = X"E7" and cpm='1' and rom14='1' and fw_update_mode='1' else '0';
-cs_xx67 <= '1' when cpu_iorq_n = '0' and cpu_a_bus (7 downto 0) = X"67" and cpm='1' and rom14='1' and fw_update_mode='1' else '0';
+cs_xxC7 <= '1' when cpu_iorq_n = '0' and cpu_a_bus (7 downto 0) = X"C7" and cpm='1' and rom14='1' and ds80='1' else '0';
+cs_xx87 <= '1' when cpu_iorq_n = '0' and cpu_a_bus (7 downto 0) = X"87" and cpm='1' and rom14='1' and ds80='1' and fw_update_mode='1' else '0';
+cs_xxA7 <= '1' when cpu_iorq_n = '0' and cpu_a_bus (7 downto 0) = X"A7" and cpm='1' and rom14='1' and ds80='1' and fw_update_mode='1' else '0';
+cs_xxE7 <= '1' when cpu_iorq_n = '0' and cpu_a_bus (7 downto 0) = X"E7" and cpm='1' and rom14='1' and ds80='1' and fw_update_mode='1' else '0';
+cs_xx67 <= '1' when cpu_iorq_n = '0' and cpu_a_bus (7 downto 0) = X"67" and cpm='1' and rom14='1' and ds80='1' and fw_update_mode='1' else '0';
 
 -- регистр AS часов
 cs_rtc_as <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and
@@ -1228,8 +1188,33 @@ saa_wr_n <= '0' when (cpu_iorq_n = '0' and cpu_wr_n = '0' and cpu_a_bus(7 downto
 
 mc146818_wr <= '1' when (cs_rtc_ds = '1' and cpu_iorq_n = '0' and cpu_wr_n = '0' and cpu_m1_n = '1') else '0';
 
-zc_wr 		<= '1' when (cpu_iorq_n = '0' and cpu_wr_n = '0' and cpu_a_bus(7 downto 6) = "01" and cpu_a_bus(4 downto 0) = "10111") else '0';
-zc_rd 		<= '1' when (cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_a_bus(7 downto 6) = "01" and cpu_a_bus(4 downto 0) = "10111") else '0';
+-- Z-controller spi
+zc_spi_start <= '1' when cpu_a_bus(7 downto 0)=X"57" and cpu_iorq_n='0' and cpu_m1_n='1' and cpm='0' and loader_act='0' and is_flash_not_sd='0' else '0';
+zc_wr_en <= '1' when cpu_a_bus(7 downto 0)=X"57" and cpu_iorq_n='0' and cpu_m1_n='1' and cpu_wr_n='0' and cpm='0' and loader_act='0' and is_flash_not_sd='0' else '0';
+port77_wr <= '1' when cpu_a_bus(7 downto 0)=X"77" and cpu_iorq_n='0' and cpu_m1_n='1' and cpu_wr_n='0' and cpm='0' and loader_act='0' and is_flash_not_sd='0' else '0';
+
+process (port77_wr, loader_act, reset, clk_bus)
+	begin
+		if loader_act='1' or reset='1' then
+			zc_cs_n <= '1';
+		elsif clk_bus'event and clk_bus='1' then
+			if port77_wr='1' then
+				zc_cs_n <= cpu_do_bus(1);
+			end if;
+		end if;
+end process;
+
+U_ZC_SPI: entity work.zc_spi     -- SD
+port map(
+	DI				=> cpu_do_bus,
+	START			=> zc_spi_start,
+	WR_EN			=> zc_wr_en,
+	CLC     		=> cpuclk,
+	MISO    		=> DATA0,
+	DO				=> zc_do_bus,
+	SCK     		=> zc_sclk,
+	MOSI    		=> zc_mosi
+);
 
 ay_port 		<= '1' when cpu_a_bus(7 downto 0) = x"FD" and cpu_a_bus(15)='1' and fd_port = '1' else '0';
 ay_bdir 		<= '1' when ay_port = '1' and cpu_iorq_n = '0' and cpu_wr_n = '0' else '0';
@@ -1250,21 +1235,22 @@ begin
 		when x"01" => cpu_di_bus <= mc146818_do_bus;
 		when x"02" => cpu_di_bus <= GX0 & "1" & kb_do_bus;
 		when x"03" => cpu_di_bus <= zc_do_bus;
-		when x"04" => cpu_di_bus <= "000" & joy_bus;
-		when x"05" => cpu_di_bus <= ssg_cn0_bus;
-		when x"06" => cpu_di_bus <= ssg_cn1_bus;
-		when x"07" => cpu_di_bus <= port_dffd_reg;
-		when x"08" => cpu_di_bus <= port_7ffd_reg;
-		when x"09" => cpu_di_bus <= ms_z(3 downto 0) & '1' & not(ms_b(2)) & not(ms_b(0)) & not(ms_b(1));
-		when x"0A" => cpu_di_bus <= ms_x;
-		when x"0B" => cpu_di_bus <= ms_y;
-		when x"0C" => cpu_di_bus <= ay_uart_do_bus;
-		when x"0D" => cpu_di_bus <= serial_ms_do_bus;
-		when x"0E" => cpu_di_bus <= zxuno_addr_to_cpu;
-		when x"0F" => cpu_di_bus <= zxuno_uart_do_bus;
-		when x"10" => cpu_di_bus <= "0000" & port_xxC7_reg(3) & port_xxC7_reg(2) & flash_rdy & flash_busy;
-		when x"11" => cpu_di_bus <= flash_do_bus;
-		when x"12" => cpu_di_bus <= vid_attr;
+		when x"04" => cpu_di_bus <= "11111100";		
+		when x"05" => cpu_di_bus <= "000" & joy_bus;
+		when x"06" => cpu_di_bus <= ssg_cn0_bus;
+		when x"07" => cpu_di_bus <= ssg_cn1_bus;
+		when x"08" => cpu_di_bus <= port_dffd_reg;
+		when x"09" => cpu_di_bus <= port_7ffd_reg;
+		when x"0A" => cpu_di_bus <= ms_z(3 downto 0) & '1' & not(ms_b(2)) & not(ms_b(0)) & not(ms_b(1));
+		when x"0B" => cpu_di_bus <= ms_x;
+		when x"0C" => cpu_di_bus <= ms_y;
+		when x"0D" => cpu_di_bus <= ay_uart_do_bus;
+		when x"0E" => cpu_di_bus <= serial_ms_do_bus;
+		when x"0F" => cpu_di_bus <= zxuno_addr_to_cpu;
+		when x"10" => cpu_di_bus <= zxuno_uart_do_bus;
+		when x"11" => cpu_di_bus <= "0000" & port_xxC7_reg(3) & port_xxC7_reg(2) & flash_rdy & flash_busy;
+		when x"12" => cpu_di_bus <= flash_do_bus;
+		when x"13" => cpu_di_bus <= vid_attr;
 		when others => cpu_di_bus <= cpld_do;
 	end case;
 end process;
@@ -1273,22 +1259,23 @@ selector <=
 	x"00" when (ram_oe_n = '0') else -- ram / rom
 	x"01" when (cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_m1_n = '1' and cs_rtc_ds = '1') else -- RTC MC146818A
 	x"02" when (cs_xxfe = '1' and cpu_rd_n = '0') else 									-- Keyboard, port #FE
-	x"03" when (cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_m1_n = '1' and cpu_a_bus( 7 downto 6) = "01" and cpu_a_bus(4 downto 0) = "10111" and cpm='0') else 	-- Z-Controller
-	x"04" when (cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_m1_n = '1' and cpu_a_bus( 7 downto 0) = X"1F" and dos_act = '0' and cpm = '0') else -- Joystick, port #1F
-	x"05" when (cs_fffd = '1' and cpu_rd_n = '0' and ssg_sel = '0') else 			-- TurboSound
-	x"06" when (cs_fffd = '1' and cpu_rd_n = '0' and ssg_sel = '1') else
-	x"07" when (cs_dffd = '1' and cpu_rd_n = '0') else										-- port #DFFD
-	x"08" when (cs_7ffd = '1' and cpu_rd_n = '0') else										-- port #7FFD
-	x"09" when (cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_a_bus = X"FADF" and ms_present = '1' and cpm='0') else	-- Mouse0 port key, z
-	x"0A" when (cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_a_bus = X"FBDF" and ms_present = '1' and cpm='0') else	-- Mouse0 port x
-	x"0B" when (cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_a_bus = X"FFDF" and ms_present = '1' and cpm='0') else	-- Mouse0 port y 																
-	x"0C" when (enable_ay_uart and cpu_iorq_n = '0' and cpu_rd_n = '0' and ay_uart_oe_n = '0') else -- AY UART
-	x"0D" when (serial_ms_oe_n = '0') else -- Serial mouse
-	x"0E" when (enable_zxuno_uart and cpu_iorq_n = '0' and cpu_rd_n = '0' and zxuno_addr_oe_n = '0') else -- ZX UNO Register
-	x"0F" when (enable_zxuno_uart and cpu_iorq_n = '0' and cpu_rd_n = '0' and zxuno_uart_oe_n = '0') else -- ZX UNO UART
-	x"10" when (cs_xxC7 = '1' and cpu_rd_n = '0') else
-	x"11" when (cs_xxE7 = '1' and cpu_rd_n = '0') else
-	x"12" when (vid_pff_cs = '1' and cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_a_bus( 7 downto 0) = X"FF") and dos_act='0' else -- Port FF select
+	x"03" when (cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_m1_n = '1' and cpu_a_bus(7 downto 0) = X"57" and cpm='0' and is_flash_not_sd = '0') else 	-- Z-Controller
+	x"04" when (cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_m1_n = '1' and cpu_a_bus(7 downto 0) = X"77" and cpm='0' and is_flash_not_sd = '0') else 	-- Z-Controller
+	x"05" when (cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_m1_n = '1' and cpu_a_bus( 7 downto 0) = X"1F" and dos_act = '0' and cpm = '0') else -- Joystick, port #1F
+	x"06" when (cs_fffd = '1' and cpu_rd_n = '0' and ssg_sel = '0') else 			-- TurboSound
+	x"07" when (cs_fffd = '1' and cpu_rd_n = '0' and ssg_sel = '1') else
+	x"08" when (cs_dffd = '1' and cpu_rd_n = '0') else										-- port #DFFD
+	x"09" when (cs_7ffd = '1' and cpu_rd_n = '0') else										-- port #7FFD
+	x"0A" when (cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_a_bus = X"FADF" and ms_present = '1' and cpm='0') else	-- Mouse0 port key, z
+	x"0B" when (cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_a_bus = X"FBDF" and ms_present = '1' and cpm='0') else	-- Mouse0 port x
+	x"0C" when (cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_a_bus = X"FFDF" and ms_present = '1' and cpm='0') else	-- Mouse0 port y 																
+	x"0D" when (enable_ay_uart and cpu_iorq_n = '0' and cpu_rd_n = '0' and ay_uart_oe_n = '0') else -- AY UART
+	x"0E" when (serial_ms_oe_n = '0') else -- Serial mouse
+	x"0F" when (enable_zxuno_uart and cpu_iorq_n = '0' and cpu_rd_n = '0' and zxuno_addr_oe_n = '0') else -- ZX UNO Register
+	x"10" when (enable_zxuno_uart and cpu_iorq_n = '0' and cpu_rd_n = '0' and zxuno_uart_oe_n = '0') else -- ZX UNO UART
+	x"11" when (cs_xxC7 = '1' and cpu_rd_n = '0') else
+	x"12" when (cs_xxE7 = '1' and cpu_rd_n = '0') else
+	x"13" when (vid_pff_cs = '1' and cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_a_bus( 7 downto 0) = X"FF") and dos_act='0' else -- Port FF select
 	(others => '1');
 	
 -- debug 
@@ -1297,6 +1284,6 @@ selector <=
 --	PIN_121 <= VGA_G(2);
 --	PIN_120 <= VGA_B(2);
 --	PIN_119 <= VGA_VS;
---	PIN_115 <= VGA_HS;	
+--	PIN_115 <= VGA_HS;
 	
 end rtl;

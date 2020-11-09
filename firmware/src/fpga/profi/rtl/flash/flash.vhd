@@ -108,7 +108,7 @@ port map (
 	cpol		=> '0', -- spi mode 0
 	cpha 		=> '0',
 	cont 		=> spi_cont,
-	clk_div 	=> 2, -- CLK divider
+	clk_div 	=> 1, --2, -- CLK divider
 	addr 		=> 0,
 	tx_data 	=> spi_di_bus,
 	miso 		=> spi_so,
