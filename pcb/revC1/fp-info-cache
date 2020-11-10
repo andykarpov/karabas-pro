@@ -1,4 +1,4 @@
-75710682298112
+77315691992112
 footprints
 ALTERA-QFP-145
 
@@ -239,6 +239,13 @@ SPST Button Switch
 2
 footprints
 TE_1734451-1
+
+
+0
+52
+52
+footprints
+TE_1734451-1-LONG
 
 
 0
