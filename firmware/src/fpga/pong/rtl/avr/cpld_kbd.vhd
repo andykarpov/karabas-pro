@@ -49,8 +49,8 @@ U_SPI: entity work.spi_slave
         spi_miso_o     => AVR_MISO,
 
         di_req_o       => open,
-        di_i           => open,
-        wren_i         => '0',
+        di_i           => x"FD00", -- init
+        wren_i         => '1',
         do_valid_o     => spi_do_valid,
         do_o           => spi_do,
 

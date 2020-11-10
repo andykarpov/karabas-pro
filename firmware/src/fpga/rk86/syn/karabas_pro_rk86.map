@@ -7,6 +7,6 @@ cfg_revC.hex		0x000F8000		0x000F8000
 
 Notes:
 
-- Data checksum for this conversion is 0x1A7FA9EE
+- Data checksum for this conversion is 0x1A8E76B5
 
 - All the addresses in this file are byte addresses
