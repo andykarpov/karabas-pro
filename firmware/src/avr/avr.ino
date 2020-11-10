@@ -1092,6 +1092,13 @@ void loop()
     fill_kbd_matrix(c);
   }
 
+  // set soft switches
+  matrix[ZX_K_SW1] = is_sw1;
+  matrix[ZX_K_SW2] = is_sw2;
+  matrix[ZX_K_SW3] = is_sw3;
+  matrix[ZX_K_SW4] = is_sw4;
+  matrix[ZX_K_SW5] = is_sw5;
+
   // transmit kbd always
   transmit_keyboard_matrix();
 
