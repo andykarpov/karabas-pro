@@ -27,6 +27,7 @@ entity pentagon_video is
 		VSYNC		: out std_logic;
 		HCNT 		: out std_logic_vector(9 downto 0);
 		VCNT 		: out std_logic_vector(8 downto 0);	
+		BLINK 	: out std_logic;
 		VBUS_MODE : in std_logic := '0'; -- 1 = video bus, 2 = cpu bus
 		VID_RD : in std_logic -- 1 = read attribute, 0 = read pixel data
 	);
@@ -251,5 +252,6 @@ begin
 	HCNT <= '0' & std_logic_vector(hor_cnt) & std_logic_vector(chr_col_cnt);
 	VCNT <= std_logic_vector(ver_cnt) & std_logic_vector(chr_row_cnt);
 
+	BLINK <= invert(4);
 
 end architecture;

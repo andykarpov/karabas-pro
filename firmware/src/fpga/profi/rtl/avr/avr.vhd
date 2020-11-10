@@ -43,6 +43,11 @@ entity avr is
 	 
 	 SOFT_SW1 	: out std_logic := '0';
 	 SOFT_SW2 	: out std_logic := '0';
+	 SOFT_SW3 	: out std_logic := '0';
+	 SOFT_SW4 	: out std_logic := '0';
+	 SOFT_SW5 	: out std_logic := '0';
+	 
+	 KB_SCANCODE: out std_logic_vector(9 downto 0);
 	 
 	 RESET		: out std_logic := '0';
 	 TURBO		: out std_logic := '0';
@@ -104,6 +109,9 @@ architecture RTL of avr is
 	signal rtc_init_ack 		: std_logic := '0';
 	signal cnt_led 			: unsigned(10 downto 0) := (others=> '0');
 	
+	signal scancode_tmp		: std_logic_vector(7 downto 0) := (others => '0');
+	signal is_up 				: std_logic := '0';
+	
 	type qmachine IS(q_idle, q_init, q_init_done, q_rtcw, q_rtcw_done, q_avrw, q_avrw_done, q_led, q_led_done, q_nop, q_nop_done); --state machine for queue writes
 	signal qstate : qmachine := q_idle;
 
@@ -153,23 +161,32 @@ begin
 					when X"03" => kb_data(23 downto 16) <= spi_do (7 downto 0);
 					when X"04" => kb_data(31 downto 24) <= spi_do (7 downto 0);
 					when X"05" => kb_data(39 downto 32) <= spi_do (7 downto 0);
-					when X"06" => kb_data(40) <= spi_do (0); 
+					-- misc signals
+					when X"06" => kb_data(40) <= spi_do (0); -- kbd 5th bit 
 									  -- misc signals
-									  RESET <= spi_do(1);
-									  TURBO <= spi_do(2);
-									  MAGICK <= spi_do(3);
-									  -- is_up <= spi_do(4);
-									  WAIT_CPU <= spi_do(5);
-									  SOFT_SW1 <= spi_do(6);
-									  SOFT_SW2 <= spi_do(7);
-					when X"07" => null; -- scancode (15...8)
-					when X"08" => null; -- scancode (7...0)
+									  RESET <= spi_do(1); -- reset signal
+									  TURBO <= spi_do(2); -- turbo signal
+									  MAGICK <= spi_do(3); -- magick signal 
+									  is_up <= spi_do(4); -- keyboard key is up
+									  WAIT_CPU <= spi_do(5); -- cpu wait signal 
+									  SOFT_SW1 <= spi_do(6); -- soft switch 1
+									  SOFT_SW2 <= spi_do(7); -- soft switch 2
+					-- keyboard scancode mixed vector
+					when X"07" => 
+									  scancode_tmp <= spi_do(7 downto 0);
+					when X"08" => 
+									  KB_SCANCODE <= is_up & spi_do(0) & scancode_tmp;
+									  SOFT_SW3 <= spi_do(1); -- soft switch 3
+									  SOFT_SW4 <= spi_do(2); -- soft switch 4
+									  SOFT_SW5 <= spi_do(3); -- soft switch 5
+									  -- 4,5,6,7 are reserver 
 					-- mouse data
 					when X"0A" => mouse_x(7 downto 0) <= signed(spi_do(7 downto 0));
 					when X"0B" => mouse_y(7 downto 0) <= signed(spi_do(7 downto 0));
 					when X"0C" => mouse_z(3 downto 0) <= signed(spi_do(3 downto 0)); buttons(2 downto 0) <= spi_do(6 downto 4); newPacket <= spi_do(7);					
 					-- joy data
-					when X"0D" => joy(4 downto 0) <= spi_do(5 downto 2) & spi_do(0); -- right, left,  down, up, fire2, fire					
+					when X"0D" => joy(4 downto 0) <= spi_do(5 downto 2) & spi_do(0); -- right, left,  down, up, fire2, fire	
+					-- rtc registers
 					when others => 
 							rtc_cmd <= spi_do(15 downto 8);
 							rtc_data <= spi_do(7 downto 0);
