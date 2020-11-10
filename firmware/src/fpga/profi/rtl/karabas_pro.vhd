@@ -745,7 +745,8 @@ port map (
 	 RTC_DO 			=>	mc146818_do_bus,
 	 RTC_CS 			=> '1',
 	 RTC_WR_N 		=> not mc146818_wr,
-	 RTC_INIT 		=> loader_act,
+	 
+	 INIT 			=> loader_reset,
 	 
 	 LED1 			=> led1,
 	 LED2				=> led2,

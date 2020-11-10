@@ -34,7 +34,8 @@ entity avr is
 	 RTC_DO 		: out std_logic_vector(7 downto 0);
 	 RTC_CS 		: in std_logic := '0';
 	 RTC_WR_N 	: in std_logic := '1';
-	 RTC_INIT 	: in std_logic := '0';
+	 
+	 INIT 		: in std_logic := '0';
 	 
 	 LED1			: in std_logic := '0';
 	 LED2 		: in std_logic := '0';
@@ -107,7 +108,6 @@ architecture RTL of avr is
 	signal queue_rd_empty   : std_logic;
 	
 	signal last_queue_di 	: std_logic_vector(15 downto 0) := (others => '1');	
-	signal rtc_init_ack 		: std_logic := '0';
 	signal cnt_led 			: unsigned(10 downto 0) := (others=> '0');
 	
 	signal scancode_tmp		: std_logic_vector(7 downto 0) := (others => '0');
@@ -375,14 +375,13 @@ begin
 	);
 		
 	-- fifo handling / queue commands to avr side
-	process(CLK, CLKEN, N_RESET, RTC_INIT, rtc_init_ack, RTC_WR_N, RTC_CS, last_queue_di, queue_wr_full, RTC_A, RTC_DI, cnt_led, LED1, LED2, LED1_OWR, LED2_OWR, queue_wr_req, queue_rd_empty)
+	process(CLK, CLKEN, N_RESET, INIT, RTC_WR_N, RTC_CS, last_queue_di, queue_wr_full, RTC_A, RTC_DI, cnt_led, LED1, LED2, LED1_OWR, LED2_OWR, queue_wr_req, queue_rd_empty)
 	begin
 		if CLK'event and CLK = '1' then
 			
-			if RTC_INIT = '1' and rtc_init_ack = '0' then -- and last_queue_di /= x"FC00" then 
-				rtc_init_ack <= '1';
-				queue_di <= x"FC00";
-				last_queue_di <= x"FC00";
+			if INIT = '1' then -- and last_queue_di /= x"FC00" then 
+				queue_di <= x"FD00";
+				last_queue_di <= x"FD00";
 				queue_wr_req <= '1';
 			elsif CLKEN = '0' and RTC_WR_N = '0' AND RTC_CS = '1' then -- and last_queue_di /= ("10" & RTC_A & RTC_DI) then 
 				-- push address and data into the FIFO queue to send via SPI
@@ -412,7 +411,7 @@ begin
 	begin 
 		if rising_edge(CLK) then
 			rtcw_wr <= '0';
-			if RTC_INIT = '0' and RTC_WR_N = '0' AND RTC_CS = '1' then
+			if INIT = '0' and RTC_WR_N = '0' AND RTC_CS = '1' then
 				-- rtc mem write by host
 				rtcw_wr <= '1';
 				rtcw_a <= RTC_A;
