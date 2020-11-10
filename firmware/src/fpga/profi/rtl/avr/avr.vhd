@@ -16,7 +16,7 @@ entity avr is
     A           : in std_logic_vector(15 downto 8);     -- address bus for kbd
     KB          : out std_logic_vector(5 downto 0) := "111111";     -- data bus for kbd + extended bit (b6)
     AVR_MOSI    : in std_logic;
-    AVR_MISO    : out std_logic;
+    AVR_MISO    : out std_logic := 'Z';
     AVR_SCK     : in std_logic;
 	 AVR_SS 		 : in std_logic;
 	 
@@ -85,6 +85,7 @@ architecture RTL of avr is
 	 signal spi_di 			: std_logic_vector(15 downto 0);
 	 signal spi_do 			: std_logic_vector(15 downto 0);
 	 signal spi_di_req 		: std_logic;
+	 signal spi_miso 		 	: std_logic;
 	 
 	 -- rtc rx spi data
 	 signal rtc_cmd 			: std_logic_vector(7 downto 0);  -- spi cmd
@@ -131,7 +132,7 @@ begin
 		  spi_sck_i      => AVR_SCK,
 		  spi_ssel_i     => AVR_SS,
 		  spi_mosi_i     => AVR_MOSI,
-		  spi_miso_o     => AVR_MISO,
+		  spi_miso_o     => spi_miso,
 
 		  di_req_o       => spi_di_req,
 		  di_i           => spi_di,
@@ -148,7 +149,8 @@ begin
 	);
 
 	spi_di <= queue_do;
-	queue_rd_req <= spi_di_req;	  
+	queue_rd_req <= spi_di_req;	
+	AVR_MISO	<= spi_miso when AVR_SS = '0' else 'Z';
 		  
 	process (CLK, spi_do_valid, spi_do)
 	begin
