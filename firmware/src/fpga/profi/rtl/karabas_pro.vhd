@@ -81,7 +81,7 @@ port (
 	-- AVR SPI slave
 	AVR_SCK 		: in std_logic;
 	AVR_MOSI 	: in std_logic;
-	AVR_MISO 	: out std_logic;
+	AVR_MISO 	: out std_logic := 'Z';
 	AVR_NCS		: in std_logic;
 	
 	-- Parallel bus for CPLD
