@@ -73,8 +73,8 @@ begin
         spi_miso_o     => AVR_MISO,
 
         di_req_o       => open,
-        di_i           => open,
-        wren_i         => '0',
+        di_i           => x"FD00", -- INIT
+        wren_i         => '1',
         do_valid_o     => spi_do_valid,
         do_o           => spi_do,
 
@@ -102,7 +102,7 @@ begin
 					when X"07" => rxsc(7 downto 0) <= spi_do(7 downto 0);
 					when X"08" => 
 										SCANCODE_READY <= '1';
-										SCANCODE <= spi_do(7 downto 0) & rxsc(7 downto 0);
+										SCANCODE <= "0000000" & spi_do(0) & rxsc(7 downto 0);
 					when others => null;
 				end case;	
 			end if;

@@ -146,6 +146,8 @@
 #define CMD_RTC_WRITE 0x80 // + regnum 0e-3f (128 ... 191)
 // RTC INIT command
 #define CMD_RTC_INIT_REQ 0xFC // rtc init request
+// INIT command
+#define CMD_INIT_REQ 0xFD // init req
 // NOP command
 #define CMD_NONE 0xFF
 

@@ -31,6 +31,7 @@ bool is_sw2 = false; // SW2 state
 bool is_sw3 = false; // SW3 state
 bool is_sw4 = false; // SW4 state
 bool is_sw5 = false; // SW5 state
+bool init_done = false; // init done
 
 bool is_wait = false; // wait mode
 bool mouse_present = false; // mouse present flag (detected by signal change on CLKM pin)
@@ -853,9 +854,20 @@ void process_in_cmd(uint8_t cmd, uint8_t data)
 {
   uint8_t reg;
 
+  if (cmd == CMD_INIT_REQ && !init_done) {
+      Serial.print(F("FPGA init request..."));
+      init_done = true;
+      transmit_keyboard_matrix();
+      rtc_send_all();
+      do_reset();
+      Serial.println("done");
+  }
+
   if (cmd == CMD_RTC_INIT_REQ && !rtc_init_done) {
+    Serial.print(F("RTC init request..."));
     rtc_init_done = true;
     rtc_send_all();
+    Serial.println("done");
   }
 
   if (cmd == CMD_LED_WRITE) {
@@ -1046,12 +1058,21 @@ void setup()
 
   Serial.println(F("ZX Keyboard / mouse / rtc controller v1.0"));
 
-  do_reset();
+  Serial.println(F("Waiting for FPGA init request"));
+  // waiting for init
+  while (!init_done) {
+    spi_send(CMD_NONE, 0x00);
+  }
 
+  Serial.print(F("Keyboard init..."));
   kbd.begin(PIN_KBD_DAT, PIN_KBD_CLK);
+  Serial.println("done");
 
+  Serial.print(F("Mouse init..."));
   init_mouse();
+  Serial.println("done");
 
+  Serial.print(F("RTC init..."));
   rtc_year = rtc.getYear();
   rtc_month = rtc.getMonth();
   rtc_day = rtc.getDay();
@@ -1067,13 +1088,16 @@ void setup()
   rtc_is_24h = bitRead(reg_b, 1);
 
   rtc_send_time();
+  Serial.println(F("done"));  
 
   if (!rtc_init_done) {
+    Serial.print(F("RTC send all registers..."));
     rtc_send_all();
+    Serial.println(F("done"));  
   }
 
+  Serial.println(F("Starting main loop"));
   digitalWrite(PIN_LED1, LOW);
-
 }
 
 
@@ -1101,14 +1125,18 @@ void loop()
     if (analogRead(PIN_BTN1) < 3 && (n - tb1 >= 500) ) {
        tb1 = n;
       digitalWrite(PIN_LED2, HIGH);
+      Serial.print(F("BTN1: Full reset..."));
       do_full_reset();
+      Serial.println(F("done"));
       digitalWrite(PIN_LED2, LOW);      
     }
 
     if (analogRead(PIN_BTN2) < 3 && (n - tb2 >= 500) ) {
       tb2 = n;
       digitalWrite(PIN_LED1, HIGH);
+      Serial.print(F("BTN2: Reset..."));
       do_reset();
+      Serial.println(F("done"));
       digitalWrite(PIN_LED1, LOW);
     }
     tb = n;
