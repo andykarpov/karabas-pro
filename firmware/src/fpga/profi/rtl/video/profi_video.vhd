@@ -44,11 +44,11 @@ architecture rtl of profi_video is
 	constant pcpm_brd_left		: natural :=  48;	-- 32 для выравнивания из-за задержки на чтение vid_reg и attr_reg задано на 8 точек меньше
 
 	constant pcpm_scr_v			: natural := 240;
-	constant pcpm_brd_bot		: natural :=  0;--16
-	constant pcpm_blk_down		: natural :=  24;--8
+	constant pcpm_brd_bot		: natural :=  16;--16
+	constant pcpm_blk_down		: natural :=  8;--8
 	constant pcpm_sync_v			: natural :=  16;--16
-	constant pcpm_blk_up			: natural :=  32;--16
-	constant pcpm_brd_top		: natural :=  0;--16
+	constant pcpm_blk_up			: natural :=  16;--16
+	constant pcpm_brd_top		: natural :=  16;--16
 	
 	constant pcpm_brd_bot_60	: natural :=  0;--16
 	constant pcpm_blk_down_60	: natural :=  7;--8
@@ -74,9 +74,9 @@ architecture rtl of profi_video is
 	constant pcpm_v_end_60		: natural := 263;
 
 	constant pcpm_h_int_on		: natural := 656; --pspec_sync_h+8;
-	constant pcpm_v_int_on		: natural := 241; --pspec_v_blk_off - 1;
+	constant pcpm_v_int_on		: natural := 257; --pspec_v_blk_off - 1;
 	constant pcpm_h_int_off		: natural := 128;
-	constant pcpm_v_int_off		: natural := 256;
+	constant pcpm_v_int_off		: natural := 272;
 
 -- INT  Y303,X752  - Y304,X128
 
