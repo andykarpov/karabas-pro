@@ -3,7 +3,7 @@ BLOCK		START ADDRESS		END ADDRESS
 Page_0		0x00000000		0x00059D8A
 profi_mainrom_fatall.hex		0x00100000		0x0010FFFF
 profi-2.2.hex		0x00110000		0x0011FFFF
-profi_rage_fix.hex		0x00120000		0x0012FFFF
+karabas-pro-flashtool_v2_3a.hex		0x00120000		0x0012FFFF
 DiagROM.v50.hex		0x00130000		0x00133FFF
 cfg_revC.hex		0x001F0000		0x001F0000
 
@@ -11,6 +11,6 @@ cfg_revC.hex		0x001F0000		0x001F0000
 
 Notes:
 
-- Data checksum for this conversion is 0x18E5F546
+- Data checksum for this conversion is 0x18F875D5
 
 - All the addresses in this file are byte addresses
