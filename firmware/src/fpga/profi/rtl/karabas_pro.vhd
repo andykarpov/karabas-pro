@@ -585,23 +585,24 @@ port map (
 	VCNT 				=> vid_vcnt,
 	BLINK 			=> blink
 );
-	
+
 -- osd (debug)
---U7: entity work.osd
---port map (
---	CLK 				=> clk_bus,
---	EN 				=> not kb_turbo,
---	DS80				=> ds80,
---	RGB_I 			=> vid_rgb,
---	RGB_O 			=> vid_rgb_osd,
---	HCNT_I 			=> vid_hcnt,
---	VCNT_I 			=> vid_vcnt,
---	PORT_1 			=> serial_ms_debug1,
---	PORT_2 			=> serial_ms_debug2,
---	PORT_3 			=> serial_ms_debug3,
---	PORT_4 			=> serial_ms_debug4
---);
-vid_rgb_osd <= vid_rgb;
+U7: entity work.osd
+port map (
+	CLK 				=> clk_bus,
+	DS80				=> ds80,
+	RGB_I 			=> vid_rgb,
+	RGB_O 			=> vid_rgb_osd,
+	HCNT_I 			=> vid_hcnt,
+	VCNT_I 			=> vid_vcnt,
+	BLINK 			=> blink,
+	
+	-- sensors
+	TURBO 			=> kb_turbo,
+	SCANDOUBLER_EN => vid_scandoubler_enable,
+	MODE60 			=> soft_sw2,
+	ROM_BANK 		=> ext_rom_bank
+);
 
 -- Scandoubler	
 U8: entity work.vga_pal 
