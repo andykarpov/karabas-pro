@@ -196,6 +196,7 @@ set_location_assignment PIN_25 -to SW3[4]
 
 
 set_location_assignment PIN_91 -to SD_NDET
+set_global_assignment -name VERILOG_FILE ../rtl/video/rom_font.v
 set_global_assignment -name VHDL_FILE ../rtl/karabas_pro.vhd
 set_global_assignment -name QIP_FILE ../rtl/pll/altpll0.qip
 set_global_assignment -name QIP_FILE ../rtl/pll/altpll1.qip

@@ -549,15 +549,17 @@ void fill_kbd_matrix(int sc)
       matrix[ZX_K_BIT6] = !is_up;
       break;
 
-
     // Fn keys
     case PS2_F1:
       if (is_menu || (is_ctrl && is_alt)) {
         if (!is_up) {
-          // menu + F1, ctrl+alt = SW1
-          is_sw1 = !is_sw1;
-          eeprom_store_value(EEPROM_SW1_ADDRESS, is_sw1);
-          matrix[ZX_K_SW1] = is_sw1;
+          // menu + F1, ctrl+alt = ROMSET 00
+          is_sw3 = false;
+          is_sw4 = false;
+          eeprom_store_value(EEPROM_SW3_ADDRESS, is_sw3);
+          eeprom_store_value(EEPROM_SW4_ADDRESS, is_sw4);
+          matrix[ZX_K_SW3] = is_sw3;
+          matrix[ZX_K_SW4] = is_sw4;
         }
       } else {
         matrix[ZX_K_A] = !is_up; matrix[ZX_K_BIT6] = !is_up;
@@ -566,10 +568,13 @@ void fill_kbd_matrix(int sc)
     case PS2_F2:
       if (is_menu || (is_ctrl && is_alt)) {
         if (!is_up) {
-          // menu + F2 = SW2
-          is_sw2 = !is_sw2;
-          eeprom_store_value(EEPROM_SW2_ADDRESS, is_sw2);
-          matrix[ZX_K_SW2] = is_sw2;
+          // menu + F2 = ROMSET 01
+          is_sw3 = true;
+          is_sw4 = false;
+          eeprom_store_value(EEPROM_SW3_ADDRESS, is_sw3);
+          eeprom_store_value(EEPROM_SW4_ADDRESS, is_sw4);
+          matrix[ZX_K_SW3] = is_sw3;
+          matrix[ZX_K_SW4] = is_sw4;
         }
       } else {
         matrix[ZX_K_B] = !is_up; matrix[ZX_K_BIT6] = !is_up; 
@@ -578,10 +583,13 @@ void fill_kbd_matrix(int sc)
     case PS2_F3:
       if (is_menu || (is_ctrl && is_alt)) {
         if (!is_up) {
-          // menu + F3 = SW3
-          is_sw3 = !is_sw3;
+          // menu + F3 = ROMSET 10
+          is_sw3 = false;
+          is_sw4 = true;
           eeprom_store_value(EEPROM_SW3_ADDRESS, is_sw3);
+          eeprom_store_value(EEPROM_SW4_ADDRESS, is_sw4);
           matrix[ZX_K_SW3] = is_sw3;
+          matrix[ZX_K_SW4] = is_sw4;
         }
       } else {
         matrix[ZX_K_C] = !is_up; matrix[ZX_K_BIT6] = !is_up; 
@@ -590,10 +598,13 @@ void fill_kbd_matrix(int sc)
     case PS2_F4:
       if (is_menu || (is_ctrl && is_alt)) {
         if (!is_up) {
-          // menu + F4 = SW4
-          is_sw4 = !is_sw4;
+          // menu + F4 = ROMSET 11
+          is_sw3 = true;
+          is_sw4 = true;
+          eeprom_store_value(EEPROM_SW3_ADDRESS, is_sw3);
           eeprom_store_value(EEPROM_SW4_ADDRESS, is_sw4);
-          matrix[ZX_K_SW4] = is_sw4;
+          matrix[ZX_K_SW3] = is_sw3;
+          matrix[ZX_K_SW4] = is_sw4;          
         }
       } else {
         matrix[ZX_K_D] = !is_up; matrix[ZX_K_BIT6] = !is_up; 
@@ -615,9 +626,30 @@ void fill_kbd_matrix(int sc)
     case PS2_F6: matrix[ZX_K_F] = !is_up; matrix[ZX_K_BIT6] = !is_up; break;
     case PS2_F7: matrix[ZX_K_G] = !is_up; matrix[ZX_K_BIT6] = !is_up; break;
     case PS2_F8: matrix[ZX_K_H] = !is_up; matrix[ZX_K_BIT6] = !is_up; break;
-    case PS2_F9: matrix[ZX_K_I] = !is_up; matrix[ZX_K_BIT6] = !is_up; break;
-    case PS2_F10: matrix[ZX_K_J] = !is_up; matrix[ZX_K_BIT6] = !is_up; break;
-    
+    case PS2_F9: 
+      if (is_menu || (is_ctrl && is_alt)) {
+        if (!is_up) {
+          // menu + F9 = SW1
+          is_sw1 = !is_sw1;
+          eeprom_store_value(EEPROM_SW1_ADDRESS, is_sw1);
+          matrix[ZX_K_SW1] = is_sw1;
+        }
+      } else {
+          matrix[ZX_K_I] = !is_up; matrix[ZX_K_BIT6] = !is_up;
+      }
+      break;
+    case PS2_F10: 
+      if (is_menu || (is_ctrl && is_alt)) {
+        if (!is_up) {
+          // menu + F10 = SW2
+          is_sw2 = !is_sw2;
+          eeprom_store_value(EEPROM_SW2_ADDRESS, is_sw2);
+          matrix[ZX_K_SW2] = is_sw2;
+        }
+      } else {
+        matrix[ZX_K_J] = !is_up; matrix[ZX_K_BIT6] = !is_up;
+      }
+      break;    
     case PS2_F11:
       if (is_menu || (is_ctrl && is_alt)) {
         if (!is_up) {

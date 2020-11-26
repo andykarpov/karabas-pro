@@ -7,29 +7,29 @@
 	<width>1</width>
 	<mode>7</mode>
 	<hex_block>
-		<hex_filename>../rom/cfg_revC.hex</hex_filename>
+		<hex_filename>/home/andy/Documents/Projects/Retrocomp/ZX-Spectrum/karabas-pro/firmware/src/fpga/profi/rom/cfg_revC.hex</hex_filename>
 		<hex_addressing>relative</hex_addressing>
-		<hex_offset>1015808</hex_offset>
+		<hex_offset>2031616</hex_offset>
 	</hex_block>
 	<hex_block>
-		<hex_filename>../rom/DiagROM.v50.hex</hex_filename>
+		<hex_filename>/home/andy/Documents/Projects/Retrocomp/ZX-Spectrum/karabas-pro/firmware/src/fpga/profi/rom/DiagROM.v50.hex</hex_filename>
 		<hex_addressing>relative</hex_addressing>
-		<hex_offset>950272</hex_offset>
+		<hex_offset>1245184</hex_offset>
 	</hex_block>
 	<hex_block>
-		<hex_filename>../rom/profi_rage_fix.hex</hex_filename>
+		<hex_filename>../rom/karabas-pro-flashtool_v2_4a.hex</hex_filename>
 		<hex_addressing>relative</hex_addressing>
-		<hex_offset>884736</hex_offset>
+		<hex_offset>1179648</hex_offset>
 	</hex_block>
 	<hex_block>
-		<hex_filename>D:/GitHub/karabas-pro/firmware/src/fpga/profi/rom/profi_mainrom_fatall.hex</hex_filename>
+		<hex_filename>/home/andy/Documents/Projects/Retrocomp/ZX-Spectrum/karabas-pro/firmware/src/fpga/profi/rom/profi-2.2.hex</hex_filename>
 		<hex_addressing>relative</hex_addressing>
-		<hex_offset>819200</hex_offset>
+		<hex_offset>1114112</hex_offset>
 	</hex_block>
 	<hex_block>
-		<hex_filename>../rom/profi_vadim.hex</hex_filename>
+		<hex_filename>../rom/profi_mainrom_fatall.hex</hex_filename>
 		<hex_addressing>relative</hex_addressing>
-		<hex_offset>753664</hex_offset>
+		<hex_offset>1048576</hex_offset>
 	</hex_block>
 	<sof_data>
 		<start_address>00000000</start_address>

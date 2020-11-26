@@ -406,6 +406,7 @@ signal soft_sw3 		: std_logic := '0';
 signal soft_sw4 		: std_logic := '0';
 signal soft_sw5 		: std_logic := '0'; -- unused yet
 
+signal board_reset 	: std_logic := '0'; -- board reset on rombank switch
 
 -- debug 
 signal fdd_oe_n 		: std_logic := '1';
@@ -603,23 +604,24 @@ port map (
 	VCNT 				=> vid_vcnt,
 	BLINK 			=> blink
 );
-	
+
 -- osd (debug)
---U7: entity work.osd
---port map (
---	CLK 				=> clk_bus,
---	EN 				=> not kb_turbo,
---	DS80				=> ds80,
---	RGB_I 			=> vid_rgb,
---	RGB_O 			=> vid_rgb_osd,
---	HCNT_I 			=> vid_hcnt,
---	VCNT_I 			=> vid_vcnt,
---	PORT_1 			=> serial_ms_debug1,
---	PORT_2 			=> serial_ms_debug2,
---	PORT_3 			=> serial_ms_debug3,
---	PORT_4 			=> serial_ms_debug4
---);
-vid_rgb_osd <= vid_rgb;
+U7: entity work.osd
+port map (
+	CLK 				=> clk_bus,
+	DS80				=> ds80,
+	RGB_I 			=> vid_rgb,
+	RGB_O 			=> vid_rgb_osd,
+	HCNT_I 			=> vid_hcnt,
+	VCNT_I 			=> vid_vcnt,
+	BLINK 			=> blink,
+	
+	-- sensors
+	TURBO 			=> kb_turbo,
+	SCANDOUBLER_EN => vid_scandoubler_enable,
+	MODE60 			=> soft_sw2,
+	ROM_BANK 		=> ext_rom_bank
+);
 
 -- Scandoubler	
 U8: entity work.vga_pal 
@@ -925,6 +927,7 @@ end generate G_UNO_UART;
 -- board features
 U22: entity work.board 
 port map(
+	CLK => clk_bus,
 	CFG => board_revision,
 	SW3 => SW3,
 	SOFT_SW1 => soft_sw1,
@@ -934,7 +937,8 @@ port map(
 	
 	AUDIO_DAC_TYPE => audio_dac_type,
 	ROM_BANK => ext_rom_bank,
-	SCANDOUBLER_EN => vid_scandoubler_enable
+	SCANDOUBLER_EN => vid_scandoubler_enable,
+	BOARD_RESET => board_reset	
 );
 
 --U23 : entity work.compressor
@@ -1000,7 +1004,7 @@ ena_div32 <= ena_cnt(5) and ena_cnt(4) and ena_cnt(3) and ena_cnt(2) and ena_cnt
 -- Global signals
 
 areset <= not locked; -- global reset
-reset <= areset or kb_reset or not(locked) or loader_reset or loader_act; -- hot reset
+reset <= areset or kb_reset or not(locked) or loader_reset or loader_act or board_reset; -- hot reset
 
 cpu_reset_n <= not(reset) and not(loader_reset); -- CPU reset
 cpu_inta_n <= cpu_iorq_n or cpu_m1_n;	-- INTA

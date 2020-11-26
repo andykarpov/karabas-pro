@@ -9,6 +9,7 @@ USE ieee.std_logic_unsigned.all;
 
 entity board is
 port (
+	CLK 				: in std_logic;
 	CFG 				: in std_logic_vector(7 downto 0);
 	SW3				: in std_logic_vector(4 downto 1) := "1111";
 	SOFT_SW1			: in std_logic;
@@ -17,15 +18,18 @@ port (
 	SOFT_SW4 		: in std_logic;
 	
 	AUDIO_DAC_TYPE : out std_logic := '0';
-	ROM_BANK 		: out std_logic_vector(1 downto 0) := "00";
-	SCANDOUBLER_EN : out std_logic := '1'
+	ROM_BANK 		: buffer std_logic_vector(1 downto 0) := "00";
+	SCANDOUBLER_EN : out std_logic := '1';
+	BOARD_RESET 	: out std_logic := '0'
 );
 end board;
 
 architecture rtl of board is
 
-signal enable_switches : std_logic := '1'; -- revC feature
-signal dac_type : std_logic := '0'; -- 0 = TDA1543, 1 = TDA1543A
+signal enable_switches 	: std_logic := '1'; -- revC feature
+signal dac_type 			: std_logic := '0'; -- 0 = TDA1543, 1 = TDA1543A
+signal old_rom_bank		: std_logic_vector(1 downto 0) := "00";
+signal reset_cnt			: std_logic_vector(3 downto 0) := "1000";
 
 begin
 
@@ -52,5 +56,20 @@ begin
 			dac_type <= '0';
 	end case;
 end process;
+
+process (CLK, old_rom_bank, ROM_BANK, reset_cnt)
+begin
+	if CLK'event and CLK = '1' then
+		if (old_rom_bank /= ROM_BANK) then 
+			old_rom_bank <= ROM_BANK;
+			reset_cnt <= "0000";
+		end if;
+		if (reset_cnt /= "1000") then 
+			reset_cnt <= reset_cnt + 1;
+		end if;
+	end if;
+end process;
+
+BOARD_RESET <= reset_cnt(2);
 
 end rtl;
