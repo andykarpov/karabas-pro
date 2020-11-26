@@ -30,7 +30,7 @@ timing
 *.html
 *.jdi
 #*.jpg
-*.mif
+#*.mif
 *.pin
 *.ptf.*
 *.qar
