@@ -37,6 +37,7 @@ architecture rtl of osd is
 	
 	signal char_x: std_logic_vector(2 downto 0);
    signal char_y: std_logic_vector(3 downto 0);
+	signal hpos : std_logic_vector(2 downto 0);
 	signal char:   std_logic_vector(7 downto 0);
 	
 	signal rom_addr: std_logic_vector(11 downto 0);
@@ -90,7 +91,7 @@ begin
       q       => font_word
    );
 	 
-	char_x <= hcnt(2 downto 0);
+	char_x <= hcnt(3 downto 1) when DS80='1' else hcnt(2 downto 0);
    char_y <= vcnt(3 downto 0);
 	rom_addr <= char & char_y;
 
@@ -98,9 +99,11 @@ begin
 	vpos(0) <= '1' when (DS80='0' and vcnt >= 288 and vcnt < 304) or (DS80='1' and vcnt >= 16 and vcnt < 32) else '0';
 	vpos(1) <= '1' when (DS80='0' and vcnt >= 304 and vcnt < 320) or (DS80='1' and vcnt >= 32 and vcnt < 48) else '0';
 
+	hpos <= hcnt(6 downto 4) when DS80 = '1' else hcnt(5 downto 3);
+	
 	-- character to request from the ROM depends on the line1 / line2 horizontal position
-	char <= std_logic_vector(to_unsigned(character'pos(line1(to_integer(unsigned(hcnt(5 downto 3))))), 8)) when vpos(0) = '1' and hcnt < 64 else 
-			  std_logic_vector(to_unsigned(character'pos(line2(to_integer(unsigned(hcnt(5 downto 3))))), 8)) when vpos(1) = '1' and hcnt < 64 else 
+	char <= std_logic_vector(to_unsigned(character'pos(line1(to_integer(unsigned(hpos(2 downto 0))))), 8)) when vpos(0) = '1' and ((DS80 = '0' and hcnt < 64) or (DS80 = '1' and hcnt < 128)) else 
+			  std_logic_vector(to_unsigned(character'pos(line2(to_integer(unsigned(hpos(2 downto 0))))), 8)) when vpos(1) = '1' and ((DS80 = '0' and hcnt < 64) or (DS80 = '1' and hcnt < 128)) else 
 			  (others => '0');
 
 	-- pixel 
