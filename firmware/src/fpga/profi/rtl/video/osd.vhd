@@ -56,8 +56,8 @@ architecture rtl of osd is
 	constant message_on:	 		lcd_line_type 	:= "ON      ";
 	constant message_off: 		lcd_line_type 	:= "OFF     ";
 	constant message_rombank: 	lcd_line_type 	:= "ROM BANK";
-	constant message_rombank0:	lcd_line_type 	:= "FATALL  ";
-	constant message_rombank1:	lcd_line_type 	:= "STANDARD";
+	constant message_rombank0:	lcd_line_type 	:= "DEFAULT ";
+	constant message_rombank1:	lcd_line_type 	:= "ALT     ";
 	constant message_rombank2:	lcd_line_type 	:= "FLASHER ";
 	constant message_rombank3:	lcd_line_type 	:= "DIAG ROM";
 	constant message_50hz: 		lcd_line_type 	:= "50 Hz   ";
@@ -73,7 +73,7 @@ architecture rtl of osd is
 	signal last_mode60 : std_logic := '0';
 	signal last_rom_bank : std_logic_vector(1 downto 0) := "00";
 	
-	signal cnt : std_logic_vector(2 downto 0) := "100";
+	signal cnt : std_logic_vector(3 downto 0) := "1000";
 	signal en : std_logic := '0';
 	
 	signal last_blink : std_logic := '0';
@@ -96,8 +96,12 @@ begin
 	rom_addr <= char & char_y;
 
 	-- vertical bounds for line1 / line2
-	vpos(0) <= '1' when (DS80='0' and vcnt >= 288 and vcnt < 304) or (DS80='1' and vcnt >= 16 and vcnt < 32) else '0';
-	vpos(1) <= '1' when (DS80='0' and vcnt >= 304 and vcnt < 320) or (DS80='1' and vcnt >= 32 and vcnt < 48) else '0';
+	vpos(0) <= '1' when (DS80='0' and MODE60 = '0' and vcnt >= 288 and vcnt < 304) or -- spectrum screen 50 Hz vpos 
+							  (DS80='0' and MODE60 = '1' and vcnt >= 0 and vcnt < 16) or    -- spectrum screen 60 Hz vpos 
+							  (DS80='1' and vcnt >= 16 and vcnt < 32) else '0';             -- profi 50/60 Hz vpos
+	vpos(1) <= '1' when (DS80='0' and MODE60 = '0' and vcnt >= 304 and vcnt < 320) or -- spectrum screen 50 Hz vpos
+	                    (DS80='0' and MODE60 = '1' and vcnt >= 16 and vcnt < 32) or   -- spectrum screen 60 Hz vpos 
+	                    (DS80='1' and vcnt >= 32 and vcnt < 48) else '0';             -- profi 50/60 Hz vpos
 
 	hpos <= hcnt(6 downto 4) when DS80 = '1' else hcnt(5 downto 3);
 	
@@ -127,7 +131,7 @@ begin
 			-- turbo mode switch
 			if (TURBO /= last_turbo) then
 				last_turbo <= TURBO;
-				cnt <= "000";
+				cnt <= "0000";
 				line1 <= message_turbo;
 				if (turbo = '0') then 
 					line2 <= message_on;
@@ -140,7 +144,7 @@ begin
 			if (MODE60 /= last_mode60 or scandoubler_en /= last_scandoubler_en) then 
 				last_mode60 <= mode60;
 				last_scandoubler_en <= scandoubler_en;
-				cnt <= "000";
+				cnt <= "0000";
 				if (scandoubler_en = '1') then 
 					line1 <= message_vga;
 				else 
@@ -156,7 +160,7 @@ begin
 			-- rombank switch
 			if (ROM_BANK /= last_rom_bank) then
 				last_rom_bank <= ROM_BANK;
-				cnt <= "000";
+				cnt <= "0000";
 				line1 <= message_rombank;
 				if (ROM_BANK = "00") then 
 					line2 <= message_rombank0;
@@ -171,13 +175,13 @@ begin
 		
 			-- enable counter
 			last_blink <= BLINK;
-			if (BLINK = '1' and last_blink = '0' and cnt /= "100") then 
+			if (BLINK = '1' and last_blink = '0' and cnt /= "1000") then 
 				cnt <= cnt + 1;
 			end if;
 			
 		end if;
 	end process;
 	
-	en <= '1' when cnt /= "100" else '0';
+	en <= '1' when cnt /= "1000" else '0';
 
 end architecture;
