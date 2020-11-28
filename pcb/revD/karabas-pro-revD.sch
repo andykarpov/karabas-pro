@@ -36,7 +36,7 @@ F 3 "" H 12650 6600 60  0000 C CNN
 	1    0    0    -1  
 $EndComp
 $Comp
-L Connector:DB15_Female_HighDensity CON3
+L Connector:DB15_Female_HighDensity_MountingHoles CON3
 U 1 1 5F338B53
 P 12650 1900
 F 0 "CON3" H 12650 2767 50  0000 C CNN
@@ -124,47 +124,36 @@ F 3 "https://amaus.net/static/S100/western%20digital/datasheet/Western%20Digital
 	1    0    0    -1  
 $EndComp
 $Comp
-L Mechanical:MountingHole H1
-U 1 1 5F34B048
-P 17550 14000
-F 0 "H1" H 17650 14046 50  0000 L CNN
-F 1 "MountingHole" H 17650 13955 50  0000 L CNN
-F 2 "MountingHole:MountingHole_3.5mm_Pad_Via" H 17550 14000 50  0001 C CNN
-F 3 "~" H 17550 14000 50  0001 C CNN
-	1    17550 14000
-	1    0    0    -1  
-$EndComp
-$Comp
-L Mechanical:MountingHole H2
+L Mechanical:MountingHole_Pad H2
 U 1 1 5F34C3F9
-P 17550 14200
-F 0 "H2" H 17650 14246 50  0000 L CNN
-F 1 "MountingHole" H 17650 14155 50  0000 L CNN
-F 2 "MountingHole:MountingHole_3.5mm_Pad_Via" H 17550 14200 50  0001 C CNN
-F 3 "~" H 17550 14200 50  0001 C CNN
-	1    17550 14200
+P 15550 13950
+F 0 "H2" H 15650 13996 50  0000 L CNN
+F 1 "MountingHole" H 15650 13905 50  0000 L CNN
+F 2 "MountingHole:MountingHole_3.5mm_Pad_Via" H 15550 13950 50  0001 C CNN
+F 3 "~" H 15550 13950 50  0001 C CNN
+	1    15550 13950
 	1    0    0    -1  
 $EndComp
 $Comp
-L Mechanical:MountingHole H3
+L Mechanical:MountingHole_Pad H3
 U 1 1 5F34C76D
-P 17550 14400
-F 0 "H3" H 17650 14446 50  0000 L CNN
-F 1 "MountingHole" H 17650 14355 50  0000 L CNN
-F 2 "MountingHole:MountingHole_3.5mm_Pad_Via" H 17550 14400 50  0001 C CNN
-F 3 "~" H 17550 14400 50  0001 C CNN
-	1    17550 14400
+P 16250 13950
+F 0 "H3" H 16350 13996 50  0000 L CNN
+F 1 "MountingHole" H 16350 13905 50  0000 L CNN
+F 2 "MountingHole:MountingHole_3.5mm_Pad_Via" H 16250 13950 50  0001 C CNN
+F 3 "~" H 16250 13950 50  0001 C CNN
+	1    16250 13950
 	1    0    0    -1  
 $EndComp
 $Comp
-L Mechanical:MountingHole H4
+L Mechanical:MountingHole_Pad H4
 U 1 1 5F34CA0C
-P 17550 14600
-F 0 "H4" H 17650 14646 50  0000 L CNN
-F 1 "MountingHole" H 17650 14555 50  0000 L CNN
-F 2 "MountingHole:MountingHole_3.5mm_Pad_Via" H 17550 14600 50  0001 C CNN
-F 3 "~" H 17550 14600 50  0001 C CNN
-	1    17550 14600
+P 16950 13950
+F 0 "H4" H 17050 13996 50  0000 L CNN
+F 1 "MountingHole" H 17050 13905 50  0000 L CNN
+F 2 "MountingHole:MountingHole_3.5mm_Pad_Via" H 16950 13950 50  0001 C CNN
+F 3 "~" H 16950 13950 50  0001 C CNN
+	1    16950 13950
 	1    0    0    -1  
 $EndComp
 $Comp
@@ -267,47 +256,47 @@ F 3 "~" H 7550 7300 50  0001 C CNN
 	1    0    0    -1  
 $EndComp
 $Comp
-L Mechanical:MountingHole H5
+L Mechanical:MountingHole_Pad H5
 U 1 1 5ED90FCA
-P 17550 14950
-F 0 "H5" H 17650 14996 50  0000 L CNN
-F 1 "MountingHole" H 17650 14905 50  0000 L CNN
-F 2 "MountingHole:MountingHole_3.5mm_Pad_Via" H 17550 14950 50  0001 C CNN
-F 3 "~" H 17550 14950 50  0001 C CNN
-	1    17550 14950
+P 14850 14550
+F 0 "H5" H 14950 14596 50  0000 L CNN
+F 1 "MountingHole" H 14950 14505 50  0000 L CNN
+F 2 "MountingHole:MountingHole_3.5mm_Pad_Via" H 14850 14550 50  0001 C CNN
+F 3 "~" H 14850 14550 50  0001 C CNN
+	1    14850 14550
 	1    0    0    -1  
 $EndComp
 $Comp
-L Mechanical:MountingHole H6
+L Mechanical:MountingHole_Pad H6
 U 1 1 5ED90FD4
-P 17550 15150
-F 0 "H6" H 17650 15196 50  0000 L CNN
-F 1 "MountingHole" H 17650 15105 50  0000 L CNN
-F 2 "MountingHole:MountingHole_3.5mm_Pad_Via" H 17550 15150 50  0001 C CNN
-F 3 "~" H 17550 15150 50  0001 C CNN
-	1    17550 15150
+P 15550 14550
+F 0 "H6" H 15650 14596 50  0000 L CNN
+F 1 "MountingHole" H 15650 14505 50  0000 L CNN
+F 2 "MountingHole:MountingHole_3.5mm_Pad_Via" H 15550 14550 50  0001 C CNN
+F 3 "~" H 15550 14550 50  0001 C CNN
+	1    15550 14550
 	1    0    0    -1  
 $EndComp
 $Comp
-L Mechanical:MountingHole H7
+L Mechanical:MountingHole_Pad H7
 U 1 1 5ED90FDE
-P 17550 15350
-F 0 "H7" H 17650 15396 50  0000 L CNN
-F 1 "MountingHole" H 17650 15305 50  0000 L CNN
-F 2 "MountingHole:MountingHole_3.5mm_Pad_Via" H 17550 15350 50  0001 C CNN
-F 3 "~" H 17550 15350 50  0001 C CNN
-	1    17550 15350
+P 16250 14550
+F 0 "H7" H 16350 14596 50  0000 L CNN
+F 1 "MountingHole" H 16350 14505 50  0000 L CNN
+F 2 "MountingHole:MountingHole_3.5mm_Pad_Via" H 16250 14550 50  0001 C CNN
+F 3 "~" H 16250 14550 50  0001 C CNN
+	1    16250 14550
 	1    0    0    -1  
 $EndComp
 $Comp
-L Mechanical:MountingHole H8
+L Mechanical:MountingHole_Pad H8
 U 1 1 5ED90FE8
-P 17550 15550
-F 0 "H8" H 17650 15596 50  0000 L CNN
-F 1 "MountingHole" H 17650 15505 50  0000 L CNN
-F 2 "MountingHole:MountingHole_3.5mm_Pad_Via" H 17550 15550 50  0001 C CNN
-F 3 "~" H 17550 15550 50  0001 C CNN
-	1    17550 15550
+P 16950 14550
+F 0 "H8" H 17050 14596 50  0000 L CNN
+F 1 "MountingHole" H 17050 14505 50  0000 L CNN
+F 2 "MountingHole:MountingHole_3.5mm_Pad_Via" H 16950 14550 50  0001 C CNN
+F 3 "~" H 16950 14550 50  0001 C CNN
+	1    16950 14550
 	1    0    0    -1  
 $EndComp
 $Comp
@@ -7532,6 +7521,117 @@ F 3 "" H 21750 3600 50  0001 C CNN
 $EndComp
 Wire Wire Line
 	21750 3300 21600 3300
+Connection ~ 21600 3300
+$Comp
+L power:GND #PWR?
+U 1 1 5FD53CCE
+P 12650 2600
+F 0 "#PWR?" H 12650 2350 50  0001 C CNN
+F 1 "GND" H 12655 2427 50  0000 C CNN
+F 2 "" H 12650 2600 50  0001 C CNN
+F 3 "" H 12650 2600 50  0001 C CNN
+	1    12650 2600
+	1    0    0    -1  
+$EndComp
+$Comp
+L Mechanical:MountingHole_Pad H1
+U 1 1 5F34B048
+P 14850 13950
+F 0 "H1" H 14950 13996 50  0000 L CNN
+F 1 "MountingHole" H 14950 13905 50  0000 L CNN
+F 2 "MountingHole:MountingHole_3.5mm_Pad_Via" H 14850 13950 50  0001 C CNN
+F 3 "~" H 14850 13950 50  0001 C CNN
+	1    14850 13950
+	1    0    0    -1  
+$EndComp
+$Comp
+L power:GND #PWR?
+U 1 1 600DFB61
+P 14850 14050
+F 0 "#PWR?" H 14850 13800 50  0001 C CNN
+F 1 "GND" H 14855 13877 50  0000 C CNN
+F 2 "" H 14850 14050 50  0001 C CNN
+F 3 "" H 14850 14050 50  0001 C CNN
+	1    14850 14050
+	1    0    0    -1  
+$EndComp
+$Comp
+L power:GND #PWR?
+U 1 1 600DFED8
+P 15550 14050
+F 0 "#PWR?" H 15550 13800 50  0001 C CNN
+F 1 "GND" H 15555 13877 50  0000 C CNN
+F 2 "" H 15550 14050 50  0001 C CNN
+F 3 "" H 15550 14050 50  0001 C CNN
+	1    15550 14050
+	1    0    0    -1  
+$EndComp
+$Comp
+L power:GND #PWR?
+U 1 1 600E027D
+P 16250 14050
+F 0 "#PWR?" H 16250 13800 50  0001 C CNN
+F 1 "GND" H 16255 13877 50  0000 C CNN
+F 2 "" H 16250 14050 50  0001 C CNN
+F 3 "" H 16250 14050 50  0001 C CNN
+	1    16250 14050
+	1    0    0    -1  
+$EndComp
+$Comp
+L power:GND #PWR?
+U 1 1 600E062B
+P 16950 14050
+F 0 "#PWR?" H 16950 13800 50  0001 C CNN
+F 1 "GND" H 16955 13877 50  0000 C CNN
+F 2 "" H 16950 14050 50  0001 C CNN
+F 3 "" H 16950 14050 50  0001 C CNN
+	1    16950 14050
+	1    0    0    -1  
+$EndComp
+$Comp
+L power:GND #PWR?
+U 1 1 600EB9B2
+P 14850 14650
+F 0 "#PWR?" H 14850 14400 50  0001 C CNN
+F 1 "GND" H 14855 14477 50  0000 C CNN
+F 2 "" H 14850 14650 50  0001 C CNN
+F 3 "" H 14850 14650 50  0001 C CNN
+	1    14850 14650
+	1    0    0    -1  
+$EndComp
+$Comp
+L power:GND #PWR?
+U 1 1 600EBFAF
+P 15550 14650
+F 0 "#PWR?" H 15550 14400 50  0001 C CNN
+F 1 "GND" H 15555 14477 50  0000 C CNN
+F 2 "" H 15550 14650 50  0001 C CNN
+F 3 "" H 15550 14650 50  0001 C CNN
+	1    15550 14650
+	1    0    0    -1  
+$EndComp
+$Comp
+L power:GND #PWR?
+U 1 1 600EC26C
+P 16250 14650
+F 0 "#PWR?" H 16250 14400 50  0001 C CNN
+F 1 "GND" H 16255 14477 50  0000 C CNN
+F 2 "" H 16250 14650 50  0001 C CNN
+F 3 "" H 16250 14650 50  0001 C CNN
+	1    16250 14650
+	1    0    0    -1  
+$EndComp
+$Comp
+L power:GND #PWR?
+U 1 1 600EC5C2
+P 16950 14650
+F 0 "#PWR?" H 16950 14400 50  0001 C CNN
+F 1 "GND" H 16955 14477 50  0000 C CNN
+F 2 "" H 16950 14650 50  0001 C CNN
+F 3 "" H 16950 14650 50  0001 C CNN
+	1    16950 14650
+	1    0    0    -1  
+$EndComp
 Wire Bus Line
 	4850 6350 5350 6350
 Wire Bus Line
@@ -7564,5 +7664,4 @@ Wire Bus Line
 	11050 700  11050 12700
 Wire Bus Line
 	6500 700  6500 12900
-Connection ~ 21600 3300
 $EndSCHEMATC
