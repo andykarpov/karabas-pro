@@ -1301,7 +1301,7 @@ port map(
 	DI				=> cpu_do_bus,
 	START			=> zc_spi_start,
 	WR_EN			=> zc_wr_en,
-	CLC     		=> cpuclk,
+	CLC     		=> clk_bus, --cpuclk,
 	MISO    		=> DATA0,
 	DO				=> zc_do_bus,
 	SCK     		=> zc_sclk,
