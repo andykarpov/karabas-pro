@@ -830,6 +830,7 @@ port map (
 	BUS_RWW			=> hdd_rww_n,
 	BUS_RWE			=> hdd_rwe_n,
 	BUS_CS3FX		=> hdd_cs3fx_n,
+	BUS_FDC_STEP	=>	PIN_119,
 	BUS_CSFF			=> fdd_cs_pff_n,
 	BUS_FDC_NCS		=> fdd_cs_n
 

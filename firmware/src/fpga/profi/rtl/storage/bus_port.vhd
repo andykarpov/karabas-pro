@@ -33,6 +33,7 @@ entity bus_port is
 	BUS_RWW 		: in std_logic;
 	BUS_RWE 		: in std_logic;
 	BUS_CS3FX 	: in std_logic;
+	BUS_FDC_STEP: in std_logic;
 	BUS_CSFF 	: in std_logic;
 	BUS_FDC_NCS : in std_logic		
 	);
@@ -58,7 +59,7 @@ begin
 		if (rising_edge(CLK)) then 
 			if (clk_cpu = '0') then --11
 				bus_a_reg(15 downto 8) <= BUS_HDD_CS_N & BUS_FDC_NCS & BUS_CSFF & BUS_CS3FX & BUS_RWE & BUS_RWW & BUS_WWE & BUS_WWC;
-				bus_a_reg(7 downto 0) <= '1' & BUS_RD_N & BUS_WR_N & bus_a;
+				bus_a_reg(7 downto 0) <= BUS_FDC_STEP & BUS_RD_N & BUS_WR_N & bus_a;
 				bus_d_reg <= bus_di;
 				bus_s_reg <= "11111111"; --BUS_RD_N & BUS_WR_N & BUS_MREQ_N & BUS_IORQ_N & BUS_M1_N & BUS_CPM & BUS_DOS & BUS_ROM14;
 			end if;

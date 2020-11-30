@@ -136,7 +136,8 @@ begin
 		BUS_RD_N => bus_a(6),
 		BUS_WR_N => bus_a(5),
 		csff => bus_a(13),
-		FDC_NCS => bus_a(14),		
+		FDC_NCS => bus_a(14),
+		FDC_STEP => bus_a(15),
 
 		OE_N => fdd_oe_n,
 		

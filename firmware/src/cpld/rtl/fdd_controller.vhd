@@ -16,6 +16,7 @@ port (
 	BUS_WR_N 	: in std_logic;
 	csff			: in std_logic := '1';
 	FDC_NCS		: in std_logic := '1';
+	FDC_STEP		: in std_logic := '0';
 	
 	OE_N 			: buffer std_logic := '1';
 	
@@ -69,7 +70,18 @@ begin
 	end process;	
 
 	f4 <= f(0); -- write pre-compensation freq
-	FDC_CLK <= f(2); -- FDC clock (1Mc)	
+	
+	process(f, FDC_WF_DE, FDC_STEP, FDC_DRQ)
+	begin
+		if FDC_WF_DE = '0' then
+			FDC_CLK <= f(2); -- FDC clock (1Mc)				
+		elsif FDC_STEP = '1' then
+			FDC_CLK <= f(1); -- FDC clock (1Mc)	
+		elsif (FDC_DRQ'event and FDC_DRQ='1') then
+			FDC_CLK <= f(2); -- FDC clock (1Mc)	
+		end if;
+	end process;
+
 	
 	------------------------------ RAWR 125 ms ---------------------------
 	process(CLK8, FDC_RDATA,rd1)
