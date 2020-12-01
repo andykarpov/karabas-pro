@@ -82,6 +82,36 @@ int capsed_keys_size = 0;
 
 SPISettings settingsA(8000000, MSBFIRST, SPI_MODE0); // SPI transmission settings
 
+
+void push_capsed_key(int key);
+void pop_capsed_key(int key);
+void process_capsed_key(int key, bool up);
+void fill_kbd_matrix(int sc);
+void send_macros(uint8_t pos);
+uint8_t get_matrix_byte(uint8_t pos);
+uint8_t get_joy_byte();
+void spi_send(uint8_t addr, uint8_t data);
+void transmit_keyboard_matrix();
+void transmit_joy_data();
+void transmit_mouse_data();
+void rtc_save();
+void rtc_send(uint8_t reg, uint8_t data);
+void rtc_send_time();
+void rtc_send_all();
+void process_in_cmd(uint8_t cmd, uint8_t data);
+void init_mouse();
+void do_reset();
+void do_full_reset();
+void do_magic();
+void clear_matrix(int clear_size);
+bool eeprom_restore_value(int addr, bool default_value);
+void eeprom_store_value(int addr, bool value);
+void eeprom_restore_values();
+void eeprom_store_values();
+void setup();
+void loop();
+
+
 void push_capsed_key(int key)
 {
   int i = 0;
