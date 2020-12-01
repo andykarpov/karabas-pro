@@ -54,6 +54,7 @@ signal pff				:std_logic_vector(7 downto 0);
 signal f					:std_logic_vector(2 downto 0);
 signal f1				:std_logic;
 signal f4				:std_logic;
+signal f_sel			:std_logic;
 signal fa				:std_logic_vector(4 downto 0);
 signal rd1				:std_logic;
 signal rd2				:std_logic;
@@ -71,17 +72,25 @@ begin
 
 	f4 <= f(0); -- write pre-compensation freq
 	
-	process(f, FDC_WF_DE, FDC_STEP, FDC_DRQ)
+	process(f_sel, FDC_WF_DE, FDC_STEP, FDC_DRQ)
 	begin
-		if FDC_WF_DE = '0' then
-			FDC_CLK <= f(2); -- FDC clock (1Mc)				
+		if FDC_WF_DE = '0' or NRESET = '0' then
+			f_sel <= '0'; -- FDC clock (1Mc)				
 		elsif FDC_STEP = '1' then
-			FDC_CLK <= f(1); -- FDC clock (1Mc)	
+			f_sel <= '1'; -- FDC clock (2Mc)	
 		elsif (FDC_DRQ'event and FDC_DRQ='1') then
-			FDC_CLK <= f(2); -- FDC clock (1Mc)	
+			f_sel <= '0'; -- FDC clock (1Mc)				
 		end if;
 	end process;
 
+	process(f_sel, f)
+	begin
+		if f_sel = '1' then
+			FDC_CLK <= f(1); -- FDC clock (2Mc)				
+		else
+			FDC_CLK <= f(2); -- FDC clock (1Mc)	
+		end if;
+	end process;
 	
 	------------------------------ RAWR 125 ms ---------------------------
 	process(CLK8, FDC_RDATA,rd1)
