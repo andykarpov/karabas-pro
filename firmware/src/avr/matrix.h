@@ -99,13 +99,9 @@
 #define ZX_K_SW4 58
 #define ZX_K_SW5 59
 
-//#define ZX_K_SCANCODE9 57
-//#define ZX_K_SCANCODE10 58
-//#define ZX_K_SCANCODE11 59
-//#define ZX_K_SCANCODE12 60
-//#define ZX_K_SCANCODE13 61
-//#define ZX_K_SCANCODE14 62
-//#define ZX_K_SCANCODE15 63
+#define ZX_K_KBD_MODE 60
+
+// free slots: 61,62,63
 
 // Joystick signals
 #define ZX_JOY_FIRE 0

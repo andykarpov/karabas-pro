@@ -686,6 +686,7 @@ void fill_kbd_matrix(int sc)
       if (is_up) {
         profi_mode = !profi_mode;
         eeprom_store_value(EEPROM_MODE_ADDRESS, profi_mode);
+        matrix[ZX_K_KBD_MODE] = profi_mode;
       }
       break;
 
@@ -892,14 +893,28 @@ void process_in_cmd(uint8_t cmd, uint8_t data)
       transmit_keyboard_matrix();
       rtc_send_all();
       do_reset();
-      Serial.println("done");
+      Serial.println(F("done"));
+      Serial.print(F("FPGA board revision is: "));
+      switch (data) {
+        case 0:
+          Serial.println(F("Rev.A with TDA1543 DAC"));
+        break;
+        case 1:
+          Serial.println(F("Rev.A with TDA1543A DAC"));
+        break;
+        case 2:
+          Serial.println(F("Rev.C"));
+        break;
+        default:
+          Serial.println(F("Unknown"));
+      }
   }
 
   if (cmd == CMD_RTC_INIT_REQ && !rtc_init_done) {
     Serial.print(F("RTC init request..."));
     rtc_init_done = true;
     rtc_send_all();
-    Serial.println("done");
+    Serial.println(F("done"));
   }
 
   if (cmd == CMD_LED_WRITE) {
@@ -1024,6 +1039,7 @@ void eeprom_restore_values()
   matrix[ZX_K_SW3] = is_sw3;
   matrix[ZX_K_SW4] = is_sw4;
   matrix[ZX_K_SW5] = is_sw5;
+  matrix[ZX_K_KBD_MODE] = profi_mode;
 }
 
 void eeprom_store_values()

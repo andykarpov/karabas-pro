@@ -157,6 +157,7 @@ signal kb_magic 		: std_logic := '0';
 signal kb_special 	: std_logic := '0';
 signal kb_turbo 		: std_logic := '0';
 signal kb_wait 		: std_logic := '0';
+signal kb_mode 		: std_logic := '1';
 
 -- Joy
 signal joy_bus 		: std_logic_vector(4 downto 0) := "11111";
@@ -590,6 +591,7 @@ port map (
 U7: entity work.osd
 port map (
 	CLK 				=> clk_bus,
+	CLK2 				=> clk_div2,
 	DS80				=> ds80,
 	RGB_I 			=> vid_rgb,
 	RGB_O 			=> vid_rgb_osd,
@@ -601,7 +603,9 @@ port map (
 	TURBO 			=> kb_turbo,
 	SCANDOUBLER_EN => vid_scandoubler_enable,
 	MODE60 			=> soft_sw2,
-	ROM_BANK 		=> ext_rom_bank
+	ROM_BANK 		=> ext_rom_bank,
+	KB_MODE 			=> kb_mode,
+	KB_WAIT 			=> kb_wait
 );
 
 -- Scandoubler	
@@ -755,11 +759,15 @@ port map (
 	 LED1_OWR 		=> led1_overwrite,
 	 LED2_OWR 		=> led2_overwrite,
 	 
+	 CFG 				=> board_revision,
+	 
 	 SOFT_SW1 		=> soft_sw1,
 	 SOFT_SW2		=> soft_sw2,
 	 SOFT_SW3 		=> soft_sw3,
 	 SOFT_SW4 		=> soft_sw4,
 	 SOFT_SW5 		=> soft_sw5,
+	 
+	 KB_MODE 		=> kb_mode,
 	 
 	 KB_SCANCODE 	=> open, 
 
