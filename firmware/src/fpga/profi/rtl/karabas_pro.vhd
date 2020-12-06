@@ -280,6 +280,7 @@ signal ena_cnt		: std_logic_vector(5 downto 0) := "000000";
 signal reset			: std_logic;
 signal areset			: std_logic;
 signal locked			: std_logic;
+signal locked_tri 	: std_logic := '0';
 signal loader_act		: std_logic := '1';
 signal loader_reset 	: std_logic := '0';
 signal loader_done 	: std_logic := '0';
@@ -989,8 +990,20 @@ ena_div32 <= ena_cnt(5) and ena_cnt(4) and ena_cnt(3) and ena_cnt(2) and ena_cnt
 -------------------------------------------------------------------------------
 -- Global signals
 
-areset <= not locked; -- global reset
-reset <= areset or kb_reset or not(locked) or loader_reset or loader_act or board_reset; -- hot reset
+process(clk_bus)
+begin
+	if rising_edge(clk_bus) then
+		if (locked_tri = '0') then 
+			locked_tri <= '1';
+			areset <= '1';
+		else 
+			areset <= '0';
+		end if;			
+	end if;
+end process;
+
+--areset <= not locked; -- global reset
+reset <= areset or kb_reset or loader_reset or loader_act or board_reset; -- hot reset
 
 cpu_reset_n <= not(reset) and not(loader_reset); -- CPU reset
 cpu_inta_n <= cpu_iorq_n or cpu_m1_n;	-- INTA
@@ -1331,5 +1344,9 @@ selector <=
 --	PIN_120 <= VGA_B(2);
 --	PIN_119 <= VGA_VS;
 --	PIN_115 <= VGA_HS;
+
+PIN_138 <= locked;
+PIN_120 <= clk_bus;
+PIN_141 <= areset;
 	
 end rtl;
