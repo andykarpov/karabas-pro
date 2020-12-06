@@ -24,6 +24,7 @@ cd fpga/profi/syn
 
 make clean
 make all
+make jic
 
 cp karabas_pro.jic ../../../../releases/profi/karabas_pro.jic
 cp karabas_pro_revA_tda1543.jic ../../../../releases/profi/karabas_pro_revA_tda1543.jic
