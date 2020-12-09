@@ -1250,6 +1250,10 @@ void loop()
   // read time from rtc
   if (n - tr >= 500) {
 
+    if (!rtc.isRunning()) {
+      rtc.startClock();
+    }
+
     rtc_year = rtc.getYear();
     rtc_month = rtc.getMonth();
     rtc_day = rtc.getDay();
