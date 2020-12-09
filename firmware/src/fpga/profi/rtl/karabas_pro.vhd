@@ -157,6 +157,7 @@ signal kb_magic 		: std_logic := '0';
 signal kb_special 	: std_logic := '0';
 signal kb_turbo 		: std_logic := '0';
 signal kb_wait 		: std_logic := '0';
+signal kb_mode 		: std_logic := '1';
 
 -- Joy
 signal joy_bus 		: std_logic_vector(4 downto 0) := "11111";
@@ -298,6 +299,7 @@ signal ena_cnt		: std_logic_vector(5 downto 0) := "000000";
 signal reset			: std_logic;
 signal areset			: std_logic;
 signal locked			: std_logic;
+signal locked_tri 	: std_logic := '0';
 signal loader_act		: std_logic := '1';
 signal loader_reset 	: std_logic := '0';
 signal loader_done 	: std_logic := '0';
@@ -609,6 +611,7 @@ port map (
 U7: entity work.osd
 port map (
 	CLK 				=> clk_bus,
+	CLK2 				=> clk_div2,
 	DS80				=> ds80,
 	RGB_I 			=> vid_rgb,
 	RGB_O 			=> vid_rgb_osd,
@@ -620,7 +623,9 @@ port map (
 	TURBO 			=> kb_turbo,
 	SCANDOUBLER_EN => vid_scandoubler_enable,
 	MODE60 			=> soft_sw2,
-	ROM_BANK 		=> ext_rom_bank
+	ROM_BANK 		=> ext_rom_bank,
+	KB_MODE 			=> kb_mode,
+	KB_WAIT 			=> kb_wait
 );
 
 -- Scandoubler	
@@ -774,11 +779,15 @@ port map (
 	 LED1_OWR 		=> led1_overwrite,
 	 LED2_OWR 		=> led2_overwrite,
 	 
+	 CFG 				=> board_revision,
+	 
 	 SOFT_SW1 		=> soft_sw1,
 	 SOFT_SW2		=> soft_sw2,
 	 SOFT_SW3 		=> soft_sw3,
 	 SOFT_SW4 		=> soft_sw4,
 	 SOFT_SW5 		=> soft_sw5,
+	 
+	 KB_MODE 		=> kb_mode,
 	 
 	 KB_SCANCODE 	=> open, 
 
@@ -1004,8 +1013,20 @@ ena_div32 <= ena_cnt(5) and ena_cnt(4) and ena_cnt(3) and ena_cnt(2) and ena_cnt
 -------------------------------------------------------------------------------
 -- Global signals
 
-areset <= not locked; -- global reset
-reset <= areset or kb_reset or not(locked) or loader_reset or loader_act or board_reset; -- hot reset
+process(clk_bus)
+begin
+	if rising_edge(clk_bus) then
+		if (locked_tri = '0') then 
+			locked_tri <= '1';
+			areset <= '1';
+		else 
+			areset <= '0';
+		end if;			
+	end if;
+end process;
+
+--areset <= not locked; -- global reset
+reset <= areset or kb_reset or loader_reset or loader_act or board_reset; -- hot reset
 
 cpu_reset_n <= not(reset) and not(loader_reset); -- CPU reset
 cpu_inta_n <= cpu_iorq_n or cpu_m1_n;	-- INTA
@@ -1378,5 +1399,9 @@ selector <=
 --	PIN_120 <= VGA_B(2);
 --	PIN_119 <= VGA_VS;
 --	PIN_115 <= VGA_HS;
+
+PIN_138 <= locked;
+PIN_120 <= clk_bus;
+PIN_141 <= areset;
 	
 end rtl;

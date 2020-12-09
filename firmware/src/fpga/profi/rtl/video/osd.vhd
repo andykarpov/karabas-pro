@@ -6,6 +6,7 @@ use IEEE.std_logic_unsigned.all;
 entity osd is
 	port (
 		CLK		: in std_logic;
+		CLK2 		: in std_logic;
 		RGB_I 	: in std_logic_vector(8 downto 0);
 		RGB_O 	: out std_logic_vector(8 downto 0);
 		DS80		: in std_logic;
@@ -17,7 +18,9 @@ entity osd is
 		TURBO 			: in std_logic := '0';
 		SCANDOUBLER_EN : in std_logic := '0';
 		MODE60 			: in std_logic := '0';
-		ROM_BANK 		: in std_logic_vector := "00"
+		ROM_BANK 		: in std_logic_vector := "00";
+		KB_MODE 			: in std_logic := '1';
+		KB_WAIT 			: in std_logic := '0'
 
 	);
 end entity;
@@ -62,6 +65,10 @@ architecture rtl of osd is
 	constant message_rombank3:	lcd_line_type 	:= "DIAG ROM";
 	constant message_50hz: 		lcd_line_type 	:= "50 Hz   ";
 	constant message_60hz: 		lcd_line_type 	:= "60 Hz   ";
+	constant message_keyboard: lcd_line_type  := "KEYBOARD";
+	constant message_profi:    lcd_line_type  := "XT-PROFI";
+	constant message_spectrum: lcd_line_type  := "SPECTRUM";
+	constant message_pause:    lcd_line_type  := "PAUSE   ";
 	constant message_empty: 	lcd_line_type 	:= "        ";
 
 	-- displayable lines
@@ -72,6 +79,9 @@ architecture rtl of osd is
 	signal last_scandoubler_en : std_logic := '0';
 	signal last_mode60 : std_logic := '0';
 	signal last_rom_bank : std_logic_vector(1 downto 0) := "00";
+	signal last_kb_mode : std_logic := '1';
+	signal last_kb_wait : std_logic := '0';
+	signal kb_mode_init : std_logic := '0';
 	
 	signal cnt : std_logic_vector(3 downto 0) := "1000";
 	signal en : std_logic := '0';
@@ -87,7 +97,7 @@ begin
 	U_FONT: rom_font
    port map (
 		address => rom_addr,
-      clock   => CLK,
+      clock   => CLK2,
       q       => font_word
    );
 	 
@@ -124,10 +134,40 @@ begin
 	RGB_O <= "000111000" when en = '1' and pixel = '1' else RGB_I;
 
 	-- display messages for changed sensors
-	process (CLK, BLINK, cnt, TURBO, SCANDOUBLER_EN, MODE60, ROM_BANK, last_turbo, last_scandoubler_en, last_mode60, last_rom_bank)
+	process (CLK, BLINK, cnt, KB_WAIT, KB_MODE, TURBO, SCANDOUBLER_EN, MODE60, ROM_BANK, last_kb_wait, last_kb_mode, kb_mode_init, last_turbo, last_scandoubler_en, last_mode60, last_rom_bank)
 	begin 
 		if rising_edge(CLK) then 
+		
+			if CLK2 = '1' then
 
+			-- wait switch
+			if (KB_WAIT /= last_kb_wait) then
+				last_kb_wait <= KB_WAIT;
+				cnt <= "0000";
+				line1 <= message_pause;
+				if (kb_wait = '0') then 
+					line2 <= message_off;
+				else 
+					line2 <= message_on;
+				end if;
+			end if;
+			
+			-- keyboard mode switch
+			if (KB_MODE /= last_kb_mode) then
+				last_kb_mode <= KB_MODE;
+				if (kb_mode_init = '1') then
+					cnt <= "0000";
+					line1 <= message_keyboard;
+					if (kb_mode = '0') then 
+						line2 <= message_spectrum;
+					else 
+						line2 <= message_profi;
+					end if;
+				else 
+					kb_mode_init <= '1';					
+				end if;
+			end if;
+			
 			-- turbo mode switch
 			if (TURBO /= last_turbo) then
 				last_turbo <= TURBO;
@@ -177,6 +217,8 @@ begin
 			last_blink <= BLINK;
 			if (BLINK = '1' and last_blink = '0' and cnt /= "1000") then 
 				cnt <= cnt + 1;
+			end if;
+			
 			end if;
 			
 		end if;

@@ -82,6 +82,36 @@ int capsed_keys_size = 0;
 
 SPISettings settingsA(8000000, MSBFIRST, SPI_MODE0); // SPI transmission settings
 
+
+void push_capsed_key(int key);
+void pop_capsed_key(int key);
+void process_capsed_key(int key, bool up);
+void fill_kbd_matrix(int sc);
+void send_macros(uint8_t pos);
+uint8_t get_matrix_byte(uint8_t pos);
+uint8_t get_joy_byte();
+void spi_send(uint8_t addr, uint8_t data);
+void transmit_keyboard_matrix();
+void transmit_joy_data();
+void transmit_mouse_data();
+void rtc_save();
+void rtc_send(uint8_t reg, uint8_t data);
+void rtc_send_time();
+void rtc_send_all();
+void process_in_cmd(uint8_t cmd, uint8_t data);
+void init_mouse();
+void do_reset();
+void do_full_reset();
+void do_magic();
+void clear_matrix(int clear_size);
+bool eeprom_restore_value(int addr, bool default_value);
+void eeprom_store_value(int addr, bool value);
+void eeprom_restore_values();
+void eeprom_store_values();
+void setup();
+void loop();
+
+
 void push_capsed_key(int key)
 {
   int i = 0;
@@ -686,6 +716,7 @@ void fill_kbd_matrix(int sc)
       if (is_up) {
         profi_mode = !profi_mode;
         eeprom_store_value(EEPROM_MODE_ADDRESS, profi_mode);
+        matrix[ZX_K_KBD_MODE] = profi_mode;
       }
       break;
 
@@ -892,14 +923,28 @@ void process_in_cmd(uint8_t cmd, uint8_t data)
       transmit_keyboard_matrix();
       rtc_send_all();
       do_reset();
-      Serial.println("done");
+      Serial.println(F("done"));
+      Serial.print(F("FPGA board revision is: "));
+      switch (data) {
+        case 0:
+          Serial.println(F("Rev.A with TDA1543 DAC"));
+        break;
+        case 1:
+          Serial.println(F("Rev.A with TDA1543A DAC"));
+        break;
+        case 2:
+          Serial.println(F("Rev.C"));
+        break;
+        default:
+          Serial.println(F("Unknown"));
+      }
   }
 
   if (cmd == CMD_RTC_INIT_REQ && !rtc_init_done) {
     Serial.print(F("RTC init request..."));
     rtc_init_done = true;
     rtc_send_all();
-    Serial.println("done");
+    Serial.println(F("done"));
   }
 
   if (cmd == CMD_LED_WRITE) {
@@ -1024,6 +1069,7 @@ void eeprom_restore_values()
   matrix[ZX_K_SW3] = is_sw3;
   matrix[ZX_K_SW4] = is_sw4;
   matrix[ZX_K_SW5] = is_sw5;
+  matrix[ZX_K_KBD_MODE] = profi_mode;
 }
 
 void eeprom_store_values()
@@ -1203,6 +1249,10 @@ void loop()
 
   // read time from rtc
   if (n - tr >= 500) {
+
+    if (!rtc.isRunning()) {
+      rtc.startClock();
+    }
 
     rtc_year = rtc.getYear();
     rtc_month = rtc.getMonth();

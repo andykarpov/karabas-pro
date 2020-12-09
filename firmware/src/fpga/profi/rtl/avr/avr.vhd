@@ -42,11 +42,15 @@ entity avr is
 	 LED1_OWR	: in std_logic := '0';
 	 LED2_OWR 	: in std_logic := '0';
 	 
+	 CFG 			: in std_logic_vector(7 downto 0);
+	 
 	 SOFT_SW1 	: out std_logic := '0';
 	 SOFT_SW2 	: out std_logic := '0';
 	 SOFT_SW3 	: out std_logic := '0';
 	 SOFT_SW4 	: out std_logic := '0';
 	 SOFT_SW5 	: out std_logic := '0';
+	 
+	 KB_MODE 	: out std_logic := '0';
 	 
 	 KB_SCANCODE: out std_logic_vector(9 downto 0);
 	 
@@ -181,7 +185,8 @@ begin
 									  SOFT_SW3 <= spi_do(1); -- soft switch 3
 									  SOFT_SW4 <= spi_do(2); -- soft switch 4
 									  SOFT_SW5 <= spi_do(3); -- soft switch 5
-									  -- 4,5,6,7 are reserver 
+									  KB_MODE <= spi_do(4); -- profi / standard kbd layout
+									  -- 5,6,7 are reserver 
 					-- mouse data
 					when X"0A" => mouse_x(7 downto 0) <= signed(spi_do(7 downto 0));
 					when X"0B" => mouse_y(7 downto 0) <= signed(spi_do(7 downto 0));
@@ -375,13 +380,13 @@ begin
 	);
 		
 	-- fifo handling / queue commands to avr side
-	process(CLK, CLKEN, N_RESET, INIT, RTC_WR_N, RTC_CS, last_queue_di, queue_wr_full, RTC_A, RTC_DI, cnt_led, LED1, LED2, LED1_OWR, LED2_OWR, queue_wr_req, queue_rd_empty)
+	process(CLK, CLKEN, N_RESET, INIT, CFG, RTC_WR_N, RTC_CS, last_queue_di, queue_wr_full, RTC_A, RTC_DI, cnt_led, LED1, LED2, LED1_OWR, LED2_OWR, queue_wr_req, queue_rd_empty)
 	begin
 		if CLK'event and CLK = '1' then
 			
 			if INIT = '1' then -- and last_queue_di /= x"FC00" then 
-				queue_di <= x"FD00";
-				last_queue_di <= x"FD00";
+				queue_di <= x"FD" & CFG;
+				last_queue_di <= x"FD" & CFG;
 				queue_wr_req <= '1';
 			elsif CLKEN = '0' and RTC_WR_N = '0' AND RTC_CS = '1' then -- and last_queue_di /= ("10" & RTC_A & RTC_DI) then 
 				-- push address and data into the FIFO queue to send via SPI
