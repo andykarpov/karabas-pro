@@ -476,7 +476,7 @@ end component;
 
 begin
 
--- PLL
+-- PLL1
 U1: entity work.altpll0
 port map (
 	inclk0			=> CLK_50MHZ,
@@ -488,10 +488,9 @@ port map (
 -- PLL2
 U2: entity work.altpll1
 port map (
-	inclk0			=> CLK_50MHZ,
+	inclk0			=> clk_24,
 	locked 			=> open,
-	c0 				=> open,
-	c1 				=> clk_8);
+	c0 				=> clk_8);
 		
 -- main clock selector
 U3: entity work.clk_ctrl
