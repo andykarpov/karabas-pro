@@ -18,6 +18,7 @@ entity turbosound is
 		I_M1_N		: in std_logic;
 		I_RESET_N	: in std_logic;
 		O_SEL		: out std_logic;
+		I_MODE 	: in std_logic;
 		-- ssg0
 		O_SSG0_DA	: out std_logic_vector(7 downto 0);
 		O_SSG0_AUDIO_A	: out std_logic_vector(7 downto 0);
@@ -48,10 +49,15 @@ port (
 	CHANNEL_A	: out std_logic_vector(7 downto 0);	-- PSG Output channel A
 	CHANNEL_B	: out std_logic_vector(7 downto 0);	-- PSG Output channel B
 	CHANNEL_C	: out std_logic_vector(7 downto 0);	-- PSG Output channel C
-	ACTIVE		: out std_logic_vector(5 downto 0);
 	SEL		: in std_logic;
-	A8		: in std_logic;
-	MODE		: in std_logic);
+	MODE		: in std_logic;
+	ACTIVE		: out std_logic_vector(5 downto 0);
+	A8			: in std_logic;
+	IOA_in	: in std_logic_vector(7 downto 0);
+	IOA_out : out std_logic_vector(7 downto 0);
+	IOB_in :  in std_logic_vector(7 downto 0);
+	IOB_out : out std_logic_vector(7 downto 0)
+);
 end component;
 	
 	
@@ -86,7 +92,12 @@ port map (
 	ACTIVE		=> open,
 	SEL		=> '0',
 	A8		=> not ssg,
-	MODE		=> '0');
+	MODE		=> I_MODE,
+	IOA_in => (others => '0'),
+	IOA_out => open,
+	IOB_in => (others => '0'),
+	IOB_out => open
+);
 	
 ssg1: ym2149
 port map (
@@ -103,6 +114,11 @@ port map (
 	ACTIVE		=> open,
 	SEL		=> '0',
 	A8		=> ssg,
-	MODE		=> '0');	
+	MODE		=> I_MODE,
+	IOA_in => (others => '0'),
+	IOA_out => open,
+	IOB_in => (others => '0'),
+	IOB_out => open	
+);	
 
 end rtl;	

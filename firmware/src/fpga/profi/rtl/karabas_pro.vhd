@@ -401,12 +401,8 @@ signal led2				: std_logic := '0';
 signal led1_overwrite: std_logic := '0';
 signal led2_overwrite: std_logic := '0';
 
--- avr soft switches (Menu+F1 .. Menu+F5)
-signal soft_sw1 		: std_logic := '0';
-signal soft_sw2 		: std_logic := '0';
-signal soft_sw3 		: std_logic := '0';
-signal soft_sw4 		: std_logic := '0';
-signal soft_sw5 		: std_logic := '0'; -- unused yet
+-- avr soft switches (Menu+F1 .. Menu+F8)
+signal soft_sw 		: std_logic_vector(1 to 8) := (others => '0');
 
 signal board_reset 	: std_logic := '0'; -- board reset on rombank switch
 
@@ -587,7 +583,7 @@ port map (
 	pFF_CS			=> vid_pff_cs, -- port FF select
 	ATTR_O 			=> vid_attr,  -- attribute register output
 	A 					=> vid_a_bus,	
-	MODE60			=> soft_sw2,
+	MODE60			=> soft_sw(2),
 	DS80 				=> ds80,
 	CS7E				=> cs_xx7e,
 	BUS_A 			=> cpu_a_bus(15 downto 8),
@@ -621,10 +617,12 @@ port map (
 	-- sensors
 	TURBO 			=> kb_turbo,
 	SCANDOUBLER_EN => vid_scandoubler_enable,
-	MODE60 			=> soft_sw2,
+	MODE60 			=> soft_sw(2),
 	ROM_BANK 		=> ext_rom_bank,
 	KB_MODE 			=> kb_mode,
-	KB_WAIT 			=> kb_wait
+	KB_WAIT 			=> kb_wait,
+	SSG_MODE 		=> soft_sw(8),
+	SSG_STEREO 		=> soft_sw(7)
 );
 
 -- Scandoubler	
@@ -700,6 +698,7 @@ port map (
 	I_M1_N			=> cpu_m1_n,
 	I_RESET_N		=> cpu_reset_n,
 	O_SEL				=> ssg_sel,
+	I_MODE 			=> soft_sw(8),
 	-- ssg0
 	O_SSG0_DA		=> ssg_cn0_bus,
 	O_SSG0_AUDIO_A	=> ssg_cn0_a,
@@ -780,11 +779,7 @@ port map (
 	 
 	 CFG 				=> board_revision,
 	 
-	 SOFT_SW1 		=> soft_sw1,
-	 SOFT_SW2		=> soft_sw2,
-	 SOFT_SW3 		=> soft_sw3,
-	 SOFT_SW4 		=> soft_sw4,
-	 SOFT_SW5 		=> soft_sw5,
+	 SOFT_SW 		=> soft_sw,
 	 
 	 KB_MODE 		=> kb_mode,
 	 
@@ -939,10 +934,10 @@ port map(
 	CLK => clk_bus,
 	CFG => board_revision,
 	SW3 => SW3,
-	SOFT_SW1 => soft_sw1,
-	SOFT_SW2 => soft_sw2,
-	SOFT_SW3 => soft_sw3,
-	SOFT_SW4 => soft_sw4,
+	SOFT_SW1 => soft_sw(1),
+	SOFT_SW2 => soft_sw(2),
+	SOFT_SW3 => soft_sw(3),
+	SOFT_SW4 => soft_sw(4),
 	
 	AUDIO_DAC_TYPE => audio_dac_type,
 	ROM_BANK => ext_rom_bank,
@@ -962,8 +957,9 @@ port map(
 --	DO => audio_r
 --);
 	
-audio_l <= mix_l;
-audio_r <= mix_r;
+-- swap audio channels
+audio_l <= mix_r;
+audio_r <= mix_l;
 	
 -------------------------------------------------------------------------------
 -- clocks
@@ -1274,21 +1270,39 @@ end process;
 -- Audio mixer
 
 speaker <= port_xxfe_reg(4);
+
 mix_l <= "0000000000000000" when loader_act = '1' or cpu_wait_n = '0' else 
-				("000" & speaker & "000000000000") + 
+				("000" & speaker & "000000000000") + -- ACB: L = A + C/2
 				("000"  & ssg_cn0_a &     "00000") + 
-				("000"  & ssg_cn0_b &     "00000") + 
+				("0000"  & ssg_cn0_c &     "0000") + 
 				("000"  & ssg_cn1_a &     "00000") + 
-				("000"  & ssg_cn1_b &     "00000") + 
+				("0000"  & ssg_cn1_c &     "0000") + 
+				("00" & covox_l & covox_l(7 downto 4) & "00") + 
+				("000"  & covox_fb &      "00000") + 
+				("000"  & saa_out_l  &    "00000") when soft_sw(7) = '0' else 
+				("000" & speaker & "000000000000") +  -- ABC: L = A + B/2
+				("000"  & ssg_cn0_a &     "00000") + 
+				("0000"  & ssg_cn0_b &     "0000") + 
+				("000"  & ssg_cn1_a &     "00000") + 
+				("0000"  & ssg_cn1_b &     "0000") + 
 				("00" & covox_l & covox_l(7 downto 4) & "00") + 
 				("000"  & covox_fb &      "00000") + 
 				("000"  & saa_out_l  &    "00000");
+				
 mix_r <= "0000000000000000" when loader_act = '1' or cpu_wait_n = '0' else 
-				("000" & speaker & "000000000000") + 
-				("000"  & ssg_cn0_c &     "00000") + 
+				("000" & speaker & "000000000000") + -- ACB: R = B + C/2
 				("000"  & ssg_cn0_b &     "00000") + 
-				("000"  & ssg_cn1_c &     "00000") + 
+				("0000"  & ssg_cn0_c &     "0000") + 
 				("000"  & ssg_cn1_b &     "00000") + 
+				("0000"  & ssg_cn1_c &     "0000") + 
+				("00" & covox_r & covox_r(7 downto 4) & "00") + 
+				("000"  & covox_fb &      "00000") + 
+				("000"  & saa_out_r &     "00000") when soft_sw(7) = '0' else
+				("000" & speaker & "000000000000") + -- ABC: R = C + B/2
+				("000"  & ssg_cn0_c &     "00000") + 
+				("0000"  & ssg_cn0_b &     "0000") + 
+				("000"  & ssg_cn1_c &     "00000") + 
+				("0000"  & ssg_cn1_b &     "0000") + 
 				("00" & covox_r & covox_r(7 downto 4) & "00") + 
 				("000"  & covox_fb &      "00000") + 
 				("000"  & saa_out_r &     "00000");

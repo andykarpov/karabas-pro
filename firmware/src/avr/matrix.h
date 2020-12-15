@@ -101,7 +101,9 @@
 
 #define ZX_K_KBD_MODE 60
 
-// free slots: 61,62,63
+#define ZX_K_SW6 61
+#define ZX_K_SW7 62
+#define ZX_K_SW8 63
 
 // Joystick signals
 #define ZX_JOY_FIRE 0
