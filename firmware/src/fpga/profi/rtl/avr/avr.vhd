@@ -44,11 +44,7 @@ entity avr is
 	 
 	 CFG 			: in std_logic_vector(7 downto 0);
 	 
-	 SOFT_SW1 	: out std_logic := '0';
-	 SOFT_SW2 	: out std_logic := '0';
-	 SOFT_SW3 	: out std_logic := '0';
-	 SOFT_SW4 	: out std_logic := '0';
-	 SOFT_SW5 	: out std_logic := '0';
+	 SOFT_SW 	: out std_logic_vector(1 to 8) := (others => '0');
 	 
 	 KB_MODE 	: out std_logic := '0';
 	 
@@ -175,18 +171,20 @@ begin
 									  MAGICK <= spi_do(3); -- magick signal 
 									  is_up <= spi_do(4); -- keyboard key is up
 									  WAIT_CPU <= spi_do(5); -- cpu wait signal 
-									  SOFT_SW1 <= spi_do(6); -- soft switch 1
-									  SOFT_SW2 <= spi_do(7); -- soft switch 2
+									  SOFT_SW(1) <= spi_do(6); -- soft switch 1
+									  SOFT_SW(2) <= spi_do(7); -- soft switch 2
 					-- keyboard scancode mixed vector
 					when X"07" => 
 									  scancode_tmp <= spi_do(7 downto 0);
 					when X"08" => 
 									  KB_SCANCODE <= is_up & spi_do(0) & scancode_tmp;
-									  SOFT_SW3 <= spi_do(1); -- soft switch 3
-									  SOFT_SW4 <= spi_do(2); -- soft switch 4
-									  SOFT_SW5 <= spi_do(3); -- soft switch 5
+									  SOFT_SW(3) <= spi_do(1); -- soft switch 3
+									  SOFT_SW(4) <= spi_do(2); -- soft switch 4
+									  SOFT_SW(5) <= spi_do(3); -- soft switch 5
 									  KB_MODE <= spi_do(4); -- profi / standard kbd layout
-									  -- 5,6,7 are reserver 
+									  SOFT_SW(6) <= spi_do(5); -- soft switch 6
+									  SOFT_SW(7) <= spi_do(6); -- soft switch 7
+									  SOFT_SW(8) <= spi_do(7); -- soft switch 8
 					-- mouse data
 					when X"0A" => mouse_x(7 downto 0) <= signed(spi_do(7 downto 0));
 					when X"0B" => mouse_y(7 downto 0) <= signed(spi_do(7 downto 0));

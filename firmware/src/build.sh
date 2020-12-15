@@ -1,5 +1,7 @@
 #!/bin/sh
 
+export PATH=/opt/altera/quartus/bin:$PATH
+
 echo "Building AVR sources"
 
 cd avr
