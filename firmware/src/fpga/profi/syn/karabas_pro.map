@@ -11,6 +11,6 @@ cfg_revC.hex		0x001F0000		0x001F0000
 
 Notes:
 
-- Data checksum for this conversion is 0x191E65A8
+- Data checksum for this conversion is 0x191B19AC
 
 - All the addresses in this file are byte addresses

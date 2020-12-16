@@ -622,7 +622,8 @@ port map (
 	KB_MODE 			=> kb_mode,
 	KB_WAIT 			=> kb_wait,
 	SSG_MODE 		=> soft_sw(8),
-	SSG_STEREO 		=> soft_sw(7)
+	SSG_STEREO 		=> soft_sw(7),
+	TURBO_FDC		=> soft_sw(5)
 );
 
 -- Scandoubler	
@@ -833,7 +834,7 @@ port map (
 	BUS_RWW			=> hdd_rww_n,
 	BUS_RWE			=> hdd_rwe_n,
 	BUS_CS3FX		=> hdd_cs3fx_n,
-	BUS_FDC_STEP	=>	PIN_119,
+	BUS_FDC_STEP	=>	PIN_119 and soft_sw(5),
 	BUS_CSFF			=> fdd_cs_pff_n,
 	BUS_FDC_NCS		=> fdd_cs_n
 
