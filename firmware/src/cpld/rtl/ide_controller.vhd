@@ -76,17 +76,18 @@ hdd_rwl_t <=rww; -- Selector Low byte Data bus Buffer Direction: 1 - to HDD bus,
 --hdd_iorqge<= profi_ebl;
 IDE_RESET_N <= NRESET;
 
+IDE_A <= BUS_A(10 downto 8);
+			
 process (CLK,BUS_A,BUS_WR_N,BUS_RD_N,cs1fx,cs3fx,rwe,wwe,wwc,rww,profi_ebl)
 begin
 	if CLK'event and CLK='1' then
 		if profi_ebl = '1' then	
-			IDE_A <= BUS_A(10 downto 8);
 			IDE_WR_N <=BUS_WR_N;
 			IDE_RD_N <=BUS_RD_N;
 			IDE_CS0_N <=cs1fx;
 			IDE_CS1_N <=cs3fx;
 		else
-			IDE_A <= (others => '1');
+--			IDE_A <= (others => '1');
 			IDE_WR_N <= '1';
 			IDE_RD_N <= '1';
 			IDE_CS0_N <= '1';
