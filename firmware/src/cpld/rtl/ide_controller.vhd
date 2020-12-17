@@ -40,7 +40,6 @@ architecture rtl of ide_controller is
 signal cs_hdd_wr	: std_logic;
 signal cs_hdd_rd	: std_logic;
 signal hdd_iorqge	: std_logic;
---signal profi_ebl	: std_logic;
 signal cs1fx		: std_logic;
 signal WD_reg_in	: std_logic_vector(15 downto 0);
 signal WD_reg_out	: std_logic_vector(15 downto 0);
@@ -49,34 +48,28 @@ begin
 
 -----------------HDD------------------
 	-- Profi
---wwc 	<='0' when BUS_WR_N='0' and BUS_A(7 downto 0)="11001011" and BUS_IORQ_N='0' and CPM='0' and dos='1' and rom14='1' else '1'; -- Write High byte from Data bus to "Write register"
---wwe 	<='0' when BUS_WR_N='0' and BUS_A(7 downto 0)="11101011" and BUS_IORQ_N='0' and CPM='0' and dos='1' and rom14='1' else '1'; -- Read High byte from "Write register" to HDD bus
---rww 	<='0' when BUS_WR_N='1' and BUS_A(7 downto 0)="11001011" and BUS_IORQ_N='0' and CPM='0' and dos='1' and rom14='1' else '1'; -- Selector Low byte Data bus Buffer Direction: 1 - to HDD bus, 0 - to Data bus
---rwe 	<='0' when BUS_WR_N='1' and BUS_A(7 downto 0)="11101011" and BUS_IORQ_N='0' and CPM='0' and dos='1' and rom14='1' else '1'; -- Read High byte from "Read register" to Data bus
---cs3fx <='0' when BUS_WR_N='0' and BUS_A(7 downto 0)="10101011" and BUS_IORQ_N='0' and CPM='0' and dos='1' and rom14='1' else '1';
 cs1fx <= rww and wwe; -- Write High byte from HDD bus to "Read register"
 cs_hdd_wr <= cs3fx and wwe and wwc;
 cs_hdd_rd <= rww and rwe;
---profi_ebl <= cs_hdd_wr and cs_hdd_rd;
 
-process (CLK,BUS_A,BUS_WR_N,BUS_RD_N,cs1fx,cs3fx)
-begin
-	if CLK'event and CLK='1' then
-		if profi_ebl = '0' then	
+--process (CLK,BUS_A,BUS_WR_N,BUS_RD_N,cs1fx,cs3fx)
+--begin
+--	if CLK'event and CLK='1' then
+--		if profi_ebl = '0' then	
 			IDE_A <= BUS_A(2 downto 0);
 			IDE_WR_N <=BUS_WR_N;
 			IDE_RD_N <=BUS_RD_N;
 			IDE_CS0_N <=cs1fx;
 			IDE_CS1_N <=cs3fx;
-		else
-			IDE_A <= (others => '1');
-			IDE_WR_N <= '1';
-			IDE_RD_N <= '1';
-			IDE_CS0_N <= '1';
-			IDE_CS1_N <= '1';
-		end if;
-	end if;
-end process;
+--		else
+--			IDE_A <= (others => '1');
+--			IDE_WR_N <= '1';
+--			IDE_RD_N <= '1';
+--			IDE_CS0_N <= '1';
+--			IDE_CS1_N <= '1';
+--		end if;
+--	end if;
+--end process;
 
 process (IDE_D, BUS_DI, CLK,cs_hdd_wr,cs_hdd_rd) -- Write low byte Data bus and HDD bus to temp. registers
 begin
@@ -116,10 +109,10 @@ end process;
 
 IDE_D (15 downto 8) <= WD_reg_in (15 downto 8) when wwe='0' else "ZZZZZZZZ";
 
-BUS_DO <= wd_reg_out (7 downto 0) when rww='0' else --and cs_hdd_rd='0' else
+BUS_DO <= wd_reg_out (7 downto 0) when rww='0' else
 			wd_reg_out (15 downto 8) when rwe='0' else "11111111";
 	
-OE_N <= cs_hdd_rd; --'0' when (rww='0' and cs_hdd_rd='0') or rwe='0' else '1';
+OE_N <= cs_hdd_rd;
 
 IDE_RESET_N <= NRESET;
 
