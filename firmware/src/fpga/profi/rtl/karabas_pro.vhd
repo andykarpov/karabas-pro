@@ -243,6 +243,7 @@ signal RT_F1_2			:std_logic;
 signal RT_F1			:std_logic;
 signal P0				:std_logic;
 signal fdd_cs_n		:std_logic;
+signal turbo_bl		:std_logic;
 
 -- TurboSound
 signal ssg_sel			: std_logic;
@@ -410,6 +411,12 @@ signal board_reset 	: std_logic := '0'; -- board reset on rombank switch
 signal fdd_oe_n 		: std_logic := '1';
 signal hdd_oe_n 		: std_logic := '1';
 signal port_nreset 	: std_logic := '1';
+
+-- wait signal
+--signal WAIT_C			:std_logic_vector(3 downto 0);
+--signal WAIT_IO			:std_logic;
+--signal WAIT_EN			:std_logic;
+--signal WAIT_C_STOP	:std_logic;
 
 component saa1099
 port (
@@ -1028,7 +1035,30 @@ cpu_reset_n <= not(reset) and not(loader_reset); -- CPU reset
 cpu_inta_n <= cpu_iorq_n or cpu_m1_n;	-- INTA
 cpu_nmi_n <= '0' when kb_magic = '1' else '1'; -- NMI
 cpu_wait_n <= '0' when kb_wait = '1' else '1'; -- WAIT
+--cpu_wait_n <= not kb_wait and WAIT_IO; -- WAIT
 cpuclk <= clk_bus and ena_div8 when kb_turbo = '1' else clk_bus and ena_div4; -- 3.5 / 7 MHz
+
+-- odnovibrator - po spadu nIORQ otschityvaet 400ns WAIT proca
+-- dlja rabotosposobnosti periferii v turbe ili v rezhime 
+-- rasshirennogo jekrana pri podkljuchenii tret'ego kvarca XMHz
+
+--WAIT_IO <= WAIT_C(3) and WAIT_C(2) and WAIT_C(1);
+--WAIT_C_STOP <=WAIT_C(3) and WAIT_C(2) and WAIT_C(1) and not WAIT_C(0);
+--WAIT_EN <= reset or kb_turbo;
+--process (ena_div2, reset, cpu_iorq_n, WAIT_EN) 	
+--	begin					
+--		if WAIT_EN = '1' then	
+--			WAIT_C <= "1111";
+--        elsif ena_div2'event and ena_div2='0' then
+--			if cpu_iorq_n='1' then
+--				WAIT_C <= "1111"; --WAIT IORQ = 0
+--			elsif WAIT_C_STOP='0' then
+--				WAIT_C <= WAIT_C + "001"; --COUNT
+--			elsif WAIT_C_STOP='1' then
+--				WAIT_C <= WAIT_C; --STOP
+--			end if;
+--		end if;
+--	end process;
 
 -- HDD / SD access
 led1_overwrite <= '1';
@@ -1185,6 +1215,8 @@ RT_F1_2 <= '0' when cpu_a_bus(7)='0' and cpu_a_bus(1 downto 0)="11" and cpu_iorq
 RT_F1 <= RT_F1_1 and RT_F1_2;
 P0 <='0' when (cpu_a_bus(7)='1' and cpu_a_bus(4 downto 0)="00011" and cpu_iorq_n='0') and ((cpm='1' and rom14='1') or (dos_act='1' and rom14='0')) else '1';
 fdd_cs_n <= RT_F1 and P0;
+
+turbo_bl <= fdd_cs_pff_n and fdd_cs_n;
 
 ------------------VV55------------------------
 --RT_F5 <='0' when adress(7)='0' and adress(1 downto 0)="11" and iorq='0' and CPM='1' and dos='1' else '1';		-- CPM=0 & BAS=1 ПЗУ 128 1F-7F
@@ -1408,14 +1440,14 @@ selector <=
 	
 -- debug 
 --	PIN_141 <= cpu_int_n;
---	PIN_138 <= VGA_R(2);
+	PIN_138 <= cpu_wait_n;
 --	PIN_121 <= VGA_G(2);
---	PIN_120 <= VGA_B(2);
+	PIN_120 <= cpu_iorq_n;
 --	PIN_119 <= VGA_VS;
 --	PIN_115 <= VGA_HS;
 
-PIN_138 <= locked;
-PIN_120 <= clk_bus;
+--PIN_138 <= locked;
+--PIN_120 <= clk_bus;
 PIN_141 <= areset;
 	
 end rtl;
