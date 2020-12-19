@@ -190,7 +190,12 @@ begin
 					when X"0B" => mouse_y(7 downto 0) <= signed(spi_do(7 downto 0));
 					when X"0C" => mouse_z(3 downto 0) <= signed(spi_do(3 downto 0)); buttons(2 downto 0) <= spi_do(6 downto 4); newPacket <= spi_do(7);					
 					-- joy data
-					when X"0D" => joy(4 downto 0) <= spi_do(5 downto 2) & spi_do(0); -- right, left,  down, up, fire2, fire	
+					when X"0D" => joy(0) <= spi_do(5); -- right 
+									  joy(1) <= spi_do(4); -- left 
+									  joy(2) <= spi_do(3); -- down 
+									  joy(3) <= spi_do(2); -- up
+									  --        not(spi_do(1)); -- fire2
+									  joy(4) <= spi_do(0); -- fire	
 					-- rtc registers
 					when others => 
 							rtc_cmd <= spi_do(15 downto 8);
