@@ -14,7 +14,7 @@
 #include <RTC.h>
 #include <EEPROM.h>
 #include <Wire.h>
-#include <SPI.h>
+#include "DigitalIO.h"
 #include "config.h"
 #include "utils.h"
 
@@ -84,8 +84,8 @@ bool rtc_is_24h = true;
 int capsed_keys[20] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 int capsed_keys_size = 0;
 
-SPISettings settingsA(8000000, MSBFIRST, SPI_MODE0); // SPI transmission settings
-
+//SPISettings settingsA(8000000, MSBFIRST, SPI_MODE0); // SPI transmission settings
+SoftSPI<PIN_MISO, PIN_MOSI, PIN_SCK, 0> spi;
 
 void push_capsed_key(int key);
 void pop_capsed_key(int key);
@@ -861,12 +861,12 @@ uint8_t get_joy_byte()
 
 void spi_send(uint8_t addr, uint8_t data)
 {
-  SPI.beginTransaction(settingsA);
+  //SPI.beginTransaction(settingsA);
   digitalWrite(PIN_SS, LOW);
-  uint8_t cmd = SPI.transfer(addr); // command (1...6)
-  uint8_t res = SPI.transfer(data); // data byte
+  uint8_t cmd = spi.transfer(addr); // command (1...6)
+  uint8_t res = spi.transfer(data); // data byte
   digitalWrite(PIN_SS, HIGH);
-  SPI.endTransaction();
+  //SPI.endTransaction();
   if (cmd > 0) {
     process_in_cmd(cmd, res);
   }
@@ -1135,7 +1135,7 @@ void setup()
   Serial.begin(115200);
   Serial.flush();
   rtc.begin();
-  SPI.begin();
+  spi.begin();
 
   // set up fast ADC
   // Bit 7 - ADEN: ADC Enable

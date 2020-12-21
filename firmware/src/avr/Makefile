@@ -1,5 +1,5 @@
 BOARD_TAG    = uno
-ARDUINO_LIBS = EEPROM Wire SPI RTC
+ARDUINO_LIBS = EEPROM Wire RTC DigitalIO
 ARDMK_DIR    = /usr/share/arduino
 ARDUINO_DIR  = /opt/arduino
 ARDUINO_LIB_PATH = /home/andy/Documents/Projects/Arduino/libraries
