@@ -32,9 +32,9 @@
 #define PIN_JOY_UP 6
 #define PIN_JOY_DOWN 8
 #define PIN_JOY_LEFT 9
-#define PIN_JOY_RIGHT 10
+#define PIN_JOY_RIGHT A3 //10
 #define PIN_JOY_FIRE1 A0
-#define PIN_JOY_FIRE2 A3
+#define PIN_JOY_FIRE2 10 // A3
 
 #define RTC_ADDRESS 0xA0
 

@@ -24,6 +24,7 @@ static DS1307 rtc;
 
 bool matrix[ZX_MATRIX_FULL_SIZE]; // matrix of pressed keys + mouse reports to be transmitted on CPLD side by simple serial protocol
 bool joy[6]; // joystic states
+bool last_joy[6];
 bool profi_mode = true; // false = zx spectrum mode (switched by PrtSrc button in run-time)
 bool is_turbo = false; // turbo toggle (switched by ScrollLock button)
 bool is_sw1 = false; // SW1 state
@@ -1143,7 +1144,7 @@ void setup()
   // Bit 4 - ADIF: ADC Interrupt Flag
   // Bit 3 - ADIE: ADC Interrupt Enable
   // Bits 2:0 - ADPS[2:0]: ADC Prescaler Select Bits
-  ADCSRA = (ADCSRA & B11111000) | 4;
+  //ADCSRA = (ADCSRA & B11111000) | 4;
 
   pinMode(PIN_SS, OUTPUT);
   digitalWrite(PIN_SS, HIGH);
@@ -1237,10 +1238,39 @@ void loop()
       digitalWrite(PIN_LED1, HIGH);
     }
     fill_kbd_matrix(c);
+    Serial.print(F("Scancode:"));
+    Serial.println(c);
   }
 
   // transmit kbd always
   transmit_keyboard_matrix();
+
+  // read joystick
+  joy[ZX_JOY_UP] = digitalRead(PIN_JOY_UP) == LOW;
+  joy[ZX_JOY_DOWN] = digitalRead(PIN_JOY_DOWN) == LOW;
+  joy[ZX_JOY_LEFT] = digitalRead(PIN_JOY_LEFT) == LOW;
+  joy[ZX_JOY_RIGHT] = digitalRead(PIN_JOY_RIGHT) == LOW;
+  joy[ZX_JOY_FIRE] = digitalRead(PIN_JOY_FIRE1) == LOW;
+  joy[ZX_JOY_FIRE2] = digitalRead(PIN_JOY_FIRE2) == LOW;
+
+  if (joy[0] != last_joy[0] || joy[1] != last_joy[1] || joy[2] != last_joy[2] || joy[3] != last_joy[3] || joy[4] != last_joy[4] || joy[5] != last_joy[5]) {
+    last_joy[0] = joy[0];
+    last_joy[1] = joy[1];
+    last_joy[2] = joy[2];
+    last_joy[3] = joy[3];
+    last_joy[4] = joy[4];
+    last_joy[5] = joy[5];
+    Serial.print(F("Joystik:"));
+    Serial.print(F(" U:")); Serial.print(joy[ZX_JOY_UP]);
+    Serial.print(F(" D:")); Serial.print(joy[ZX_JOY_DOWN]);
+    Serial.print(F(" L:")); Serial.print(joy[ZX_JOY_LEFT]);
+    Serial.print(F(" R:")); Serial.print(joy[ZX_JOY_RIGHT]);
+    Serial.print(F(" F:")); Serial.print(joy[ZX_JOY_FIRE]);
+    Serial.print(F(" F2:")); Serial.println(joy[ZX_JOY_FIRE2]);
+  }
+
+  // transmit joy matrix
+  transmit_joy_data();
 
   // react on hardware buttons every 100ms
 #if USE_HW_BUTTONS
@@ -1266,36 +1296,11 @@ void loop()
   }
 #endif
 
-  // read joystick
-  joy[ZX_JOY_UP] = digitalRead(PIN_JOY_UP) == LOW;
-  joy[ZX_JOY_DOWN] = digitalRead(PIN_JOY_DOWN) == LOW;
-  joy[ZX_JOY_LEFT] = digitalRead(PIN_JOY_LEFT) == LOW;
-  joy[ZX_JOY_RIGHT] = digitalRead(PIN_JOY_RIGHT) == LOW;
-  joy[ZX_JOY_FIRE] = digitalRead(PIN_JOY_FIRE1) == LOW;
-  joy[ZX_JOY_FIRE2] = digitalRead(PIN_JOY_FIRE2) == LOW;
-
-  if (joy[0] || joy[1] || joy[2] || joy[3] || joy[4] || joy[5]) {
-    if (!led1_overwrite) {
-      digitalWrite(PIN_LED1, HIGH);
-    }
-    blink_state = true;
-    tl = n;
-  }
-
-  // transmit joy matrix
-  transmit_joy_data();
-
-  if (n - tl >= 200) {
-    if (!led1_overwrite) {
-      digitalWrite(PIN_LED1, LOW);
-    }
-    blink_state = false;
-  }
-
   // read time from rtc
   if (n - tr >= 500) {
 
     if (!rtc.isRunning()) {
+      Serial.println(F("RTC is not running. Staring it..."));
       rtc.startClock();
     }
 
@@ -1316,7 +1321,9 @@ void loop()
   // try to re-init mouse every 1s if not present, up to N tries
   if (mouse_tries > 0 && !mouse_present && n - tm > 1000) {
     mouse_tries--;
+    Serial.print(F("Mouse not present. Trying to init mouse: ")); Serial.println(mouse_tries);
     init_mouse();
+    Serial.print(F("Mouse present: ")); Serial.println(mouse_present);
     tm = n;
   }
 

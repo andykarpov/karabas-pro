@@ -1,9 +1,12 @@
-/* Version V1.0.2
+/* Version V1.0.5
   PS2KeyRaw.cpp - PS2KeyRaw library
   Copyright (c) 2007 Free Software Foundation.  All right reserved.
   Written by Paul Carpenter, PC Services <sales@pcserviceselectronics.co.uk>
+    Update Jan-2020 Paul Carpenter, Improve conditionals for other platform support
+
   Stripped down version of PS2Keyboard to get every key code byte from a PS2 
   Keyboard for testing purposes. Enables capture of all bytes see example.
+
   IMPORTANT WARNING
  
     If using a DUE or similar board with 3V3 I/O you MUST put a level translator 
@@ -11,10 +14,12 @@
     Bi-directional (signals transmitted from both ends on same wire).
  
     Failure to do so may damage your Arduino Due or similar board.
+
   Test History
     September 2014 Uno and Mega 2560 September 2014 using Arduino V1.6.0
     January 2016   Uno, Mega 2560 and Due using Arduino 1.6.7 and Due Board 
                     Manager V1.6.6
+
   Created September 2014 based, on PS2Keyboard which was
   Written by Christian Weichel <info@32leaves.net>
   ** Mostly rewritten Paul Stoffregen <paul@pjrc.com> 2010, 2011
@@ -27,10 +32,12 @@
   modify it under the terms of the GNU Lesser General Public
   License as published by the Free Software Foundation; either
   version 2.1 of the License, or (at your option) any later version.
+
   This library is distributed in the hope that it will be useful,
   but WITHOUT ANY WARRANTY; without even the implied warranty of
   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
   Lesser General Public License for more details.
+
   You should have received a copy of the GNU Lesser General Public
   License along with this library; if not, write to the Free Software
   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
@@ -52,18 +59,18 @@ uint8_t get_scan_code( );
 // Interrupt every falling incoming clock edge from keyboard
 void ps2interrupt( void )
 {
-  static uint8_t bitcount = 0;      // Main state variable and bit count
-  static uint8_t incoming;
+	static uint8_t bitcount = 0;      // Main state variable and bit count
+	static uint8_t incoming;
     static uint8_t parity;
-  static uint32_t prev_ms = 0;
-  uint32_t now_ms;
-  uint8_t val;
+	static uint32_t prev_ms = 0;
+	uint32_t now_ms;
+	uint8_t val;
 
-  val = digitalRead( PS2_DataPin );
-  now_ms = millis();
-  if( now_ms - prev_ms > 250 )
-    bitcount = 0;
-  prev_ms = now_ms;
+	val = digitalRead( PS2_DataPin );
+	now_ms = millis();
+	if( now_ms - prev_ms > 250 )
+	  bitcount = 0;
+	prev_ms = now_ms;
     bitcount++;         // Now point to next bit
     switch( bitcount )
        {
@@ -104,7 +111,8 @@ void ps2interrupt( void )
                     head = val;
                     }
                   }
-                // fall through to default
+                bitcount = 0;
+                break;
        default: // in case of weird error and end of byte reception re-sync
                 bitcount = 0;
       }
@@ -113,16 +121,16 @@ void ps2interrupt( void )
 
 uint8_t get_scan_code(void)
 {
-  uint8_t  i;
+	uint8_t  i;
 
-  i = tail;
-  if( i == head )     // check for empty buffer
+	i = tail;
+	if( i == head )     // check for empty buffer
       return 0;
-  i++;
-  if( i >= BUFFER_SIZE )
+	i++;
+	if( i >= BUFFER_SIZE )
       i = 0;
-  tail = i;
-  return buffer[ i ];
+	tail = i;
+	return buffer[ i ];
 }
 
 
@@ -130,9 +138,7 @@ int8_t PS2KeyRaw::available()
 {
 int8_t  i;
 
-if( tail == head )
-  return false;
-i = tail - head;
+i = head - tail;
 if( i < 0 )
   i += BUFFER_SIZE;
 return i;
@@ -179,4 +185,3 @@ tail = 0;
 // Setup interrupt handler
 attachInterrupt( digitalPinToInterrupt( irq_pin ), ps2interrupt, FALLING );
 }
-
