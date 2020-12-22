@@ -13,7 +13,10 @@
 #define PIN_MOUSE_CLK 3 // pin 26 (CLKM)
 #define PIN_MOUSE_DAT 5 // pin 25 (DATM)
 
-// 13,12,11 - hardware SPI
+// 13,12,11 - SPI
+#define PIN_SCK 13
+#define PIN_MISO 12
+#define PIN_MOSI 11
 #define PIN_SS 7 // SPI slave select
 
 // leds
@@ -32,9 +35,9 @@
 #define PIN_JOY_UP 6
 #define PIN_JOY_DOWN 8
 #define PIN_JOY_LEFT 9
-#define PIN_JOY_RIGHT A3 //10
+#define PIN_JOY_RIGHT 10
 #define PIN_JOY_FIRE1 A0
-#define PIN_JOY_FIRE2 10 // A3
+#define PIN_JOY_FIRE2 A3
 
 #define RTC_ADDRESS 0xA0
 
