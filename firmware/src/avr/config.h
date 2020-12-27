@@ -6,6 +6,8 @@
 
 #define USE_HW_BUTTONS 0
 
+#define MOUSE_POLL_INTERVAL 10 // ms
+
 // ---- Pins for Atmega328
 #define PIN_KBD_CLK 2 // pin 28 (CLKK)
 #define PIN_KBD_DAT 4 // pin 27 (DATK)

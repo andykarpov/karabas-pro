@@ -1327,8 +1327,8 @@ void loop()
     tm = n;
   }
 
-  // polling for mouse data every 100ms
-  if (mouse_present && n - t > 100) {
+  // polling for mouse data every 10ms
+  if (mouse_present && n - t > MOUSE_POLL_INTERVAL) {
 
     MouseData m = mouse.readData();
 
