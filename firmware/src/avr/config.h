@@ -7,6 +7,7 @@
 #define USE_HW_BUTTONS 0
 
 #define MOUSE_POLL_INTERVAL 10 // ms
+#define MOUSE_SWAP_INTERVAL 1000 // ms
 
 // ---- Pins for Atmega328
 #define PIN_KBD_CLK 2 // pin 28 (CLKK)
@@ -53,6 +54,7 @@
 #define EEPROM_SW6_ADDRESS 0x07
 #define EEPROM_SW7_ADDRESS 0x08
 #define EEPROM_SW8_ADDRESS 0x09
+#define EEPROM_MOUSE_SWAP_ADDRESS 0x0A
 
 #define EEPROM_RTC_OFFSET 0x10
 

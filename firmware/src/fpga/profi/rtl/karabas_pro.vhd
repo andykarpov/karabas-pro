@@ -1313,7 +1313,7 @@ begin
 		when x"07" => cpu_di_bus <= ssg_cn1_bus;
 		when x"08" => cpu_di_bus <= port_dffd_reg;
 		when x"09" => cpu_di_bus <= port_7ffd_reg;
-		when x"0A" => cpu_di_bus <= ms_z(3 downto 0) & '1' & not(ms_b(2)) & not(ms_b(0)) & not(ms_b(1));
+		when x"0A" => cpu_di_bus <= ms_z(3 downto 0) & '1' & not(ms_b(2)) & not(ms_b(0)) & not(ms_b(1)); -- D0=right, D1 = left, D2 = middle, D3 = fourth, D4..D7 - wheel
 		when x"0B" => cpu_di_bus <= ms_x;
 		when x"0C" => cpu_di_bus <= ms_y;
 		when x"0D" => cpu_di_bus <= ay_uart_do_bus;
