@@ -27,6 +27,10 @@ bool joy[6]; // joystic states
 bool last_joy[6];
 bool profi_mode = true; // false = zx spectrum mode (switched by PrtSrc button in run-time)
 bool is_turbo = false; // turbo toggle (switched by ScrollLock button)
+bool is_mouse_swap = false; // mouse buttons swap
+bool is_menu = false; // menu button pressed
+bool is_ctrl = false; // Ctrl button
+bool is_alt = false;  // Alt button
 bool is_sw1 = false; // SW1 state
 bool is_sw2 = false; // SW2 state
 bool is_sw3 = false; // SW3 state
@@ -47,6 +51,10 @@ bool led2_state = false;
 bool led1_overwrite = false;
 bool led2_overwrite = false;
 
+bool ms_btn1 = false;
+bool ms_btn2 = false;
+bool ms_btn3 = false;
+
 unsigned long t = 0;  // current time
 unsigned long tl1, tl2 = 0; // led1/2 time
 unsigned long tm = 0; // mouse poll time
@@ -54,6 +62,8 @@ unsigned long tl = 0; // blink poll time
 unsigned long tr = 0; // rtc poll time
 unsigned long te = 0; // eeprom store time
 unsigned long tb, tb1, tb2 = 0; // hw buttons poll time
+unsigned long ts = 0; // mouse swap time
+
 int mouse_tries = 2; // number of triers to init mouse
 
 uint8_t mouse_x = 0; // current mouse X
@@ -168,7 +178,7 @@ void fill_kbd_matrix(int sc)
 {
 
   static bool is_up = false, is_e = false, is_e1 = false;
-  static bool is_ctrl = false, is_alt = false, is_del = false, is_win = false, is_menu = false, is_bksp = false, is_shift = false, is_esc = false, is_ss_used = false;
+  static bool is_del = false, is_win = false, is_bksp = false, is_shift = false, is_esc = false, is_ss_used = false;
   static int scancode = 0;
 
   // is extended scancode prefix
@@ -1101,6 +1111,7 @@ void eeprom_restore_values()
   is_sw6 = eeprom_restore_value(EEPROM_SW6_ADDRESS, is_sw6);
   is_sw7 = eeprom_restore_value(EEPROM_SW7_ADDRESS, is_sw7);
   is_sw8 = eeprom_restore_value(EEPROM_SW8_ADDRESS, is_sw8);
+  is_mouse_swap = eeprom_restore_value(EEPROM_MOUSE_SWAP_ADDRESS, is_mouse_swap);
   
   // apply restored values
   matrix[ZX_K_TURBO] = is_turbo;
@@ -1127,6 +1138,7 @@ void eeprom_store_values()
   eeprom_store_value(EEPROM_SW6_ADDRESS, is_sw6);
   eeprom_store_value(EEPROM_SW7_ADDRESS, is_sw7);
   eeprom_store_value(EEPROM_SW8_ADDRESS, is_sw8);
+  eeprom_store_value(EEPROM_MOUSE_SWAP_ADDRESS, is_mouse_swap);
 }
 
 // initial setup
@@ -1327,8 +1339,8 @@ void loop()
     tm = n;
   }
 
-  // polling for mouse data every 100ms
-  if (mouse_present && n - t > 100) {
+  // polling for mouse data every 10ms
+  if (mouse_present && n - t > MOUSE_POLL_INTERVAL) {
 
     MouseData m = mouse.readData();
 
@@ -1337,18 +1349,34 @@ void loop()
     mouse_y = m.position.y;
     mouse_z = m.wheel;
 
-    bool btn1 = bitRead(m.status, 0);
-    bool btn2 = bitRead(m.status, 1);
-    bool btn3 = bitRead(m.status, 2);
-    bitWrite(mouse_z, 4, btn1);
-    bitWrite(mouse_z, 5, btn2);
-    bitWrite(mouse_z, 6, btn3);
+    ms_btn1 = bitRead(m.status, 0);
+    ms_btn2 = bitRead(m.status, 1);
+    ms_btn3 = bitRead(m.status, 2);
+    bitWrite(mouse_z, 4, is_mouse_swap ? ms_btn2 : ms_btn1); // left
+    bitWrite(mouse_z, 5, is_mouse_swap ? ms_btn1 : ms_btn2); // right
+    bitWrite(mouse_z, 6, ms_btn3); // middle
     bitWrite(mouse_z, 7, mouse_new_packet);
 
     // transmit mouse only if present, every 100ms
     transmit_mouse_data();
 
     t = n;
+  }
+
+  // swap mouse buttons
+  if (mouse_present && n - ts > MOUSE_SWAP_INTERVAL) {
+    if ((is_menu || (is_ctrl && is_alt)) && ms_btn1) {
+      is_mouse_swap = !is_mouse_swap;
+      eeprom_store_value(EEPROM_MOUSE_SWAP_ADDRESS, is_mouse_swap);
+      digitalWrite(PIN_LED1, HIGH);
+      delay(100);
+      digitalWrite(PIN_LED1, LOW);
+      delay(100);
+      digitalWrite(PIN_LED1, HIGH);
+      delay(100);
+      digitalWrite(PIN_LED1, LOW);      
+    }
+    ts = n;
   }
 
   // control led1
