@@ -130,14 +130,14 @@ begin
 
 	-- pixel 
 	bit_addr <= char_x(2 downto 0);
-   pixel <=  font_word(7) when bit_addr = "000" else 
-				 font_word(6) when bit_addr = "001" else 
-				 font_word(5) when bit_addr = "010" else 
-				 font_word(4) when bit_addr = "011" else 
-				 font_word(3) when bit_addr = "100" else 
-				 font_word(2) when bit_addr = "101" else 
-				 font_word(1) when bit_addr = "110" else 
-				 font_word(0) when bit_addr = "111";
+   pixel <=  font_word(0) when bit_addr = "000" else 
+				 font_word(7) when bit_addr = "001" else 
+				 font_word(6) when bit_addr = "010" else 
+				 font_word(5) when bit_addr = "011" else 
+				 font_word(4) when bit_addr = "100" else 
+				 font_word(3) when bit_addr = "101" else 
+				 font_word(2) when bit_addr = "110" else 
+				 font_word(1) when bit_addr = "111";
 
 	RGB_O <= "000111000" when en = '1' and pixel = '1' else RGB_I;
 
