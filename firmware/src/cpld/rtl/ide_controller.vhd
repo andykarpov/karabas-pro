@@ -53,10 +53,16 @@ cs_hdd_wr <= cs3fx and wwe and wwc;
 cs_hdd_rd <= rww and rwe;
 
 IDE_A <= BUS_A(2 downto 0);
-IDE_WR_N <=BUS_WR_N;
-IDE_RD_N <=BUS_RD_N;
-IDE_CS0_N <=cs1fx;
-IDE_CS1_N <=cs3fx;
+
+process (CLK,BUS_A,BUS_WR_N,BUS_RD_N,cs1fx,cs3fx)
+begin
+	if CLK'event and CLK='1' then
+		IDE_WR_N <=BUS_WR_N;
+		IDE_RD_N <=BUS_RD_N;
+		IDE_CS0_N <=cs1fx;
+		IDE_CS1_N <=cs3fx;
+	end if;
+end process;
 
 process (IDE_D, BUS_DI, CLK,cs_hdd_wr,cs_hdd_rd) -- Write low byte Data bus and HDD bus to temp. registers
 begin
