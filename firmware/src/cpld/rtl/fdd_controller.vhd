@@ -72,7 +72,7 @@ begin
 
 	f4 <= f(0); -- write pre-compensation freq
 	
-	process(f_sel, FDC_WF_DE, FDC_STEP, FDC_DRQ)
+	process(f_sel, FDC_WF_DE, FDC_STEP, FDC_DRQ, NRESET)
 	begin
 		if FDC_WF_DE = '0' or NRESET = '0' then
 			f_sel <= '0'; -- FDC clock (1Mc)				

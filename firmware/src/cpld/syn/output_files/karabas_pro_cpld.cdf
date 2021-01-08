@@ -5,8 +5,8 @@ JedecChain;
 
 	P ActionCode(Cfg)
 		Device PartName(EPM3128AT100) Path("D:/GitHub/karabas-pro/firmware/src/cpld/syn/output_files/") File("karabas_pro_cpld.pof") MfrSpec(OpMask(7));
-	P ActionCode(Cfg)
-		Device PartName(EP4CE6) Path("D:/GitHub/karabas-pro/firmware/src/fpga/profi/syn/") File("karabas_pro.jic") MfrSpec(OpMask(1) SEC_Device(EPCS16) Child_OpMask(1 7));
+	P ActionCode(Ign)
+		Device PartName(EP4CE6) MfrSpec(OpMask(0));
 
 ChainEnd;
 

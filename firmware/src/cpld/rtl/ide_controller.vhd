@@ -52,15 +52,22 @@ cs1fx <= rww and wwe; -- Write High byte from HDD bus to "Read register"
 cs_hdd_wr <= cs3fx and wwe and wwc;
 cs_hdd_rd <= rww and rwe;
 
-IDE_A <= BUS_A(2 downto 0);
+
 
 process (CLK,BUS_A,BUS_WR_N,BUS_RD_N,cs1fx,cs3fx)
 begin
-	if CLK'event and CLK='1' then
+	if NRESET = '0' then
+		IDE_WR_N <='1';
+		IDE_RD_N <='1';
+		IDE_CS0_N <='1';
+		IDE_CS1_N <='1';
+		IDE_A <= "ZZZ";
+	elsif CLK'event and CLK='1' then
 		IDE_WR_N <=BUS_WR_N;
 		IDE_RD_N <=BUS_RD_N;
 		IDE_CS0_N <=cs1fx;
 		IDE_CS1_N <=cs3fx;
+		IDE_A <= BUS_A(2 downto 0);
 	end if;
 end process;
 
