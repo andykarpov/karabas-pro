@@ -6,7 +6,7 @@
 
 #define USE_HW_BUTTONS 0
 
-#define MOUSE_POLL_INTERVAL 20 // ms
+#define MOUSE_POLL_INTERVAL 50 // ms
 #define MOUSE_SWAP_INTERVAL 1000 // ms
 
 // ---- Pins for Atmega328

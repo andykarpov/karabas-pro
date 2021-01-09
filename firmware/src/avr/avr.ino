@@ -1339,7 +1339,7 @@ void loop()
     tm = n;
   }
 
-  // polling for mouse data every 10ms
+  // polling for mouse data
   if (mouse_present && n - t > MOUSE_POLL_INTERVAL) {
 
     MouseData m = mouse.readData();
@@ -1357,7 +1357,6 @@ void loop()
     bitWrite(mouse_z, 6, ms_btn3); // middle
     bitWrite(mouse_z, 7, mouse_new_packet);
 
-    // transmit mouse only if present, every 100ms
     transmit_mouse_data();
 
     t = n;
