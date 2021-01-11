@@ -14,7 +14,7 @@ clean:
 
 version:
 	@echo "Build version: ${BUILD_VERSION}"
-	sed -i 's/FW_VER/${BUILD_VERSION}/g' ../rtl/video/osd.vhd
+	sed -i 's/FIRM_VER/${BUILD_VERSION}/g' ../rtl/video/osd.vhd
 
 unversion:
 	git checkout ../rtl/video/osd.vhd
