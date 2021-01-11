@@ -54,7 +54,7 @@ cs_hdd_rd <= rww and rwe;
 
 
 
-process (CLK,BUS_A,BUS_WR_N,BUS_RD_N,cs1fx,cs3fx)
+process (CLK,BUS_A,BUS_WR_N,BUS_RD_N,cs1fx,cs3fx,NRESET)
 begin
 	if NRESET = '0' then
 		IDE_WR_N <='1';
