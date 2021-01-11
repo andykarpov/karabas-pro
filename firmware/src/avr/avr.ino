@@ -769,13 +769,10 @@ void fill_kbd_matrix(int sc)
       }
       break;
 
-    // Scroll Lock -> Wait
+    // Scroll Lock -> Nothing
     case PS2_SCROLL:
-      if (is_up) {
-        is_wait = !is_wait;
-        matrix[ZX_K_WAIT] = is_wait;
-      }
-      break;
+      // TODO
+    break;
 
     // PrtScr -> Mode profi / zx
     case PS2_PSCR1:
@@ -786,7 +783,15 @@ void fill_kbd_matrix(int sc)
           matrix[ZX_K_KBD_MODE] = profi_mode;
         }
       }
-      break;
+    break;
+
+    // Pause -> Wait
+    case PS2_PAUSE:
+      if (is_up) {
+        is_wait = !is_wait;
+        matrix[ZX_K_WAIT] = is_wait;
+      }      
+    break;
 
       // TODO:
       // Windows L / Home -> SS+F
