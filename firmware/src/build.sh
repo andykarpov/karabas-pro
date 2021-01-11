@@ -25,8 +25,10 @@ echo "Building FPGA sources"
 cd fpga/profi/syn
 
 make clean
+make version
 make all
 make jic
+make unversion
 
 cp karabas_pro.jic ../../../../releases/profi/karabas_pro.jic
 cp karabas_pro_revA_tda1543.jic ../../../../releases/profi/karabas_pro_revA_tda1543.jic
