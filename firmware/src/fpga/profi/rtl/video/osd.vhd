@@ -14,6 +14,8 @@ entity osd is
 		VCNT_I	: in std_logic_vector(8 downto 0);
 		BLINK 	: in std_logic;
 		
+		LOADED 	: in std_logic;
+		
 		-- sensors
 		TURBO 			: in std_logic := '0';
 		SCANDOUBLER_EN : in std_logic := '0';
@@ -76,6 +78,8 @@ architecture rtl of osd is
 	constant message_ym_acb:	lcd_line_type  := "YM, ACB ";
 	constant message_ay_abc:	lcd_line_type  := "AY, ABC ";
 	constant message_ay_acb:	lcd_line_type  := "AY, ACB ";
+	constant message_karabas:  lcd_line_type  := "VERSION ";
+	constant message_pro:      lcd_line_type  := "${FWVER}";
 
 	-- displayable lines
 	signal line1 : lcd_line_type := message_empty;
@@ -89,7 +93,7 @@ architecture rtl of osd is
 	signal last_kb_wait : std_logic := '0';
 	signal last_ssg_mode : std_logic := '0';
 	signal last_ssg_stereo : std_logic := '0';
-	signal kb_mode_init : std_logic := '0';
+	signal last_loaded : std_logic := '0';
 	
 	signal cnt : std_logic_vector(3 downto 0) := "1000";
 	signal en : std_logic := '0';
@@ -142,28 +146,43 @@ begin
 	RGB_O <= "000111000" when en = '1' and pixel = '1' else RGB_I;
 
 	-- display messages for changed sensors
-	process (CLK, BLINK, cnt, KB_WAIT, KB_MODE, TURBO, SCANDOUBLER_EN, MODE60, ROM_BANK, SSG_MODE, SSG_STEREO, last_ssg_mode, last_ssg_stereo, last_kb_wait, last_kb_mode, kb_mode_init, last_turbo, last_scandoubler_en, last_mode60, last_rom_bank)
+	process (CLK, BLINK, cnt, KB_WAIT, KB_MODE, TURBO, SCANDOUBLER_EN, MODE60, ROM_BANK, SSG_MODE, SSG_STEREO, last_ssg_mode, last_ssg_stereo, last_kb_wait, last_kb_mode, LOADED, last_loaded, last_turbo, last_scandoubler_en, last_mode60, last_rom_bank)
 	begin 
 		if rising_edge(CLK) then 
 		
 			if CLK2 = '1' then
 
-			-- wait switch
-			if (KB_WAIT /= last_kb_wait) then
+			-- init signal from AVR
+			if (LOADED = '1' and last_loaded = '0') then
+				last_loaded <= '1';
 				last_kb_wait <= KB_WAIT;
-				cnt <= "0000";
-				line1 <= message_pause;
-				if (kb_wait = '0') then 
-					line2 <= message_off;
-				else 
-					line2 <= message_on;
-				end if;
-			end if;
-			
-			-- keyboard mode switch
-			if (KB_MODE /= last_kb_mode) then
 				last_kb_mode <= KB_MODE;
-				if (kb_mode_init = '1') then
+				last_turbo <= TURBO;
+				last_mode60 <= MODE60;
+				last_scandoubler_en <= SCANDOUBLER_EN;
+				last_rom_bank <= ROM_BANK;
+				last_ssg_mode <= SSG_MODE;
+				last_ssg_stereo <= SSG_STEREO;
+				cnt <= "0000";
+				line1 <= message_karabas;
+				line2 <= message_pro;
+			elsif (LOADED = '1') then
+			
+				-- wait switch
+				if (KB_WAIT /= last_kb_wait) then
+					last_kb_wait <= KB_WAIT;
+					cnt <= "0000";
+					line1 <= message_pause;
+					if (kb_wait = '0') then 
+						line2 <= message_off;
+					else 
+						line2 <= message_on;
+					end if;
+				end if;
+				
+				-- keyboard mode switch
+				if (KB_MODE /= last_kb_mode) then
+					last_kb_mode <= KB_MODE;
 					cnt <= "0000";
 					line1 <= message_keyboard;
 					if (kb_mode = '0') then 
@@ -171,70 +190,68 @@ begin
 					else 
 						line2 <= message_profi;
 					end if;
-				else 
-					kb_mode_init <= '1';					
 				end if;
-			end if;
-			
-			-- turbo mode switch
-			if (TURBO /= last_turbo) then
-				last_turbo <= TURBO;
-				cnt <= "0000";
-				line1 <= message_turbo;
-				if (turbo = '0') then 
-					line2 <= message_on;
-				else 
-					line2 <= message_off;
+				
+				-- turbo mode switch
+				if (TURBO /= last_turbo) then
+					last_turbo <= TURBO;
+					cnt <= "0000";
+					line1 <= message_turbo;
+					if (turbo = '0') then 
+						line2 <= message_on;
+					else 
+						line2 <= message_off;
+					end if;
 				end if;
-			end if;
-			
-			-- vga/rgb 50/60 hz switches
-			if (MODE60 /= last_mode60 or scandoubler_en /= last_scandoubler_en) then 
-				last_mode60 <= mode60;
-				last_scandoubler_en <= scandoubler_en;
-				cnt <= "0000";
-				if (scandoubler_en = '1') then 
-					line1 <= message_vga;
-				else 
-					line1 <= message_rgb;
+				
+				-- vga/rgb 50/60 hz switches
+				if (MODE60 /= last_mode60 or scandoubler_en /= last_scandoubler_en) then 
+					last_mode60 <= mode60;
+					last_scandoubler_en <= scandoubler_en;
+					cnt <= "0000";
+					if (scandoubler_en = '1') then 
+						line1 <= message_vga;
+					else 
+						line1 <= message_rgb;
+					end if;
+					if (mode60 = '1') then 
+						line2 <= message_60hz;
+					else 
+						line2 <= message_50hz;
+					end if;
 				end if;
-				if (mode60 = '1') then 
-					line2 <= message_60hz;
-				else 
-					line2 <= message_50hz;
+				
+				-- rombank switch
+				if (ROM_BANK /= last_rom_bank) then
+					last_rom_bank <= ROM_BANK;
+					cnt <= "0000";
+					line1 <= message_rombank;
+					if (ROM_BANK = "00") then 
+						line2 <= message_rombank0;
+					elsif (ROM_BANK = "01") then 
+						line2 <= message_rombank1;
+					elsif (ROM_BANK = "10") then 
+						line2 <= message_rombank2;
+					else 
+						line2 <= message_rombank3;
+					end if;
 				end if;
-			end if;
-			
-			-- rombank switch
-			if (ROM_BANK /= last_rom_bank) then
-				last_rom_bank <= ROM_BANK;
-				cnt <= "0000";
-				line1 <= message_rombank;
-				if (ROM_BANK = "00") then 
-					line2 <= message_rombank0;
-				elsif (ROM_BANK = "01") then 
-					line2 <= message_rombank1;
-				elsif (ROM_BANK = "10") then 
-					line2 <= message_rombank2;
-				else 
-					line2 <= message_rombank3;
-				end if;
-			end if;
-			
-			-- ssg mode switch
-			if (SSG_MODE /= last_ssg_mode or SSG_STEREO /= last_ssg_stereo) then
-				last_ssg_mode <= SSG_MODE;
-				last_ssg_stereo <= SSG_STEREO;
-				cnt <= "0000";
-				line1 <= message_ssgmode;
-				if (SSG_MODE = '0' and SSG_STEREO = '0') then 
-					line2 <= message_ym_acb;
-				elsif (SSG_MODE = '0' and SSG_STEREO = '1') then 
-					line2 <= message_ym_abc;
-				elsif (SSG_MODE = '1' and SSG_STEREO = '0') then 
-					line2 <= message_ay_acb;
-				else 
-					line2 <= message_ay_abc;
+				
+				-- ssg mode switch
+				if (SSG_MODE /= last_ssg_mode or SSG_STEREO /= last_ssg_stereo) then
+					last_ssg_mode <= SSG_MODE;
+					last_ssg_stereo <= SSG_STEREO;
+					cnt <= "0000";
+					line1 <= message_ssgmode;
+					if (SSG_MODE = '0' and SSG_STEREO = '0') then 
+						line2 <= message_ym_acb;
+					elsif (SSG_MODE = '0' and SSG_STEREO = '1') then 
+						line2 <= message_ym_abc;
+					elsif (SSG_MODE = '1' and SSG_STEREO = '0') then 
+						line2 <= message_ay_acb;
+					else 
+						line2 <= message_ay_abc;
+					end if;
 				end if;
 			end if;
 		

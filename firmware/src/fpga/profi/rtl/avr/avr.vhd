@@ -55,6 +55,8 @@ entity avr is
 	 MAGICK		: out std_logic := '0';
 	 WAIT_CPU 	: out std_logic := '0';
 	 
+	 LOADED 		: out std_logic := '0';
+	 
 	 JOY			: out std_logic_vector(4 downto 0) := "00000"
 	 
 	);
@@ -185,6 +187,7 @@ begin
 									  SOFT_SW(6) <= spi_do(5); -- soft switch 6
 									  SOFT_SW(7) <= spi_do(6); -- soft switch 7
 									  SOFT_SW(8) <= spi_do(7); -- soft switch 8
+									  LOADED <= '1'; -- loaded
 					-- mouse data
 					when X"0A" => mouse_x(7 downto 0) <= signed(spi_do(7 downto 0));
 					when X"0B" => mouse_y(7 downto 0) <= signed(spi_do(7 downto 0));

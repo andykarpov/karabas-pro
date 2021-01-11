@@ -5,11 +5,19 @@
 PROJECT = karabas_pro
 TOP_LEVEL_ENTITY = karabas_pro
 ASSIGNMENT_FILES = $(PROJECT).qpf $(PROJECT).qsf
+BUILD_VERSION = $$(date '+%y%m%d%H')
 
 all: smart.log $(PROJECT).asm.rpt $(PROJECT).sta.rpt
 
 clean:
 	rm -rf *.rpt *.chg smart.log *.htm *.eqn *.pin *.sof *.pof db incremental_db *.summary *.done *.smsg *.jdi *.jic *.map *.rbf
+
+version:
+	@echo "Build version: ${BUILD_VERSION}"
+	sed -i 's/FW_VER/${BUILD_VERSION}/g' ../rtl/video/osd.vhd
+
+unversion:
+	git checkout ../rtl/video/osd.vhd
 
 map: smart.log $(PROJECT).map.rpt
 fit: smart.log $(PROJECT).fit.rpt
