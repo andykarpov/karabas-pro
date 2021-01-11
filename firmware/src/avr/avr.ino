@@ -4,7 +4,7 @@
    Designed to build on Arduino IDE.
 
    @author Andy Karpov <andy.karpov@gmail.com>
-   Ukraine, 2020
+   Ukraine, 2021
 */
 
 #include "ps2.h"
@@ -14,7 +14,7 @@
 #include <RTC.h>
 #include <EEPROM.h>
 #include <Wire.h>
-#include "DigitalIO.h"
+#include <SPI.h>
 #include "config.h"
 #include "utils.h"
 
@@ -94,8 +94,7 @@ bool rtc_is_24h = true;
 int capsed_keys[20] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 int capsed_keys_size = 0;
 
-//SPISettings settingsA(8000000, MSBFIRST, SPI_MODE0); // SPI transmission settings
-SoftSPI<PIN_MISO, PIN_MOSI, PIN_SCK, 0> spi;
+SPISettings settingsA(8000000, MSBFIRST, SPI_MODE0); // SPI transmission settings
 
 void push_capsed_key(int key);
 void pop_capsed_key(int key);
@@ -871,12 +870,12 @@ uint8_t get_joy_byte()
 
 void spi_send(uint8_t addr, uint8_t data)
 {
-  //SPI.beginTransaction(settingsA);
+  SPI.beginTransaction(settingsA);
   digitalWrite(PIN_SS, LOW);
-  uint8_t cmd = spi.transfer(addr); // command (1...6)
-  uint8_t res = spi.transfer(data); // data byte
+  uint8_t cmd = SPI.transfer(addr); // command (1...6)
+  uint8_t res = SPI.transfer(data); // data byte
   digitalWrite(PIN_SS, HIGH);
-  //SPI.endTransaction();
+  SPI.endTransaction();
   if (cmd > 0) {
     process_in_cmd(cmd, res);
   }
@@ -1147,7 +1146,9 @@ void setup()
   Serial.begin(115200);
   Serial.flush();
   rtc.begin();
-  spi.begin();
+  pinMode(PIN_JOY_RIGHT, OUTPUT);
+  digitalWrite(PIN_JOY_RIGHT, LOW);
+  SPI.begin();
 
   // set up fast ADC
   // Bit 7 - ADEN: ADC Enable
@@ -1182,7 +1183,7 @@ void setup()
   pinMode(PIN_JOY_UP, INPUT_PULLUP);
   pinMode(PIN_JOY_DOWN, INPUT_PULLUP);
   pinMode(PIN_JOY_LEFT, INPUT_PULLUP);
-  pinMode(PIN_JOY_RIGHT, INPUT_PULLUP);
+//  pinMode(PIN_JOY_RIGHT, INPUT_PULLUP);
   pinMode(PIN_JOY_FIRE1, INPUT_PULLUP);
   pinMode(PIN_JOY_FIRE2, INPUT_PULLUP);
 
@@ -1258,12 +1259,19 @@ void loop()
   transmit_keyboard_matrix();
 
   // read joystick
+  // Due to conflict with the hardware SPI, we should stop the HW SPI and switch the joy_right as input before reading
+  // WARNING: a 100-500 Ohm resistor is required on the PIN_JOY_RIGHT line
+  SPI.end();
+  pinMode(PIN_JOY_RIGHT, INPUT_PULLUP);  
   joy[ZX_JOY_UP] = digitalRead(PIN_JOY_UP) == LOW;
   joy[ZX_JOY_DOWN] = digitalRead(PIN_JOY_DOWN) == LOW;
   joy[ZX_JOY_LEFT] = digitalRead(PIN_JOY_LEFT) == LOW;
   joy[ZX_JOY_RIGHT] = digitalRead(PIN_JOY_RIGHT) == LOW;
   joy[ZX_JOY_FIRE] = digitalRead(PIN_JOY_FIRE1) == LOW;
   joy[ZX_JOY_FIRE2] = digitalRead(PIN_JOY_FIRE2) == LOW;
+  pinMode(PIN_JOY_RIGHT, OUTPUT);
+  digitalWrite(PIN_JOY_RIGHT, LOW);
+  SPI.begin();
 
   if (joy[0] != last_joy[0] || joy[1] != last_joy[1] || joy[2] != last_joy[2] || joy[3] != last_joy[3] || joy[4] != last_joy[4] || joy[5] != last_joy[5]) {
     last_joy[0] = joy[0];
