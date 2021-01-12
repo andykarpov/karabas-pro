@@ -13,7 +13,6 @@ entity osd is
 		HCNT_I	: in std_logic_vector(9 downto 0);
 		VCNT_I	: in std_logic_vector(8 downto 0);
 		BLINK 	: in std_logic;
-		
 		LOADED 	: in std_logic;
 		
 		-- sensors
@@ -81,7 +80,7 @@ architecture rtl of osd is
 	constant message_ay_acb:	lcd_line_type  := "AY, ACB ";
 	constant message_turbo_fdc:lcd_line_type  := "TURBOFDC";
 	constant message_karabas:  lcd_line_type  := "VERSION ";
-	constant message_pro:      lcd_line_type  := "FIRM_VER";
+	constant message_pro:      lcd_line_type  := "21011212";
 
 	-- displayable lines
 	signal line1 : lcd_line_type := message_empty;
