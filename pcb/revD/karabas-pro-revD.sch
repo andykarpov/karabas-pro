@@ -181,12 +181,12 @@ $EndComp
 $Comp
 L Oscillator:SG-7050CAN X1
 U 1 1 5EAB6A81
-P 7600 5100
-F 0 "X1" H 7944 5146 50  0000 L CNN
-F 1 "SG-7050CAN" H 7944 5055 50  0000 L CNN
-F 2 "Oscillator:Oscillator_SMD_SeikoEpson_SG8002CA-4Pin_7.0x5.0mm" H 8300 4750 50  0001 C CNN
-F 3 "https://support.epson.biz/td/api/doc_check.php?dl=brief_SG7050CAN&lang=en" H 7500 5100 50  0001 C CNN
-	1    7600 5100
+P 7250 5100
+F 0 "X1" H 7350 5500 50  0000 L CNN
+F 1 "SG-7050CAN" H 7350 5400 50  0000 L CNN
+F 2 "Oscillator:Oscillator_SMD_SeikoEpson_SG8002CA-4Pin_7.0x5.0mm" H 7950 4750 50  0001 C CNN
+F 3 "https://support.epson.biz/td/api/doc_check.php?dl=brief_SG7050CAN&lang=en" H 7150 5100 50  0001 C CNN
+	1    7250 5100
 	1    0    0    -1  
 $EndComp
 $Comp
@@ -1525,17 +1525,15 @@ Entry Wire Line
 Entry Wire Line
 	8650 5100 8750 5000
 Wire Wire Line
-	7300 5100 6600 5100
+	6950 5100 6600 5100
 Wire Wire Line
-	6600 4700 7600 4700
+	6600 4700 7250 4700
 Wire Wire Line
-	7600 4700 7600 4800
+	7250 4700 7250 4800
 Wire Wire Line
-	7900 5100 8650 5100
+	6600 5500 7250 5500
 Wire Wire Line
-	6600 5500 7600 5500
-Wire Wire Line
-	7600 5500 7600 5400
+	7250 5500 7250 5400
 Text Label 6600 4700 0    50   ~ 0
 VCC3_3
 Text Label 6600 5100 0    50   ~ 0
@@ -3046,13 +3044,9 @@ Wire Wire Line
 Wire Wire Line
 	17500 5050 17500 5950
 Wire Wire Line
-	17400 5950 17400 5050
-Wire Wire Line
 	17300 5050 17300 5950
 Wire Wire Line
 	17200 5950 17200 5050
-Wire Wire Line
-	17100 5050 17100 5950
 Wire Wire Line
 	17000 5950 17000 5050
 Wire Wire Line
@@ -4594,8 +4588,6 @@ Wire Wire Line
 	12400 5250 11150 5250
 Wire Wire Line
 	11150 5350 12400 5350
-Wire Wire Line
-	12400 5450 11150 5450
 Wire Wire Line
 	11150 5550 12400 5550
 Text Label 11150 4850 0    50   ~ 0
@@ -8007,6 +7999,66 @@ F 3 "" H 5200 6700 50  0001 C CNN
 	1    5200 6700
 	-1   0    0    1   
 $EndComp
+$Comp
+L Device:R R63
+U 1 1 6012722D
+P 11900 5450
+F 0 "R63" V 11900 5450 50  0000 C CNN
+F 1 "100" V 11950 5250 50  0000 C CNN
+F 2 "Resistor_SMD:R_0805_2012Metric_Pad1.15x1.40mm_HandSolder" V 11830 5450 50  0001 C CNN
+F 3 "~" H 11900 5450 50  0001 C CNN
+	1    11900 5450
+	0    -1   -1   0   
+$EndComp
+Wire Wire Line
+	11150 5450 11750 5450
+Wire Wire Line
+	12050 5450 12400 5450
+$Comp
+L Device:R R77
+U 1 1 60543D6C
+P 7950 5100
+F 0 "R77" V 8157 5100 50  0000 C CNN
+F 1 "27" V 8066 5100 50  0000 C CNN
+F 2 "Resistor_SMD:R_0805_2012Metric_Pad1.15x1.40mm_HandSolder" V 7880 5100 50  0001 C CNN
+F 3 "~" H 7950 5100 50  0001 C CNN
+	1    7950 5100
+	0    -1   -1   0   
+$EndComp
+Wire Wire Line
+	7550 5100 7800 5100
+Wire Wire Line
+	8100 5100 8650 5100
+$Comp
+L Device:R R79
+U 1 1 6094B27A
+P 17400 5650
+F 0 "R79" V 17400 5650 50  0000 C CNN
+F 1 "27" V 17550 5650 50  0000 C CNN
+F 2 "Resistor_SMD:R_0805_2012Metric_Pad1.15x1.40mm_HandSolder" V 17330 5650 50  0001 C CNN
+F 3 "~" H 17400 5650 50  0001 C CNN
+	1    17400 5650
+	-1   0    0    1   
+$EndComp
+$Comp
+L Device:R R78
+U 1 1 6094BA15
+P 17100 5650
+F 0 "R78" V 17100 5650 50  0000 C CNN
+F 1 "27" V 17250 5650 50  0000 C CNN
+F 2 "Resistor_SMD:R_0805_2012Metric_Pad1.15x1.40mm_HandSolder" V 17030 5650 50  0001 C CNN
+F 3 "~" H 17100 5650 50  0001 C CNN
+	1    17100 5650
+	-1   0    0    1   
+$EndComp
+Wire Wire Line
+	17100 5950 17100 5800
+Wire Wire Line
+	17400 5950 17400 5800
+Wire Wire Line
+	17400 5500 17400 5050
+Wire Wire Line
+	17100 5500 17100 5050
 Wire Bus Line
 	4850 6350 5350 6350
 Wire Bus Line
