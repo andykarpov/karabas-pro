@@ -86,6 +86,7 @@
 #define PS2_L_WIN 0x11f
 #define PS2_R_WIN 0x127
 #define PS2_MENU  0x12f
+#define PS2_PAUSE 0x177
 
 
 // F1..F12

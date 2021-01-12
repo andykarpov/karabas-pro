@@ -158,6 +158,7 @@ signal kb_special 	: std_logic := '0';
 signal kb_turbo 		: std_logic := '0';
 signal kb_wait 		: std_logic := '0';
 signal kb_mode 		: std_logic := '1';
+signal kb_loaded 		: std_logic := '0';
 
 -- Joy
 signal joy_bus 		: std_logic_vector(4 downto 0) := "11111";
@@ -620,6 +621,8 @@ port map (
 	HCNT_I 			=> vid_hcnt,
 	VCNT_I 			=> vid_vcnt,
 	BLINK 			=> blink,
+
+	LOADED 			=> kb_loaded,
 	
 	-- sensors
 	TURBO 			=> kb_turbo,
@@ -797,6 +800,8 @@ port map (
 	 TURBO 			=> kb_turbo,
 	 MAGICK 			=> kb_magic,
 	 WAIT_CPU 		=> kb_wait,
+	 
+	 LOADED 			=> kb_loaded,
 	 
 	 JOY 				=> joy_bus
 );
@@ -1034,9 +1039,9 @@ reset <= areset or kb_reset or loader_reset or loader_act or board_reset; -- hot
 cpu_reset_n <= not(reset) and not(loader_reset); -- CPU reset
 cpu_inta_n <= cpu_iorq_n or cpu_m1_n;	-- INTA
 cpu_nmi_n <= '0' when kb_magic = '1' else '1'; -- NMI
-cpu_wait_n <= '0' when kb_wait = '1' else '1'; -- WAIT
---cpu_wait_n <= not kb_wait and WAIT_IO; -- WAIT
-cpuclk <= clk_bus and ena_div8 when kb_turbo = '1' else clk_bus and ena_div4; -- 3.5 / 7 MHz
+--cpu_wait_n <= '0' when kb_wait = '1' else '1'; -- WAIT
+cpu_wait_n <= '1';
+cpuclk <= '0' when kb_wait = '1' else clk_bus and ena_div8 when kb_turbo = '1' else clk_bus and ena_div4; -- 3.5 / 7 MHz
 
 -- odnovibrator - po spadu nIORQ otschityvaet 400ns WAIT proca
 -- dlja rabotosposobnosti periferii v turbe ili v rezhime 

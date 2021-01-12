@@ -4,7 +4,7 @@
    Designed to build on Arduino IDE.
 
    @author Andy Karpov <andy.karpov@gmail.com>
-   Ukraine, 2020
+   Ukraine, 2021
 */
 
 #include "ps2.h"
@@ -14,7 +14,7 @@
 #include <RTC.h>
 #include <EEPROM.h>
 #include <Wire.h>
-#include "DigitalIO.h"
+#include <SPI.h>
 #include "config.h"
 #include "utils.h"
 
@@ -94,8 +94,7 @@ bool rtc_is_24h = true;
 int capsed_keys[20] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 int capsed_keys_size = 0;
 
-//SPISettings settingsA(8000000, MSBFIRST, SPI_MODE0); // SPI transmission settings
-SoftSPI<PIN_MISO, PIN_MOSI, PIN_SCK, 0> spi;
+SPISettings settingsA(8000000, MSBFIRST, SPI_MODE0); // SPI transmission settings
 
 void push_capsed_key(int key);
 void pop_capsed_key(int key);
@@ -253,14 +252,16 @@ void fill_kbd_matrix(int sc)
 
     // Del -> P+b6 for Profi, SS+C for ZX
     case PS2_DELETE:
-      if (profi_mode) {
-        matrix[ZX_K_P] = !is_up;
-        matrix[ZX_K_BIT6] = !is_up;
-      } else {
-        matrix[ZX_K_SS] = !is_up;
-        matrix[ZX_K_C] =  !is_up;
+      if (!is_shift) {
+        if (profi_mode) {
+          matrix[ZX_K_P] = !is_up;
+          matrix[ZX_K_BIT6] = !is_up;
+        } else {
+          matrix[ZX_K_SS] = !is_up;
+          matrix[ZX_K_C] =  !is_up;
+        }
+        is_del = !is_up;
       }
-      is_del = !is_up;
       break;
 
     // Win
@@ -276,35 +277,45 @@ void fill_kbd_matrix(int sc)
 
     // Ins -> O+b6 for Profi, SS+A for ZX
     case PS2_INSERT:
-      if (profi_mode) {
-        matrix[ZX_K_O] = !is_up;
-        matrix[ZX_K_BIT6] = !is_up;
-      } else {
-        matrix[ZX_K_SS] = !is_up;
-        matrix[ZX_K_A] =  !is_up;
+      if (!is_shift) {
+        if (profi_mode) {
+          matrix[ZX_K_O] = !is_up;
+          matrix[ZX_K_BIT6] = !is_up;
+        } else {
+          matrix[ZX_K_SS] = !is_up;
+          matrix[ZX_K_A] =  !is_up;
+        }
       }
       break;
 
     // Cursor -> CS + 5,6,7,8
     case PS2_UP:
-      matrix[ZX_K_CS] = !is_up;
-      matrix[ZX_K_7] = !is_up;
-      process_capsed_key(scancode, is_up);
+      if (!is_shift) {
+        matrix[ZX_K_CS] = !is_up;
+        matrix[ZX_K_7] = !is_up;
+        process_capsed_key(scancode, is_up);
+      }
       break;
     case PS2_DOWN:
-      matrix[ZX_K_CS] = !is_up;
-      matrix[ZX_K_6] = !is_up;
-      process_capsed_key(scancode, is_up);
+      if (!is_shift) {
+        matrix[ZX_K_CS] = !is_up;
+        matrix[ZX_K_6] = !is_up;
+        process_capsed_key(scancode, is_up);
+      }
       break;
     case PS2_LEFT:
-      matrix[ZX_K_CS] = !is_up;
-      matrix[ZX_K_5] = !is_up;
-      process_capsed_key(scancode, is_up);
+      if (!is_shift) {
+        matrix[ZX_K_CS] = !is_up;
+        matrix[ZX_K_5] = !is_up;
+        process_capsed_key(scancode, is_up);
+      }
       break;
     case PS2_RIGHT:
-      matrix[ZX_K_CS] = !is_up;
-      matrix[ZX_K_8] = !is_up;
-      process_capsed_key(scancode, is_up);
+      if (!is_shift) {
+        matrix[ZX_K_CS] = !is_up;
+        matrix[ZX_K_8] = !is_up;
+        process_capsed_key(scancode, is_up);
+      }
       break;
 
     // ESC -> CS+1 for Profi, CS+SPACE for ZX
@@ -559,38 +570,46 @@ void fill_kbd_matrix(int sc)
 
     // PgUp -> M+BIT6 for Profi, CS+3 for ZX
     case PS2_PGUP:
-      if (profi_mode) {
-        matrix[ZX_K_M] = !is_up;
-        matrix[ZX_K_BIT6] = !is_up;
-      } else {
-        matrix[ZX_K_CS] = !is_up;
-        matrix[ZX_K_3] = !is_up;
-        process_capsed_key(scancode, is_up);
+      if (!is_shift) {
+        if (profi_mode) {
+          matrix[ZX_K_M] = !is_up;
+          matrix[ZX_K_BIT6] = !is_up;
+        } else {
+          matrix[ZX_K_CS] = !is_up;
+          matrix[ZX_K_3] = !is_up;
+          process_capsed_key(scancode, is_up);
+        }
       }
       break;
 
     // PgDn -> N+BIT6 for Profi, CS+4 for ZX
     case PS2_PGDN:
-      if (profi_mode) {
-        matrix[ZX_K_N] = !is_up;
-        matrix[ZX_K_BIT6] = !is_up;
-      } else {
-        matrix[ZX_K_CS] = !is_up;
-        matrix[ZX_K_4] = !is_up;
-        process_capsed_key(scancode, is_up);
+      if (!is_shift) {
+        if (profi_mode) {
+          matrix[ZX_K_N] = !is_up;
+          matrix[ZX_K_BIT6] = !is_up;
+        } else {
+          matrix[ZX_K_CS] = !is_up;
+          matrix[ZX_K_4] = !is_up;
+          process_capsed_key(scancode, is_up);
+        }
       }
       break;
 
     // Home -> K+BIT6 for Profi
     case PS2_HOME:
-      matrix[ZX_K_K] = !is_up;
-      matrix[ZX_K_BIT6] = !is_up;
+      if (!is_shift) {
+        matrix[ZX_K_K] = !is_up;
+        matrix[ZX_K_BIT6] = !is_up;
+      }
       break;
 
     // End -> L+BIT6 for Profi
     case PS2_END:
-      matrix[ZX_K_L] = !is_up;
-      matrix[ZX_K_BIT6] = !is_up;
+      if (!is_shift) {
+        matrix[ZX_K_L] = !is_up;
+        matrix[ZX_K_BIT6] = !is_up;
+      }
       break;
 
     // Fn keys
@@ -750,22 +769,29 @@ void fill_kbd_matrix(int sc)
       }
       break;
 
-    // Scroll Lock -> Wait
+    // Scroll Lock -> Nothing
     case PS2_SCROLL:
-      if (is_up) {
-        is_wait = !is_wait;
-        matrix[ZX_K_WAIT] = is_wait;
-      }
-      break;
+      // TODO
+    break;
 
     // PrtScr -> Mode profi / zx
     case PS2_PSCR1:
-      if (is_up) {
-        profi_mode = !profi_mode;
-        eeprom_store_value(EEPROM_MODE_ADDRESS, profi_mode);
-        matrix[ZX_K_KBD_MODE] = profi_mode;
+      if (!is_shift) {
+        if (is_up) {
+          profi_mode = !profi_mode;
+          eeprom_store_value(EEPROM_MODE_ADDRESS, profi_mode);
+          matrix[ZX_K_KBD_MODE] = profi_mode;
+        }
       }
-      break;
+    break;
+
+    // Pause -> Wait
+    case PS2_PAUSE:
+      if (is_up) {
+        is_wait = !is_wait;
+        matrix[ZX_K_WAIT] = is_wait;
+      }      
+    break;
 
       // TODO:
       // Windows L / Home -> SS+F
@@ -871,12 +897,12 @@ uint8_t get_joy_byte()
 
 void spi_send(uint8_t addr, uint8_t data)
 {
-  //SPI.beginTransaction(settingsA);
+  SPI.beginTransaction(settingsA);
   digitalWrite(PIN_SS, LOW);
-  uint8_t cmd = spi.transfer(addr); // command (1...6)
-  uint8_t res = spi.transfer(data); // data byte
+  uint8_t cmd = SPI.transfer(addr); // command (1...6)
+  uint8_t res = SPI.transfer(data); // data byte
   digitalWrite(PIN_SS, HIGH);
-  //SPI.endTransaction();
+  SPI.endTransaction();
   if (cmd > 0) {
     process_in_cmd(cmd, res);
   }
@@ -1147,7 +1173,9 @@ void setup()
   Serial.begin(115200);
   Serial.flush();
   rtc.begin();
-  spi.begin();
+  pinMode(PIN_JOY_RIGHT, OUTPUT);
+  digitalWrite(PIN_JOY_RIGHT, LOW);
+  SPI.begin();
 
   // set up fast ADC
   // Bit 7 - ADEN: ADC Enable
@@ -1182,7 +1210,7 @@ void setup()
   pinMode(PIN_JOY_UP, INPUT_PULLUP);
   pinMode(PIN_JOY_DOWN, INPUT_PULLUP);
   pinMode(PIN_JOY_LEFT, INPUT_PULLUP);
-  pinMode(PIN_JOY_RIGHT, INPUT_PULLUP);
+//  pinMode(PIN_JOY_RIGHT, INPUT_PULLUP);
   pinMode(PIN_JOY_FIRE1, INPUT_PULLUP);
   pinMode(PIN_JOY_FIRE2, INPUT_PULLUP);
 
@@ -1251,19 +1279,26 @@ void loop()
     }
     fill_kbd_matrix(c);
     Serial.print(F("Scancode:"));
-    Serial.println(c);
+    Serial.println(c, HEX);
   }
 
   // transmit kbd always
   transmit_keyboard_matrix();
 
   // read joystick
+  // Due to conflict with the hardware SPI, we should stop the HW SPI and switch the joy_right as input before reading
+  // WARNING: a 100-500 Ohm resistor is required on the PIN_JOY_RIGHT line
+  SPI.end();
+  pinMode(PIN_JOY_RIGHT, INPUT_PULLUP);  
   joy[ZX_JOY_UP] = digitalRead(PIN_JOY_UP) == LOW;
   joy[ZX_JOY_DOWN] = digitalRead(PIN_JOY_DOWN) == LOW;
   joy[ZX_JOY_LEFT] = digitalRead(PIN_JOY_LEFT) == LOW;
   joy[ZX_JOY_RIGHT] = digitalRead(PIN_JOY_RIGHT) == LOW;
   joy[ZX_JOY_FIRE] = digitalRead(PIN_JOY_FIRE1) == LOW;
   joy[ZX_JOY_FIRE2] = digitalRead(PIN_JOY_FIRE2) == LOW;
+  pinMode(PIN_JOY_RIGHT, OUTPUT);
+  digitalWrite(PIN_JOY_RIGHT, LOW);
+  SPI.begin();
 
   if (joy[0] != last_joy[0] || joy[1] != last_joy[1] || joy[2] != last_joy[2] || joy[3] != last_joy[3] || joy[4] != last_joy[4] || joy[5] != last_joy[5]) {
     last_joy[0] = joy[0];
