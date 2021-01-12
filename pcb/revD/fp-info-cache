@@ -1,4 +1,4 @@
-18509060238072307
+18512281191500307
 Battery
 BatteryHolder_Bulgin_BX0036_1xC
 Bulgin Battery Holder, BX0036, Battery Type C (https://www.bulgin.com/products/pub/media/bulgin/data/Battery_holders.pdf)
@@ -81130,6 +81130,13 @@ TRRS 3.5MM RIGHT ANGLE STEREO JACK - SMT
 4
 4
 footprints
+BAT_BS-7-BLUE
+
+
+0
+2
+2
+footprints
 CP_EIA-7343-31_Kemet-D-uni
 Tantalum Capacitor SMD Kemet-D (7343-31 Metric), IPC_7351 nominal, (Body size from: http://www.kemet.com/Lists/ProductCatalog/Attachments/253/KEM_TC101_STD.pdf), generated with kicad-footprint-generator
 capacitor tantalum
@@ -81325,6 +81332,13 @@ resistor
 0
 2
 2
+footprints
+SD_TE_2041021-mod
+SD card connector, top mount, SMT (http://www.te.com/commerce/DocumentDelivery/DDEController?Action=showdoc&DocId=Customer+Drawing%7F2041021%7FB%7Fpdf%7FEnglish%7FENG_CD_2041021_B_C_2041021_B.pdf%7F2041021-4)
+sd card
+0
+15
+13
 footprints
 SG053-SZ
 

@@ -451,43 +451,6 @@ X Pin_9 9 -200 400 150 R 50 50 1 1 P
 ENDDRAW
 ENDDEF
 #
-# Connector_Generic_Shielded_Conn_02x05_Odd_Even_Shielded
-#
-DEF Connector_Generic_Shielded_Conn_02x05_Odd_Even_Shielded J 0 40 Y N 1 F N
-F0 "J" 60 290 50 H V C CNN
-F1 "Connector_Generic_Shielded_Conn_02x05_Odd_Even_Shielded" 90 -290 50 H V L CNN
-F2 "" 0 0 50 H I C CNN
-F3 "" 0 0 50 H I C CNN
-$FPLIST
- Connector*:*_2x??-1SH*
-$ENDFPLIST
-DRAW
-S -50 250 150 -250 1 1 6 N
-S -40 -195 10 -205 1 1 6 N
-S -40 -95 10 -105 1 1 6 N
-S -40 5 10 -5 1 1 6 N
-S -40 105 10 95 1 1 6 N
-S -40 205 10 195 1 1 6 N
-S -40 240 140 -240 1 1 10 f
-S 140 -195 90 -205 1 1 6 N
-S 140 -95 90 -105 1 1 6 N
-S 140 5 90 -5 1 1 6 N
-S 140 105 90 95 1 1 6 N
-S 140 205 90 195 1 1 6 N
-X Pin_1 1 -200 200 160 R 50 50 1 1 P
-X Pin_10 10 300 -200 160 L 50 50 1 1 P
-X Pin_2 2 300 200 160 L 50 50 1 1 P
-X Pin_3 3 -200 100 160 R 50 50 1 1 P
-X Pin_4 4 300 100 160 L 50 50 1 1 P
-X Pin_5 5 -200 0 160 R 50 50 1 1 P
-X Pin_6 6 300 0 160 L 50 50 1 1 P
-X Pin_7 7 -200 -100 160 R 50 50 1 1 P
-X Pin_8 8 300 -100 160 L 50 50 1 1 P
-X Pin_9 9 -200 -200 160 R 50 50 1 1 P
-X Shield SH 50 -400 150 U 50 50 1 1 P
-ENDDRAW
-ENDDEF
-#
 # Connector_SD_Card
 #
 DEF Connector_SD_Card J 0 40 Y Y 1 F N
