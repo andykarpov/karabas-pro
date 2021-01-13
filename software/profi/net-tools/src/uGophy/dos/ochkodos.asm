@@ -90,12 +90,9 @@ fclose:
     ret
 
 error:
-    ld a, 1 : out (#fe), a 
-    ld a, 2 : out (#fe), a
-    ld a, 3 : out (#fe), a 
-    ld a, 4 : out (#fe), a
+    ld hl, .msg : call putStringZ
     jr error
-
+.msg db "Can't init SD Card or FAT!",13,"Computer halted!",0
 
 
 ffs			defs	FATFS_SIZE

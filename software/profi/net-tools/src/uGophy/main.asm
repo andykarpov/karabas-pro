@@ -25,10 +25,11 @@ begin:
     res 4, (iy+1)
     xor a : out (#fe), a : call changeBank
     ld sp, $ ; We don't care about anything before
-    
+    call renderHeader
+
     call Dos.init
     ld de, work_dir : call Dos.cwd
-    or a : jp nz, Dos.error
+    or a : jp nz, .dirError
 
     ; Read player from disk
     ld l, Dos.FA_READ, bc, player_name : call Dos.fopen
@@ -38,8 +39,6 @@ begin:
     xor a : ld (#5c6a), a  ; Thank you, Mario Prato, for feedback
     ei
 
-    call renderHeader
-
     call initWifi
     
     call wSec
@@ -47,8 +46,11 @@ begin:
     ld de, path : ld hl, server : ld bc, port : call openPage
 
     jp showPage
+.dirError
+    ld hl, .err : call putStringZ
+    jr $
 
-
+.err db "Can't enter 'wifi' directory",13,"Computer halted",0
 wSec: ei : ld b, 50
 wsLp  halt : djnz wsLp
     include "screen64.asm"
