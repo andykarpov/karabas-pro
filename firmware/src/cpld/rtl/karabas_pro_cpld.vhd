@@ -63,8 +63,6 @@ signal ide_oe_n : std_logic := '1';
 signal fdd_oe_n : std_logic := '1';
 signal fdd_bus_do : std_logic_vector(7 downto 0);
 signal ide_bus_do : std_logic_vector(7 downto 0);
---signal clk_x2 : std_logic := '0';
---signal clk_x4 : std_logic := '0';
 
 begin 
 
@@ -74,43 +72,18 @@ begin
 	process (CLK, SA)
 	begin 
 		if falling_edge(CLK) then
-		--if clk_bus = '0' then
-		case SA is 
-			when "00" => 
-				rx_buf <= SD(7 downto 0); -- rx
-			when "01" => 
-				bus_a(15 downto 8) <= rx_buf;
-				bus_a(7 downto 0) <= SD(7 downto 0);
-			when "10" =>
-				bus_di <= SD(7 downto 0);
---			when "11" =>
---				bus_rd_n <= SD(7); -- rx
---				bus_wr_n <= SD(6);
---				bus_mreq_n <= SD(5);
---				bus_iorq_n <= SD(4);
---				bus_m1_n <= SD(3);
---				bus_cpm <= not SD(2);
---				bus_dos <= not SD(1);
---				bus_rom14 <= SD(0);
-			when others => null;
-		end case;
-		--end if;
+			case SA is 
+				when "00" => 
+					rx_buf <= SD(7 downto 0); -- rx
+				when "01" => 
+					bus_a(15 downto 8) <= rx_buf;
+					bus_a(7 downto 0) <= SD(7 downto 0);
+				when "10" =>
+					bus_di <= SD(7 downto 0);
+				when others => null;
+			end case;
 		end if;
 	end process;
---
---	process (CLK, CLK_x2)
---	begin 
---		if rising_edge(CLK) then
---			CLK_x2 <= not CLK_x2;
---		end if;
---	end process;
---	
---	process (CLK_x4, CLK_x2)
---	begin 
---		if rising_edge(CLK_x2) then
---			CLK_x4 <= not CLK_x4;
---		end if;
---	end process;
 	
 	U1: entity work.ide_controller 
 	port map (

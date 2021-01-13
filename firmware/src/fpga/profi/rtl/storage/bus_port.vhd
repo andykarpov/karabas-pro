@@ -43,7 +43,7 @@ architecture RTL of bus_port is
 signal cnt			: std_logic_vector(1 downto 0) := "00";
 signal bus_a_reg	: std_logic_vector(15 downto 0);
 signal bus_d_reg	: std_logic_vector(7 downto 0);
-signal bus_s_reg	: std_logic_vector(7 downto 0);
+signal bus_s_reg	: std_logic_vector(7 downto 0) := "11111111";
 
 begin
 	
@@ -54,18 +54,26 @@ begin
 	SA <= cnt;	
 	BUS_DO <= SD(15 downto 8);
 
-	process (CLK, cnt, CLK_BUS)
+	process (CLK_BUS, cnt, BUS_HDD_CS_N, BUS_FDC_NCS, BUS_CSFF, BUS_CS3FX, BUS_RWE, BUS_RWW, BUS_WWE, BUS_WWC, BUS_FDC_STEP, BUS_RD_N, BUS_WR_N, bus_a, bus_di)
 	begin 
-		if (rising_edge(CLK)) then 
-			if (clk_cpu = '0') then --11
-				bus_a_reg(15 downto 8) <= BUS_HDD_CS_N & BUS_FDC_NCS & BUS_CSFF & BUS_CS3FX & BUS_RWE & BUS_RWW & BUS_WWE & BUS_WWC;
-				bus_a_reg(7 downto 0) <= BUS_FDC_STEP & BUS_RD_N & BUS_WR_N & bus_a;
+		if (falling_edge(CLK_BUS)) then 
+				bus_a_reg <= BUS_HDD_CS_N & BUS_FDC_NCS & BUS_CSFF & BUS_CS3FX & BUS_RWE & BUS_RWW & BUS_WWE & BUS_WWC & BUS_FDC_STEP & BUS_RD_N & BUS_WR_N & bus_a;
 				bus_d_reg <= bus_di;
 				bus_s_reg <= "11111111"; --BUS_RD_N & BUS_WR_N & BUS_MREQ_N & BUS_IORQ_N & BUS_M1_N & BUS_CPM & BUS_DOS & BUS_ROM14;
-			end if;
-			cnt <= cnt + 1;
 		end if;
 	end process;
+
+	--counter
+	process (CLK, cnt)
+	begin 
+		if (rising_edge(CLK)) then 
+			if cnt = "10" then
+				cnt <= "00";
+			else
+				cnt <= cnt + 1;
+			end if;
+		end if;
+	end process;	
 	
 	UMUX: entity work.bus_mux
 	port map(
