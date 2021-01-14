@@ -52,14 +52,20 @@ begin
 	SA <= cnt;	
 	BUS_DO <= SD(15 downto 8);
 
+	-- regs
+	process(CLK_CPU, BUS_A, BUS_DI, BUS_RD_N, BUS_WR_N, BUS_MREQ_N, BUS_IORQ_N, BUS_M1_N, BUS_CPM, BUS_DOS, BUS_ROM14)
+	begin
+		if (falling_edge(CLK_CPU)) then 
+			bus_a_reg <= bus_a;
+			bus_d_reg <= bus_di;
+			bus_s_reg <= BUS_RD_N & BUS_WR_N & BUS_MREQ_N & BUS_IORQ_N & BUS_M1_N & BUS_CPM & BUS_DOS & BUS_ROM14;
+		end if;
+	end process;
+
+	-- counter
 	process (CLK, cnt, CLK_BUS)
 	begin 
 		if (rising_edge(CLK)) then 
-			if (clk_cpu = '0') then --11
-				bus_a_reg <= bus_a;
-				bus_d_reg <= bus_di;
-				bus_s_reg <= BUS_RD_N & BUS_WR_N & BUS_MREQ_N & BUS_IORQ_N & BUS_M1_N & BUS_CPM & BUS_DOS & BUS_ROM14;
-			end if;
 			cnt <= cnt + 1;
 		end if;
 	end process;
