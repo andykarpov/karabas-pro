@@ -26,11 +26,14 @@ begin:
     xor a : out (#fe), a : call changeBank
     ld sp, $ ; We don't care about anything before
     call renderHeader
+    
+    ld hl, init1 : call putStringZ
 
     call Dos.init
     ld de, work_dir : call Dos.cwd
     or a : jp nz, .dirError
 
+    ld hl, init2 : call putStringZ
     ; Read player from disk
     ld l, Dos.FA_READ, bc, player_name : call Dos.fopen
     ld bc, #4000, de, 3061 : call Dos.fread
@@ -39,6 +42,7 @@ begin:
     xor a : ld (#5c6a), a  ; Thank you, Mario Prato, for feedback
     ei
 
+    ld hl, init3 : call putStringZ
     call initWifi
     
     call wSec
@@ -51,6 +55,11 @@ begin:
     jr $
 
 .err db "Can't enter 'wifi' directory",13,"Computer halted",0
+
+init1 db "Initing sd card", 13, 0
+init2 db "Loading PT3 player", 13, 0
+init3 db "Initing Wifi module", 13, 0
+
 wSec: ei : ld b, 50
 wsLp  halt : djnz wsLp
     include "screen64.asm"
