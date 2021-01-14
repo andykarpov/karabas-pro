@@ -46,10 +46,11 @@ use IEEE.numeric_std.all;
 
 entity karabas_pro is
 	generic (
-		enable_ay_uart 	 : boolean := false;
-		enable_zxuno_uart  : boolean := true;
-		enable_saa1099 	 : boolean := false;
-		enable_diag_rom	 : boolean := false -- Retroleum diagrom (blockram based)
+		enable_ay_uart 	   : boolean := false;
+		enable_zxuno_uart    : boolean := true;
+		enable_esp866_bridge : boolean := false;
+		enable_saa1099 	   : boolean := false;
+		enable_diag_rom	   : boolean := false -- Retroleum diagrom (blockram based)
 	);
 port (
 	-- Clock (50MHz)
@@ -912,6 +913,13 @@ port map(
 );	
 end generate G_UNO_UART;
 
+-- ESP8266 UART bridge on pin header
+G_ESP8266_BRIDGE: if enable_esp866_bridge generate
+	UART_TX <= PIN_141;
+	PIN_121 <= UART_RX;
+	UART_CTS <= PIN_138;
+end generate G_ESP8266_BRIDGE;
+
 -- board features
 U22: entity work.board 
 port map(
@@ -1366,8 +1374,8 @@ selector <=
 --	PIN_119 <= VGA_VS;
 --	PIN_115 <= VGA_HS;
 
-PIN_138 <= locked;
-PIN_120 <= clk_bus;
-PIN_141 <= areset;
+-- PIN_138 <= locked;
+-- PIN_120 <= clk_bus;
+-- PIN_141 <= areset;
 	
 end rtl;
