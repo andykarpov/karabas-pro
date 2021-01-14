@@ -90,9 +90,11 @@ fclose:
     ret
 
 error:
+    add '0'
+    call putC
     ld hl, .msg : call putStringZ
-    jr error
-.msg db "Can't init SD Card or FAT!",13,"Computer halted!",0
+    jr $
+.msg db " - can't init SD Card or FAT!",13,"Computer halted!",0
 
 
 ffs			defs	FATFS_SIZE
