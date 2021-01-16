@@ -149,12 +149,14 @@ signal port_dffd_reg : std_logic_vector(7 downto 0) := "00000000";
 signal port_xx7e_reg : std_logic_vector(7 downto 0) := "00000000";
 signal port_xx7e_a   : std_logic_vector(15 downto 8) := "00000000";
 signal port_xx7e_aprev   : std_logic_vector(15 downto 8) := "00000000";
-signal reg_8b			: std_logic_vector(7 downto 0) := "00000000";
+signal port_xx8b_reg	: std_logic_vector(7 downto 0) := "00000000";
 
 -------------8B_PORT------------------
+signal rom2				: std_logic;
+signal onrom			: std_logic;
+signal turbo_on		: std_logic;
 signal lock_dffd		: std_logic;
-signal block_rom		: std_logic;
-signal rom_oe			: std_logic;
+signal unlock_128		: std_logic;
 signal iorqge_8b		: std_logic;
 
 -- Keyboard
@@ -1182,21 +1184,20 @@ cs_8b <= cs_8b_1 and cs_8b_2;
 process(f14,reset,cs_8b,Data)
 begin
 	if reset='0' then
-		reg_8b <= "00000000";
+		port_xx8b_reg <= "00000000";
 	elsif f14'event and f14='1' then
 		if cs_8b='0' and wr='0' then
-			reg_8b <= Data;
+			port_xx8b_reg <= Data;
 		end if;
 	end if;
 end process;
 
-block_rom <= not reg_8b(1) or reg_dffd(4); -- ROM Change
-blok <= block_rom;
-cache_we	<= tr_dos_en;
-rom_oe <= pzu or rd or mrq_z or block_rom;
-cache_oe <= rom_oe;
-cpld_121 <=  not reg_8b(3); -- turbo on
-lock_dffd <= reg_8b(4) and not (cs_dffd or wr_z); -- lock_dffd bit
+																			-- 0 - Reserved
+rom2 <= not port_xx8b_reg(1) or port_dffd_reg(4); 			-- 1 - ROM Change
+onrom <= port_xx8b_reg(2);											-- 2 - Forced activation of the signal "DOS"
+turbo_on <=  port_xx8b_reg(3); 									-- 3 - Turbo on
+lock_dffd <= port_xx8b_reg(4);								 	-- 4 - Lock port DFFD
+unlock_128 <= port_xx8b_reg(5);									-- 5 - Unlock 128 ROM page for DOS 
 
 rom14 <= port_7ffd_reg(4); -- rom bank
 cpm 	<= port_dffd_reg(5); -- 1 - блокирует работу контроллера из ПЗУ TR-DOS и включает порты на доступ из ОЗУ (ROM14=0); При ROM14=1 - мод. доступ к расширен. периферии
