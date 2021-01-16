@@ -64,7 +64,7 @@ unsigned long te = 0; // eeprom store time
 unsigned long tb, tb1, tb2 = 0; // hw buttons poll time
 unsigned long ts = 0; // mouse swap time
 
-int mouse_tries = 2; // number of triers to init mouse
+int mouse_tries; // number of triers to init mouse
 
 uint8_t mouse_x = 0; // current mouse X
 uint8_t mouse_y = 0; // current mouse Y
@@ -1059,7 +1059,11 @@ void process_in_cmd(uint8_t cmd, uint8_t data)
 
 void init_mouse()
 {
+#if (MOUSE_POLL_TYPE == 1)
   mouse_present = mouse.initialize();
+#else 
+  mouse_present = mouse.streamInitialize();
+#endif
 }
 
 void do_reset()
@@ -1232,6 +1236,8 @@ void setup()
   kbd.begin(PIN_KBD_DAT, PIN_KBD_CLK);
   Serial.println("done");
 
+  mouse_tries = MOUSE_INIT_TRIES;
+
   Serial.print(F("Mouse init..."));
   init_mouse();
   Serial.println("done");
@@ -1375,6 +1381,7 @@ void loop()
   }
 
   // polling for mouse data
+  #if MOUSE_POLL_TYPE == 1
   if (mouse_present && n - t > MOUSE_POLL_INTERVAL) {
 
     MouseData m = mouse.readData();
@@ -1396,6 +1403,30 @@ void loop()
 
     t = n;
   }
+  #else
+  // mouse stream report read
+  if (mouse.reportAvailable() > 0 ) {
+    MouseData m = mouse.readReport();
+
+    //if ((bitRead(m.status, 3) == 1) and (bitRead(m.status, 6) == 0) and (bitRead(m.status,7)== 0)) {
+      mouse_new_packet = !mouse_new_packet;
+      mouse_x = m.position.x;
+      mouse_y = m.position.y;
+      mouse_z = m.wheel;
+  
+      ms_btn1 = bitRead(m.status, 0);
+      ms_btn2 = bitRead(m.status, 1);
+      ms_btn3 = bitRead(m.status, 2);
+      bitWrite(mouse_z, 4, is_mouse_swap ? ms_btn2 : ms_btn1); // left
+      bitWrite(mouse_z, 5, is_mouse_swap ? ms_btn1 : ms_btn2); // right
+      bitWrite(mouse_z, 6, ms_btn3); // middle
+      bitWrite(mouse_z, 7, mouse_new_packet);
+  
+      transmit_mouse_data();    
+    //}
+  }
+
+  #endif
 
   // swap mouse buttons
   if (mouse_present && n - ts > MOUSE_SWAP_INTERVAL) {
