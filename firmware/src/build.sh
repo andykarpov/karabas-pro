@@ -6,15 +6,33 @@ echo "Building AVR sources"
 
 cd avr
 
+# normal firmware
 make clean
-sed -i 's/USE_HW_BUTTONS 0/USE_HW_BUTTONS 1/g' config.h
+sed -i 's/USE_HW_BUTTONS 0/USE_HW_BUTTONS 1/g' config.h # with hw buttons
+set -i 's/MOUSE_POLL_TYPE 0/MOUSE_POLL_TYPE 1/g' config.h # mouse poll type : poll
 make
 cp build-uno/avr.hex ../../releases/profi/karabas_pro.hex
 
 make clean
-sed -i 's/USE_HW_BUTTONS 1/USE_HW_BUTTONS 0/g' config.h
+sed -i 's/USE_HW_BUTTONS 1/USE_HW_BUTTONS 0/g' config.h # without hw buttons
+set -i 's/MOUSE_POLL_TYPE 0/MOUSE_POLL_TYPE 1/g' config.h # mouse poll type : poll
 make
 cp build-uno/avr.hex ../../releases/profi/karabas_pro_revA.hex
+
+# kvm ready firmware
+make clean
+sed -i 's/USE_HW_BUTTONS 0/USE_HW_BUTTONS 1/g' config.h # with hw buttons
+set -i 's/MOUSE_POLL_TYPE 1/MOUSE_POLL_TYPE 0/g' config.h # mouse poll type : stream
+make
+cp build-uno/avr.hex ../../releases/profi/karabas_pro_kvm.hex
+
+make clean
+sed -i 's/USE_HW_BUTTONS 1/USE_HW_BUTTONS 0/g' config.h # without hw buttons
+set -i 's/MOUSE_POLL_TYPE 1/MOUSE_POLL_TYPE 0/g' config.h # mouse poll type : stream
+make
+cp build-uno/avr.hex ../../releases/profi/karabas_pro_revA_kvm.hex
+
+git checkout config.h # revert changes
 
 echo "Done"
 

@@ -2,6 +2,10 @@
 
 #define MOUSE_H_
 
+#include "Arduino.h"
+
+#define BUFFER_SIZE 16
+
 typedef struct {
     int x, y;
 } Position;
@@ -38,6 +42,8 @@ private:
 
     void setRemoteMode();
 
+    void setStreamingMode();
+
     bool waitForClockState(int expectedState);
 
     void requestData();
@@ -54,8 +60,11 @@ public:
     PS2Mouse(int clockPin, int dataPin);
 
     bool initialize();
-
     MouseData readData();
+
+    bool streamInitialize();
+    int8_t reportAvailable();
+    MouseData readReport();
 };
 
 #endif // MOUSE_H_

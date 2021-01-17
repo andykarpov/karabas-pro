@@ -1482,14 +1482,14 @@ selector <=
 	
 -- debug 
 --	PIN_141 <= cpu_int_n;
-	PIN_138 <= cpu_wait_n;
+--	PIN_138 <= cpu_wait_n;
 --	PIN_121 <= VGA_G(2);
-	PIN_120 <= cpu_iorq_n;
+--	PIN_120 <= cpu_iorq_n;
 --	PIN_119 <= VGA_VS;
 --	PIN_115 <= VGA_HS;
-
+--
 --PIN_138 <= locked;
 --PIN_120 <= clk_bus;
-PIN_141 <= areset;
+--PIN_141 <= areset;
 	
 end rtl;
