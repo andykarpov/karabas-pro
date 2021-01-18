@@ -57,25 +57,26 @@ cs_hdd_rd <= rww and rwe;
 process (CLK,BUS_A,BUS_WR_N,BUS_RD_N,cs1fx,cs3fx,NRESET)
 begin
 	if NRESET = '0' then
-		IDE_A <= (others => '0');
+		IDE_A <= (others => 'Z');
 		IDE_WR_N <='1';
 		IDE_RD_N <='1';
 		IDE_CS0_N <='1';
 		IDE_CS1_N <='1';
-	elsif CLK'event and CLK='1' then
-		if profi_ebl = '0' then
+--	elsif CLK'event and CLK='1' then
+--		if profi_ebl = '0' then
+	else
 			IDE_A <= BUS_A(2 downto 0);
 			IDE_WR_N <=BUS_WR_N;
 			IDE_RD_N <=BUS_RD_N;
 			IDE_CS0_N <=cs1fx;
 			IDE_CS1_N <=cs3fx;
-		else
-			IDE_A <= (others => '0');
-			IDE_WR_N <='1';
-			IDE_RD_N <='1';
-			IDE_CS0_N <='1';
-			IDE_CS1_N <='1';
-		end if;
+--		else
+--			IDE_A <= (others => '0');
+--			IDE_WR_N <='1';
+--			IDE_RD_N <='1';
+--			IDE_CS0_N <='1';
+--			IDE_CS1_N <='1';
+--		end if;
 	end if;
 end process;
 

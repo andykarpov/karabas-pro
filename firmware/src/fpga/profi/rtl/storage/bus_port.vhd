@@ -52,7 +52,7 @@ begin
 	SA <= cnt;	
 	BUS_DO <= SD(15 downto 8);
 
-	process (CLK_BUS, cnt, BUS_HDD_CS_N, BUS_FDC_NCS, BUS_CSFF, BUS_CS3FX, BUS_RWE, BUS_RWW, BUS_WWE, BUS_WWC, BUS_FDC_STEP, BUS_RD_N, BUS_WR_N, bus_a, bus_di)
+	process (CLK_CPU, cnt, BUS_HDD_CS_N, BUS_FDC_NCS, BUS_CSFF, BUS_CS3FX, BUS_RWE, BUS_RWW, BUS_WWE, BUS_WWC, BUS_FDC_STEP, BUS_RD_N, BUS_WR_N, bus_a, bus_di)
 	begin 
 		if (falling_edge(CLK_CPU)) then 
 				bus_a_reg <= BUS_HDD_CS_N & BUS_FDC_NCS & BUS_CSFF & BUS_CS3FX & BUS_RWE & BUS_RWW & BUS_WWE & BUS_WWC & BUS_FDC_STEP & BUS_RD_N & BUS_WR_N & bus_a;
@@ -64,11 +64,7 @@ begin
 	process (CLK, cnt)
 	begin 
 		if (rising_edge(CLK)) then 
-			if cnt = "10" then
-				cnt <= "00";
-			else
-				cnt <= cnt + 1;
-			end if;
+			cnt <= cnt + 1;
 		end if;
 	end process;	
 	
@@ -77,6 +73,7 @@ begin
 		data0x => bus_a_reg(15 downto 8),
 		data1x => bus_a_reg(7 downto 0),
 		data2x => bus_d_reg,
+		data3x => "11111111",
 		sel => cnt,
 		result => SD(7 downto 0)
 	);

@@ -840,7 +840,7 @@ port map (
 	CLK 				=> clk_bus_port,
 	CLK2 				=> clk_8,
 	CLK_BUS 			=> clk_bus,
-	CLK_CPU 			=> cpuclk,
+	CLK_CPU 			=> clk_div2,
 	RESET 			=> reset,
 	
 	SD 				=> SD,
