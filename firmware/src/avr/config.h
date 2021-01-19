@@ -8,7 +8,7 @@
 
 #define MOUSE_POLL_INTERVAL 10 // ms
 #define MOUSE_SWAP_INTERVAL 1000 // ms
-#define MOUSE_INIT_TRIES 10 
+#define MOUSE_INIT_TRIES 2 
 #define MOUSE_POLL_TYPE 1 // 1 = poll, 0 = stream
 
 // ---- Pins for Atmega328
@@ -56,6 +56,8 @@
 #define EEPROM_SW6_ADDRESS 0x07
 #define EEPROM_SW7_ADDRESS 0x08
 #define EEPROM_SW8_ADDRESS 0x09
+#define EEPROM_SW9_ADDRESS 0x0B
+#define EEPROM_SW10_ADDRESS 0x0C
 #define EEPROM_MOUSE_SWAP_ADDRESS 0x0A
 
 #define EEPROM_RTC_OFFSET 0x10

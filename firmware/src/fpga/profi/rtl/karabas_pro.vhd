@@ -386,7 +386,7 @@ signal led1_overwrite: std_logic := '0';
 signal led2_overwrite: std_logic := '0';
 
 -- avr soft switches (Menu+F1 .. Menu+F8)
-signal soft_sw 		: std_logic_vector(1 to 8) := (others => '0');
+signal soft_sw 		: std_logic_vector(1 to 10) := (others => '0');
 
 signal board_reset 	: std_logic := '0'; -- board reset on rombank switch
 
@@ -608,8 +608,9 @@ port map (
 	ROM_BANK 		=> ext_rom_bank,
 	KB_MODE 			=> kb_mode,
 	KB_WAIT 			=> kb_wait,
-	SSG_MODE 		=> soft_sw(8),
-	SSG_STEREO 		=> soft_sw(7)
+	SSG_MODE 		=> soft_sw(7),
+	SSG_STEREO 		=> soft_sw(8),
+	SSG_MIX  		=> soft_sw(9)
 );
 
 -- Scandoubler	
@@ -685,7 +686,7 @@ port map (
 	I_M1_N			=> cpu_m1_n,
 	I_RESET_N		=> cpu_reset_n,
 	O_SEL				=> ssg_sel,
-	I_MODE 			=> soft_sw(8),
+	I_MODE 			=> soft_sw(7),
 	-- ssg0
 	O_SSG0_DA		=> ssg_cn0_bus,
 	O_SSG0_AUDIO_A	=> ssg_cn0_a,
@@ -1232,7 +1233,21 @@ end process;
 
 speaker <= port_xxfe_reg(4);
 
-mix_l <= "0000000000000000" when loader_act = '1' or cpu_wait_n = '0' else 
+mix_l <= "0000000000000000" when loader_act = '1' or kb_wait = '1' else 
+				-- mono
+				("000" & speaker & "000000000000") +
+				("000"  & ssg_cn0_a &     "00000") + 
+				("000"  & ssg_cn0_b &     "00000") + 
+				("000"  & ssg_cn0_c &     "00000") + 
+				("000"  & ssg_cn1_a &     "00000") + 
+				("000"  & ssg_cn1_b &     "00000") + 
+				("000"  & ssg_cn1_c &     "00000") + 
+				("000" & covox_l & covox_l(7 downto 4) & "0") + 
+				("000" & covox_r & covox_r(7 downto 4) & "0") + 
+				("000"  & saa_out_l &     "00000") +
+				("000"  & saa_out_r &     "00000") + 
+				("000"  & covox_fb &      "00000") when soft_sw(9) = '1' else 				
+				-- stereo: L - ACB
 				("000" & speaker & "000000000000") + -- ACB: L = A + C/2
 				("000"  & ssg_cn0_a &     "00000") + 
 				("0000"  & ssg_cn0_c &     "0000") + 
@@ -1240,7 +1255,8 @@ mix_l <= "0000000000000000" when loader_act = '1' or cpu_wait_n = '0' else
 				("0000"  & ssg_cn1_c &     "0000") + 
 				("00" & covox_l & covox_l(7 downto 4) & "00") + 
 				("000"  & covox_fb &      "00000") + 
-				("000"  & saa_out_l  &    "00000") when soft_sw(7) = '0' else 
+				("000"  & saa_out_l  &    "00000") when soft_sw(8) = '0' else 
+				-- stereo: L - ABC
 				("000" & speaker & "000000000000") +  -- ABC: L = A + B/2
 				("000"  & ssg_cn0_a &     "00000") + 
 				("0000"  & ssg_cn0_b &     "0000") + 
@@ -1250,7 +1266,21 @@ mix_l <= "0000000000000000" when loader_act = '1' or cpu_wait_n = '0' else
 				("000"  & covox_fb &      "00000") + 
 				("000"  & saa_out_l  &    "00000");
 				
-mix_r <= "0000000000000000" when loader_act = '1' or cpu_wait_n = '0' else 
+mix_r <= "0000000000000000" when loader_act = '1' or kb_wait = '1' else 				
+				-- mono
+				("000" & speaker & "000000000000") +
+				("000"  & ssg_cn0_a &     "00000") + 
+				("000"  & ssg_cn0_b &     "00000") + 
+				("000"  & ssg_cn0_c &     "00000") + 
+				("000"  & ssg_cn1_a &     "00000") + 
+				("000"  & ssg_cn1_b &     "00000") + 
+				("000"  & ssg_cn1_c &     "00000") + 
+				("000" & covox_l & covox_l(7 downto 4) & "0") + 
+				("000" & covox_r & covox_r(7 downto 4) & "0") + 
+				("000"  & saa_out_l &     "00000") +
+				("000"  & saa_out_r &     "00000") + 
+				("000"  & covox_fb &      "00000") when soft_sw(9) = '1' else 
+				-- stereo: R - ACB
 				("000" & speaker & "000000000000") + -- ACB: R = B + C/2
 				("000"  & ssg_cn0_b &     "00000") + 
 				("0000"  & ssg_cn0_c &     "0000") + 
@@ -1258,7 +1288,8 @@ mix_r <= "0000000000000000" when loader_act = '1' or cpu_wait_n = '0' else
 				("0000"  & ssg_cn1_c &     "0000") + 
 				("00" & covox_r & covox_r(7 downto 4) & "00") + 
 				("000"  & covox_fb &      "00000") + 
-				("000"  & saa_out_r &     "00000") when soft_sw(7) = '0' else
+				("000"  & saa_out_r &     "00000") when soft_sw(8) = '0' else
+				-- stereo: R - ABC
 				("000" & speaker & "000000000000") + -- ABC: R = C + B/2
 				("000"  & ssg_cn0_c &     "00000") + 
 				("0000"  & ssg_cn0_b &     "0000") + 

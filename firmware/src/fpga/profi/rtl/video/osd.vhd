@@ -24,7 +24,8 @@ entity osd is
 		KB_MODE 			: in std_logic := '1';
 		KB_WAIT 			: in std_logic := '0';
 		SSG_MODE 		: in std_logic := '0';
-		SSG_STEREO 		: in std_logic := '0'
+		SSG_STEREO 		: in std_logic := '0';
+		SSG_MIX			: in std_logic := '0'
 	);
 end entity;
 
@@ -78,6 +79,8 @@ architecture rtl of osd is
 	constant message_ym_acb:	lcd_line_type  := "YM, ACB ";
 	constant message_ay_abc:	lcd_line_type  := "AY, ABC ";
 	constant message_ay_acb:	lcd_line_type  := "AY, ACB ";
+	constant message_ym_mono:  lcd_line_type  := "YM, MONO";
+	constant message_ay_mono:  lcd_line_type  := "AY, MONO";
 	constant message_karabas:  lcd_line_type  := "VERSION ";
 	constant message_pro:      lcd_line_type  := "FIRM_VER";
 
@@ -93,7 +96,9 @@ architecture rtl of osd is
 	signal last_kb_wait : std_logic := '0';
 	signal last_ssg_mode : std_logic := '0';
 	signal last_ssg_stereo : std_logic := '0';
+	signal last_ssg_mix : std_logic := '0';
 	signal last_loaded : std_logic := '0';
+	signal ssg_mux : std_logic_vector(2 downto 0) := "000";
 	
 	signal cnt : std_logic_vector(3 downto 0) := "1000";
 	signal en : std_logic := '0';
@@ -145,6 +150,8 @@ begin
 
 	RGB_O <= "000111000" when en = '1' and pixel = '1' else RGB_I;
 
+	ssg_mux <= SSG_MIX & SSG_STEREO & SSG_MODE;
+	
 	-- display messages for changed sensors
 	process (CLK, BLINK, cnt, KB_WAIT, KB_MODE, TURBO, SCANDOUBLER_EN, MODE60, ROM_BANK, SSG_MODE, SSG_STEREO, last_ssg_mode, last_ssg_stereo, last_kb_wait, last_kb_mode, LOADED, last_loaded, last_turbo, last_scandoubler_en, last_mode60, last_rom_bank)
 	begin 
@@ -163,6 +170,7 @@ begin
 				last_rom_bank <= ROM_BANK;
 				last_ssg_mode <= SSG_MODE;
 				last_ssg_stereo <= SSG_STEREO;
+				last_ssg_mix <= SSG_MIX;
 				cnt <= "0000";
 				line1 <= message_karabas;
 				line2 <= message_pro;
@@ -238,20 +246,21 @@ begin
 				end if;
 				
 				-- ssg mode switch
-				if (SSG_MODE /= last_ssg_mode or SSG_STEREO /= last_ssg_stereo) then
+				if (SSG_MODE /= last_ssg_mode or SSG_STEREO /= last_ssg_stereo or SSG_MIX /= last_ssg_mix) then
 					last_ssg_mode <= SSG_MODE;
 					last_ssg_stereo <= SSG_STEREO;
+					last_ssg_mix <= SSG_MIX;
 					cnt <= "0000";
 					line1 <= message_ssgmode;
-					if (SSG_MODE = '0' and SSG_STEREO = '0') then 
-						line2 <= message_ym_acb;
-					elsif (SSG_MODE = '0' and SSG_STEREO = '1') then 
-						line2 <= message_ym_abc;
-					elsif (SSG_MODE = '1' and SSG_STEREO = '0') then 
-						line2 <= message_ay_acb;
-					else 
-						line2 <= message_ay_abc;
-					end if;
+					case ssg_mux is 
+						when "000" => line2 <= message_ym_acb;
+						when "001" => line2 <= message_ay_acb;
+						when "010" => line2 <= message_ym_abc;
+						when "011" => line2 <= message_ay_abc;
+						when "100" => line2 <= message_ym_mono;
+						when "101" => line2 <= message_ay_mono;
+						when others => line2 <= message_off;
+					end case;
 				end if;
 			end if;
 		

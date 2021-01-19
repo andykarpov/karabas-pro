@@ -39,6 +39,9 @@ bool is_sw5 = false; // SW5 state
 bool is_sw6 = false; // SW6 state
 bool is_sw7 = false; // SW7 state
 bool is_sw8 = false; // SW8 state
+bool is_sw9 = false; // SW9 state
+bool is_sw10 = false; // SW10 state
+uint8_t ssg_mode = 0; // SSG mode
 bool init_done = false; // init done
 
 bool is_wait = false; // wait mode
@@ -701,10 +704,10 @@ void fill_kbd_matrix(int sc)
     case PS2_F7: 
       if (is_menu || (is_ctrl && is_alt)) {
         if (!is_up) {
-          // menu + F7 = SW7
-          is_sw7 = !is_sw7;
-          eeprom_store_value(EEPROM_SW7_ADDRESS, is_sw7);
-          matrix[ZX_K_SW7] = is_sw7;
+          // menu + F7 = SW10
+          is_sw10 = !is_sw10;
+          eeprom_store_value(EEPROM_SW10_ADDRESS, is_sw10);
+          matrix[ZX_K_SW10] = is_sw10;
         }
       } else {
         matrix[ZX_K_G] = !is_up; matrix[ZX_K_BIT6] = !is_up; 
@@ -713,10 +716,21 @@ void fill_kbd_matrix(int sc)
     case PS2_F8: 
       if (is_menu || (is_ctrl && is_alt)) {
         if (!is_up) {
-          // menu + F8 = SW8
-          is_sw8 = !is_sw8;
+          // menu + F8 = SSG MODE
+          if (ssg_mode < 5) {
+            ssg_mode++;
+          } else {
+            ssg_mode = 0;
+          }
+          is_sw7 = bitRead(ssg_mode, 0);
+          is_sw8 = bitRead(ssg_mode, 1);
+          is_sw9 = bitRead(ssg_mode, 2);
+          eeprom_store_value(EEPROM_SW7_ADDRESS, is_sw7);          
           eeprom_store_value(EEPROM_SW8_ADDRESS, is_sw8);
+          eeprom_store_value(EEPROM_SW9_ADDRESS, is_sw9);
+          matrix[ZX_K_SW7] = is_sw7;
           matrix[ZX_K_SW8] = is_sw8;
+          matrix[ZX_K_SW9] = is_sw9;
         }
       } else {
         matrix[ZX_K_H] = !is_up; matrix[ZX_K_BIT6] = !is_up;
@@ -911,7 +925,7 @@ void spi_send(uint8_t addr, uint8_t data)
 // transmit keyboard matrix from AVR to CPLD side via SPI
 void transmit_keyboard_matrix()
 {
-  uint8_t bytes = 8;
+  uint8_t bytes = ZX_MATRIX_FULL_SIZE / 8;
   for (uint8_t i = 0; i < bytes; i++) {
     uint8_t data = get_matrix_byte(i);
     spi_send(i + 1, data);
@@ -1141,6 +1155,12 @@ void eeprom_restore_values()
   is_sw6 = eeprom_restore_value(EEPROM_SW6_ADDRESS, is_sw6);
   is_sw7 = eeprom_restore_value(EEPROM_SW7_ADDRESS, is_sw7);
   is_sw8 = eeprom_restore_value(EEPROM_SW8_ADDRESS, is_sw8);
+  is_sw9 = eeprom_restore_value(EEPROM_SW9_ADDRESS, is_sw9);
+  is_sw10 = eeprom_restore_value(EEPROM_SW10_ADDRESS, is_sw10);
+  ssg_mode = 0;
+  bitWrite(ssg_mode, 0, is_sw7);
+  bitWrite(ssg_mode, 1, is_sw8);
+  bitWrite(ssg_mode, 2, is_sw9);  
   is_mouse_swap = eeprom_restore_value(EEPROM_MOUSE_SWAP_ADDRESS, is_mouse_swap);
   
   // apply restored values
@@ -1153,6 +1173,8 @@ void eeprom_restore_values()
   matrix[ZX_K_SW6] = is_sw6;
   matrix[ZX_K_SW7] = is_sw7;
   matrix[ZX_K_SW8] = is_sw8;
+  matrix[ZX_K_SW9] = is_sw9;
+  matrix[ZX_K_SW10] = is_sw10;
   matrix[ZX_K_KBD_MODE] = profi_mode;
 }
 
@@ -1168,6 +1190,8 @@ void eeprom_store_values()
   eeprom_store_value(EEPROM_SW6_ADDRESS, is_sw6);
   eeprom_store_value(EEPROM_SW7_ADDRESS, is_sw7);
   eeprom_store_value(EEPROM_SW8_ADDRESS, is_sw8);
+  eeprom_store_value(EEPROM_SW9_ADDRESS, is_sw9);
+  eeprom_store_value(EEPROM_SW10_ADDRESS, is_sw10);
   eeprom_store_value(EEPROM_MOUSE_SWAP_ADDRESS, is_mouse_swap);
 }
 
