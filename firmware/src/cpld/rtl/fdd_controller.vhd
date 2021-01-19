@@ -159,8 +159,6 @@ begin
 
 	FDC_DS0 <= '1' when pff(1 downto 0) = "00" else '0';
 	FDC_DS1 <= '1' when pff(1 downto 0) = "01" else '0';
---	FDC_DS0 <= not pff(0);
---	FDC_DS1 <= pff(0) and not pff(1);
 
 	----------------port ff to WG93------------------------------
 	process(CLK,pff,BUS_DI,BUS_WR_N,csff,NRESET)
