@@ -284,7 +284,6 @@ signal clk_28 			: std_logic := '0';
 signal clk_24 			: std_logic := '0';
 signal clk_8			: std_logic := '0';
 signal clk_bus			: std_logic := '0';
-signal clk_bus_port 	: std_logic := '0';
 signal clk_div2		: std_logic := '0';
 signal clk_div4		: std_logic := '0';
 signal clk_div8		: std_logic := '0';
@@ -487,8 +486,7 @@ port map (
 	inclk0			=> CLK_50MHZ,
 	locked			=> locked,
 	c0 				=> clk_28,
-	c1 				=> clk_24,
-	c2 				=> clk_bus_port
+	c1 				=> clk_24
 	);
 	
 -- PLL2
@@ -825,7 +823,7 @@ port map (
 -- FDD / HDD controllers
 U16: entity work.bus_port
 port map (
-	CLK 				=> clk_bus_port,
+	CLK 				=> clk_bus,
 	CLK2 				=> clk_8,
 	CLK_BUS 			=> clk_bus,
 	CLK_CPU 			=> clk_div2,
