@@ -636,7 +636,7 @@ port map (
 	LOADED 			=> kb_loaded,
 	
 	-- sensors
-	TURBO 			=> kb_turbo or turbo_on,
+	TURBO 			=> kb_turbo and (not turbo_on),
 	SCANDOUBLER_EN => vid_scandoubler_enable,
 	MODE60 			=> soft_sw(2),
 	ROM_BANK 		=> ext_rom_bank_pq,
@@ -1052,7 +1052,7 @@ cpu_inta_n <= cpu_iorq_n or cpu_m1_n;	-- INTA
 cpu_nmi_n <= '0' when kb_magic = '1' else '1'; -- NMI
 --cpu_wait_n <= '0' when kb_wait = '1' else '1'; -- WAIT
 cpu_wait_n <= '1';
-cpuclk <= '0' when kb_wait = '1' else clk_bus and ena_div8 when (kb_turbo = '1') or (turbo_on = '1') else clk_bus and ena_div4; -- 3.5 / 7 MHz
+cpuclk <= '0' when kb_wait = '1' else clk_bus and ena_div8 when kb_turbo = '1' and turbo_on = '0' else clk_bus and ena_div4; -- 3.5 / 7 MHz
 
 -- odnovibrator - po spadu nIORQ otschityvaet 400ns WAIT proca
 -- dlja rabotosposobnosti periferii v turbe ili v rezhime 
@@ -1173,19 +1173,8 @@ begin
 	end if;
 end process;
 
-------------------- 8B PORT ----------------------
-cs_xx8b <='0' when cpu_a_bus(7 downto 0)=X"8B" and cpu_iorq_n='0' and cpu_m1_n = '1' and (rom14='1' or (rom14='0' and dos_act='1')) else '1';					-- ROM14=1 BAS=0/1 ПЗУ DOS / SOS
-
-process(clk_bus,reset,cs_xx8b,cpu_do_bus)
-begin
-	if reset='1' then
-		port_xx8b_reg <= "00000000";
-	elsif clk_bus'event and clk_bus='1' then
-		if cs_xx8b='0' and cpu_wr_n='0' then
-			port_xx8b_reg <= cpu_do_bus;
-		end if;
-	end if;
-end process;
+-- Config PORT X"8B"
+cs_xx8b <='1' when cpu_a_bus(7 downto 0)=X"8B" and cpu_iorq_n='0' and cpu_m1_n = '1' and ((cpm='1' and rom14='1') or (dos_act='1' and rom14='0')) else '0';
 
 																			-- 0 - Reserved
 rom2 <= port_xx8b_reg(1);											-- 1 - ROM Change
@@ -1194,7 +1183,7 @@ turbo_on <=  port_xx8b_reg(3); 									-- 3 - Turbo on
 lock_dffd <= port_xx8b_reg(4);								 	-- 4 - Lock port DFFD
 unlock_128 <= port_xx8b_reg(5);									-- 5 - Unlock 128 ROM page for DOS 
 
-ext_rom_bank_pq <= ext_rom_bank when rom2 = '0' else "01";
+ext_rom_bank_pq <= ext_rom_bank when rom2 = '0' else "01";	-- ROMBANK ALT
 
 rom14 <= port_7ffd_reg(4); -- rom bank
 cpm 	<= port_dffd_reg(5); -- 1 - блокирует работу контроллера из ПЗУ TR-DOS и включает порты на доступ из ОЗУ (ROM14=0); При ROM14=1 - мод. доступ к расширен. периферии
@@ -1267,9 +1256,16 @@ turbo_bl <= fdd_cs_pff_n and fdd_cs_n;
 --portAS <= '1' when adress(9)='0' and adress(7)='1' and adress(5)='1' and adress(3 downto 0)=X"F" and iorq='0' and cpm='0' and rom14='1' else '0';
 --portDS <= '1' when adress(9)='0' and adress(7)='1' and adress(5)='0' and adress(3 downto 0)=X"F" and iorq='0' and cpm='0' and rom14='1' else '0';
 
+process(clk_bus,reset,cs_xx8b,cpu_do_bus)
+begin
+	if reset='1' then
+		
+	elsif clk_bus'event and clk_bus='1' then
 
+	end if;
+end process;
 
-process (reset, areset, clk_bus, cpu_a_bus, dos_act, cs_xxfe, cs_eff7, cs_7ffd, cs_xxfd, port_7ffd_reg, cpu_mreq_n, cpu_m1_n, cpu_wr_n, cpu_do_bus, fd_port)
+process (reset, areset, clk_bus, cpu_a_bus, dos_act, cs_xxfe, cs_eff7, cs_7ffd, cs_xxfd, port_7ffd_reg, cpu_mreq_n, cpu_m1_n, cpu_wr_n, cpu_do_bus, fd_port, cs_xx8b)
 begin
 	if reset = '1' then
 		port_eff7_reg <= (others => '0');
@@ -1280,6 +1276,7 @@ begin
 		port_xxA7_reg <= (others => '0');
 		port_xxE7_reg <= (others => '0');
 		port_xx67_reg <= (others => '0');
+		port_xx8b_reg <= (others => '0');
 		dos_act <= '1';
 	elsif clk_bus'event and clk_bus = '1' then
 
@@ -1331,6 +1328,11 @@ begin
 				port_xx67_reg <= cpu_do_bus;
 			end if;
 			
+			-- #xx8B
+			if cs_xx8b = '1' and cpu_wr_n='0' then
+				port_xx8b_reg <= cpu_do_bus;
+			end if;
+			
 			-- TR-DOS FLAG
 			if (cpu_m1_n = '0' and cpu_mreq_n = '0' and cpu_a_bus(15 downto 8) = X"3D" and (rom14 = '1' or unlock_128 = '1') and port_dffd_reg(4) = '0') or (onrom = '1') then dos_act <= '1';
 			elsif ((cpu_m1_n = '0' and cpu_mreq_n = '0' and cpu_a_bus(15 downto 14) /= "00") or (port_dffd_reg(4) = '1')) then dos_act <= '0'; end if;
@@ -1380,7 +1382,7 @@ mix_r <= "0000000000000000" when loader_act = '1' or cpu_wait_n = '0' else
 				("000"  & saa_out_r &     "00000");
 				
 -- SAA1099
-saa_wr_n <= '0' when (cpu_iorq_n = '0' and cpu_wr_n = '0' and cpu_a_bus(7 downto 0) = "11111111" and dos_act = '0') else '1';
+saa_wr_n <= '0' when (cpu_iorq_n = '0' and cpu_wr_n = '0' and cpu_a_bus(7 downto 0) = X"FF" and dos_act = '0') else '1';
 
 -------------------------------------------------------------------------------
 -- Port I/O
