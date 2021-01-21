@@ -234,9 +234,7 @@ signal cs_xxE7 		: std_logic := '0';
 signal cs_xx67 		: std_logic := '0';
 signal cs_rtc_ds 		: std_logic := '0';
 signal cs_rtc_as 		: std_logic := '0';
-signal cs_8b			: std_logic := '0';
-signal cs_8b_1			: std_logic := '0';
-signal cs_8b_2			: std_logic := '0';
+signal cs_xx8b			: std_logic := '0';
 
 -- Profi HDD ports
 signal hdd_profi_ebl_n	:std_logic;
@@ -328,6 +326,7 @@ signal ram_oe_n 		: std_logic := '1';
 signal vbus_mode 		: std_logic := '0';
 signal vid_rd 			: std_logic := '0';
 signal ext_rom_bank  : std_logic_vector(1 downto 0) := "00";
+signal ext_rom_bank_pq	: std_logic_vector(1 downto 0) := "00";
 
 -- Loader
 signal loader_ram_di	: std_logic_vector(7 downto 0);
@@ -585,7 +584,7 @@ port map (
 	TRDOS 			=> dos_act,	
 	-- rom
 	ROM_BANK 		=> rom14,
-	EXT_ROM_BANK   => ext_rom_bank
+	EXT_ROM_BANK   => ext_rom_bank_pq
 );	
 
 -- Video Spectrum/Pentagon
@@ -637,10 +636,10 @@ port map (
 	LOADED 			=> kb_loaded,
 	
 	-- sensors
-	TURBO 			=> kb_turbo,
+	TURBO 			=> kb_turbo or turbo_on,
 	SCANDOUBLER_EN => vid_scandoubler_enable,
 	MODE60 			=> soft_sw(2),
-	ROM_BANK 		=> ext_rom_bank,
+	ROM_BANK 		=> ext_rom_bank_pq,
 	KB_MODE 			=> kb_mode,
 	KB_WAIT 			=> kb_wait,
 	SSG_MODE 		=> soft_sw(8),
@@ -1053,7 +1052,7 @@ cpu_inta_n <= cpu_iorq_n or cpu_m1_n;	-- INTA
 cpu_nmi_n <= '0' when kb_magic = '1' else '1'; -- NMI
 --cpu_wait_n <= '0' when kb_wait = '1' else '1'; -- WAIT
 cpu_wait_n <= '1';
-cpuclk <= '0' when kb_wait = '1' else clk_bus and ena_div8 when kb_turbo = '1' else clk_bus and ena_div4; -- 3.5 / 7 MHz
+cpuclk <= '0' when kb_wait = '1' else clk_bus and ena_div8 when (kb_turbo = '1') or (turbo_on = '1') else clk_bus and ena_div4; -- 3.5 / 7 MHz
 
 -- odnovibrator - po spadu nIORQ otschityvaet 400ns WAIT proca
 -- dlja rabotosposobnosti periferii v turbe ili v rezhime 
@@ -1175,27 +1174,27 @@ begin
 end process;
 
 ------------------- 8B PORT ----------------------
-cs_8b_1 <='0' when adress(7 downto 0)="10001011" and iorq_z='0' and rom14='1' else '1';					-- ROM14=1 BAS=0/1 ПЗУ DOS / SOS
-cs_8b_2 <='0' when adress(7 downto 0)="10001011" and iorq_z='0' and rom14='0' and dos='0' else '1';	-- ROM14=0 BAS=0 ПЗУ SYS
-cs_8b <= cs_8b_1 and cs_8b_2;
+cs_xx8b <='0' when cpu_a_bus(7 downto 0)=X"8B" and cpu_iorq_n='0' and cpu_m1_n = '1' and (rom14='1' or (rom14='0' and dos_act='1')) else '1';					-- ROM14=1 BAS=0/1 ПЗУ DOS / SOS
 
-process(f14,reset,cs_8b,Data)
+process(clk_bus,reset,cs_xx8b,cpu_do_bus)
 begin
-	if reset='0' then
+	if reset='1' then
 		port_xx8b_reg <= "00000000";
-	elsif f14'event and f14='1' then
-		if cs_8b='0' and wr='0' then
-			port_xx8b_reg <= Data;
+	elsif clk_bus'event and clk_bus='1' then
+		if cs_xx8b='0' and cpu_wr_n='0' then
+			port_xx8b_reg <= cpu_do_bus;
 		end if;
 	end if;
 end process;
 
 																			-- 0 - Reserved
-rom2 <= not port_xx8b_reg(1) or port_dffd_reg(4); 			-- 1 - ROM Change
+rom2 <= port_xx8b_reg(1);											-- 1 - ROM Change
 onrom <= port_xx8b_reg(2);											-- 2 - Forced activation of the signal "DOS"
 turbo_on <=  port_xx8b_reg(3); 									-- 3 - Turbo on
 lock_dffd <= port_xx8b_reg(4);								 	-- 4 - Lock port DFFD
 unlock_128 <= port_xx8b_reg(5);									-- 5 - Unlock 128 ROM page for DOS 
+
+ext_rom_bank_pq <= ext_rom_bank when rom2 = '0' else "01";
 
 rom14 <= port_7ffd_reg(4); -- rom bank
 cpm 	<= port_dffd_reg(5); -- 1 - блокирует работу контроллера из ПЗУ TR-DOS и включает порты на доступ из ОЗУ (ROM14=0); При ROM14=1 - мод. доступ к расширен. периферии
@@ -1212,7 +1211,7 @@ cs_xxfe <= '1' when cpu_iorq_n = '0' and cpu_a_bus(0) = '0' else '0';
 cs_xx7e <= '1' when cs_xxfe = '1' and cpu_a_bus(7) = '0' else '0';
 cs_eff7 <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and cpu_a_bus = X"EFF7" else '0';
 cs_fffd <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and cpu_a_bus = X"FFFD" and fd_port = '1' else '0';
-cs_dffd <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and cpu_a_bus = X"DFFD" and fd_port = '1' else '0';
+cs_dffd <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and cpu_a_bus = X"DFFD" and fd_port = '1' and lock_dffd = '0' else '0';
 cs_7ffd <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and cpu_a_bus = X"7FFD" else '0';
 cs_xxfd <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and cpu_a_bus(15) = '0' and cpu_a_bus(1) = '0' and fd_port = '0' else '0';
 
@@ -1333,7 +1332,7 @@ begin
 			end if;
 			
 			-- TR-DOS FLAG
-			if cpu_m1_n = '0' and cpu_mreq_n = '0' and cpu_a_bus(15 downto 8) = X"3D" and rom14 = '1' and port_dffd_reg(4) = '0' then dos_act <= '1';
+			if (cpu_m1_n = '0' and cpu_mreq_n = '0' and cpu_a_bus(15 downto 8) = X"3D" and (rom14 = '1' or unlock_128 = '1') and port_dffd_reg(4) = '0') or (onrom = '1') then dos_act <= '1';
 			elsif ((cpu_m1_n = '0' and cpu_mreq_n = '0' and cpu_a_bus(15 downto 14) /= "00") or (port_dffd_reg(4) = '1')) then dos_act <= '0'; end if;
 				
 	end if;
