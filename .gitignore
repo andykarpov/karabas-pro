@@ -27,7 +27,7 @@ timing
 *.done
 *.eqn
 #*.hex
-*.html
+#*.html
 *.jdi
 #*.jpg
 #*.mif
