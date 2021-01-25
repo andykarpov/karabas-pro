@@ -52,7 +52,13 @@ PLLJ_PLLSPE_INFO.txt
 #*-cache.lib
 *.*-bak
 #*-info-cache
-
+bom
+pcb/rev*/gerbers
+*-sch.pdf
+*-top.pdf
+*-bot.pdf
+*-bom.pdf
+*.csv
 # Gtkwave
 *.ghw
 *.cf
