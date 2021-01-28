@@ -80,7 +80,8 @@ begin
 					bus_a(7 downto 0) <= SD(7 downto 0);
 				when "10" =>
 					bus_di <= SD(7 downto 0);
-				when others => null;
+				when "11" =>
+					bus_di <= bus_di;
 			end case;
 		end if;
 	end process;

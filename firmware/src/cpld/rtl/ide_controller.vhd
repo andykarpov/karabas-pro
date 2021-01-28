@@ -54,20 +54,28 @@ cs_hdd_rd <= rww and rwe;
 
 
 
-process (CLK,BUS_A,BUS_WR_N,BUS_RD_N,cs1fx,cs3fx,NRESET)
+process (CLK,BUS_A,BUS_WR_N,BUS_RD_N,cs1fx,cs3fx,NRESET,profi_ebl)
 begin
 	if NRESET = '0' then
 		IDE_WR_N <='1';
 		IDE_RD_N <='1';
 		IDE_CS0_N <='1';
 		IDE_CS1_N <='1';
-		IDE_A <= "ZZZ";
-	elsif CLK'event and CLK='1' then
-		IDE_WR_N <=BUS_WR_N;
-		IDE_RD_N <=BUS_RD_N;
-		IDE_CS0_N <=cs1fx;
-		IDE_CS1_N <=cs3fx;
-		IDE_A <= BUS_A(2 downto 0);
+		IDE_A <= "000";
+	elsif CLK'event and CLK='0' then
+		if profi_ebl = '0' then
+			IDE_WR_N <=BUS_WR_N;
+			IDE_RD_N <=BUS_RD_N;
+			IDE_CS0_N <=cs1fx;
+			IDE_CS1_N <=cs3fx;
+			IDE_A <= BUS_A(2 downto 0);
+		else
+			IDE_WR_N <='1';
+			IDE_RD_N <='1';
+			IDE_CS0_N <='1';
+			IDE_CS1_N <='1';
+			IDE_A <= "000";
+		end if;
 	end if;
 end process;
 
@@ -82,9 +90,11 @@ begin
 	end if;
 end process;
 
-process (CLK, rww, WD_reg_in,cs_hdd_wr)
+process (CLK, rww, WD_reg_in,cs_hdd_wr,NRESET,profi_ebl)
 begin
-	if CLK'event and CLK='1' then
+	if NRESET = '0' or profi_ebl = '1' then
+		IDE_D(7 downto 0) <= "11111111";	
+	elsif CLK'event and CLK='1' then
 		if rww='1' and cs_hdd_wr='0' then
 			IDE_D(7 downto 0) <= WD_reg_in (7 downto 0);
 		else 
