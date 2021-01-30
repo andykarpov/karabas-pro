@@ -666,7 +666,7 @@ port map (
 	KSI_IN 			=> vid_vsync,
 	SSI_IN 			=> vid_hsync,
 	CLK 				=> clk_div2,
-	CLK2 				=> clk_bus,
+	CLK2 				=> not(clk_bus),
 	EN 				=> vid_scandoubler_enable,
 	DS80				=> ds80,		
 	RGB_O(8 downto 6)	=> VGA_R,
