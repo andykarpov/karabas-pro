@@ -80,7 +80,7 @@ architecture rtl of osd is
 	constant message_ay_acb:	lcd_line_type  := "AY, ACB ";
 	constant message_turbo_fdc:lcd_line_type  := "TURBOFDC";
 	constant message_karabas:  lcd_line_type  := "VERSION ";
-	constant message_pro:      lcd_line_type  := "21013013";
+	constant message_pro:      lcd_line_type  := "FIRM_VER";
 
 	-- displayable lines
 	signal line1 : lcd_line_type := message_empty;
