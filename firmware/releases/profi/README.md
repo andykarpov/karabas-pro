@@ -2,15 +2,8 @@
 
 ## How to flash FPGA and CPLD things
 
-### For PCB rev.A and rev.B:
-
-1) Open Quartus Programmer file karabas_pro_revA_tda1543.cdf or karabas_pro_revA_tda1543a.cdf (depends on the DAC model on your board)
+1) Open Quartus Programmer file karabas_pro_tda1543.cdf or karabas_pro_tda1543a.cdf (depends of the DAC model on your board)
 2) Check all chips you want to flash (EPM3128, EP4CE6 and it's configuration device EPCS16), then click Program button
-
-### For PCB rev.C and up:
-
-1) Open Quartus Programmer file karabas_pro.cdf
-2) Check all chips you want to flash (EPM3128, EP4CE6 and it's configuration device EPCS16), then click Program butt
 
 ## How to flash the AVR microcontroller:
 
