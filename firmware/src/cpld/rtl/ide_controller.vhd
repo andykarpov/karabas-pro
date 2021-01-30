@@ -92,7 +92,7 @@ end process;
 
 process (CLK, rww, WD_reg_in,cs_hdd_wr,NRESET,profi_ebl)
 begin
-	if NRESET = '0' or profi_ebl = '1' then
+	if NRESET = '0' then
 		IDE_D(7 downto 0) <= "11111111";	
 	elsif CLK'event and CLK='1' then
 		if rww='1' and cs_hdd_wr='0' then

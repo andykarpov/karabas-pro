@@ -290,10 +290,14 @@ signal saa_out_l		: std_logic_vector(7 downto 0);
 signal saa_out_r		: std_logic_vector(7 downto 0);
 
 -- CLOCK
+signal clk_112			: std_logic := '0';
+signal clk_84 			: std_logic := '0';
+signal clk_72 			: std_logic := '0';
 signal clk_28 			: std_logic := '0';
 signal clk_24 			: std_logic := '0';
 signal clk_8			: std_logic := '0';
 signal clk_bus			: std_logic := '0';
+signal clk_bus_port	: std_logic := '0';
 signal clk_div2		: std_logic := '0';
 signal clk_div4		: std_logic := '0';
 signal clk_div8		: std_logic := '0';
@@ -316,7 +320,7 @@ signal loader_act		: std_logic := '1';
 signal loader_reset 	: std_logic := '0';
 signal loader_done 	: std_logic := '0';
 signal dos_act			: std_logic := '1';
-signal cpuclk			: std_logic;
+signal clk_cpu			: std_logic;
 signal selector		: std_logic_vector(7 downto 0);
 signal mux				: std_logic_vector(3 downto 0);
 signal speaker 		: std_logic := '0';
@@ -496,16 +500,19 @@ U1: entity work.altpll0
 port map (
 	inclk0			=> CLK_50MHZ,
 	locked			=> locked,
-	c0 				=> clk_28,
-	c1 				=> clk_24
+	c0 				=> clk_112
 	);
 	
 -- PLL2
 U2: entity work.altpll1
 port map (
-	inclk0			=> clk_24,
+	inclk0			=> clk_112,
 	locked 			=> open,
-	c0 				=> clk_8);
+	c0 				=> clk_84,
+	c1 				=> clk_72,
+	c2 				=> clk_28,
+	c3 				=> clk_24,
+	c4 				=> clk_8);
 		
 -- main clock selector
 U3: entity work.clk_ctrl
@@ -516,12 +523,21 @@ port map(
 	outclk 		=> clk_bus
 );
 
+-- Bus Port clock selector
+U4: entity work.clk_ctrl2
+port map(
+	clkselect 	=> ds80,
+	inclk0x 		=> clk_84,
+	inclk1x 		=> clk_72,
+	outclk 		=> clk_bus_port
+);
+
 -- Zilog Z80A CPU
-U4: entity work.T80aw
+U5: entity work.T80aw
 port map (
 	RESET_n			=> cpu_reset_n,
 	CLK_n				=> clk_bus,
-	ENA				=> cpuclk,
+	ENA				=> clk_cpu,
 	WAIT_n			=> cpu_wait_n,
 	INT_n				=> cpu_int_n and serial_ms_int,
 	NMI_n				=> cpu_nmi_n,
@@ -540,11 +556,11 @@ port map (
 );
 	
 -- memory manager
-U5: entity work.memory 
+U6: entity work.memory 
 port map ( 
 	CLK2X 			=> clk_bus,
 	CLKX 				=> clk_div2,
-	CLK_CPU 			=> cpuclk,
+	CLK_CPU 			=> clk_cpu,
 	-- cpu signals
 	A 					=> cpu_a_bus,
 	D 					=> cpu_do_bus,
@@ -588,7 +604,7 @@ port map (
 );	
 
 -- Video Spectrum/Pentagon
-U6: entity work.video
+U7: entity work.video
 port map (
 	CLK 				=> clk_div2, 	-- 14 / 12
 	CLK2x 			=> clk_bus, 	-- 28 / 24
@@ -622,7 +638,7 @@ port map (
 );
 
 -- osd (debug)
-U7: entity work.osd
+U8: entity work.osd
 port map (
 	CLK 				=> clk_bus,
 	CLK2 				=> clk_div2,
@@ -648,7 +664,7 @@ port map (
 );
 
 -- Scandoubler	
-U8: entity work.vga_pal 
+U9: entity work.vga_pal 
 port map (
 	RGB_IN 			=> vid_rgb_osd,
 	KSI_IN 			=> vid_vsync,
@@ -665,7 +681,7 @@ port map (
 );
 
 -- SPI flash parallel interface
-U9: entity work.flash
+U10: entity work.flash
 port map(
 	CLK 				=> clk_bus,
 	RESET 			=> areset,
@@ -687,7 +703,7 @@ port map(
 );
 
 -- Loader
-U10: entity work.loader
+U11: entity work.loader
 port map(
 	CLK 				=> clk_bus,
 	RESET 			=> areset,
@@ -709,7 +725,7 @@ port map(
 );	
 		
 -- TurboSound
-U11: entity work.turbosound
+U12: entity work.turbosound
 port map (
 	I_CLK				=> clk_bus,
 	I_ENA				=> ena_div16,
@@ -733,7 +749,7 @@ port map (
 	O_SSG1_AUDIO_C	=> ssg_cn1_c);
 
 -- Covox
-U12: entity work.covox
+U13: entity work.covox
 port map (
 	I_RESET			=> reset,
 	I_CLK				=> clk_bus,
@@ -751,7 +767,7 @@ port map (
 );
 	 
 G_SAA1099: if enable_saa1099 generate
-U13: saa1099
+U14: saa1099
 port map(
 	clk_sys			=> clk_8,
 	ce					=> '1',
@@ -765,10 +781,10 @@ port map(
 end generate G_SAA1099;
 
 -- AVR Keyboard / mouse / rtc
-U14: entity work.avr
+U15: entity work.avr
 port map (
 	 CLK 				=> clk_bus,
-	 CLKEN 			=> cpuclk,
+	 CLKEN 			=> clk_cpu,
 	 N_RESET 		=> not areset,
     A       		=> cpu_a_bus(15 downto 8),
     KB				=> kb_do_bus,
@@ -818,7 +834,7 @@ port map (
 );
 	
 -- TDA1543
-U15: entity work.tda1543
+U16: entity work.tda1543
 port map (
 	RESET				=> reset,
 	CLK 				=> clk_8,
@@ -832,12 +848,12 @@ port map (
 );
 
 -- FDD / HDD controllers
-U16: entity work.bus_port
+U17: entity work.bus_port
 port map (
-	CLK 				=> clk_bus,
+	CLK 				=> clk_bus_port,
 	CLK2 				=> clk_8,
 	CLK_BUS 			=> clk_bus,
-	CLK_CPU 			=> clk_div2,
+	CLK_CPU 			=> clk_cpu,
 	RESET 			=> reset,
 	
 	SD 				=> SD,
@@ -865,7 +881,7 @@ port map (
 
 -- UART (via AY port A)
 G_AY_UART: if enable_ay_uart generate
-U17: entity work.ay_uart 
+U18: entity work.ay_uart 
 port map(
 	CLK_I 			=> clk_bus,
 	RESET_I 			=> reset,
@@ -883,7 +899,7 @@ port map(
 end generate G_AY_UART;
 
 -- Diag ROM
-U18: entity work.altrom0
+U19: entity work.altrom0
 port map(
 	clock => clk_bus,
 	address => cpu_a_bus(13 downto 0),
@@ -891,10 +907,10 @@ port map(
 );
 
 -- Serial mouse emulation
-U19: entity work.serial_mouse
+U20: entity work.serial_mouse
 port map(
 	CLK 				=> clk_bus,
-	CLKEN 			=> cpuclk,
+	CLKEN 			=> clk_cpu,
 	N_RESET 			=> not(reset),
 	A 					=> cpu_a_bus,
 	DI					=> cpu_do_bus,
@@ -919,7 +935,7 @@ port map(
 
 -- UART (via ZX UNO ports #FC3B / #FD3B) 	
 G_UNO_UART: if enable_zxuno_uart generate
-U20: zxunoregs 
+U21: zxunoregs 
 port map(
 	clk => clk_bus,
 	rst_n => not(reset),
@@ -936,7 +952,7 @@ port map(
 	regaddr_changed => zxuno_regaddr_changed
 );
 
-U21: zxunouart 
+U22: zxunouart 
 port map(
 	clk => clk_div4, -- 7 or 6 mhz
 	ds80 => ds80,
@@ -953,7 +969,7 @@ port map(
 end generate G_UNO_UART;
 
 -- board features
-U22: entity work.board 
+U23: entity work.board 
 port map(
 	CLK => clk_bus,
 	CFG => board_revision,
@@ -969,13 +985,13 @@ port map(
 	BOARD_RESET => board_reset	
 );
 
---U23 : entity work.compressor
+--U24 : entity work.compressor
 --port map(
 --	DI => mix_l,
 --	DO => audio_l
 --);
 --
---U24 : entity work.compressor
+--U25 : entity work.compressor
 --port map(
 --	DI => mix_r,
 --	DO => audio_r
@@ -1052,7 +1068,7 @@ cpu_inta_n <= cpu_iorq_n or cpu_m1_n;	-- INTA
 cpu_nmi_n <= '0' when kb_magic = '1' else '1'; -- NMI
 --cpu_wait_n <= '0' when kb_wait = '1' else '1'; -- WAIT
 cpu_wait_n <= '1';
-cpuclk <= '0' when kb_wait = '1' else clk_bus and ena_div8 when kb_turbo = '1' and turbo_on = '0' else clk_bus and ena_div4; -- 3.5 / 7 MHz
+clk_cpu <= '0' when kb_wait = '1' else clk_bus and ena_div8 when kb_turbo = '1' and turbo_on = '0' else clk_bus and ena_div4; -- 3.5 / 7 MHz
 
 -- odnovibrator - po spadu nIORQ otschityvaet 400ns WAIT proca
 -- dlja rabotosposobnosti periferii v turbe ili v rezhime 
@@ -1410,7 +1426,7 @@ port map(
 	DI				=> cpu_do_bus,
 	START			=> zc_spi_start,
 	WR_EN			=> zc_wr_en,
-	CLC     		=> clk_bus, --cpuclk,
+	CLC     		=> clk_bus, --clk_cpu,
 	MISO    		=> DATA0,
 	DO				=> zc_do_bus,
 	SCK     		=> zc_sclk,

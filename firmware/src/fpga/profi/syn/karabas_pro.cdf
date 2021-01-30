@@ -3,10 +3,6 @@ JedecChain;
 	FileRevision(JESD32A);
 	DefaultMfr(6E);
 
-	P ActionCode(Ign)
-		Device PartName(EPM3128AT100) MfrSpec(OpMask(0) FullPath("D:/GitHub/karabas-pro/firmware/releases/profi/karabas_pro_cpld.pof"));
-	P ActionCode(Cfg)
-		Device PartName(EP4CE6) Path("D:/GitHub/karabas-pro/firmware/src/fpga/profi/syn/") File("karabas_pro_revA_tda1543a.jic") MfrSpec(OpMask(1) SEC_Device(EPCS16) Child_OpMask(1 7));
 
 ChainEnd;
 
