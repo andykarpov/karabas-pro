@@ -48,8 +48,7 @@ entity karabas_pro is
 	generic (
 		enable_ay_uart 	 : boolean := false;
 		enable_zxuno_uart  : boolean := true;
-		enable_saa1099 	 : boolean := false;
-		enable_diag_rom	 : boolean := false -- Retroleum diagrom (blockram based)
+		enable_saa1099 	 : boolean := false
 	);
 port (
 	-- Clock (50MHz)
@@ -102,8 +101,8 @@ port (
 	PIN_138 		: inout std_logic;
 	PIN_121		: inout std_logic;
 	PIN_120		: inout std_logic;
-	PIN_119		: inout std_logic;
-	PIN_115		: inout std_logic;
+	FDC_STEP		: inout std_logic; -- PIN_119 connected to FDC_STEP for TurboFDC
+	SD_MOSI		: inout std_logic; -- PIN_115 connected to SD_SI
 	
 	-- Dip Switches 
 	SW3 			: in std_logic_vector(4 downto 1) := "1111";
@@ -399,9 +398,6 @@ signal cpld_do 		: std_logic_vector(7 downto 0);
 signal serial_ms_do_bus : std_logic_vector(7 downto 0);
 signal serial_ms_oe_n : std_logic := '1';
 signal serial_ms_int : std_logic := '1';
-
--- test rom 
-signal rom_do_bus 	: std_logic_vector(7 downto 0);
 
 -- profi special signals
 signal cpm 				: std_logic := '0';
@@ -873,7 +869,7 @@ port map (
 	BUS_RWW			=> hdd_rww_n,
 	BUS_RWE			=> hdd_rwe_n,
 	BUS_CS3FX		=> hdd_cs3fx_n,
-	BUS_FDC_STEP	=>	PIN_119 and soft_sw(5),
+	BUS_FDC_STEP	=>	fdc_step and soft_sw(5),
 	BUS_CSFF			=> fdd_cs_pff_n,
 	BUS_FDC_NCS		=> fdd_cs_n
 
@@ -897,14 +893,6 @@ port map(
 	UART_RTS 		=> UART_CTS
 );
 end generate G_AY_UART;
-
--- Diag ROM
-U19: entity work.altrom0
-port map(
-	clock => clk_bus,
-	address => cpu_a_bus(13 downto 0),
-	q => rom_do_bus
-);
 
 -- Serial mouse emulation
 U20: entity work.serial_mouse
@@ -973,7 +961,7 @@ U23: entity work.board
 port map(
 	CLK => clk_bus,
 	CFG => board_revision,
-	SW3 => SW3,
+
 	SOFT_SW1 => soft_sw(1),
 	SOFT_SW2 => soft_sw(2),
 	SOFT_SW3 => soft_sw(3),
@@ -984,18 +972,6 @@ port map(
 	SCANDOUBLER_EN => vid_scandoubler_enable,
 	BOARD_RESET => board_reset	
 );
-
---U24 : entity work.compressor
---port map(
---	DI => mix_l,
---	DO => audio_l
---);
---
---U25 : entity work.compressor
---port map(
---	DI => mix_r,
---	DO => audio_r
---);
 	
 -- swap audio channels
 audio_l <= mix_r;
@@ -1131,7 +1107,7 @@ sd_si 	<= '1' when loader_act = '1' or is_flash_not_sd = '1' else zc_mosi;
 DCLK <= flash_clk when loader_act = '1' or is_flash_not_sd = '1' else sd_clk;
 ASDO <= flash_do when loader_act = '1' or is_flash_not_sd = '1' else sd_si;
 NCSO <= flash_ncs when loader_act = '1' or is_flash_not_sd = '1' else '1';
-PIN_115 <= sd_si;
+SD_MOSI <= sd_si;
 
 -- share flash between loader and host
 flash_a_bus <= loader_flash_a when loader_act = '1' else host_flash_a_bus;
@@ -1443,12 +1419,7 @@ ay_bc1 		<= '1' when ay_port = '1' and cpu_a_bus(14) = '1' and cpu_iorq_n = '0' 
 process (selector, cpu_a_bus, gx0, serial_ms_do_bus, ram_do_bus, mc146818_do_bus, kb_do_bus, zc_do_bus, ssg_cn0_bus, ssg_cn1_bus, port_7ffd_reg, port_dffd_reg, ay_uart_do_bus, zxuno_uart_do_bus, cpld_do, vid_attr, port_eff7_reg, joy_bus, ms_z, ms_b, ms_x, ms_y, zxuno_addr_to_cpu, port_xxC7_reg, flash_rdy, flash_busy, flash_do_bus)
 begin
 	case selector is
-		when x"00" => 
-			if (cpu_a_bus(15 downto 14) = "00" and enable_diag_rom) then 
-				cpu_di_bus <= rom_do_bus;
-			else
-				cpu_di_bus <= ram_do_bus;
-			end if;	
+		when x"00" => cpu_di_bus <= ram_do_bus;
 		when x"01" => cpu_di_bus <= mc146818_do_bus;
 		when x"02" => cpu_di_bus <= GX0 & "1" & kb_do_bus;
 		when x"03" => cpu_di_bus <= zc_do_bus;
@@ -1494,17 +1465,5 @@ selector <=
 	x"12" when (cs_xxE7 = '1' and cpu_rd_n = '0') else
 	x"13" when (vid_pff_cs = '1' and cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_a_bus( 7 downto 0) = X"FF") and dos_act='0' else -- Port FF select
 	(others => '1');
-	
--- debug 
---	PIN_141 <= cpu_int_n;
---	PIN_138 <= cpu_wait_n;
---	PIN_121 <= VGA_G(2);
---	PIN_120 <= cpu_iorq_n;
---	PIN_119 <= VGA_VS;
---	PIN_115 <= VGA_HS;
---
---PIN_138 <= locked;
---PIN_120 <= clk_bus;
---PIN_141 <= areset;
 	
 end rtl;
