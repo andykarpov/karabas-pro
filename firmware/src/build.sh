@@ -48,9 +48,8 @@ make all
 make jic
 make unversion
 
-cp karabas_pro.jic ../../../../releases/profi/karabas_pro.jic
-cp karabas_pro_revA_tda1543.jic ../../../../releases/profi/karabas_pro_revA_tda1543.jic
-cp karabas_pro_revA_tda1543a.jic ../../../../releases/profi/karabas_pro_revA_tda1543a.jic
+cp karabas_pro_tda1543.jic ../../../../releases/profi/karabas_pro_tda1543.jic
+cp karabas_pro_tda1543a.jic ../../../../releases/profi/karabas_pro_tda1543a.jic
 cp karabas_pro.rbf ../../../../releases/profi/karabas_pro.rbf
 
 make clean

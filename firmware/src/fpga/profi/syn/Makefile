@@ -78,10 +78,9 @@ asm.chg:
 ###################################################################
 
 jic: $(PROJECT).sof
-	quartus_cpf -c $(PROJECT).cof
 	quartus_cpf -c $(PROJECT)_rbf.cof
-	quartus_cpf -c $(PROJECT)_revA_tda1543.cof
-	quartus_cpf -c $(PROJECT)_revA_tda1543a.cof
+	quartus_cpf -c $(PROJECT)_tda1543.cof
+	quartus_cpf -c $(PROJECT)_tda1543a.cof
 
 program: $(PROJECT).sof
 	quartus_pgm --no_banner --mode=jtag -o "P;$(PROJECT).sof"

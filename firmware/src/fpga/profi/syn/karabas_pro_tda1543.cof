@@ -2,12 +2,12 @@
 <cof>
 	<eprom_name>EPCS16</eprom_name>
 	<flash_loader_device>EP4CE6</flash_loader_device>
-	<output_filename>karabas_pro.jic</output_filename>
+	<output_filename>karabas_pro_tda1543.jic</output_filename>
 	<n_pages>1</n_pages>
 	<width>1</width>
 	<mode>7</mode>
 	<hex_block>
-		<hex_filename>../rom/cfg_revC.hex</hex_filename>
+		<hex_filename>../rom/cfg_revA_tda1543.hex</hex_filename>
 		<hex_addressing>relative</hex_addressing>
 		<hex_offset>2031616</hex_offset>
 	</hex_block>
