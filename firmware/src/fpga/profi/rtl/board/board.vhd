@@ -29,7 +29,7 @@ architecture rtl of board is
 signal enable_switches 	: std_logic := '1'; -- revC feature
 signal dac_type 			: std_logic := '0'; -- 0 = TDA1543, 1 = TDA1543A
 signal old_rom_bank		: std_logic_vector(1 downto 0) := "00";
-signal reset_cnt			: std_logic_vector(3 downto 0) := "1000";
+signal reset_cnt			: std_logic_vector(4 downto 0) := "10000";
 
 begin
 
@@ -62,14 +62,14 @@ begin
 	if CLK'event and CLK = '1' then
 		if (old_rom_bank /= ROM_BANK) then 
 			old_rom_bank <= ROM_BANK;
-			reset_cnt <= "0000";
+			reset_cnt <= "00000";
 		end if;
-		if (reset_cnt /= "1000") then 
+		if (reset_cnt /= "10000") then 
 			reset_cnt <= reset_cnt + 1;
 		end if;
 	end if;
 end process;
 
-BOARD_RESET <= reset_cnt(2);
+BOARD_RESET <= reset_cnt(3);
 
 end rtl;

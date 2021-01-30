@@ -46,11 +46,10 @@ use IEEE.numeric_std.all;
 
 entity karabas_pro is
 	generic (
-		enable_ay_uart 	   : boolean := false;
-		enable_zxuno_uart    : boolean := true;
-		enable_esp866_bridge : boolean := false;
-		enable_saa1099 	   : boolean := false;
-		enable_diag_rom	   : boolean := false -- Retroleum diagrom (blockram based)
+		enable_ay_uart 	 : boolean := false;
+		enable_zxuno_uart  : boolean := true;
+		enable_saa1099 	 : boolean := false;
+		enable_diag_rom	 : boolean := false -- Retroleum diagrom (blockram based)
 	);
 port (
 	-- Clock (50MHz)
@@ -150,6 +149,15 @@ signal port_dffd_reg : std_logic_vector(7 downto 0) := "00000000";
 signal port_xx7e_reg : std_logic_vector(7 downto 0) := "00000000";
 signal port_xx7e_a   : std_logic_vector(15 downto 8) := "00000000";
 signal port_xx7e_aprev   : std_logic_vector(15 downto 8) := "00000000";
+signal port_xx8b_reg	: std_logic_vector(7 downto 0) := "00000000";
+
+-------------8B_PORT------------------
+signal rom2				: std_logic;
+signal onrom			: std_logic;
+signal turbo_on		: std_logic;
+signal lock_dffd		: std_logic;
+signal unlock_128		: std_logic;
+signal iorqge_8b		: std_logic;
 
 -- Keyboard
 signal kb_do_bus		: std_logic_vector(5 downto 0);
@@ -225,7 +233,28 @@ signal cs_xxC7 		: std_logic := '0';
 signal cs_xxE7 		: std_logic := '0';
 signal cs_xx67 		: std_logic := '0';
 signal cs_rtc_ds 		: std_logic := '0';
-signal cs_rtc_as 		: std_logic := '0'; 			
+signal cs_rtc_as 		: std_logic := '0';
+signal cs_xx8b			: std_logic := '0';
+
+-- Profi HDD ports
+signal hdd_profi_ebl_n	:std_logic;
+signal hdd_wwc_n			:std_logic; -- Write High byte from Data bus to "Write register"
+signal hdd_wwe_n			:std_logic; -- Read High byte from "Write register" to HDD bus
+signal hdd_rww_n			:std_logic; -- Selector Low byte Data bus Buffer Direction: 1 - to HDD bus, 0 - to Data bus
+signal hdd_rwe_n			:std_logic; -- Read High byte from "Read register" to Data bus
+signal hdd_cs3fx_n		:std_logic;
+
+-- Profi FDD ports
+signal RT_F2_1			:std_logic;
+signal RT_F2_2			:std_logic;
+signal RT_F2_3			:std_logic;
+signal fdd_cs_pff_n	:std_logic;
+signal RT_F1_1			:std_logic;
+signal RT_F1_2			:std_logic;
+signal RT_F1			:std_logic;
+signal P0				:std_logic;
+signal fdd_cs_n		:std_logic;
+signal turbo_bl		:std_logic;
 
 -- TurboSound
 signal ssg_sel			: std_logic;
@@ -261,11 +290,14 @@ signal saa_out_l		: std_logic_vector(7 downto 0);
 signal saa_out_r		: std_logic_vector(7 downto 0);
 
 -- CLOCK
+signal clk_112			: std_logic := '0';
+signal clk_84 			: std_logic := '0';
+signal clk_72 			: std_logic := '0';
 signal clk_28 			: std_logic := '0';
 signal clk_24 			: std_logic := '0';
 signal clk_8			: std_logic := '0';
 signal clk_bus			: std_logic := '0';
-signal clk_bus_port 	: std_logic := '0';
+signal clk_bus_port	: std_logic := '0';
 signal clk_div2		: std_logic := '0';
 signal clk_div4		: std_logic := '0';
 signal clk_div8		: std_logic := '0';
@@ -288,7 +320,7 @@ signal loader_act		: std_logic := '1';
 signal loader_reset 	: std_logic := '0';
 signal loader_done 	: std_logic := '0';
 signal dos_act			: std_logic := '1';
-signal cpuclk			: std_logic;
+signal clk_cpu			: std_logic;
 signal selector		: std_logic_vector(7 downto 0);
 signal mux				: std_logic_vector(3 downto 0);
 signal speaker 		: std_logic := '0';
@@ -298,6 +330,7 @@ signal ram_oe_n 		: std_logic := '1';
 signal vbus_mode 		: std_logic := '0';
 signal vid_rd 			: std_logic := '0';
 signal ext_rom_bank  : std_logic_vector(1 downto 0) := "00";
+signal ext_rom_bank_pq	: std_logic_vector(1 downto 0) := "00";
 
 -- Loader
 signal loader_ram_di	: std_logic_vector(7 downto 0);
@@ -395,6 +428,12 @@ signal fdd_oe_n 		: std_logic := '1';
 signal hdd_oe_n 		: std_logic := '1';
 signal port_nreset 	: std_logic := '1';
 
+-- wait signal
+--signal WAIT_C			:std_logic_vector(3 downto 0);
+--signal WAIT_IO			:std_logic;
+--signal WAIT_EN			:std_logic;
+--signal WAIT_C_STOP	:std_logic;
+
 component saa1099
 port (
 	clk_sys	: in std_logic;
@@ -461,17 +500,19 @@ U1: entity work.altpll0
 port map (
 	inclk0			=> CLK_50MHZ,
 	locked			=> locked,
-	c0 				=> clk_28,
-	c1 				=> clk_24,
-	c2 				=> clk_bus_port
+	c0 				=> clk_112
 	);
 	
 -- PLL2
 U2: entity work.altpll1
 port map (
-	inclk0			=> clk_24,
+	inclk0			=> clk_112,
 	locked 			=> open,
-	c0 				=> clk_8);
+	c0 				=> clk_84,
+	c1 				=> clk_72,
+	c2 				=> clk_28,
+	c3 				=> clk_24,
+	c4 				=> clk_8);
 		
 -- main clock selector
 U3: entity work.clk_ctrl
@@ -482,12 +523,21 @@ port map(
 	outclk 		=> clk_bus
 );
 
+-- Bus Port clock selector
+U4: entity work.clk_ctrl2
+port map(
+	clkselect 	=> ds80,
+	inclk0x 		=> clk_84,
+	inclk1x 		=> clk_72,
+	outclk 		=> clk_bus_port
+);
+
 -- Zilog Z80A CPU
-U4: entity work.T80aw
+U5: entity work.T80aw
 port map (
 	RESET_n			=> cpu_reset_n,
 	CLK_n				=> clk_bus,
-	ENA				=> cpuclk,
+	ENA				=> clk_cpu,
 	WAIT_n			=> cpu_wait_n,
 	INT_n				=> cpu_int_n and serial_ms_int,
 	NMI_n				=> cpu_nmi_n,
@@ -506,11 +556,11 @@ port map (
 );
 	
 -- memory manager
-U5: entity work.memory 
+U6: entity work.memory 
 port map ( 
 	CLK2X 			=> clk_bus,
 	CLKX 				=> clk_div2,
-	CLK_CPU 			=> cpuclk,
+	CLK_CPU 			=> clk_cpu,
 	-- cpu signals
 	A 					=> cpu_a_bus,
 	D 					=> cpu_do_bus,
@@ -550,11 +600,11 @@ port map (
 	TRDOS 			=> dos_act,	
 	-- rom
 	ROM_BANK 		=> rom14,
-	EXT_ROM_BANK   => ext_rom_bank
+	EXT_ROM_BANK   => ext_rom_bank_pq
 );	
 
 -- Video Spectrum/Pentagon
-U6: entity work.video
+U7: entity work.video
 port map (
 	CLK 				=> clk_div2, 	-- 14 / 12
 	CLK2x 			=> clk_bus, 	-- 28 / 24
@@ -588,7 +638,7 @@ port map (
 );
 
 -- osd (debug)
-U7: entity work.osd
+U8: entity work.osd
 port map (
 	CLK 				=> clk_bus,
 	CLK2 				=> clk_div2,
@@ -602,18 +652,19 @@ port map (
 	LOADED 			=> kb_loaded,
 	
 	-- sensors
-	TURBO 			=> kb_turbo,
+	TURBO 			=> kb_turbo and (not turbo_on),
 	SCANDOUBLER_EN => vid_scandoubler_enable,
 	MODE60 			=> soft_sw(2),
-	ROM_BANK 		=> ext_rom_bank,
+	ROM_BANK 		=> ext_rom_bank_pq,
 	KB_MODE 			=> kb_mode,
 	KB_WAIT 			=> kb_wait,
 	SSG_MODE 		=> soft_sw(8),
-	SSG_STEREO 		=> soft_sw(7)
+	SSG_STEREO 		=> soft_sw(7),
+	TURBO_FDC		=> soft_sw(5)
 );
 
 -- Scandoubler	
-U8: entity work.vga_pal 
+U9: entity work.vga_pal 
 port map (
 	RGB_IN 			=> vid_rgb_osd,
 	KSI_IN 			=> vid_vsync,
@@ -630,7 +681,7 @@ port map (
 );
 
 -- SPI flash parallel interface
-U9: entity work.flash
+U10: entity work.flash
 port map(
 	CLK 				=> clk_bus,
 	RESET 			=> areset,
@@ -652,7 +703,7 @@ port map(
 );
 
 -- Loader
-U10: entity work.loader
+U11: entity work.loader
 port map(
 	CLK 				=> clk_bus,
 	RESET 			=> areset,
@@ -674,7 +725,7 @@ port map(
 );	
 		
 -- TurboSound
-U11: entity work.turbosound
+U12: entity work.turbosound
 port map (
 	I_CLK				=> clk_bus,
 	I_ENA				=> ena_div16,
@@ -698,7 +749,7 @@ port map (
 	O_SSG1_AUDIO_C	=> ssg_cn1_c);
 
 -- Covox
-U12: entity work.covox
+U13: entity work.covox
 port map (
 	I_RESET			=> reset,
 	I_CLK				=> clk_bus,
@@ -716,7 +767,7 @@ port map (
 );
 	 
 G_SAA1099: if enable_saa1099 generate
-U13: saa1099
+U14: saa1099
 port map(
 	clk_sys			=> clk_8,
 	ce					=> '1',
@@ -730,10 +781,10 @@ port map(
 end generate G_SAA1099;
 
 -- AVR Keyboard / mouse / rtc
-U14: entity work.avr
+U15: entity work.avr
 port map (
 	 CLK 				=> clk_bus,
-	 CLKEN 			=> cpuclk,
+	 CLKEN 			=> clk_cpu,
 	 N_RESET 		=> not areset,
     A       		=> cpu_a_bus(15 downto 8),
     KB				=> kb_do_bus,
@@ -783,7 +834,7 @@ port map (
 );
 	
 -- TDA1543
-U15: entity work.tda1543
+U16: entity work.tda1543
 port map (
 	RESET				=> reset,
 	CLK 				=> clk_8,
@@ -797,12 +848,12 @@ port map (
 );
 
 -- FDD / HDD controllers
-U16: entity work.bus_port
+U17: entity work.bus_port
 port map (
 	CLK 				=> clk_bus_port,
 	CLK2 				=> clk_8,
 	CLK_BUS 			=> clk_bus,
-	CLK_CPU 			=> cpuclk,
+	CLK_CPU 			=> clk_cpu,
 	RESET 			=> reset,
 	
 	SD 				=> SD,
@@ -811,22 +862,26 @@ port map (
 	CPLD_CLK2 		=> CPLD_CLK2,
 	NRESET 			=> NRESET,
 
-	BUS_A 			=> cpu_a_bus,
+	BUS_A 			=> cpu_a_bus(10 downto 8) & cpu_a_bus(6 downto 5),
 	BUS_DI 			=> cpu_do_bus,
 	BUS_DO 			=> cpld_do,
 	BUS_RD_N 		=> cpu_rd_n,
 	BUS_WR_N 		=> cpu_wr_n,
-	BUS_MREQ_N 		=> cpu_mreq_n,
-	BUS_IORQ_N 		=> cpu_iorq_n,
-	BUS_M1_N 		=> cpu_m1_n,
-	BUS_CPM 			=> cpm,
-	BUS_DOS 			=> dos_act,
-	BUS_ROM14 		=> rom14	
+	BUS_HDD_CS_N	=> hdd_profi_ebl_n,
+	BUS_WWC			=> hdd_wwc_n,
+	BUS_WWE			=> hdd_wwe_n,
+	BUS_RWW			=> hdd_rww_n,
+	BUS_RWE			=> hdd_rwe_n,
+	BUS_CS3FX		=> hdd_cs3fx_n,
+	BUS_FDC_STEP	=>	PIN_119 and soft_sw(5),
+	BUS_CSFF			=> fdd_cs_pff_n,
+	BUS_FDC_NCS		=> fdd_cs_n
+
 );
 
 -- UART (via AY port A)
 G_AY_UART: if enable_ay_uart generate
-U17: entity work.ay_uart 
+U18: entity work.ay_uart 
 port map(
 	CLK_I 			=> clk_bus,
 	RESET_I 			=> reset,
@@ -844,7 +899,7 @@ port map(
 end generate G_AY_UART;
 
 -- Diag ROM
-U18: entity work.altrom0
+U19: entity work.altrom0
 port map(
 	clock => clk_bus,
 	address => cpu_a_bus(13 downto 0),
@@ -852,10 +907,10 @@ port map(
 );
 
 -- Serial mouse emulation
-U19: entity work.serial_mouse
+U20: entity work.serial_mouse
 port map(
 	CLK 				=> clk_bus,
-	CLKEN 			=> cpuclk,
+	CLKEN 			=> clk_cpu,
 	N_RESET 			=> not(reset),
 	A 					=> cpu_a_bus,
 	DI					=> cpu_do_bus,
@@ -880,7 +935,7 @@ port map(
 
 -- UART (via ZX UNO ports #FC3B / #FD3B) 	
 G_UNO_UART: if enable_zxuno_uart generate
-U20: zxunoregs 
+U21: zxunoregs 
 port map(
 	clk => clk_bus,
 	rst_n => not(reset),
@@ -897,7 +952,7 @@ port map(
 	regaddr_changed => zxuno_regaddr_changed
 );
 
-U21: zxunouart 
+U22: zxunouart 
 port map(
 	clk => clk_div4, -- 7 or 6 mhz
 	ds80 => ds80,
@@ -913,15 +968,8 @@ port map(
 );	
 end generate G_UNO_UART;
 
--- ESP8266 UART bridge on pin header
-G_ESP8266_BRIDGE: if enable_esp866_bridge generate
-	UART_TX <= PIN_141;
-	PIN_121 <= UART_RX;
-	UART_CTS <= PIN_138;
-end generate G_ESP8266_BRIDGE;
-
 -- board features
-U22: entity work.board 
+U23: entity work.board 
 port map(
 	CLK => clk_bus,
 	CFG => board_revision,
@@ -937,13 +985,13 @@ port map(
 	BOARD_RESET => board_reset	
 );
 
---U23 : entity work.compressor
+--U24 : entity work.compressor
 --port map(
 --	DI => mix_l,
 --	DO => audio_l
 --);
 --
---U24 : entity work.compressor
+--U25 : entity work.compressor
 --port map(
 --	DI => mix_r,
 --	DO => audio_r
@@ -1020,7 +1068,29 @@ cpu_inta_n <= cpu_iorq_n or cpu_m1_n;	-- INTA
 cpu_nmi_n <= '0' when kb_magic = '1' else '1'; -- NMI
 --cpu_wait_n <= '0' when kb_wait = '1' else '1'; -- WAIT
 cpu_wait_n <= '1';
-cpuclk <= '0' when kb_wait = '1' else clk_bus and ena_div8 when kb_turbo = '1' else clk_bus and ena_div4; -- 3.5 / 7 MHz
+clk_cpu <= '0' when kb_wait = '1' else clk_bus and ena_div8 when kb_turbo = '1' and turbo_on = '0' else clk_bus and ena_div4; -- 3.5 / 7 MHz
+
+-- odnovibrator - po spadu nIORQ otschityvaet 400ns WAIT proca
+-- dlja rabotosposobnosti periferii v turbe ili v rezhime 
+-- rasshirennogo jekrana pri podkljuchenii tret'ego kvarca XMHz
+
+--WAIT_IO <= WAIT_C(3) and WAIT_C(2) and WAIT_C(1);
+--WAIT_C_STOP <=WAIT_C(3) and WAIT_C(2) and WAIT_C(1) and not WAIT_C(0);
+--WAIT_EN <= reset or kb_turbo;
+--process (ena_div2, reset, cpu_iorq_n, WAIT_EN) 	
+--	begin					
+--		if WAIT_EN = '1' then	
+--			WAIT_C <= "1111";
+--        elsif ena_div2'event and ena_div2='0' then
+--			if cpu_iorq_n='1' then
+--				WAIT_C <= "1111"; --WAIT IORQ = 0
+--			elsif WAIT_C_STOP='0' then
+--				WAIT_C <= WAIT_C + "001"; --COUNT
+--			elsif WAIT_C_STOP='1' then
+--				WAIT_C <= WAIT_C; --STOP
+--			end if;
+--		end if;
+--	end process;
 
 -- HDD / SD access
 led1_overwrite <= '1';
@@ -1119,6 +1189,18 @@ begin
 	end if;
 end process;
 
+-- Config PORT X"8B"
+cs_xx8b <='1' when cpu_a_bus(7 downto 0)=X"8B" and cpu_iorq_n='0' and cpu_m1_n = '1' and ((cpm='1' and rom14='1') or (dos_act='1' and rom14='0')) else '0';
+
+																			-- 0 - Reserved
+rom2 <= port_xx8b_reg(1);											-- 1 - ROM Change
+onrom <= port_xx8b_reg(2);											-- 2 - Forced activation of the signal "DOS"
+turbo_on <=  port_xx8b_reg(3); 									-- 3 - Turbo on
+lock_dffd <= port_xx8b_reg(4);								 	-- 4 - Lock port DFFD
+unlock_128 <= port_xx8b_reg(5);									-- 5 - Unlock 128 ROM page for DOS 
+
+ext_rom_bank_pq <= ext_rom_bank when rom2 = '0' else "01";	-- ROMBANK ALT
+
 rom14 <= port_7ffd_reg(4); -- rom bank
 cpm 	<= port_dffd_reg(5); -- 1 - блокирует работу контроллера из ПЗУ TR-DOS и включает порты на доступ из ОЗУ (ROM14=0); При ROM14=1 - мод. доступ к расширен. периферии
 worom <= port_dffd_reg(4); -- 1 - отключает блокировку порта 7ffd и выключает ПЗУ, помещая на его место ОЗУ из seg 00
@@ -1134,7 +1216,7 @@ cs_xxfe <= '1' when cpu_iorq_n = '0' and cpu_a_bus(0) = '0' else '0';
 cs_xx7e <= '1' when cs_xxfe = '1' and cpu_a_bus(7) = '0' else '0';
 cs_eff7 <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and cpu_a_bus = X"EFF7" else '0';
 cs_fffd <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and cpu_a_bus = X"FFFD" and fd_port = '1' else '0';
-cs_dffd <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and cpu_a_bus = X"DFFD" and fd_port = '1' else '0';
+cs_dffd <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and cpu_a_bus = X"DFFD" and fd_port = '1' and lock_dffd = '0' else '0';
 cs_7ffd <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and cpu_a_bus = X"7FFD" else '0';
 cs_xxfd <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and cpu_a_bus(15) = '0' and cpu_a_bus(1) = '0' and fd_port = '0' else '0';
 
@@ -1147,18 +1229,59 @@ cs_xx67 <= '1' when cpu_iorq_n = '0' and cpu_a_bus (7 downto 0) = X"67" and cpm=
 
 -- регистр AS часов
 cs_rtc_as <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and
-							((cpu_a_bus(7 downto 0) = X"FF" or cpu_a_bus(7 downto 0) = X"BF") and cpm='1' and rom14='1' and dos_act='0') -- расширенная периферия
+							((cpu_a_bus(7 downto 0) = X"FF" or cpu_a_bus(7 downto 0) = X"BF") and ((cpm='1' and rom14='1') or (dos_act='1' and rom14='0'))) -- расширенная периферия
 				     else '0';
 --
 -- регистр DS часов					  
 cs_rtc_ds <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and 
-							((cpu_a_bus(7 downto 0) = X"DF" or cpu_a_bus(7 downto 0) = X"9F") and cpm='1' and rom14='1' and dos_act='0') -- расширенная периферия
+							((cpu_a_bus(7 downto 0) = X"DF" or cpu_a_bus(7 downto 0) = X"9F") and ((cpm='1' and rom14='1') or (dos_act='1' and rom14='0'))) -- расширенная периферия
 				     else '0';
 					  
 -- порты #7e - пишутся по фронту /wr
 port_xxfe_reg <= cpu_do_bus when cs_xxfe = '1' and (cpu_wr_n'event and cpu_wr_n = '1');
 
-process (reset, areset, clk_bus, cpu_a_bus, dos_act, cs_xxfe, cs_eff7, cs_7ffd, cs_xxfd, port_7ffd_reg, cpu_mreq_n, cpu_m1_n, cpu_wr_n, cpu_do_bus, fd_port)
+-- порты Profi HDD
+hdd_profi_ebl_n	<='0' when (cpu_a_bus(7)='1' and cpu_a_bus(4 downto 0)="01011" and cpu_iorq_n='0') and ((cpm='1' and rom14='1') or (dos_act='1' and rom14='0')) else '1';	-- ROM14=0 BAS=0 ПЗУ SYS
+hdd_wwc_n 	<='0' when (cpu_wr_n='0' and cpu_a_bus(7 downto 0)="11001011" and cpu_iorq_n='0') and ((cpm='1' and rom14='1') or (dos_act='1' and rom14='0')) else '1'; -- Write High byte from Data bus to "Write register"
+hdd_wwe_n 	<='0' when (cpu_wr_n='0' and cpu_a_bus(7 downto 0)="11101011" and cpu_iorq_n='0') and ((cpm='1' and rom14='1') or (dos_act='1' and rom14='0')) else '1'; -- Read High byte from "Write register" to HDD bus
+hdd_rww_n 	<='0' when (cpu_wr_n='1' and cpu_a_bus(7 downto 0)="11001011" and cpu_iorq_n='0') and ((cpm='1' and rom14='1') or (dos_act='1' and rom14='0')) else '1'; -- Selector Low byte Data bus Buffer Direction: 1 - to HDD bus, 0 - to Data bus
+hdd_rwe_n 	<='0' when (cpu_wr_n='1' and cpu_a_bus(7 downto 0)="11101011" and cpu_iorq_n='0') and ((cpm='1' and rom14='1') or (dos_act='1' and rom14='0')) else '1'; -- Read High byte from "Read register" to Data bus
+hdd_cs3fx_n <='0' when (cpu_wr_n='0' and cpu_a_bus(7 downto 0)="10101011" and cpu_iorq_n='0') and ((cpm='1' and rom14='1') or (dos_act='1' and rom14='0')) else '1';
+
+-- порты Profi FDD
+RT_F2_1 <='0' when (cpu_a_bus(7 downto 5)="001" and cpu_a_bus(1 downto 0)="11" and cpu_iorq_n='0') and ((cpm='1' and rom14='1') or (dos_act='1' and rom14='0')) else '1'; --6D
+RT_F2_2 <='0' when cpu_a_bus(7 downto 5)="101" and cpu_a_bus(1 downto 0)="11" and cpu_iorq_n='0' and cpm='1' and dos_act='0' and rom14='0' else '1'; --75
+RT_F2_3 <='0' when cpu_a_bus(7 downto 5)="111" and cpu_a_bus(1 downto 0)="11" and cpu_iorq_n='0' and cpm='0' and dos_act='1' and rom14='1' else '1'; --F3 and FB
+fdd_cs_pff_n <= RT_F2_1 and RT_F2_2 and RT_F2_3;
+
+RT_F1_1 <= '0' when cpu_a_bus(7)='0' and cpu_a_bus(1 downto 0)="11" and cpu_iorq_n='0' and cpm='1' and dos_act='0' and rom14='0' else '1';
+RT_F1_2 <= '0' when cpu_a_bus(7)='0' and cpu_a_bus(1 downto 0)="11" and cpu_iorq_n='0' and cpm='0' and dos_act='1' and rom14='1' else '1';
+RT_F1 <= RT_F1_1 and RT_F1_2;
+P0 <='0' when (cpu_a_bus(7)='1' and cpu_a_bus(4 downto 0)="00011" and cpu_iorq_n='0') and ((cpm='1' and rom14='1') or (dos_act='1' and rom14='0')) else '1';
+fdd_cs_n <= RT_F1 and P0;
+
+turbo_bl <= fdd_cs_pff_n and fdd_cs_n;
+
+------------------VV55------------------------
+--RT_F5 <='0' when adress(7)='0' and adress(1 downto 0)="11" and iorq='0' and CPM='1' and dos='1' else '1';		-- CPM=0 & BAS=1 ПЗУ 128 1F-7F
+--P1_1 <='0' when adress(7)='1' and adress(4 downto 0)="00111" and iorq='0' and CPM='0' and rom14='1' else '1';	-- CPM=1 & ROM14=1 ПЗУ DOS/ SOS 87-E7
+--P1_2 <='0' when adress(7)='1' and adress(4 downto 0)="00111" and iorq='0' and dos='0' and rom14='0' else '1';	-- ROM14=0 BAS=0 ПЗУ SYS 87-E7
+--vv55_cs <= RT_F5 and P1_1 and P1_2;
+
+---- Profi RTC
+--portAS <= '1' when adress(9)='0' and adress(7)='1' and adress(5)='1' and adress(3 downto 0)=X"F" and iorq='0' and cpm='0' and rom14='1' else '0';
+--portDS <= '1' when adress(9)='0' and adress(7)='1' and adress(5)='0' and adress(3 downto 0)=X"F" and iorq='0' and cpm='0' and rom14='1' else '0';
+
+process(clk_bus,reset,cs_xx8b,cpu_do_bus)
+begin
+	if reset='1' then
+		
+	elsif clk_bus'event and clk_bus='1' then
+
+	end if;
+end process;
+
+process (reset, areset, clk_bus, cpu_a_bus, dos_act, cs_xxfe, cs_eff7, cs_7ffd, cs_xxfd, port_7ffd_reg, cpu_mreq_n, cpu_m1_n, cpu_wr_n, cpu_do_bus, fd_port, cs_xx8b)
 begin
 	if reset = '1' then
 		port_eff7_reg <= (others => '0');
@@ -1169,6 +1292,7 @@ begin
 		port_xxA7_reg <= (others => '0');
 		port_xxE7_reg <= (others => '0');
 		port_xx67_reg <= (others => '0');
+		port_xx8b_reg <= (others => '0');
 		dos_act <= '1';
 	elsif clk_bus'event and clk_bus = '1' then
 
@@ -1220,9 +1344,14 @@ begin
 				port_xx67_reg <= cpu_do_bus;
 			end if;
 			
+			-- #xx8B
+			if cs_xx8b = '1' and cpu_wr_n='0' then
+				port_xx8b_reg <= cpu_do_bus;
+			end if;
+			
 			-- TR-DOS FLAG
-			if cpu_m1_n = '0' and cpu_mreq_n = '0' and cpu_a_bus(15 downto 8) = X"3D" and rom14 = '1' and port_dffd_reg(5) = '0' then dos_act <= '1';
-			elsif ((cpu_m1_n = '0' and cpu_mreq_n = '0' and cpu_a_bus(15 downto 14) /= "00") or (port_dffd_reg(5) = '1')) then dos_act <= '0'; end if;
+			if (cpu_m1_n = '0' and cpu_mreq_n = '0' and cpu_a_bus(15 downto 8) = X"3D" and (rom14 = '1' or unlock_128 = '1') and port_dffd_reg(4) = '0') or (onrom = '1') then dos_act <= '1';
+			elsif ((cpu_m1_n = '0' and cpu_mreq_n = '0' and cpu_a_bus(15 downto 14) /= "00") or (port_dffd_reg(4) = '1')) then dos_act <= '0'; end if;
 				
 	end if;
 end process;
@@ -1269,7 +1398,7 @@ mix_r <= "0000000000000000" when loader_act = '1' or cpu_wait_n = '0' else
 				("000"  & saa_out_r &     "00000");
 				
 -- SAA1099
-saa_wr_n <= '0' when (cpu_iorq_n = '0' and cpu_wr_n = '0' and cpu_a_bus(7 downto 0) = "11111111" and dos_act = '0') else '1';
+saa_wr_n <= '0' when (cpu_iorq_n = '0' and cpu_wr_n = '0' and cpu_a_bus(7 downto 0) = X"FF" and dos_act = '0') else '1';
 
 -------------------------------------------------------------------------------
 -- Port I/O
@@ -1297,7 +1426,7 @@ port map(
 	DI				=> cpu_do_bus,
 	START			=> zc_spi_start,
 	WR_EN			=> zc_wr_en,
-	CLC     		=> clk_bus, --cpuclk,
+	CLC     		=> clk_bus, --clk_cpu,
 	MISO    		=> DATA0,
 	DO				=> zc_do_bus,
 	SCK     		=> zc_sclk,
@@ -1368,14 +1497,14 @@ selector <=
 	
 -- debug 
 --	PIN_141 <= cpu_int_n;
---	PIN_138 <= VGA_R(2);
+--	PIN_138 <= cpu_wait_n;
 --	PIN_121 <= VGA_G(2);
---	PIN_120 <= VGA_B(2);
+--	PIN_120 <= cpu_iorq_n;
 --	PIN_119 <= VGA_VS;
 --	PIN_115 <= VGA_HS;
-
--- PIN_138 <= locked;
--- PIN_120 <= clk_bus;
--- PIN_141 <= areset;
+--
+--PIN_138 <= locked;
+--PIN_120 <= clk_bus;
+--PIN_141 <= areset;
 	
 end rtl;

@@ -111,8 +111,19 @@ architecture RTL of serial_mouse is
 	
 begin
 
+-- Serial
+
+--vi53_cs <= '0' when (adress(7)='1' and adress(4 downto 0)="01111" and iorq='0' and dos='0' and rom14='0') or			-- ROM14=0 BAS=0 ПЗУ SYS
+--							(adress(7)='1' and adress(4 downto 0)="01111" and iorq='0' and CPM='0' and rom14='1') else '1';	-- CPM=1 & ROM14=1 ПЗУ DOS/ SOS
+--ladr5 <= adress(5);
+--ladr6 <= adress(6);
+--P4 <= '0' when (adress(7)='1' and adress(4 downto 0)="10011" and iorq='0' and dos='0' and rom14='0') or			-- ROM14=0 BAS=0 ПЗУ SYS
+--					  (adress(7)='1' and adress(4 downto 0)="10011" and iorq='0' and CPM='0' and rom14='1') else '1';	-- CPM=1 & ROM14=1 ПЗУ DOS/ SOS
+--vv51_cs <= not adress(6) or P4;
+--P4I <= adress(6) or P4;
+
 	--p4 <= '0' when A(7)='1' and A(4 downto 0)="10011" and cpm='1' and dos='0' and rom14='1' and IORQ_N='0' else '1';
-	p4 <= '0' when A(7)='1' and A(4 downto 0)="10011" and IORQ_N='0' else '1';
+	p4 <= '0' when (A(7)='1' and A(4 downto 0)="10011" and IORQ_N='0') and ((cpm='1' and rom14='1') or (dos='1' and rom14='0')) else '1';
 	vv51_cs      <= not A(6) or p4;
 	vv51_cs_cmd  <= '0' when vv51_cs='0' and A(5) = '1' else '1';
 	vv51_cs_data <= '0' when vv51_cs='0' and A(5) = '0' else '1';

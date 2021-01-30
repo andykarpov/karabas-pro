@@ -13,7 +13,6 @@ entity osd is
 		HCNT_I	: in std_logic_vector(9 downto 0);
 		VCNT_I	: in std_logic_vector(8 downto 0);
 		BLINK 	: in std_logic;
-		
 		LOADED 	: in std_logic;
 		
 		-- sensors
@@ -24,7 +23,8 @@ entity osd is
 		KB_MODE 			: in std_logic := '1';
 		KB_WAIT 			: in std_logic := '0';
 		SSG_MODE 		: in std_logic := '0';
-		SSG_STEREO 		: in std_logic := '0'
+		SSG_STEREO 		: in std_logic := '0';
+		TURBO_FDC		: in std_logic := '0'
 	);
 end entity;
 
@@ -78,8 +78,9 @@ architecture rtl of osd is
 	constant message_ym_acb:	lcd_line_type  := "YM, ACB ";
 	constant message_ay_abc:	lcd_line_type  := "AY, ABC ";
 	constant message_ay_acb:	lcd_line_type  := "AY, ACB ";
+	constant message_turbo_fdc:lcd_line_type  := "TURBOFDC";
 	constant message_karabas:  lcd_line_type  := "VERSION ";
-	constant message_pro:      lcd_line_type  := "FIRM_VER";
+	constant message_pro:      lcd_line_type  := "21013013";
 
 	-- displayable lines
 	signal line1 : lcd_line_type := message_empty;
@@ -93,6 +94,8 @@ architecture rtl of osd is
 	signal last_kb_wait : std_logic := '0';
 	signal last_ssg_mode : std_logic := '0';
 	signal last_ssg_stereo : std_logic := '0';
+	signal kb_mode_init : std_logic := '0';
+	signal last_turbo_fdc : std_logic := '0';
 	signal last_loaded : std_logic := '0';
 	
 	signal cnt : std_logic_vector(3 downto 0) := "1000";
@@ -252,6 +255,18 @@ begin
 					else 
 						line2 <= message_ay_abc;
 					end if;
+				end if;
+			end if;
+
+			-- turbo mode switch
+			if (TURBO_FDC /= last_turbo_fdc) then
+				last_turbo_fdc <= TURBO_FDC;
+				cnt <= "0000";
+				line1 <= message_turbo_fdc;
+				if (turbo_fdc = '0') then 
+					line2 <= message_off;
+				else 
+					line2 <= message_on;
 				end if;
 			end if;
 		
