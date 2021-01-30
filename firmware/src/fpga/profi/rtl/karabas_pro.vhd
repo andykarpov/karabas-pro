@@ -1361,7 +1361,7 @@ end process;
 
 speaker <= port_xxfe_reg(4);
 
-mix_l <= "0000000000000000" when loader_act = '1' or cpu_wait_n = '0' else 
+mix_l <= "0000000000000000" when loader_act = '1' or kb_wait = '1' else 
 				("000" & speaker & "000000000000") + -- ACB: L = A + C/2
 				("000"  & ssg_cn0_a &     "00000") + 
 				("0000"  & ssg_cn0_c &     "0000") + 
@@ -1379,7 +1379,7 @@ mix_l <= "0000000000000000" when loader_act = '1' or cpu_wait_n = '0' else
 				("000"  & covox_fb &      "00000") + 
 				("000"  & saa_out_l  &    "00000");
 				
-mix_r <= "0000000000000000" when loader_act = '1' or cpu_wait_n = '0' else 
+mix_r <= "0000000000000000" when loader_act = '1' or kb_wait = '1' else 
 				("000" & speaker & "000000000000") + -- ACB: R = B + C/2
 				("000"  & ssg_cn0_b &     "00000") + 
 				("0000"  & ssg_cn0_c &     "0000") + 
