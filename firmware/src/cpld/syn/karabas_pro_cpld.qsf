@@ -42,7 +42,7 @@ set_global_assignment -name TOP_LEVEL_ENTITY karabas_pro_cpld
 set_global_assignment -name ORIGINAL_QUARTUS_VERSION "13.0 SP1"
 set_global_assignment -name PROJECT_CREATION_TIME_DATE "15:44:26  JUNE 08, 2020"
 set_global_assignment -name LAST_QUARTUS_VERSION "13.0 SP1"
-set_global_assignment -name PROJECT_OUTPUT_DIRECTORY ..\\syn\\output_files
+set_global_assignment -name PROJECT_OUTPUT_DIRECTORY ./
 set_global_assignment -name ERROR_CHECK_FREQUENCY_DIVISOR "-1"
 set_global_assignment -name VHDL_FILE ../rtl/karabas_pro_cpld.vhd
 set_global_assignment -name STRATIX_DEVICE_IO_STANDARD "2.5 V"
