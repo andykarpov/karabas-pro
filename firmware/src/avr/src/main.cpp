@@ -1018,12 +1018,14 @@ void process_in_cmd(uint8_t cmd, uint8_t data)
     Serial.println(F("done"));
   }
 
+#if ALLOW_LED_OVERRIDE
   if (cmd == CMD_LED_WRITE) {
     led1_state = bitRead(data, 0);
     led2_state = bitRead(data, 1);
     led1_overwrite = bitRead(data, 2);
     led2_overwrite = bitRead(data, 3);
   }
+#endif
 
   if (cmd >= CMD_RTC_WRITE && cmd < CMD_RTC_WRITE + 64) {
     // write rtc register
@@ -1444,6 +1446,7 @@ void loop()
   }
 
   // control led1
+#if ALLOW_LED_OVERRIDE
   if (led1_overwrite) {
     if (led1_state == 1) {
       digitalWrite(PIN_LED1, HIGH);
@@ -1468,5 +1471,16 @@ void loop()
       }
     }
   }
+#else 
+  if (is_wait) {
+    digitalWrite(PIN_LED2, led2_state);
+    if (n - tl2 >= 500) {
+      tl2 = n;
+      led2_state != led2_state;
+    }
+  } else {
+    digitalWrite(PIN_LED2, HIGH);
+  }
+#endif
 
 }

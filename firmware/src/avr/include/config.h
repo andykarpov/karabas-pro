@@ -16,6 +16,10 @@
 #define MOUSE_POLL_TYPE 1 // 1 = poll, 0 = stream
 #endif
 
+#ifndef ALLOW_LED_OVERRIDE
+#define ALLOW_LED_OVERRIDE 1
+#endif
+
 // ---- Pins for Atmega328
 #define PIN_KBD_CLK 2 // pin 28 (CLKK)
 #define PIN_KBD_DAT 4 // pin 27 (DATK)
