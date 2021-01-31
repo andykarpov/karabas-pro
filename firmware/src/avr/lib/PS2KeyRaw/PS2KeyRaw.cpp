@@ -43,7 +43,7 @@
   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
-#include "ps2.h"
+#include "PS2KeyRaw.h"
 
 /* Private variable definition */
 #define BUFFER_SIZE 16

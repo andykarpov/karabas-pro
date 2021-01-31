@@ -7,10 +7,11 @@
    Ukraine, 2021
 */
 
-#include "ps2.h"
+#include "Arduino.h"
+#include "PS2KeyRaw.h"
+#include "PS2Mouse.h"
 #include "matrix.h"
 #include "ps2_codes.h"
-#include "ps2mouse.h"
 #include <RTC.h>
 #include <EEPROM.h>
 #include <Wire.h>
@@ -19,7 +20,7 @@
 #include "utils.h"
 
 PS2KeyRaw kbd;
-PS2Mouse mouse(PIN_MOUSE_CLK, PIN_MOUSE_DAT);
+PS2Mouse mice;
 static DS1307 rtc;
 
 bool matrix[ZX_MATRIX_FULL_SIZE]; // matrix of pressed keys + mouse reports to be transmitted on CPLD side by simple serial protocol
@@ -926,9 +927,6 @@ void transmit_joy_data()
 
 void transmit_mouse_data()
 {
-  uint8_t cmd = 0;
-  uint8_t res = 0;
-
   spi_send(CMD_MOUSE_X, mouse_x);
   spi_send(CMD_MOUSE_Y, mouse_y);
   spi_send(CMD_MOUSE_Z, mouse_z);
@@ -951,7 +949,7 @@ void rtc_send(uint8_t reg, uint8_t data) {
 
 
 void rtc_send_time() {
-  uint8_t data;
+  //uint8_t data;
   //data = EEPROM.read(EEPROM_RTC_OFFSET + 0xA); bitClear(data, 7); rtc_send(0xA, data);
   //data = EEPROM.read(EEPROM_RTC_OFFSET + 0xB); rtc_send(0xB, data);
   rtc_send(0, rtc_is_bcd ? bin2bcd(rtc_seconds) : rtc_seconds);
@@ -1060,9 +1058,9 @@ void process_in_cmd(uint8_t cmd, uint8_t data)
 void init_mouse()
 {
 #if (MOUSE_POLL_TYPE == 1)
-  mouse_present = mouse.initialize();
+  mouse_present = mice.initialize();
 #else 
-  mouse_present = mouse.streamInitialize();
+  mouse_present = mice.streamInitialize();
 #endif
 }
 
@@ -1239,6 +1237,7 @@ void setup()
   mouse_tries = MOUSE_INIT_TRIES;
 
   Serial.print(F("Mouse init..."));
+  mice.begin(PIN_MOUSE_CLK, PIN_MOUSE_DAT);
   init_mouse();
   Serial.println("done");
 
@@ -1384,7 +1383,7 @@ void loop()
   #if MOUSE_POLL_TYPE == 1
   if (mouse_present && n - t > MOUSE_POLL_INTERVAL) {
 
-    MouseData m = mouse.readData();
+    MouseData m = mice.readData();
 
     mouse_new_packet = !mouse_new_packet;
     mouse_x = m.position.x;
@@ -1405,8 +1404,8 @@ void loop()
   }
   #else
   // mouse stream report read
-  if (mouse.reportAvailable() > 0 ) {
-    MouseData m = mouse.readReport();
+  if (mice.reportAvailable() > 0 ) {
+    MouseData m = mice.readReport();
 
     //if ((bitRead(m.status, 3) == 1) and (bitRead(m.status, 6) == 0) and (bitRead(m.status,7)== 0)) {
       mouse_new_packet = !mouse_new_packet;

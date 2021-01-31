@@ -4,12 +4,17 @@
 #define DEBUG_MODE 1
 #define DEBUG_TIME 0
 
-#define USE_HW_BUTTONS 0
+#ifndef USE_HW_BUTTONS
+#define USE_HW_BUTTONS 1
+#endif
 
 #define MOUSE_POLL_INTERVAL 10 // ms
 #define MOUSE_SWAP_INTERVAL 1000 // ms
 #define MOUSE_INIT_TRIES 2
+
+#ifndef MOUSE_POLL_TYPE
 #define MOUSE_POLL_TYPE 1 // 1 = poll, 0 = stream
+#endif
 
 // ---- Pins for Atmega328
 #define PIN_KBD_CLK 2 // pin 28 (CLKK)

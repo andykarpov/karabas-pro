@@ -1,4 +1,4 @@
-#include "ps2mouse.h"
+#include "PS2Mouse.h"
 #include "Arduino.h"
 
 #define INTELLI_MOUSE 3
@@ -25,7 +25,11 @@ uint8_t PS2_MS_DataPin;
 
 void receiveReport();
 
-PS2Mouse::PS2Mouse(int clockPin, int dataPin) {
+PS2Mouse::PS2Mouse() {
+    // void constructor
+}
+
+void PS2Mouse::begin(int clockPin, int dataPin) {
     _clockPin = clockPin;
     _dataPin = dataPin;
     PS2_MS_DataPin = dataPin;
@@ -42,7 +46,7 @@ void PS2Mouse::low(int pin) {
     digitalWrite(pin, LOW);
 }
 
-bool PS2Mouse::initialize() {
+bool PS2Mouse::initialize(void) {
     high(_clockPin);
     high(_dataPin);
     if (!reset()) return false;
@@ -55,7 +59,7 @@ bool PS2Mouse::initialize() {
     return true;
 }
 
-bool PS2Mouse::streamInitialize() {
+bool PS2Mouse::streamInitialize(void) {
   high(_clockPin);
   high(_dataPin);
   reset();
@@ -244,7 +248,7 @@ void PS2Mouse::requestData() {
     writeAndReadAck(REQUEST_DATA);
 }
 
-void receiveReport() {
+void receiveReport(void) {
 
   static uint8_t bitcount = 0;      // Main state variable and bit count
   static uint8_t incoming = 0;
@@ -333,13 +337,13 @@ void receiveReport() {
 
 }
 
-int8_t PS2Mouse::reportAvailable() {
+int8_t PS2Mouse::reportAvailable(void) {
   int8_t  i = mshead - mstail;
   if( i < 0 ) i += MS_BUFFER_SIZE;
   return i;
 }
 
-MouseData PS2Mouse::readReport() {
+MouseData PS2Mouse::readReport(void) {
 
   uint8_t  i;
   MouseData default_data;

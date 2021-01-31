@@ -33,7 +33,7 @@ uint8_t time_to24h(uint8_t val) {
 uint8_t time_to12h(uint8_t val) {
   bool pm = false;
   if (val > 12) {
-    val = val = 12;
+    val = 12;
     pm = true;
   }
   bitWrite(val, 7, pm);

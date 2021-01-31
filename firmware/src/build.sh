@@ -1,38 +1,36 @@
 #!/bin/sh
 
-export PATH=/opt/altera/quartus/bin:$PATH
+export PATH=/opt/altera/quartus/bin:$HOME/.platformio/penv/bin:$PATH
 
 echo "Building AVR sources"
 
 cd avr
 
 # normal firmware
-make clean
-sed -i 's/USE_HW_BUTTONS 0/USE_HW_BUTTONS 1/g' config.h # with hw buttons
-set -i 's/MOUSE_POLL_TYPE 0/MOUSE_POLL_TYPE 1/g' config.h # mouse poll type : poll
-make
-cp build-uno/avr.hex ../../releases/profi/karabas_pro.hex
+pio run -t clean
+export PLATFORMIO_BUILD_FLAGS="-DUSE_HW_BUTTONS=1 -DMOUSE_POLL_TYPE=1 -Wall"
+pio run
+cp .pio/build/ATmeta328/firmware.hex ../../releases/profi/karabas_pro.hex
 
-make clean
-sed -i 's/USE_HW_BUTTONS 1/USE_HW_BUTTONS 0/g' config.h # without hw buttons
-set -i 's/MOUSE_POLL_TYPE 0/MOUSE_POLL_TYPE 1/g' config.h # mouse poll type : poll
-make
-cp build-uno/avr.hex ../../releases/profi/karabas_pro_revA.hex
+pio run -t clean
+export PLATFORMIO_BUILD_FLAGS="-DUSE_HW_BUTTONS=0 -DMOUSE_POLL_TYPE=1 -Wall"
+pio run
+cp .pio/build/ATmega328/firmware.hex ../../releases/profi/karabas_pro_revA.hex
 
 # kvm ready firmware
-make clean
-sed -i 's/USE_HW_BUTTONS 0/USE_HW_BUTTONS 1/g' config.h # with hw buttons
-set -i 's/MOUSE_POLL_TYPE 1/MOUSE_POLL_TYPE 0/g' config.h # mouse poll type : stream
-make
-cp build-uno/avr.hex ../../releases/profi/karabas_pro_kvm.hex
+pio run -t clean
+export PLATFORMIO_BUILD_FLAGS="-DUSE_HW_BUTTONS=1 -DMOUSE_POLL_TYPE=0 -Wall"
+pio run
+cp .pio/build/ATmeta328/firmware.hex ../../releases/profi/karabas_pro_kvm.hex
 
-make clean
-sed -i 's/USE_HW_BUTTONS 1/USE_HW_BUTTONS 0/g' config.h # without hw buttons
-set -i 's/MOUSE_POLL_TYPE 1/MOUSE_POLL_TYPE 0/g' config.h # mouse poll type : stream
-make
-cp build-uno/avr.hex ../../releases/profi/karabas_pro_revA_kvm.hex
+pio run -t clean
+export PLATFORMIO_BUILD_FLAGS="-DUSE_HW_BUTTONS=0 -DMOUSE_POLL_TYPE=0 -Wall"
+pio run
+cp .pio/build/ATmega328/firmware.hex ../../releases/profi/karabas_pro_revA_kvm.hex
 
-git checkout config.h # revert changes
+pio run -t clean
+
+exit
 
 echo "Done"
 

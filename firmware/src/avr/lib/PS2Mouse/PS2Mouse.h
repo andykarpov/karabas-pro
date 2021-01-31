@@ -1,70 +1,53 @@
-#ifndef MOUSE_H_
-
-#define MOUSE_H_
+#ifndef PS2_MOUSE_H_
+#define PS2_MOUSE_H_
 
 #include "Arduino.h"
 
 #define BUFFER_SIZE 16
 
-typedef struct {
+struct Position {
     int x, y;
-} Position;
+};
 
-typedef struct {
+struct MouseData {
     int status;
     Position position;
     int wheel;
-} MouseData;
+};
 
 class PS2Mouse {
+
+public:
+    PS2Mouse();
+    void begin(int clockPin, int dataPin);
+    bool initialize(void);
+    MouseData readData(void);
+    bool streamInitialize(void);
+    int8_t reportAvailable(void);
+    MouseData readReport(void);
+
 private:
     int _clockPin;
     int _dataPin;
     bool _supportsIntelliMouseExtensions;
-
     void high(int pin);
-
     void low(int pin);
-
     bool writeAndReadAck(int data);
-
     bool reset();
-
     void setSampleRate(int rate);
-
     void checkIntelliMouseExtensions();
-
     void setResolution(int resolution);
-
     char getDeviceId();
-
     void setScaling(int scaling);
-
     void setRemoteMode();
-
     void setStreamingMode();
-
     bool waitForClockState(int expectedState);
-
     void requestData();
-
     char readByte();
-
     int readBit();
-
     bool writeByte(char data);
-
     void writeBit(int bit);
 
-public:
-    PS2Mouse(int clockPin, int dataPin);
-
-    bool initialize();
-    MouseData readData();
-
-    bool streamInitialize();
-    int8_t reportAvailable();
-    MouseData readReport();
 };
 
-#endif // MOUSE_H_
+#endif // PSMOUSE_H_
