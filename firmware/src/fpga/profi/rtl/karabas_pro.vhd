@@ -897,14 +897,6 @@ port map(
 );
 end generate G_AY_UART;
 
--- Diag ROM
-U19: entity work.altrom0
-port map(
-	clock => clk_bus,
-	address => cpu_a_bus(13 downto 0),
-	q => rom_do_bus
-);
-
 -- Serial mouse emulation
 U20: entity work.serial_mouse
 port map(
