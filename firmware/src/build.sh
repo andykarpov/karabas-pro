@@ -44,7 +44,7 @@ cp .pio/build/ATmega328/firmware.hex ../../releases/profi/karabas_pro_revA_kvm.h
 
 pio run -t clean
 
-exit
+#exit
 
 echo "Done"
 
