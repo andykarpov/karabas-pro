@@ -101,8 +101,8 @@ port (
 	PIN_138 		: inout std_logic;
 	PIN_121		: inout std_logic;
 	PIN_120		: inout std_logic;
-	FDC_STEP		: inout std_logic; -- PIN_119 connected to FDC_STEP for TurboFDC
-	SD_MOSI		: inout std_logic; -- PIN_115 connected to SD_SI
+        FDC_STEP        : inout std_logic; -- PIN_119 connected to FDC_STEP for TurboFDC
+        SD_MOSI         : inout std_logic; -- PIN_115 connected to SD_S
 	
 	-- Dip Switches 
 	SW3 			: in std_logic_vector(4 downto 1) := "1111";
@@ -399,6 +399,9 @@ signal serial_ms_do_bus : std_logic_vector(7 downto 0);
 signal serial_ms_oe_n : std_logic := '1';
 signal serial_ms_int : std_logic := '1';
 
+-- test rom 
+signal rom_do_bus 	: std_logic_vector(7 downto 0);
+
 -- profi special signals
 signal cpm 				: std_logic := '0';
 signal worom 			: std_logic := '0';
@@ -666,7 +669,7 @@ port map (
 	KSI_IN 			=> vid_vsync,
 	SSI_IN 			=> vid_hsync,
 	CLK 				=> clk_div2,
-	CLK2 				=> not(clk_bus),
+	CLK2 				=> clk_bus,
 	EN 				=> vid_scandoubler_enable,
 	DS80				=> ds80,		
 	RGB_O(8 downto 6)	=> VGA_R,
@@ -869,7 +872,7 @@ port map (
 	BUS_RWW			=> hdd_rww_n,
 	BUS_RWE			=> hdd_rwe_n,
 	BUS_CS3FX		=> hdd_cs3fx_n,
-	BUS_FDC_STEP	=>	fdc_step and soft_sw(5),
+	BUS_FDC_STEP	=>	FDC_STEP and soft_sw(5),
 	BUS_CSFF			=> fdd_cs_pff_n,
 	BUS_FDC_NCS		=> fdd_cs_n
 
@@ -893,6 +896,14 @@ port map(
 	UART_RTS 		=> UART_CTS
 );
 end generate G_AY_UART;
+
+-- Diag ROM
+U19: entity work.altrom0
+port map(
+	clock => clk_bus,
+	address => cpu_a_bus(13 downto 0),
+	q => rom_do_bus
+);
 
 -- Serial mouse emulation
 U20: entity work.serial_mouse
@@ -961,7 +972,7 @@ U23: entity work.board
 port map(
 	CLK => clk_bus,
 	CFG => board_revision,
-
+	SW3 => SW3,
 	SOFT_SW1 => soft_sw(1),
 	SOFT_SW2 => soft_sw(2),
 	SOFT_SW3 => soft_sw(3),
@@ -972,6 +983,18 @@ port map(
 	SCANDOUBLER_EN => vid_scandoubler_enable,
 	BOARD_RESET => board_reset	
 );
+
+--U24 : entity work.compressor
+--port map(
+--	DI => mix_l,
+--	DO => audio_l
+--);
+--
+--U25 : entity work.compressor
+--port map(
+--	DI => mix_r,
+--	DO => audio_r
+--);
 	
 -- swap audio channels
 audio_l <= mix_r;
@@ -1465,5 +1488,17 @@ selector <=
 	x"12" when (cs_xxE7 = '1' and cpu_rd_n = '0') else
 	x"13" when (vid_pff_cs = '1' and cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_a_bus( 7 downto 0) = X"FF") and dos_act='0' else -- Port FF select
 	(others => '1');
+	
+-- debug 
+--	PIN_141 <= cpu_int_n;
+--	PIN_138 <= cpu_wait_n;
+--	PIN_121 <= VGA_G(2);
+--	PIN_120 <= cpu_iorq_n;
+--	PIN_119 <= VGA_VS;
+--	PIN_115 <= VGA_HS;
+--
+--PIN_138 <= locked;
+--PIN_120 <= clk_bus;
+--PIN_141 <= areset;
 	
 end rtl;
