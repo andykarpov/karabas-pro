@@ -4,6 +4,9 @@ use IEEE.numeric_std.ALL;
 use IEEE.std_logic_unsigned.all;
 
 entity osd is
+	generic ( 
+		VER 		: string(1 to 8) := "FIRM_VER"
+	);
 	port (
 		CLK		: in std_logic;
 		CLK2 		: in std_logic;
@@ -52,41 +55,37 @@ architecture rtl of osd is
 	signal vpos : std_logic_vector(1 downto 0) := "00";
 	signal bit_addr: std_logic_vector(2 downto 0);
 	signal pixel: std_logic;
-	
-	-- 8 characters
-	type lcd_line_type is array(0 to 7) of character;
-	
+		
 	-- Define messages displayed
-	constant message_turbo: 	lcd_line_type 	:= "TURBO   ";
-	constant message_vga: 		lcd_line_type 	:= "VGA     ";
-	constant message_rgb: 		lcd_line_type 	:= "RGB     ";
-	constant message_on:	 		lcd_line_type 	:= "ON      ";
-	constant message_off: 		lcd_line_type 	:= "OFF     ";
-	constant message_rombank: 	lcd_line_type 	:= "ROM BANK";
-	constant message_rombank0:	lcd_line_type 	:= "DEFAULT ";
-	constant message_rombank1:	lcd_line_type 	:= "ALT     ";
-	constant message_rombank2:	lcd_line_type 	:= "FLASHER ";
-	constant message_rombank3:	lcd_line_type 	:= "DIAG ROM";
-	constant message_50hz: 		lcd_line_type 	:= "50 Hz   ";
-	constant message_60hz: 		lcd_line_type 	:= "60 Hz   ";
-	constant message_keyboard: lcd_line_type  := "KEYBOARD";
-	constant message_profi:    lcd_line_type  := "XT-PROFI";
-	constant message_spectrum: lcd_line_type  := "SPECTRUM";
-	constant message_pause:    lcd_line_type  := "PAUSE   ";
-	constant message_empty: 	lcd_line_type 	:= "        ";
-	constant message_ssgmode:  lcd_line_type  := "SSG MODE";
-	constant message_ym_abc:	lcd_line_type  := "YM, ABC ";
-	constant message_ym_acb:	lcd_line_type  := "YM, ACB ";
-	constant message_ay_abc:	lcd_line_type  := "AY, ABC ";
-	constant message_ay_acb:	lcd_line_type  := "AY, ACB ";
-	constant message_covox:		lcd_line_type  := "COVOX   ";
-	constant message_turbo_fdc:lcd_line_type  := "TURBOFDC";
-	constant message_karabas:  lcd_line_type  := "VERSION ";
-	constant message_pro:      lcd_line_type  := "FIRM_VER";
+	constant message_turbo: 	string(1 to 8) 	:= "TURBO   ";
+	constant message_vga: 		string(1 to 8) 	:= "VGA     ";
+	constant message_rgb: 		string(1 to 8) 	:= "RGB     ";
+	constant message_on:	 		string(1 to 8) 	:= "ON      ";
+	constant message_off: 		string(1 to 8) 	:= "OFF     ";
+	constant message_rombank: 	string(1 to 8) 	:= "ROM BANK";
+	constant message_rombank0:	string(1 to 8) 	:= "DEFAULT ";
+	constant message_rombank1:	string(1 to 8) 	:= "ALT     ";
+	constant message_rombank2:	string(1 to 8) 	:= "FLASHER ";
+	constant message_rombank3:	string(1 to 8) 	:= "DIAG ROM";
+	constant message_50hz: 		string(1 to 8) 	:= "50 Hz   ";
+	constant message_60hz: 		string(1 to 8) 	:= "60 Hz   ";
+	constant message_keyboard: string(1 to 8)  := "KEYBOARD";
+	constant message_profi:    string(1 to 8)  := "XT-PROFI";
+	constant message_spectrum: string(1 to 8)  := "SPECTRUM";
+	constant message_pause:    string(1 to 8)  := "PAUSE   ";
+	constant message_empty: 	string(1 to 8) 	:= "        ";
+	constant message_ssgmode:  string(1 to 8)  := "SSG MODE";
+	constant message_ym_abc:	string(1 to 8)  := "YM, ABC ";
+	constant message_ym_acb:	string(1 to 8)  := "YM, ACB ";
+	constant message_ay_abc:	string(1 to 8)  := "AY, ABC ";
+	constant message_ay_acb:	string(1 to 8)  := "AY, ACB ";
+	constant message_covox:		string(1 to 8)  := "COVOX   ";
+	constant message_turbo_fdc:string(1 to 8)  := "TURBOFDC";
+	constant message_karabas:  string(1 to 8)  := "VERSION ";
 
 	-- displayable lines
-	signal line1 : lcd_line_type := message_empty;
-	signal line2 : lcd_line_type := message_empty;
+	signal line1 : string(1 to 8) := message_empty;
+	signal line2 : string(1 to 8) := message_empty;
 	
 	signal last_turbo : std_logic := '0';
 	signal last_scandoubler_en : std_logic := '0';
@@ -134,8 +133,8 @@ begin
 	hpos <= hcnt(6 downto 4) when DS80 = '1' else hcnt(5 downto 3);
 	
 	-- character to request from the ROM depends on the line1 / line2 horizontal position
-	char <= std_logic_vector(to_unsigned(character'pos(line1(to_integer(unsigned(hpos(2 downto 0))))), 8)) when vpos(0) = '1' and ((DS80 = '0' and hcnt < 64) or (DS80 = '1' and hcnt < 128)) else 
-			  std_logic_vector(to_unsigned(character'pos(line2(to_integer(unsigned(hpos(2 downto 0))))), 8)) when vpos(1) = '1' and ((DS80 = '0' and hcnt < 64) or (DS80 = '1' and hcnt < 128)) else 
+	char <= std_logic_vector(to_unsigned(character'pos(line1(to_integer(unsigned(hpos(2 downto 0)))+1)), 8)) when vpos(0) = '1' and ((DS80 = '0' and hcnt < 64) or (DS80 = '1' and hcnt < 128)) else 
+			  std_logic_vector(to_unsigned(character'pos(line2(to_integer(unsigned(hpos(2 downto 0)))+1)), 8)) when vpos(1) = '1' and ((DS80 = '0' and hcnt < 64) or (DS80 = '1' and hcnt < 128)) else 
 			  (others => '0');
 
 	-- pixel 
@@ -173,7 +172,7 @@ begin
 				last_turbo_fdc <= TURBO_FDC;
 				cnt <= "0000";
 				line1 <= message_karabas;
-				line2 <= message_pro;
+				line2 <= VER;
 			elsif (LOADED = '1') then
 			
 				-- wait switch

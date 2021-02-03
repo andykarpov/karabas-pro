@@ -48,7 +48,8 @@ entity karabas_pro is
 	generic (
 		enable_ay_uart 	 : boolean := false;
 		enable_zxuno_uart  : boolean := true;
-		enable_saa1099 	 : boolean := false
+		enable_saa1099 	 : boolean := false;
+		build_version		 : string(1 to 8) := "FIRM_VER"
 	);
 port (
 	-- Clock (50MHz)
@@ -638,6 +639,9 @@ port map (
 
 -- osd (debug)
 U8: entity work.osd
+generic map (
+	VER => build_version
+)
 port map (
 	CLK 				=> clk_bus,
 	CLK2 				=> clk_div2,
