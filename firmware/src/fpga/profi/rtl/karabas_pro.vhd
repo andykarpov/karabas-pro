@@ -659,6 +659,7 @@ port map (
 	KB_WAIT 			=> kb_wait,
 	SSG_MODE 		=> soft_sw(8),
 	SSG_STEREO 		=> soft_sw(7),
+	COVOX_EN			=> soft_sw(6),
 	TURBO_FDC		=> soft_sw(5)
 );
 
@@ -752,7 +753,7 @@ U13: entity work.covox
 port map (
 	I_RESET			=> reset,
 	I_CLK				=> clk_bus,
-	I_CS				=> '1',
+	I_CS				=> soft_sw(6),
 	I_WR_N			=> cpu_wr_n,
 	I_ADDR			=> cpu_a_bus(7 downto 0),
 	I_DATA			=> cpu_do_bus,
@@ -1262,15 +1263,6 @@ turbo_bl <= fdd_cs_pff_n and fdd_cs_n;
 ---- Profi RTC
 --portAS <= '1' when adress(9)='0' and adress(7)='1' and adress(5)='1' and adress(3 downto 0)=X"F" and iorq='0' and cpm='0' and rom14='1' else '0';
 --portDS <= '1' when adress(9)='0' and adress(7)='1' and adress(5)='0' and adress(3 downto 0)=X"F" and iorq='0' and cpm='0' and rom14='1' else '0';
-
-process(clk_bus,reset,cs_xx8b,cpu_do_bus)
-begin
-	if reset='1' then
-		
-	elsif clk_bus'event and clk_bus='1' then
-
-	end if;
-end process;
 
 process (reset, areset, clk_bus, cpu_a_bus, dos_act, cs_xxfe, cs_eff7, cs_7ffd, cs_xxfd, port_7ffd_reg, cpu_mreq_n, cpu_m1_n, cpu_wr_n, cpu_do_bus, fd_port, cs_xx8b)
 begin

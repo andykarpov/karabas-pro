@@ -24,6 +24,7 @@ entity osd is
 		KB_WAIT 			: in std_logic := '0';
 		SSG_MODE 		: in std_logic := '0';
 		SSG_STEREO 		: in std_logic := '0';
+		COVOX_EN 		: in std_logic := '0';
 		TURBO_FDC		: in std_logic := '0'
 	);
 end entity;
@@ -78,6 +79,7 @@ architecture rtl of osd is
 	constant message_ym_acb:	lcd_line_type  := "YM, ACB ";
 	constant message_ay_abc:	lcd_line_type  := "AY, ABC ";
 	constant message_ay_acb:	lcd_line_type  := "AY, ACB ";
+	constant message_covox:		lcd_line_type  := "COVOX   ";
 	constant message_turbo_fdc:lcd_line_type  := "TURBOFDC";
 	constant message_karabas:  lcd_line_type  := "VERSION ";
 	constant message_pro:      lcd_line_type  := "FIRM_VER";
@@ -94,6 +96,7 @@ architecture rtl of osd is
 	signal last_kb_wait : std_logic := '0';
 	signal last_ssg_mode : std_logic := '0';
 	signal last_ssg_stereo : std_logic := '0';
+	signal last_covox : std_logic := '0';
 	signal kb_mode_init : std_logic := '0';
 	signal last_turbo_fdc : std_logic := '0';
 	signal last_loaded : std_logic := '0';
@@ -149,7 +152,7 @@ begin
 	RGB_O <= "000111000" when en = '1' and pixel = '1' else RGB_I;
 
 	-- display messages for changed sensors
-	process (CLK, BLINK, cnt, KB_WAIT, KB_MODE, TURBO, SCANDOUBLER_EN, MODE60, ROM_BANK, SSG_MODE, SSG_STEREO, last_ssg_mode, last_ssg_stereo, last_kb_wait, last_kb_mode, LOADED, last_loaded, last_turbo, last_scandoubler_en, last_mode60, last_rom_bank)
+	process (CLK, BLINK, cnt, KB_WAIT, KB_MODE, TURBO, SCANDOUBLER_EN, MODE60, ROM_BANK, SSG_MODE, SSG_STEREO, last_ssg_mode, last_ssg_stereo, last_kb_wait, last_kb_mode, LOADED, last_loaded, last_turbo, last_scandoubler_en, last_mode60, last_rom_bank, COVOX_EN, last_covox, TURBO_FDC, last_turbo_fdc)
 	begin 
 		if rising_edge(CLK) then 
 		
@@ -166,6 +169,8 @@ begin
 				last_rom_bank <= ROM_BANK;
 				last_ssg_mode <= SSG_MODE;
 				last_ssg_stereo <= SSG_STEREO;
+				last_covox <= COVOX_EN;
+				last_turbo_fdc <= TURBO_FDC;
 				cnt <= "0000";
 				line1 <= message_karabas;
 				line2 <= message_pro;
@@ -256,20 +261,32 @@ begin
 						line2 <= message_ay_abc;
 					end if;
 				end if;
-			end if;
-
-			-- turbo mode switch
-			if (TURBO_FDC /= last_turbo_fdc) then
-				last_turbo_fdc <= TURBO_FDC;
-				cnt <= "0000";
-				line1 <= message_turbo_fdc;
-				if (turbo_fdc = '0') then 
-					line2 <= message_off;
-				else 
-					line2 <= message_on;
+				
+				-- turbo fdc mode switch
+				if (TURBO_FDC /= last_turbo_fdc) then
+					last_turbo_fdc <= TURBO_FDC;
+					cnt <= "0000";
+					line1 <= message_turbo_fdc;
+					if (turbo_fdc = '0') then 
+						line2 <= message_off;
+					else 
+						line2 <= message_on;
+					end if;
+				end if;
+				
+				-- covox mode switch
+				if (COVOX_EN /= last_covox) then
+					last_covox <= COVOX_EN;
+					cnt <= "0000";
+					line1 <= message_covox;
+					if (covox_en = '0') then 
+						line2 <= message_off;
+					else 
+						line2 <= message_on;
+					end if;
 				end if;
 			end if;
-		
+
 			-- enable counter
 			last_blink <= BLINK;
 			if (BLINK = '1' and last_blink = '0' and cnt /= "1000") then 
