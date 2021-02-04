@@ -69,19 +69,19 @@ architecture rtl of osd is
 	constant message_rombank3:	string(1 to 8) 	:= "DIAG ROM";
 	constant message_50hz: 		string(1 to 8) 	:= "50 Hz   ";
 	constant message_60hz: 		string(1 to 8) 	:= "60 Hz   ";
-	constant message_keyboard: string(1 to 8)  := "KEYBOARD";
-	constant message_profi:    string(1 to 8)  := "XT-PROFI";
-	constant message_spectrum: string(1 to 8)  := "SPECTRUM";
-	constant message_pause:    string(1 to 8)  := "PAUSE   ";
+	constant message_keyboard: string(1 to 8)  	:= "KEYBOARD";
+	constant message_profi:    string(1 to 8)  	:= "XT-PROFI";
+	constant message_spectrum: string(1 to 8)  	:= "SPECTRUM";
+	constant message_pause:    string(1 to 8)  	:= "PAUSE   ";
 	constant message_empty: 	string(1 to 8) 	:= "        ";
-	constant message_ssgmode:  string(1 to 8)  := "SSG MODE";
-	constant message_ym_abc:	string(1 to 8)  := "YM, ABC ";
-	constant message_ym_acb:	string(1 to 8)  := "YM, ACB ";
-	constant message_ay_abc:	string(1 to 8)  := "AY, ABC ";
-	constant message_ay_acb:	string(1 to 8)  := "AY, ACB ";
-	constant message_covox:		string(1 to 8)  := "COVOX   ";
-	constant message_turbo_fdc:string(1 to 8)  := "TURBOFDC";
-	constant message_karabas:  string(1 to 8)  := "VERSION ";
+	constant message_ssgmode:  string(1 to 8)  	:= "SSG MODE";
+	constant message_ym_abc:	string(1 to 8)  	:= "YM, ABC ";
+	constant message_ym_acb:	string(1 to 8)  	:= "YM, ACB ";
+	constant message_ay_abc:	string(1 to 8)  	:= "AY, ABC ";
+	constant message_ay_acb:	string(1 to 8)  	:= "AY, ACB ";
+	constant message_covox:		string(1 to 8)  	:= "COVOX   ";
+	constant message_turbo_fdc:string(1 to 8)  	:= "TURBOFDC";
+	constant message_karabas:  string(1 to 8)  	:= "VERSION ";
 
 	-- displayable lines
 	signal line1 : string(1 to 8) := message_empty;

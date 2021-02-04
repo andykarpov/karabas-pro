@@ -25,38 +25,49 @@ entity covox is
 		I_CPM 		: in std_logic; -- https://zx-pk.ru/printthread.php?t=609&pp=10&page=135
 		I_ROM14		: in std_logic;
 		
-		O_LEFT 		: out std_logic_vector(7 downto 0);
-		O_RIGHT 		: out std_logic_vector(7 downto 0);
+		O_A	 		: out std_logic_vector(7 downto 0);
+		O_B	 		: out std_logic_vector(7 downto 0);
+		O_C	 		: out std_logic_vector(7 downto 0);
+		O_D	 		: out std_logic_vector(7 downto 0);
 		O_FB 			: out std_logic_vector(7 downto 0)
 );		
 end covox;
  
 architecture covox_unit of covox is
 
-	signal out3f_reg : std_logic_vector (7 downto 0);
-	signal out5f_reg : std_logic_vector (7 downto 0);
-	signal outfb_reg : std_logic_vector (7 downto 0);
+	signal outa_reg : std_logic_vector (7 downto 0);
+	signal outb_reg : std_logic_vector (7 downto 0);
+	signal outc_reg : std_logic_vector (7 downto 0);
+	signal outd_reg : std_logic_vector (7 downto 0);
+	signal outfb_reg 		: std_logic_vector (7 downto 0);
 	
 begin
 
 	process (I_CLK, I_RESET, I_CS, I_DOS, I_CPM, I_IORQ_N, I_WR_N)
 	begin
 		if I_RESET = '1' or I_CS = '0' then
-			out3f_reg <= (others => '0');
-			out5f_reg <= (others => '0');
+			outa_reg <= (others => '0');
+			outb_reg <= (others => '0');		
+			outc_reg <= (others => '0');
+			outd_reg <= (others => '0');
 			outfb_reg <= (others => '0');	
 		elsif I_CLK'event and I_CLK = '1' and I_DOS = '0' and I_CPM='0' and I_CS = '1' and  I_IORQ_N = '0' and I_WR_N = '0' then
 			case I_ADDR is 
-				when x"3F" => out3f_reg <= I_DATA;
-				when x"5F" => out5f_reg <= I_DATA;
+				when x"0F" => outa_reg <= I_DATA;
+				when x"1F" => outb_reg <= I_DATA;
+				when x"3F" => outb_reg <= I_DATA;
+				when x"4F" => outc_reg <= I_DATA;
+				when x"5F" => outd_reg <= I_DATA;
 				when x"FB" => outfb_reg <= I_DATA;
 				when others => null;
 			end case;
 		end if;
 	end process;
 	
-	O_LEFT <= out3f_reg;
-	O_RIGHT <= out5f_reg;
+	O_A <= outa_reg;
+	O_B <= outb_reg;
+	O_C <= outc_reg;
+	O_D <= outd_reg;
 	O_FB <= outfb_reg;
 	
 end covox_unit;
