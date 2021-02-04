@@ -273,8 +273,10 @@ signal ay_bc1			: std_logic;
 signal ay_port 		: std_logic := '0';
 
 -- Covox
-signal covox_l			: std_logic_vector(7 downto 0);
-signal covox_r			: std_logic_vector(7 downto 0);
+signal covox_a			: std_logic_vector(7 downto 0);
+signal covox_b			: std_logic_vector(7 downto 0);
+signal covox_c			: std_logic_vector(7 downto 0);
+signal covox_d			: std_logic_vector(7 downto 0);
 signal covox_fb		: std_logic_vector(7 downto 0);
 
 -- Output audio
@@ -765,8 +767,10 @@ port map (
 	I_DOS				=> dos_act,
 	I_CPM 			=> cpm,
 	I_ROM14 			=> rom14,
-	O_LEFT			=> covox_l,
-	O_RIGHT			=> covox_r,
+	O_A				=> covox_a,
+	O_B				=> covox_b,
+	O_C				=> covox_c,
+	O_D				=> covox_d,
 	O_FB 				=> covox_fb
 );
 	 
@@ -1354,7 +1358,8 @@ mix_l <= "0000000000000000" when loader_act = '1' or kb_wait = '1' else
 				("0000"  & ssg_cn0_c &     "0000") + 
 				("000"  & ssg_cn1_a &     "00000") + 
 				("0000"  & ssg_cn1_c &     "0000") + 
-				("00" & covox_l & covox_l(7 downto 4) & "00") + 
+				("00" & covox_a & covox_a(7 downto 4) & "00") + 
+				("00" & covox_b & covox_b(7 downto 4) & "00") + 
 				("000"  & covox_fb &      "00000") + 
 				("000"  & saa_out_l  &    "00000") when soft_sw(7) = '0' else 
 				("000" & speaker & "000000000000") +  -- ABC: L = A + B/2
@@ -1362,7 +1367,8 @@ mix_l <= "0000000000000000" when loader_act = '1' or kb_wait = '1' else
 				("0000"  & ssg_cn0_b &     "0000") + 
 				("000"  & ssg_cn1_a &     "00000") + 
 				("0000"  & ssg_cn1_b &     "0000") + 
-				("00" & covox_l & covox_l(7 downto 4) & "00") + 
+				("00" & covox_a & covox_a(7 downto 4) & "00") + 
+				("00" & covox_b & covox_b(7 downto 4) & "00") + 
 				("000"  & covox_fb &      "00000") + 
 				("000"  & saa_out_l  &    "00000");
 				
@@ -1372,7 +1378,8 @@ mix_r <= "0000000000000000" when loader_act = '1' or kb_wait = '1' else
 				("0000"  & ssg_cn0_c &     "0000") + 
 				("000"  & ssg_cn1_b &     "00000") + 
 				("0000"  & ssg_cn1_c &     "0000") + 
-				("00" & covox_r & covox_r(7 downto 4) & "00") + 
+				("00" & covox_c & covox_c(7 downto 4) & "00") + 
+				("00" & covox_d & covox_d(7 downto 4) & "00") + 
 				("000"  & covox_fb &      "00000") + 
 				("000"  & saa_out_r &     "00000") when soft_sw(7) = '0' else
 				("000" & speaker & "000000000000") + -- ABC: R = C + B/2
@@ -1380,7 +1387,8 @@ mix_r <= "0000000000000000" when loader_act = '1' or kb_wait = '1' else
 				("0000"  & ssg_cn0_b &     "0000") + 
 				("000"  & ssg_cn1_c &     "00000") + 
 				("0000"  & ssg_cn1_b &     "0000") + 
-				("00" & covox_r & covox_r(7 downto 4) & "00") + 
+				("00" & covox_c & covox_c(7 downto 4) & "00") + 
+				("00" & covox_d & covox_d(7 downto 4) & "00") + 
 				("000"  & covox_fb &      "00000") + 
 				("000"  & saa_out_r &     "00000");
 				
