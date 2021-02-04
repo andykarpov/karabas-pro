@@ -5,19 +5,11 @@
 PROJECT = karabas_pro
 TOP_LEVEL_ENTITY = karabas_pro
 ASSIGNMENT_FILES = $(PROJECT).qpf $(PROJECT).qsf
-BUILD_VERSION = $$(date '+%y%m%d%H')
 
 all: smart.log $(PROJECT).asm.rpt $(PROJECT).sta.rpt
 
 clean:
 	rm -rf *.rpt *.chg smart.log *.htm *.eqn *.pin *.sof *.pof db incremental_db *.summary *.done *.smsg *.jdi *.jic *.map *.rbf
-
-version:
-	@echo "Build version: ${BUILD_VERSION}"
-	sed -i "s/FIRM_VER/${BUILD_VERSION}/g" ../rtl/video/osd.vhd
-
-unversion:
-	git checkout ../rtl/video/osd.vhd
 
 map: smart.log $(PROJECT).map.rpt
 fit: smart.log $(PROJECT).fit.rpt
@@ -54,9 +46,10 @@ $(PROJECT).asm.rpt: asm.chg $(PROJECT).fit.rpt
 
 $(PROJECT).sta.rpt: sta.chg $(PROJECT).fit.rpt
 	quartus_sta $(STA_ARGS) $(PROJECT) 
+	quartus_sh -t remove_ver.tcl $(PROJECT)
 
 smart.log: $(ASSIGNMENT_FILES)
-	quartus_sh --determine_smart_action $(PROJECT) > smart.log
+	quartus_sh -t add_ver.tcl --determine_smart_action $(PROJECT) > smart.log
 
 ###################################################################
 # Project initialization
