@@ -1358,8 +1358,8 @@ mix_l <= "0000000000000000" when loader_act = '1' or kb_wait = '1' else
 				("0000"  & ssg_cn0_c &     "0000") + 
 				("000"  & ssg_cn1_a &     "00000") + 
 				("0000"  & ssg_cn1_c &     "0000") + 
-				("00" & covox_a & covox_a(7 downto 4) & "00") + 
-				("00" & covox_b & covox_b(7 downto 4) & "00") + 
+				("000"  & covox_a &       "00000") + 
+				("000"  & covox_b &       "00000") + 
 				("000"  & covox_fb &      "00000") + 
 				("000"  & saa_out_l  &    "00000") when soft_sw(7) = '0' else 
 				("000" & speaker & "000000000000") +  -- ABC: L = A + B/2
@@ -1367,8 +1367,8 @@ mix_l <= "0000000000000000" when loader_act = '1' or kb_wait = '1' else
 				("0000"  & ssg_cn0_b &     "0000") + 
 				("000"  & ssg_cn1_a &     "00000") + 
 				("0000"  & ssg_cn1_b &     "0000") + 
-				("00" & covox_a & covox_a(7 downto 4) & "00") + 
-				("00" & covox_b & covox_b(7 downto 4) & "00") + 
+				("000"  & covox_a &       "00000") + 
+				("000"  & covox_b &       "00000") + 
 				("000"  & covox_fb &      "00000") + 
 				("000"  & saa_out_l  &    "00000");
 				
@@ -1378,8 +1378,8 @@ mix_r <= "0000000000000000" when loader_act = '1' or kb_wait = '1' else
 				("0000"  & ssg_cn0_c &     "0000") + 
 				("000"  & ssg_cn1_b &     "00000") + 
 				("0000"  & ssg_cn1_c &     "0000") + 
-				("00" & covox_c & covox_c(7 downto 4) & "00") + 
-				("00" & covox_d & covox_d(7 downto 4) & "00") + 
+				("000"  & covox_c &       "00000") + 
+				("000"  & covox_d &       "00000") + 
 				("000"  & covox_fb &      "00000") + 
 				("000"  & saa_out_r &     "00000") when soft_sw(7) = '0' else
 				("000" & speaker & "000000000000") + -- ABC: R = C + B/2
@@ -1387,8 +1387,8 @@ mix_r <= "0000000000000000" when loader_act = '1' or kb_wait = '1' else
 				("0000"  & ssg_cn0_b &     "0000") + 
 				("000"  & ssg_cn1_c &     "00000") + 
 				("0000"  & ssg_cn1_b &     "0000") + 
-				("00" & covox_c & covox_c(7 downto 4) & "00") + 
-				("00" & covox_d & covox_d(7 downto 4) & "00") + 
+				("000"  & covox_c &       "00000") + 
+				("000"  & covox_d &       "00000") + 
 				("000"  & covox_fb &      "00000") + 
 				("000"  & saa_out_r &     "00000");
 				
