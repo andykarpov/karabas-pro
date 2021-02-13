@@ -64,6 +64,7 @@ entity avr is
 architecture RTL of avr is
 
 	 -- keyboard state
+	 signal kb_data_tmp 		: std_logic_vector(39 downto 0) := (others => '0');
 	 signal kb_data 			: std_logic_vector(40 downto 0) := (others => '0'); -- 40 keys + bit6
 	 signal ms_flag 			: std_logic := '0';
 	 
@@ -160,13 +161,13 @@ begin
 			if spi_do_valid = '1' then
 				case spi_do(15 downto 8) is 
 					-- keyboard matrix
-					when X"01" => kb_data(7 downto 0) <= spi_do (7 downto 0);
-					when X"02" => kb_data(15 downto 8) <= spi_do (7 downto 0);
-					when X"03" => kb_data(23 downto 16) <= spi_do (7 downto 0);
-					when X"04" => kb_data(31 downto 24) <= spi_do (7 downto 0);
-					when X"05" => kb_data(39 downto 32) <= spi_do (7 downto 0);
+					when X"01" => kb_data_tmp(7 downto 0) <= spi_do (7 downto 0);
+					when X"02" => kb_data_tmp(15 downto 8) <= spi_do (7 downto 0);
+					when X"03" => kb_data_tmp(23 downto 16) <= spi_do (7 downto 0);
+					when X"04" => kb_data_tmp(31 downto 24) <= spi_do (7 downto 0);
+					when X"05" => kb_data_tmp(39 downto 32) <= spi_do (7 downto 0);
 					-- misc signals
-					when X"06" => kb_data(40) <= spi_do (0); -- kbd 5th bit 
+					when X"06" => kb_data(40 downto 0) <= spi_do (0) & kb_data_tmp(39 downto 0); -- kbd 5th bit + the rest 
 									  -- misc signals
 									  RESET <= spi_do(1); -- reset signal
 									  TURBO <= spi_do(2); -- turbo signal
@@ -219,7 +220,7 @@ begin
 	--    -- so if multiple address lines are low
 	--    -- the up/down status of MULTIPLE 'keybits' will be passeds
 
-			if (rising_edge(CLK)) then
+			--if (rising_edge(CLK)) then
 					KB(0) <=	not(( kb_data(0)  and not(A(8)  ) ) 
 								or 	( kb_data(1)  and not(A(9)  ) ) 
 								or 	( kb_data(2) and not(A(10) ) ) 
@@ -264,38 +265,9 @@ begin
 								or   ( kb_data(37) and not(A(13)) ) 
 								or   ( kb_data(38) and not(A(14)) ) 
 								or   ( kb_data(39) and not(A(15)) ) );
-								
-					-- по мотивам http://zx-pk.ru/archive/index.php/t-21356.html
 
-					-- 5й бит появляется в том полуряду, в котором нажимается соотв. кнопка
-					-- DEL = P = 5
-					-- INS = O = 13
-					-- PGUP = M = 23
-					-- PGDN = N = 31
-					-- HOME = K = 22
-					-- END =  L = 14
-					-- F1 =   A = 1
-					-- F2 =   B = 39
-					-- F3 =   C = 24
-					-- F4 =   D = 17
-					-- F5 =   E = 18
-					-- F6 =   F = 25
-					-- F7 =   G = 33
-					-- F8 =   H = 38
-					-- F9 =   I = 21
-					-- F10 =  J = 30
-					
-					KB(5) <= not(
-						(kb_data(40) and (kb_data(24)) and not (A(8)) ) or -- 0 8 16 24 32 = 24
-						(kb_data(40) and (kb_data(1) or kb_data(17) or kb_data(25) or kb_data(33)) and not (A(9)) ) or -- 1 9 17 25 33 = 1 17 25 33
-						(kb_data(40) and (kb_data(18)) and not (A(10)) ) or -- 2 10 18 26 34 = 18
-					-- (kb_data(40) and (kb_data(x) or kb_data(x)) and not (A(11)) ) or -- 3 11 19 27 35
-					-- (kb_data(40) and (kb_data(x) or kb_data(x)) and not (A(12)) ) or -- 4 12 20 28 36
-						(kb_data(40) and (kb_data(5) or kb_data(13) or kb_data(21)) and not (A(13)) ) or -- 5 13 21 29 37 = 5 13 21
-						(kb_data(40) and (kb_data(22) or kb_data(14) or kb_data(38) or kb_data(30)) and not (A(14)) ) or -- 6 14 22 30 38 = 22 14 38 30
-						(kb_data(40) and (kb_data(21) or kb_data(31) or kb_data(39)) and not (A(15)) ) -- 7 15 23 31 39 = 23 31 39
-					);
-			end if;
+					KB(5) <= not(kb_data(40));
+			--end if;
 
 	end process;
 
