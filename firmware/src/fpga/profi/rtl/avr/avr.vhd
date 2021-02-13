@@ -267,11 +267,34 @@ begin
 								
 					-- по мотивам http://zx-pk.ru/archive/index.php/t-21356.html
 
-					if (A(14)='0') then
-						KB(5) <= not(kb_data(40));
-					else 
-						KB(5) <= '1';
-					end if;
+					-- 5й бит появляется в том полуряду, в котором нажимается соотв. кнопка
+					-- DEL = P = 5
+					-- INS = O = 13
+					-- PGUP = M = 23
+					-- PGDN = N = 31
+					-- HOME = K = 22
+					-- END =  L = 14
+					-- F1 =   A = 1
+					-- F2 =   B = 39
+					-- F3 =   C = 24
+					-- F4 =   D = 17
+					-- F5 =   E = 18
+					-- F6 =   F = 25
+					-- F7 =   G = 33
+					-- F8 =   H = 38
+					-- F9 =   I = 21
+					-- F10 =  J = 30
+					
+					KB(5) <= not(
+						(kb_data(40) and (kb_data(24)) and not (A(8)) ) or -- 0 8 16 24 32 = 24
+						(kb_data(40) and (kb_data(1) or kb_data(17) or kb_data(25) or kb_data(33)) and not (A(9)) ) or -- 1 9 17 25 33 = 1 17 25 33
+						(kb_data(40) and (kb_data(18)) and not (A(10)) ) or -- 2 10 18 26 34 = 18
+					-- (kb_data(40) and (kb_data(x) or kb_data(x)) and not (A(11)) ) or -- 3 11 19 27 35
+					-- (kb_data(40) and (kb_data(x) or kb_data(x)) and not (A(12)) ) or -- 4 12 20 28 36
+						(kb_data(40) and (kb_data(5) or kb_data(13) or kb_data(21)) and not (A(13)) ) or -- 5 13 21 29 37 = 5 13 21
+						(kb_data(40) and (kb_data(22) or kb_data(14) or kb_data(38) or kb_data(30)) and not (A(14)) ) or -- 6 14 22 30 38 = 22 14 38 30
+						(kb_data(40) and (kb_data(21) or kb_data(31) or kb_data(39)) and not (A(15)) ) -- 7 15 23 31 39 = 23 31 39
+					);
 			end if;
 
 	end process;
