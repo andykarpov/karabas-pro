@@ -42,9 +42,18 @@ The idea was to make a smaller Profi (Профи) ZX Spectrum clone, with real F
 
 **Latest revision:** rev.C.
 
-**Latest development revision:** rev.D alpha 2.
+**Latest development revision:** rev.D alpha 3.
 
 **Profi firmware** [Download a Profi firmware](https://github.com/andykarpov/karabas-pro/tree/master/firmware/releases/profi).
+
+## Donations
+
+Donations are not mandatory, but very pleasant ;)
+
+Feel free to send any amount of USD/EUR/etc to support developers of this project:
+
+[![](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](https://www.paypal.com/donate?business=VLPSW86UVSDYA&currency_code=USD)
+
 
 ### Pre-production renders:
 
