@@ -10,7 +10,7 @@ cd avr
 pio run -t clean
 export PLATFORMIO_BUILD_FLAGS="-DUSE_HW_BUTTONS=1 -DMOUSE_POLL_TYPE=1 -DALLOW_LED_OVERRIDE=1 -Wall"
 pio run
-cp .pio/build/ATmeta328/firmware.hex ../../releases/profi/karabas_pro.hex
+cp .pio/build/ATmega328/firmware.hex ../../releases/profi/karabas_pro.hex
 
 # normal firmware - without hw buttons
 pio run -t clean
@@ -34,7 +34,7 @@ cp .pio/build/ATmega328/firmware.hex ../../releases/profi/karabas_pro_revD_kvm.h
 pio run -t clean
 export PLATFORMIO_BUILD_FLAGS="-DUSE_HW_BUTTONS=1 -DMOUSE_POLL_TYPE=0 -DALLOW_LED_OVERRIDE=1 -Wall"
 pio run
-cp .pio/build/ATmeta328/firmware.hex ../../releases/profi/karabas_pro_kvm.hex
+cp .pio/build/ATmega328/firmware.hex ../../releases/profi/karabas_pro_kvm.hex
 
 # kvm ready firmware - without hw buttons
 pio run -t clean

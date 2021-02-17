@@ -1176,7 +1176,6 @@ void setup()
 {
   Serial.begin(115200);
   Serial.flush();
-  rtc.begin();
   pinMode(PIN_JOY_RIGHT, OUTPUT);
   digitalWrite(PIN_JOY_RIGHT, LOW);
   SPI.begin();
@@ -1244,6 +1243,13 @@ void setup()
   Serial.println("done");
 
   Serial.print(F("RTC init..."));
+  rtc.begin();
+
+  if (!rtc.isRunning()) {
+     Serial.println(F("RTC is not running. Staring it..."));
+     rtc.startClock();
+  }
+
   rtc_year = rtc.getYear();
   rtc_month = rtc.getMonth();
   rtc_day = rtc.getDay();
@@ -1352,11 +1358,6 @@ void loop()
 
   // read time from rtc
   if (n - tr >= 500) {
-
-    if (!rtc.isRunning()) {
-      Serial.println(F("RTC is not running. Staring it..."));
-      rtc.startClock();
-    }
 
     rtc_year = rtc.getYear();
     rtc_month = rtc.getMonth();
@@ -1482,5 +1483,7 @@ void loop()
     digitalWrite(PIN_LED2, HIGH);
   }
 #endif
+
+delayMicroseconds(1);
 
 }
