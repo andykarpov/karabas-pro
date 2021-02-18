@@ -6,41 +6,23 @@ echo "Building AVR sources"
 
 cd avr
 
-# normal firmware - hw buttons
-pio run -t clean
-export PLATFORMIO_BUILD_FLAGS="-DUSE_HW_BUTTONS=1 -DMOUSE_POLL_TYPE=1 -DALLOW_LED_OVERRIDE=1 -Wall"
-pio run
-cp .pio/build/ATmega328/firmware.hex ../../releases/profi/karabas_pro.hex
-
-# normal firmware - without hw buttons
-pio run -t clean
-export PLATFORMIO_BUILD_FLAGS="-DUSE_HW_BUTTONS=0 -DMOUSE_POLL_TYPE=1 -DALLOW_LED_OVERRIDE=1 -Wall"
-pio run
-cp .pio/build/ATmega328/firmware.hex ../../releases/profi/karabas_pro_revA.hex
-
-# normal firmware - hw buttons + disabled led override
-pio run -t clean
-export PLATFORMIO_BUILD_FLAGS="-DUSE_HW_BUTTONS=1 -DMOUSE_POLL_TYPE=1 -DALLOW_LED_OVERRIDE=0 -Wall"
-pio run
-cp .pio/build/ATmega328/firmware.hex ../../releases/profi/karabas_pro_revD.hex
-
-# kvm ready firmware - hw buttons + disabled led override
-pio run -t clean
-export PLATFORMIO_BUILD_FLAGS="-DUSE_HW_BUTTONS=1 -DMOUSE_POLL_TYPE=0 -DALLOW_LED_OVERRIDE=0 -Wall"
-pio run
-cp .pio/build/ATmega328/firmware.hex ../../releases/profi/karabas_pro_revD_kvm.hex
-
-# kvm ready firmware - hw buttons
-pio run -t clean
-export PLATFORMIO_BUILD_FLAGS="-DUSE_HW_BUTTONS=1 -DMOUSE_POLL_TYPE=0 -DALLOW_LED_OVERRIDE=1 -Wall"
-pio run
-cp .pio/build/ATmega328/firmware.hex ../../releases/profi/karabas_pro_kvm.hex
-
-# kvm ready firmware - without hw buttons
+# without hw buttons
 pio run -t clean
 export PLATFORMIO_BUILD_FLAGS="-DUSE_HW_BUTTONS=0 -DMOUSE_POLL_TYPE=0 -DALLOW_LED_OVERRIDE=1 -Wall"
 pio run
-cp .pio/build/ATmega328/firmware.hex ../../releases/profi/karabas_pro_revA_kvm.hex
+cp .pio/build/ATmega328/firmware.hex ../../releases/profi/karabas_pro_revA.hex
+
+# hw buttons + disabled led override
+pio run -t clean
+export PLATFORMIO_BUILD_FLAGS="-DUSE_HW_BUTTONS=1 -DMOUSE_POLL_TYPE=0 -DALLOW_LED_OVERRIDE=0 -Wall"
+pio run
+cp .pio/build/ATmega328/firmware.hex ../../releases/profi/karabas_pro_revD.hex
+
+# hw buttons
+pio run -t clean
+export PLATFORMIO_BUILD_FLAGS="-DUSE_HW_BUTTONS=1 -DMOUSE_POLL_TYPE=0 -DALLOW_LED_OVERRIDE=1 -Wall"
+pio run
+cp .pio/build/ATmega328/firmware.hex ../../releases/profi/karabas_pro.hex
 
 pio run -t clean
 

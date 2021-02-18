@@ -12,9 +12,9 @@
 #include "PS2Mouse.h"
 #include "matrix.h"
 #include "ps2_codes.h"
-#include <RTC.h>
 #include <EEPROM.h>
-#include <Wire.h>
+#include "SBWire.h"
+#include "RTC.h"
 #include <SPI.h>
 #include "config.h"
 #include "utils.h"
@@ -95,7 +95,7 @@ bool rtc_is_24h = true;
 int capsed_keys[20] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 int capsed_keys_size = 0;
 
-SPISettings settingsA(8000000, MSBFIRST, SPI_MODE0); // SPI transmission settings
+SPISettings settingsA(1000000, MSBFIRST, SPI_MODE0); // SPI transmission settings
 
 void push_capsed_key(int key);
 void pop_capsed_key(int key);
@@ -1187,7 +1187,7 @@ void setup()
   // Bit 4 - ADIF: ADC Interrupt Flag
   // Bit 3 - ADIE: ADC Interrupt Enable
   // Bits 2:0 - ADPS[2:0]: ADC Prescaler Select Bits
-  //ADCSRA = (ADCSRA & B11111000) | 4;
+  ADCSRA = (ADCSRA & B11111000) | 4;
 
   pinMode(PIN_SS, OUTPUT);
   digitalWrite(PIN_SS, HIGH);
@@ -1291,7 +1291,7 @@ void loop()
       digitalWrite(PIN_LED1, HIGH);
     }
     fill_kbd_matrix(c);
-    Serial.print(F("Scancode:"));
+    Serial.print(F("Scancode: "));
     Serial.println(c, HEX);
   }
 
@@ -1301,8 +1301,11 @@ void loop()
   // read joystick
   // Due to conflict with the hardware SPI, we should stop the HW SPI and switch the joy_right as input before reading
   // WARNING: a 100-500 Ohm resistor is required on the PIN_JOY_RIGHT line
-  SPI.end();
-  pinMode(PIN_JOY_RIGHT, INPUT_PULLUP);  
+  //SPI.end();
+  //interrupts(); // SPI.end() calls noInterrupts()
+  SPCR &= ~_BV(SPE);
+
+  pinMode(PIN_JOY_RIGHT, INPUT_PULLUP);
   joy[ZX_JOY_UP] = digitalRead(PIN_JOY_UP) == LOW;
   joy[ZX_JOY_DOWN] = digitalRead(PIN_JOY_DOWN) == LOW;
   joy[ZX_JOY_LEFT] = digitalRead(PIN_JOY_LEFT) == LOW;
@@ -1311,7 +1314,11 @@ void loop()
   joy[ZX_JOY_FIRE2] = digitalRead(PIN_JOY_FIRE2) == LOW;
   pinMode(PIN_JOY_RIGHT, OUTPUT);
   digitalWrite(PIN_JOY_RIGHT, LOW);
-  SPI.begin();
+
+  //SPI.begin();
+  //interrupts(); // SPI.begin() calls noInterrupts()
+  SPCR |= _BV(MSTR);
+  SPCR |= _BV(SPE);
 
   if (joy[0] != last_joy[0] || joy[1] != last_joy[1] || joy[2] != last_joy[2] || joy[3] != last_joy[3] || joy[4] != last_joy[4] || joy[5] != last_joy[5]) {
     last_joy[0] = joy[0];
@@ -1320,7 +1327,7 @@ void loop()
     last_joy[3] = joy[3];
     last_joy[4] = joy[4];
     last_joy[5] = joy[5];
-    Serial.print(F("Joystik:"));
+    Serial.print(F("Joystiсk:"));
     Serial.print(F(" U:")); Serial.print(joy[ZX_JOY_UP]);
     Serial.print(F(" D:")); Serial.print(joy[ZX_JOY_DOWN]);
     Serial.print(F(" L:")); Serial.print(joy[ZX_JOY_LEFT]);
@@ -1373,8 +1380,8 @@ void loop()
     tr = n;
   }
 
-  // try to re-init mouse every 1s if not present, up to N tries
-  if (mouse_tries > 0 && !mouse_present && n - tm > 1000) {
+  // try to re-init mouse every 100us if not present, up to N tries
+  if (mouse_tries > 0 && !mouse_present && n - tm > 100) {
     mouse_tries--;
     Serial.print(F("Mouse not present. Trying to init mouse: ")); Serial.println(mouse_tries);
     init_mouse();

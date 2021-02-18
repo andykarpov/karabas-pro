@@ -46,7 +46,7 @@
 #include "PS2KeyRaw.h"
 
 /* Private variable definition */
-#define BUFFER_SIZE 16
+#define BUFFER_SIZE 64
 volatile uint8_t buffer[ BUFFER_SIZE ];
 volatile uint8_t head, tail;
 uint8_t PS2_DataPin;
@@ -68,7 +68,7 @@ void ps2interrupt( void )
 
 	val = digitalRead( PS2_DataPin );
 	now_ms = millis();
-	if( now_ms - prev_ms > 250 )
+	if( now_ms - prev_ms > 25 )
 	  bitcount = 0;
 	prev_ms = now_ms;
     bitcount++;         // Now point to next bit
