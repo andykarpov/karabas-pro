@@ -178,7 +178,7 @@ void fill_kbd_matrix(int sc)
 {
 
   static bool is_up = false, is_e = false, is_e1 = false;
-  static bool is_del = false, is_win = false, is_bksp = false, is_shift = false, is_esc = false, is_ss_used = false;
+  static bool is_del = false, is_win = false, is_bksp = false, is_shift = false, is_esc = false, is_ss_used = false, is_pscr1 = false;
   static int scancode = 0;
 
   // is extended scancode prefix
@@ -777,8 +777,12 @@ void fill_kbd_matrix(int sc)
 
     // PrtScr -> Mode profi / zx
     case PS2_PSCR1:
-      if (!is_shift) {
-        if (is_up) {
+      is_pscr1 = !is_up;
+    break;
+
+    case PS2_PSCR2:
+      if (!is_shift && is_pscr1) {
+        if (!is_up) {
           profi_mode = !profi_mode;
           eeprom_store_value(EEPROM_MODE_ADDRESS, profi_mode);
           matrix[ZX_K_KBD_MODE] = profi_mode;

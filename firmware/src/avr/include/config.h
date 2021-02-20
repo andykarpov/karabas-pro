@@ -13,7 +13,7 @@
 #define MOUSE_INIT_TRIES 2
 
 #ifndef MOUSE_POLL_TYPE
-#define MOUSE_POLL_TYPE 1 // 1 = poll, 0 = stream
+#define MOUSE_POLL_TYPE 0 // 1 = poll, 0 = stream
 #endif
 
 #ifndef ALLOW_LED_OVERRIDE
