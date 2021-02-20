@@ -48,12 +48,14 @@ The idea was to make a smaller Profi (Профи) ZX Spectrum clone, with real F
 
 ## Donations
 
-Donations are not mandatory, but very pleasant ;)
+Our team is looking for some donations to release new features.
+Most important one - a ROM image to extract FDD images (TRD, FDI, TD0) to real floppy drives.
 
-Feel free to send any amount of USD/EUR/etc to support developers of this project:
+Feel free to send any amount of USD/EUR/etc to support development of this project:
 
-[![](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](https://www.paypal.com/donate?business=VLPSW86UVSDYA&currency_code=USD)
+[![](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](https://paypal.me/dexius?locale.x=ru_RU)
 
+WMID: 305965057957
 
 ### Pre-production renders:
 
