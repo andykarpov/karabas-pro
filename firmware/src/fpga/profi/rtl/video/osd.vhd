@@ -148,7 +148,20 @@ begin
 				 font_word(2) when bit_addr = "110" else 
 				 font_word(1) when bit_addr = "111";
 
-	RGB_O <= "000111000" when en = '1' and pixel = '1' else RGB_I;
+	process (CLK, CLK2, pixel, en)
+	begin
+		if rising_edge(CLK) then
+			if (CLK2 = '1') then 
+				if (en = '1' and pixel = '1') then 
+					RGB_O <= "000111000";
+				else 
+					RGB_O <= RGB_I;
+				end if;
+			end if;
+		end if;
+	end process;
+				 
+	--RGB_O <= "000111000" when en = '1' and pixel = '1' else RGB_I;
 
 	-- display messages for changed sensors
 	process (CLK, BLINK, cnt, KB_WAIT, KB_MODE, TURBO, SCANDOUBLER_EN, MODE60, ROM_BANK, SSG_MODE, SSG_STEREO, last_ssg_mode, last_ssg_stereo, last_kb_wait, last_kb_mode, LOADED, last_loaded, last_turbo, last_scandoubler_en, last_mode60, last_rom_bank, COVOX_EN, last_covox, TURBO_FDC, last_turbo_fdc)

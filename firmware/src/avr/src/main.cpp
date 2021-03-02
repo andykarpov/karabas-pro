@@ -1,10 +1,24 @@
-/*
-   AVR keyboard & mouse firmware for Karabas-Pro
+/**
+                                                                                                                
+#       #######                                                 #                                               
+#                                                               #                                               
+#                                                               #                                               
+############### ############### ############### ############### ############### ############### ############### 
+#             #               # #                             # #             #               # #               
+#             # ############### #               ############### #             # ############### ############### 
+#             # #             # #               #             # #             # #             #               # 
+#             # ############### #               ############### ############### ############### ############### 
+                                                                                                                
+        ####### ####### ####### #######                         ############### ############### ############### 
+                                                                #             # #               #             # 
+                                                                ############### #               #             # 
+                                                                #               #               #             # 
+https://github.com/andykarpov/karabas-pro                       #               #               ############### 
 
-   Designed to build on Arduino IDE.
+AVR firmware for Karabas-Pro
 
-   @author Andy Karpov <andy.karpov@gmail.com>
-   Ukraine, 2021
+@author Andy Karpov <andy.karpov@gmail.com>
+Ukraine, 2021
 */
 
 #include "Arduino.h"
