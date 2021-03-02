@@ -88,7 +88,7 @@ port (
 	NRESET 		: out std_logic;
 	CPLD_CLK 	: out std_logic;
 	CPLD_CLK2 	: out std_logic;
-	SDIR 			: in std_logic;
+	SDIR 			: out std_logic;
 	SA				: out std_logic_vector(1 downto 0);
 	SD				: inout std_logic_vector(15 downto 0) := "ZZZZZZZZZZZZZZZZ";
 	
@@ -1094,10 +1094,10 @@ clk_cpu <= '0' when kb_wait = '1' else clk_bus and ena_div8 when kb_turbo = '1' 
 
 -- HDD / SD access
 led1_overwrite <= '1';
-process (clk_bus, SDIR, SD_NCS)
+process (clk_bus, hdd_wwe_n, hdd_rww_n, SD_NCS)
 begin
 	if rising_edge(clk_bus) then
-		if SDIR = '1' or SD_NCS = '0' then
+		if (hdd_wwe_n = '0') or (hdd_rww_n = '0') or (SD_NCS = '0') then
 			led1 <= '1';
 		else 
 			led1 <= '0';

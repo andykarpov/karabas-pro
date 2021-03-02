@@ -12,7 +12,7 @@ port (
 	-- FPGA interface signals
 	NRESET : in std_logic;
 	SA: in std_logic_vector(1 downto 0);
-	SDIR: out std_logic;
+	SDIR: in std_logic;
 	SD: inout std_logic_vector(15 downto 0);
 
 	-- BDI signals
@@ -128,7 +128,7 @@ begin
 		csff => bus_a(13),
 		FDC_NCS => bus_a(14),
 		FDC_STEP => bus_a(7),
-
+		FDD_CHNG => SDIR,
 		OE_N => fdd_oe_n,
 		
 		FDC_NWR => FDC_NWR,
@@ -154,7 +154,7 @@ begin
 		FDC_WDATA => FDC_WDATA
 	);
 	
-SDIR <= '1' when HDD_NCS0 = '0' else '0';
+--SDIR <= '1' when HDD_NCS0 = '0' else '0';
 --HDD_NCS1 <= '1';
 
 FDC_NCS <= bus_a(14);
