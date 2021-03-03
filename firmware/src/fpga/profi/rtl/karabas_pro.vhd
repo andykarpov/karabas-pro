@@ -152,6 +152,8 @@ signal port_xx7e_aprev   : std_logic_vector(15 downto 8) := "00000000";
 signal port_xx8b_reg	: std_logic_vector(7 downto 0) := "00000000";
 
 -------------8B_PORT------------------
+signal rom0				: std_logic;
+signal rom1				: std_logic;
 signal rom2				: std_logic;
 signal onrom			: std_logic;
 signal turbo_on		: std_logic;
@@ -1192,14 +1194,16 @@ end process;
 -- Config PORT X"8B"
 cs_xx8b <='1' when cpu_a_bus(7 downto 0)=X"8B" and cpu_iorq_n='0' and cpu_m1_n = '1' and ((cpm='1' and rom14='1') or (dos_act='1' and rom14='0')) else '0';
 
-																			-- 0 - Reserved
-rom2 <= port_xx8b_reg(1);											-- 1 - ROM Change
-onrom <= port_xx8b_reg(2);											-- 2 - Forced activation of the signal "DOS"
-turbo_on <=  port_xx8b_reg(3); 									-- 3 - Turbo on
-lock_dffd <= port_xx8b_reg(4);								 	-- 4 - Lock port DFFD
-unlock_128 <= port_xx8b_reg(5);									-- 5 - Unlock 128 ROM page for DOS 
+onrom <= port_xx8b_reg(0);											-- 0 - Forced activation of the signal "DOS"
+rom0 <= port_xx8b_reg(1);											-- 1 - ROM64Kb PAGE bit 0 Change
+rom1 <= port_xx8b_reg(2);											-- 2 - ROM64Kb PAGE bit 1 Change
+rom2 <= port_xx8b_reg(3);											-- 3 - ROM64Kb PAGE bit 2 Change
+unlock_128 <= port_xx8b_reg(4);									-- 4 - Unlock 128 ROM page for DOS
+turbo_on <=  port_xx8b_reg(5); 									-- 5 - Turbo on
+lock_dffd <= port_xx8b_reg(6);								 	-- 6 - Lock port DFFD
+SDIR <= port_xx8b_reg(7);											-- 7 - Floppy Disk Drive Selector Change
 
-ext_rom_bank_pq <= ext_rom_bank when rom2 = '0' else "01";	-- ROMBANK ALT
+ext_rom_bank_pq <= ext_rom_bank when rom0 = '0' else "01";	-- ROMBANK ALT
 
 rom14 <= port_7ffd_reg(4); -- rom bank
 cpm 	<= port_dffd_reg(5); -- 1 - блокирует работу контроллера из ПЗУ TR-DOS и включает порты на доступ из ОЗУ (ROM14=0); При ROM14=1 - мод. доступ к расширен. периферии
