@@ -256,7 +256,6 @@ signal RT_F1_2			:std_logic;
 signal RT_F1			:std_logic;
 signal P0				:std_logic;
 signal fdd_cs_n		:std_logic;
-signal turbo_bl		:std_logic;
 
 -- TurboSound
 signal ssg_sel			: std_logic;
@@ -668,7 +667,7 @@ port map (
 	SSG_MODE 		=> soft_sw(8),
 	SSG_STEREO 		=> soft_sw(7),
 	COVOX_EN			=> soft_sw(6),
-	TURBO_FDC		=> soft_sw(5)
+	FD_CHANGE		=> soft_sw(5)
 );
 
 -- Scandoubler	
@@ -883,7 +882,7 @@ port map (
 	BUS_RWW			=> hdd_rww_n,
 	BUS_RWE			=> hdd_rwe_n,
 	BUS_CS3FX		=> hdd_cs3fx_n,
-	BUS_FDC_STEP	=>	FDC_STEP and soft_sw(5),
+	BUS_FDC_STEP	=>	FDC_STEP,-- and soft_sw(5),
 	BUS_CSFF			=> fdd_cs_pff_n,
 	BUS_FDC_NCS		=> fdd_cs_n
 
@@ -1201,7 +1200,7 @@ rom2 <= port_xx8b_reg(3);											-- 3 - ROM64Kb PAGE bit 2 Change
 unlock_128 <= port_xx8b_reg(4);									-- 4 - Unlock 128 ROM page for DOS
 turbo_on <=  port_xx8b_reg(5); 									-- 5 - Turbo on
 lock_dffd <= port_xx8b_reg(6);								 	-- 6 - Lock port DFFD
-SDIR <= port_xx8b_reg(7);											-- 7 - Floppy Disk Drive Selector Change
+SDIR <= port_xx8b_reg(7) or soft_sw(5);						-- 7 - Floppy Disk Drive Selector Change
 
 ext_rom_bank_pq <= ext_rom_bank when rom0 = '0' else "01";	-- ROMBANK ALT
 
@@ -1263,8 +1262,6 @@ RT_F1_2 <= '0' when cpu_a_bus(7)='0' and cpu_a_bus(1 downto 0)="11" and cpu_iorq
 RT_F1 <= RT_F1_1 and RT_F1_2;
 P0 <='0' when (cpu_a_bus(7)='1' and cpu_a_bus(4 downto 0)="00011" and cpu_iorq_n='0') and ((cpm='1' and rom14='1') or (dos_act='1' and rom14='0')) else '1';
 fdd_cs_n <= RT_F1 and P0;
-
-turbo_bl <= fdd_cs_pff_n and fdd_cs_n;
 
 ------------------VV55------------------------
 --RT_F5 <='0' when adress(7)='0' and adress(1 downto 0)="11" and iorq='0' and CPM='1' and dos='1' else '1';		-- CPM=0 & BAS=1 ПЗУ 128 1F-7F

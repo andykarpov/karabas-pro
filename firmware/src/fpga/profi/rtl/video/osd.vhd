@@ -28,7 +28,7 @@ entity osd is
 		SSG_MODE 		: in std_logic := '0';
 		SSG_STEREO 		: in std_logic := '0';
 		COVOX_EN 		: in std_logic := '0';
-		TURBO_FDC		: in std_logic := '0'
+		FD_CHANGE		: in std_logic := '0'
 	);
 end entity;
 
@@ -80,7 +80,7 @@ architecture rtl of osd is
 	constant message_ay_abc:	string(1 to 8)  	:= "AY, ABC ";
 	constant message_ay_acb:	string(1 to 8)  	:= "AY, ACB ";
 	constant message_covox:		string(1 to 8)  	:= "COVOX   ";
-	constant message_turbo_fdc:string(1 to 8)  	:= "TURBOFDC";
+	constant message_fd_change:string(1 to 8)  	:= "FDCHANGE";
 	constant message_karabas:  string(1 to 8)  	:= "VERSION ";
 
 	-- displayable lines
@@ -97,7 +97,7 @@ architecture rtl of osd is
 	signal last_ssg_stereo : std_logic := '0';
 	signal last_covox : std_logic := '0';
 	signal kb_mode_init : std_logic := '0';
-	signal last_turbo_fdc : std_logic := '0';
+	signal last_fd_change : std_logic := '0';
 	signal last_loaded : std_logic := '0';
 	
 	signal cnt : std_logic_vector(3 downto 0) := "1000";
@@ -151,7 +151,7 @@ begin
 	RGB_O <= "000111000" when en = '1' and pixel = '1' else RGB_I;
 
 	-- display messages for changed sensors
-	process (CLK, BLINK, cnt, KB_WAIT, KB_MODE, TURBO, SCANDOUBLER_EN, MODE60, ROM_BANK, SSG_MODE, SSG_STEREO, last_ssg_mode, last_ssg_stereo, last_kb_wait, last_kb_mode, LOADED, last_loaded, last_turbo, last_scandoubler_en, last_mode60, last_rom_bank, COVOX_EN, last_covox, TURBO_FDC, last_turbo_fdc)
+	process (CLK, BLINK, cnt, KB_WAIT, KB_MODE, TURBO, SCANDOUBLER_EN, MODE60, ROM_BANK, SSG_MODE, SSG_STEREO, last_ssg_mode, last_ssg_stereo, last_kb_wait, last_kb_mode, LOADED, last_loaded, last_turbo, last_scandoubler_en, last_mode60, last_rom_bank, COVOX_EN, last_covox, FD_CHANGE, last_fd_change)
 	begin 
 		if rising_edge(CLK) then 
 		
@@ -169,7 +169,7 @@ begin
 				last_ssg_mode <= SSG_MODE;
 				last_ssg_stereo <= SSG_STEREO;
 				last_covox <= COVOX_EN;
-				last_turbo_fdc <= TURBO_FDC;
+				last_fd_change <= FD_CHANGE;
 				cnt <= "0000";
 				line1 <= message_karabas;
 				line2 <= VER;
@@ -262,11 +262,11 @@ begin
 				end if;
 				
 				-- turbo fdc mode switch
-				if (TURBO_FDC /= last_turbo_fdc) then
-					last_turbo_fdc <= TURBO_FDC;
+				if (FD_CHANGE /= last_fd_change) then
+					last_fd_change <= FD_CHANGE;
 					cnt <= "0000";
-					line1 <= message_turbo_fdc;
-					if (turbo_fdc = '0') then 
+					line1 <= message_fd_change;
+					if (FD_CHANGE = '0') then 
 						line2 <= message_off;
 					else 
 						line2 <= message_on;
