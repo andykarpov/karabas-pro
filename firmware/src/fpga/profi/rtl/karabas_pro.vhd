@@ -19,7 +19,7 @@
 -- FPGA firmware for Karabas-Pro
 --
 -- @author Andy Karpov <andy.karpov@gmail.com>
--- @author Oleg Starichenko <solegstar@ukr.net>
+-- @author Oleh Starychenko <solegstar@gmail.com>
 -- Ukraine, 2021
 -------------------------------------------------------------------------------------------------------------------
 
@@ -30,7 +30,6 @@ use IEEE.numeric_std.all;
 
 entity karabas_pro is
 	generic (
-		enable_ay_uart 	 : boolean := false;
 		enable_zxuno_uart  : boolean := true;
 		enable_saa1099 	 : boolean := false;
 		build_version		 : string(1 to 8) := "FIRM_VER"
@@ -86,10 +85,10 @@ port (
 	PIN_138 		: inout std_logic;
 	PIN_121		: inout std_logic;
 	PIN_120		: inout std_logic;
-        FDC_STEP        : inout std_logic; -- PIN_119 connected to FDC_STEP for TurboFDC
-        SD_MOSI         : inout std_logic; -- PIN_115 connected to SD_S
+   FDC_STEP    : inout std_logic; -- PIN_119 connected to FDC_STEP for TurboFDC
+   SD_MOSI     : inout std_logic; -- PIN_115 connected to SD_S
 	
-	-- Dip Switches 
+	-- Dip Switches - unused yet
 	SW3 			: in std_logic_vector(4 downto 1) := "1111";
 		
 	-- UART / ESP8266
@@ -264,8 +263,6 @@ signal covox_d			: std_logic_vector(7 downto 0);
 signal covox_fb		: std_logic_vector(7 downto 0);
 
 -- Output audio
-signal mix_l			: std_logic_vector(15 downto 0);
-signal mix_r			: std_logic_vector(15 downto 0);
 signal audio_l			: std_logic_vector(15 downto 0);
 signal audio_r			: std_logic_vector(15 downto 0);
 signal audio_dac_type: std_logic := '0'; -- 0 = TDA1543, 1 = TDA1543A
@@ -363,10 +360,6 @@ signal flash_clk 		: std_logic;
 signal flash_do 		: std_logic;
 signal sd_clk 			: std_logic;
 signal sd_si 			: std_logic;
-
--- AY UART 
-signal ay_uart_do_bus 	: std_logic_vector(7 downto 0) := "00000000";
-signal ay_uart_oe_n 		: std_logic := '1';
 
 -- ZXUNO regs / UART ports
 signal zxuno_regrd : std_logic;
@@ -877,25 +870,6 @@ port map (
 
 );
 
--- UART (via AY port A)
-G_AY_UART: if enable_ay_uart generate
-U18: entity work.ay_uart 
-port map(
-	CLK_I 			=> clk_bus,
-	RESET_I 			=> reset,
-	EN_I 				=> clk_div16,
-	BDIR_I 			=> ay_bdir,
-	BC_I 				=> ay_bc1,			
-	CS_I 				=> ay_port,
-	DATA_I 			=> cpu_do_bus,
-	DATA_O 			=> ay_uart_do_bus,
-	OE_N 				=> ay_uart_oe_n,
-	UART_TX 			=> UART_TX,
-	UART_RX 			=> UART_RX,
-	UART_RTS 		=> UART_CTS
-);
-end generate G_AY_UART;
-
 -- Serial mouse emulation
 U20: entity work.serial_mouse
 port map(
@@ -965,7 +939,6 @@ U23: entity work.board
 port map(
 	CLK => clk_bus,
 	CFG => board_revision,
-	SW3 => SW3,
 	SOFT_SW1 => soft_sw(1),
 	SOFT_SW2 => soft_sw(2),
 	SOFT_SW3 => soft_sw(3),
@@ -974,24 +947,9 @@ port map(
 	AUDIO_DAC_TYPE => audio_dac_type,
 	ROM_BANK => ext_rom_bank,
 	SCANDOUBLER_EN => vid_scandoubler_enable,
+	
 	BOARD_RESET => board_reset	
 );
-
---U24 : entity work.compressor
---port map(
---	DI => mix_l,
---	DO => audio_l
---);
---
---U25 : entity work.compressor
---port map(
---	DI => mix_r,
---	DO => audio_r
---);
-	
--- swap audio channels
-audio_l <= mix_l;
-audio_r <= mix_r;
 	
 -------------------------------------------------------------------------------
 -- clocks
@@ -1344,7 +1302,7 @@ end process;
 
 speaker <= port_xxfe_reg(4);
 
-mix_l <= "0000000000000000" when loader_act = '1' or kb_wait = '1' else 
+audio_l <= "0000000000000000" when loader_act = '1' or kb_wait = '1' else 
 				("000" & speaker & "000000000000") + -- ACB: L = A + C/2
 				("000"  & ssg_cn0_a &     "00000") + 
 				("0000"  & ssg_cn0_c &     "0000") + 
@@ -1364,7 +1322,7 @@ mix_l <= "0000000000000000" when loader_act = '1' or kb_wait = '1' else
 				("000"  & covox_fb &      "00000") + 
 				("000"  & saa_out_l  &    "00000");
 				
-mix_r <= "0000000000000000" when loader_act = '1' or kb_wait = '1' else 
+audio_r <= "0000000000000000" when loader_act = '1' or kb_wait = '1' else 
 				("000" & speaker & "000000000000") + -- ACB: R = B + C/2
 				("000"  & ssg_cn0_b &     "00000") + 
 				("0000"  & ssg_cn0_c &     "0000") + 
@@ -1427,7 +1385,7 @@ ay_bc1 		<= '1' when ay_port = '1' and cpu_a_bus(14) = '1' and cpu_iorq_n = '0' 
 -------------------------------------------------------------------------------
 -- CPU0 Data bus
 
-process (selector, cpu_a_bus, gx0, serial_ms_do_bus, ram_do_bus, mc146818_do_bus, kb_do_bus, zc_do_bus, ssg_cn0_bus, ssg_cn1_bus, port_7ffd_reg, port_dffd_reg, ay_uart_do_bus, zxuno_uart_do_bus, cpld_do, vid_attr, port_eff7_reg, joy_bus, ms_z, ms_b, ms_x, ms_y, zxuno_addr_to_cpu, port_xxC7_reg, flash_rdy, flash_busy, flash_do_bus)
+process (selector, cpu_a_bus, gx0, serial_ms_do_bus, ram_do_bus, mc146818_do_bus, kb_do_bus, zc_do_bus, ssg_cn0_bus, ssg_cn1_bus, port_7ffd_reg, port_dffd_reg, zxuno_uart_do_bus, cpld_do, vid_attr, port_eff7_reg, joy_bus, ms_z, ms_b, ms_x, ms_y, zxuno_addr_to_cpu, port_xxC7_reg, flash_rdy, flash_busy, flash_do_bus)
 begin
 	case selector is
 		when x"00" => cpu_di_bus <= ram_do_bus;
@@ -1443,7 +1401,6 @@ begin
 		when x"0A" => cpu_di_bus <= ms_z(3 downto 0) & '1' & not(ms_b(2)) & not(ms_b(0)) & not(ms_b(1)); -- D0=right, D1 = left, D2 = middle, D3 = fourth, D4..D7 - wheel
 		when x"0B" => cpu_di_bus <= ms_x;
 		when x"0C" => cpu_di_bus <= ms_y;
-		when x"0D" => cpu_di_bus <= ay_uart_do_bus;
 		when x"0E" => cpu_di_bus <= serial_ms_do_bus;
 		when x"0F" => cpu_di_bus <= zxuno_addr_to_cpu;
 		when x"10" => cpu_di_bus <= zxuno_uart_do_bus;
@@ -1468,7 +1425,6 @@ selector <=
 	x"0A" when (cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_a_bus = X"FADF" and ms_present = '1' and cpm='0') else	-- Mouse0 port key, z
 	x"0B" when (cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_a_bus = X"FBDF" and ms_present = '1' and cpm='0') else	-- Mouse0 port x
 	x"0C" when (cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_a_bus = X"FFDF" and ms_present = '1' and cpm='0') else	-- Mouse0 port y 																
-	x"0D" when (enable_ay_uart and cpu_iorq_n = '0' and cpu_rd_n = '0' and ay_uart_oe_n = '0') else -- AY UART
 	x"0E" when (serial_ms_oe_n = '0') else -- Serial mouse
 	x"0F" when (enable_zxuno_uart and cpu_iorq_n = '0' and cpu_rd_n = '0' and zxuno_addr_oe_n = '0') else -- ZX UNO Register
 	x"10" when (enable_zxuno_uart and cpu_iorq_n = '0' and cpu_rd_n = '0' and zxuno_uart_oe_n = '0') else -- ZX UNO UART
