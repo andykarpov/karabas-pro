@@ -990,8 +990,8 @@ port map(
 --);
 	
 -- swap audio channels
-audio_l <= mix_r;
-audio_r <= mix_l;
+audio_l <= mix_l;
+audio_r <= mix_r;
 	
 -------------------------------------------------------------------------------
 -- clocks
