@@ -41,12 +41,13 @@ entity bus_port is
 architecture RTL of bus_port is
 
 signal cnt			: std_logic_vector(1 downto 0) := "00";
+signal prev_clk_cpu : std_logic := '0';
 signal bus_a_reg	: std_logic_vector(15 downto 0);
 signal bus_d_reg	: std_logic_vector(7 downto 0);
 
 begin
 	
-	CPLD_CLK <= CLK;
+	CPLD_CLK <= CLK_BUS;
 	CPLD_CLK2 <= CLK2;
 	NRESET <= not reset;
 	SA <= cnt;	
@@ -60,10 +61,12 @@ begin
 		end if;
 	end process;
 
-	process (CLK, cnt, CLK_BUS)
+	process (CLK_BUS, CLK_CPU, prev_clk_cpu, cnt)
 	begin 
-		if CLK'event and CLK = '1' then
-			if CLK_CPU = '1' then 
+		--if CLK'event and CLK = '1' then
+		if CLK_BUS'event and CLK_BUS = '1' then
+			prev_clk_cpu <= CLK_CPU;
+			if prev_clk_cpu = '0' and CLK_CPU = '1' then 
 				cnt <= "11";
 			else
 				cnt <= cnt + 1;
