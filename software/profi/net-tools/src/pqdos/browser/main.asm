@@ -11,14 +11,17 @@
     include "gopher/engine/media-processor.asm"
     include "gopher/gopher.asm"
     include "player/vortex-processor.asm"
+    include "drivers/index.asm"
 
 start:  
     call TextMode.init
+    ld hl, initing : call TextMode.printZ
+    call Wifi.init
     call History.home
     jp exit
 
 outputBuffer:
-
+initing db "Initing Wifi...",13,0
 
     display "ENDS: ", $
     display "Buff size", #c000 - $

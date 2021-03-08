@@ -1,7 +1,7 @@
     MODULE Fetcher
 
 fetchFromNet:
-    call Gopher.makeRequest : jr nz, .error
+    call Gopher.makeRequest : jr c, .error
     call Gopher.loadBuffer
     jp MediaProcessor.processResource
 .error

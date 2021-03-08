@@ -1,7 +1,5 @@
     module Gopher
-; HL - gopher row
 extractRequest:
-/*
     ld hl, historyBlock.locator
     ld de, requestbuffer
 .loop
@@ -28,77 +26,33 @@ extractRequest:
     inc hl : inc de
     jr .searchCopy
 .exit
-    ld a, CR : ld (de), a : inc de
-    ld a, LF : ld (de), a : inc de
     xor a
-    ld (de), a*/
+    ld (de), a
     ret
 
 
 makeRequest:
-/*
-    call TcpIP.closeAll
     call extractRequest
-    ld de, historyBlock.port
-    call atohl
-    ld (.port + 1), hl
 
     ld hl, historyBlock.host
-    call TcpIP.resolveIp
-    jp nc, .error
-.port  
-    ld bc, #beaf
-    call TcpIP.openTcp
-    jp nz, .error
+    ld de, historyBlock.port
+    call Wifi.openTCP
+    ret c
 
-    ld a, b
-    ld (socket), a
+    ld hl, requestbuffer
+    call Wifi.tcpSendZ
+    xor a : ld (Wifi.closed), a
+    ret
 
-    ld de, requestbuffer
-    push de
-    call strlen
-    pop de
-    ld a, (socket)
-    call TcpIP.sendTCP
-    or a
-    ret
-.error*/
-    scf
-    ret
 
 loadBuffer:
-    scf
-    ret
-/*
     ld hl, outputBuffer
-    ld (.pointer), hl
+    ld (Wifi.buffer_pointer), hl
 .loop
-    ld a, (socket)
-    call TcpIP.stateTcp
-    and a : ret nz ; If there some error
-    ld a, h : or l : jr nz, .getPacket ; if there some data
-    ld a, b : cp 4 : ret nz ; If there no established status
+    call Wifi.getPacket
+    ld a, (Wifi.closed) : and a : ret nz
     jr .loop
-.getPacket
-    ld hl, 512
-    ld a, (socket)
-    call TcpIP.recvTCP
-    push bc
-        ld hl, (.pointer)
-        add hl, bc : ld a, h : cp #c0 : jp nc, .skiploop
-        ld de, (.pointer), hl, TcpIP.tcpBuff
-        ldir
-    pop bc
-    ld hl, (.pointer)
-    add hl, bc
-    ld (.pointer), hl
-    jp .loop
-.skiploop
-    pop bc
-    call TcpIP.closeAll
-    jp .loop
-.pointer dw outputBuffer
-*/
+
 download:
     /*
     ld de, historyBlock.locator
