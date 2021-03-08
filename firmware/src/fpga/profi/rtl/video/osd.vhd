@@ -56,36 +56,47 @@ architecture rtl of osd is
 	signal bit_addr: std_logic_vector(2 downto 0);
 	signal pixel: std_logic;
 		
-	-- Define messages displayed
-	constant message_turbo: 	string(1 to 8) 	:= "TURBO   ";
-	constant message_vga: 		string(1 to 8) 	:= "VGA     ";
-	constant message_rgb: 		string(1 to 8) 	:= "RGB     ";
-	constant message_on:	 		string(1 to 8) 	:= "ON      ";
-	constant message_off: 		string(1 to 8) 	:= "OFF     ";
-	constant message_rombank: 	string(1 to 8) 	:= "ROM BANK";
-	constant message_rombank0:	string(1 to 8) 	:= "DEFAULT ";
-	constant message_rombank1:	string(1 to 8) 	:= "ALT     ";
-	constant message_rombank2:	string(1 to 8) 	:= "FLASHER ";
-	constant message_rombank3:	string(1 to 8) 	:= "DIAG ROM";
-	constant message_50hz: 		string(1 to 8) 	:= "50 Hz   ";
-	constant message_60hz: 		string(1 to 8) 	:= "60 Hz   ";
-	constant message_keyboard: string(1 to 8)  	:= "KEYBOARD";
-	constant message_profi:    string(1 to 8)  	:= "XT-PROFI";
-	constant message_spectrum: string(1 to 8)  	:= "SPECTRUM";
-	constant message_pause:    string(1 to 8)  	:= "PAUSE   ";
-	constant message_empty: 	string(1 to 8) 	:= "        ";
-	constant message_ssgmode:  string(1 to 8)  	:= "SSG MODE";
-	constant message_ym_abc:	string(1 to 8)  	:= "YM, ABC ";
-	constant message_ym_acb:	string(1 to 8)  	:= "YM, ACB ";
-	constant message_ay_abc:	string(1 to 8)  	:= "AY, ABC ";
-	constant message_ay_acb:	string(1 to 8)  	:= "AY, ACB ";
-	constant message_covox:		string(1 to 8)  	:= "COVOX   ";
-	constant message_turbo_fdc:string(1 to 8)  	:= "TURBOFDC";
-	constant message_karabas:  string(1 to 8)  	:= "VERSION ";
+	-- Define message addresses displayed
+	constant message_turbo: 	integer 	:= 0;
+	constant message_vga: 		integer 	:= 8;
+	constant message_rgb: 		integer 	:= 16;
+	constant message_on:	 		integer 	:= 24;
+	constant message_off: 		integer  := 32;
+	constant message_rombank: 	integer 	:= 40;
+	constant message_rombank0:	integer 	:= 48;
+	constant message_rombank1:	integer 	:= 56;
+	constant message_rombank2:	integer 	:= 64;
+	constant message_rombank3:	integer 	:= 72;
+	constant message_50hz: 		integer 	:= 80;
+	constant message_60hz: 		integer 	:= 88;
+	constant message_keyboard: integer  := 96;
+	constant message_profi:    integer 	:= 104;
+	constant message_spectrum: integer 	:= 112;
+	constant message_pause:    integer 	:= 120;
+	constant message_empty: 	integer 	:= 128;
+	constant message_ssgmode:  integer  := 136;
+	constant message_ym_abc:	integer 	:= 144;
+	constant message_ym_acb:	integer 	:= 152;
+	constant message_ay_abc:	integer  := 160;
+	constant message_ay_acb:	integer  := 168;
+	constant message_ay_mono:  integer  := 176;
+	constant message_ym_mono:  integer  := 184;
+	constant message_covox:		integer 	:= 192;
+	constant message_turbo_fdc:integer 	:= 200;
+	constant message_karabas:  integer 	:= 208;
+	constant message_ver		:  integer  := 216;
 
-	-- displayable lines
-	signal line1 : string(1 to 8) := message_empty;
-	signal line2 : string(1 to 8) := message_empty;
+	signal message_addr : std_logic_vector(7 downto 0);
+
+	-- signals to write version into the ROM
+	signal ver_addr : std_logic_vector(7 downto 0);
+	signal ver_wr : std_logic := '0';
+	signal ver_data : std_logic_vector(7 downto 0);
+	signal ver_wr_cnt : std_logic_vector(4 downto 0) := "11111";
+	
+	-- displayable lines (addresses)
+	signal line1 : std_logic_vector(7 downto 0) := std_logic_vector(to_unsigned(message_empty, 8));
+	signal line2 : std_logic_vector(7 downto 0) := std_logic_vector(to_unsigned(message_empty, 8));
 	
 	signal last_turbo : std_logic := '0';
 	signal last_scandoubler_en : std_logic := '0';
@@ -117,6 +128,17 @@ begin
       clock   => CLK2,
       q       => font_word
    );
+	
+	-- message rom
+	U_MESSAGES: entity work.rom_message 
+	port map (
+		clock   		=> CLK2,
+		wraddress 	=> ver_addr,
+		wren 			=> ver_wr,
+		data 			=> ver_data,
+		rdaddress 	=> message_addr,
+		q       		=> char
+	);
 	 
 	char_x <= hcnt(3 downto 1) when DS80='1' else hcnt(2 downto 0);
    char_y <= vcnt(3 downto 0);
@@ -132,10 +154,10 @@ begin
 
 	hpos <= hcnt(6 downto 4) when DS80 = '1' else hcnt(5 downto 3);
 	
-	-- character to request from the ROM depends on the line1 / line2 horizontal position
-	char <= std_logic_vector(to_unsigned(character'pos(line1(to_integer(unsigned(hpos(2 downto 0)))+1)), 8)) when vpos(0) = '1' and ((DS80 = '0' and hcnt < 64) or (DS80 = '1' and hcnt < 128)) else 
-			  std_logic_vector(to_unsigned(character'pos(line2(to_integer(unsigned(hpos(2 downto 0)))+1)), 8)) when vpos(1) = '1' and ((DS80 = '0' and hcnt < 64) or (DS80 = '1' and hcnt < 128)) else 
-			  (others => '0');
+	-- message address
+	message_addr <= line1 + hpos(2 downto 0) when vpos(0) = '1' and ((DS80 = '0' and hcnt < 64) or (DS80 = '1' and hcnt < 128)) else 
+						 line2 + hpos(2 downto 0) when vpos(1) = '1' and ((DS80 = '0' and hcnt < 64) or (DS80 = '1' and hcnt < 128)) else 
+						 std_logic_vector(to_unsigned(message_empty, 8));
 
 	-- pixel 
 	bit_addr <= char_x(2 downto 0);
@@ -169,7 +191,17 @@ begin
 		if rising_edge(CLK) then 
 		
 			if CLK2 = '1' then
-
+	
+				-- write version into ROM
+				if (ver_wr_cnt < 8) then 
+					ver_addr <= std_logic_vector(to_unsigned(message_ver, 8)) + ver_wr_cnt;
+					ver_wr <= '1';
+					ver_data <= std_logic_vector(to_unsigned(character'pos(VER(to_integer(unsigned(ver_wr_cnt))+1)), 8));
+					ver_wr_cnt <= ver_wr_cnt + 1;
+				else 
+					ver_wr <= '0';
+				end if;
+			
 			-- init signal from AVR
 			if (LOADED = '1' and last_loaded = '0') then
 				last_loaded <= '1';
@@ -184,19 +216,21 @@ begin
 				last_covox <= COVOX_EN;
 				last_turbo_fdc <= TURBO_FDC;
 				cnt <= "0000";
-				line1 <= message_karabas;
-				line2 <= VER;
+				line1 <= std_logic_vector(to_unsigned(message_karabas, 8));
+				line2 <= std_logic_vector(to_unsigned(message_ver, 8));
+				ver_wr_cnt <= "00000";
+				
 			elsif (LOADED = '1') then
 			
 				-- wait switch
 				if (KB_WAIT /= last_kb_wait) then
 					last_kb_wait <= KB_WAIT;
 					cnt <= "0000";
-					line1 <= message_pause;
+					line1 <= std_logic_vector(to_unsigned(message_pause, 8));
 					if (kb_wait = '0') then 
-						line2 <= message_off;
+						line2 <= std_logic_vector(to_unsigned(message_off, 8));
 					else 
-						line2 <= message_on;
+						line2 <= std_logic_vector(to_unsigned(message_on, 8));
 					end if;
 				end if;
 				
@@ -204,11 +238,11 @@ begin
 				if (KB_MODE /= last_kb_mode) then
 					last_kb_mode <= KB_MODE;
 					cnt <= "0000";
-					line1 <= message_keyboard;
+					line1 <= std_logic_vector(to_unsigned(message_keyboard, 8));
 					if (kb_mode = '0') then 
-						line2 <= message_spectrum;
+						line2 <= std_logic_vector(to_unsigned(message_spectrum, 8));
 					else 
-						line2 <= message_profi;
+						line2 <= std_logic_vector(to_unsigned(message_profi, 8));
 					end if;
 				end if;
 				
@@ -216,11 +250,11 @@ begin
 				if (TURBO /= last_turbo) then
 					last_turbo <= TURBO;
 					cnt <= "0000";
-					line1 <= message_turbo;
+					line1 <= std_logic_vector(to_unsigned(message_turbo, 8));
 					if (turbo = '0') then 
-						line2 <= message_on;
+						line2 <= std_logic_vector(to_unsigned(message_on, 8));
 					else 
-						line2 <= message_off;
+						line2 <= std_logic_vector(to_unsigned(message_off, 8));
 					end if;
 				end if;
 				
@@ -230,14 +264,14 @@ begin
 					last_scandoubler_en <= scandoubler_en;
 					cnt <= "0000";
 					if (scandoubler_en = '1') then 
-						line1 <= message_vga;
+						line1 <= std_logic_vector(to_unsigned(message_vga, 8));
 					else 
-						line1 <= message_rgb;
+						line1 <= std_logic_vector(to_unsigned(message_rgb, 8));
 					end if;
 					if (mode60 = '1') then 
-						line2 <= message_60hz;
+						line2 <= std_logic_vector(to_unsigned(message_60hz, 8));
 					else 
-						line2 <= message_50hz;
+						line2 <= std_logic_vector(to_unsigned(message_50hz, 8));
 					end if;
 				end if;
 				
@@ -245,15 +279,15 @@ begin
 				if (ROM_BANK /= last_rom_bank) then
 					last_rom_bank <= ROM_BANK;
 					cnt <= "0000";
-					line1 <= message_rombank;
+					line1 <= std_logic_vector(to_unsigned(message_rombank, 8));
 					if (ROM_BANK = "00") then 
-						line2 <= message_rombank0;
+						line2 <= std_logic_vector(to_unsigned(message_rombank0, 8));
 					elsif (ROM_BANK = "01") then 
-						line2 <= message_rombank1;
+						line2 <= std_logic_vector(to_unsigned(message_rombank1, 8));
 					elsif (ROM_BANK = "10") then 
-						line2 <= message_rombank2;
+						line2 <= std_logic_vector(to_unsigned(message_rombank2, 8));
 					else 
-						line2 <= message_rombank3;
+						line2 <= std_logic_vector(to_unsigned(message_rombank3, 8));
 					end if;
 				end if;
 				
@@ -262,15 +296,15 @@ begin
 					last_ssg_mode <= SSG_MODE;
 					last_ssg_stereo <= SSG_STEREO;
 					cnt <= "0000";
-					line1 <= message_ssgmode;
+					line1 <= std_logic_vector(to_unsigned(message_ssgmode, 8));
 					if (SSG_MODE = '0' and SSG_STEREO = '0') then 
-						line2 <= message_ym_acb;
+						line2 <= std_logic_vector(to_unsigned(message_ym_acb, 8));
 					elsif (SSG_MODE = '0' and SSG_STEREO = '1') then 
-						line2 <= message_ym_abc;
+						line2 <= std_logic_vector(to_unsigned(message_ym_abc, 8));
 					elsif (SSG_MODE = '1' and SSG_STEREO = '0') then 
-						line2 <= message_ay_acb;
+						line2 <= std_logic_vector(to_unsigned(message_ay_acb, 8));
 					else 
-						line2 <= message_ay_abc;
+						line2 <= std_logic_vector(to_unsigned(message_ay_abc, 8));
 					end if;
 				end if;
 				
@@ -278,11 +312,11 @@ begin
 				if (TURBO_FDC /= last_turbo_fdc) then
 					last_turbo_fdc <= TURBO_FDC;
 					cnt <= "0000";
-					line1 <= message_turbo_fdc;
+					line1 <= std_logic_vector(to_unsigned(message_turbo_fdc, 8));
 					if (turbo_fdc = '0') then 
-						line2 <= message_off;
+						line2 <= std_logic_vector(to_unsigned(message_off, 8));
 					else 
-						line2 <= message_on;
+						line2 <= std_logic_vector(to_unsigned(message_on, 8));
 					end if;
 				end if;
 				
@@ -290,11 +324,11 @@ begin
 				if (COVOX_EN /= last_covox) then
 					last_covox <= COVOX_EN;
 					cnt <= "0000";
-					line1 <= message_covox;
+					line1 <= std_logic_vector(to_unsigned(message_covox, 8));
 					if (covox_en = '0') then 
-						line2 <= message_off;
+						line2 <= std_logic_vector(to_unsigned(message_off, 8));
 					else 
-						line2 <= message_on;
+						line2 <= std_logic_vector(to_unsigned(message_on, 8));
 					end if;
 				end if;
 			end if;
