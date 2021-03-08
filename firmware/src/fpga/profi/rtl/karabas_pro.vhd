@@ -264,6 +264,7 @@ signal covox_fb		: std_logic_vector(7 downto 0);
 -- Output audio
 signal audio_l			: std_logic_vector(15 downto 0);
 signal audio_r			: std_logic_vector(15 downto 0);
+signal audio_mono		: std_logic_vector(15 downto 0);
 signal audio_dac_type: std_logic := '0'; -- 0 = TDA1543, 1 = TDA1543A
 
 -- SAA1099
@@ -397,7 +398,7 @@ signal led1_overwrite: std_logic := '0';
 signal led2_overwrite: std_logic := '0';
 
 -- avr soft switches (Menu+F1 .. Menu+F8)
-signal soft_sw 		: std_logic_vector(1 to 8) := (others => '0');
+signal soft_sw 		: std_logic_vector(1 to 10) := (others => '0');
 
 signal board_reset 	: std_logic := '0'; -- board reset on rombank switch
 
@@ -643,7 +644,9 @@ port map (
 	SSG_MODE 		=> soft_sw(8),
 	SSG_STEREO 		=> soft_sw(7),
 	COVOX_EN			=> soft_sw(6),
-	TURBO_FDC		=> soft_sw(5)
+	TURBO_FDC		=> soft_sw(5),
+	SSG_MONO 		=> soft_sw(9)--,
+--	FDC_SWAP			=> soft_sw(10)
 );
 
 -- Scandoubler	
@@ -1298,7 +1301,24 @@ end process;
 
 speaker <= port_xxfe_reg(4);
 
+audio_mono <= 	
+				("0000" & speaker & "00000000000") +
+				("0000"  & ssg_cn0_a &     "0000") + 
+				("0000"  & ssg_cn0_b &     "0000") + 
+				("0000"  & ssg_cn0_c &     "0000") + 
+				("0000"  & ssg_cn1_a &     "0000") + 
+				("0000"  & ssg_cn1_b &     "0000") + 
+				("0000"  & ssg_cn1_c &     "0000") + 
+				("0000"  & covox_a &       "0000") + 
+				("0000"  & covox_b &       "0000") + 
+				("0000"  & covox_c &       "0000") + 
+				("0000"  & covox_d &       "0000") + 
+				("0000"  & covox_fb &      "0000") + 
+				("0000"  & saa_out_l &     "0000") + 				
+				("0000"  & saa_out_r &     "0000");
+
 audio_l <= "0000000000000000" when loader_act = '1' or kb_wait = '1' else 
+				audio_mono when soft_sw(9) = '1' else
 				("000" & speaker & "000000000000") + -- ACB: L = A + C/2
 				("000"  & ssg_cn0_a &     "00000") + 
 				("0000"  & ssg_cn0_c &     "0000") + 
@@ -1319,6 +1339,7 @@ audio_l <= "0000000000000000" when loader_act = '1' or kb_wait = '1' else
 				("000"  & saa_out_l  &    "00000");
 				
 audio_r <= "0000000000000000" when loader_act = '1' or kb_wait = '1' else 
+				audio_mono when soft_sw(9) = '1' else
 				("000" & speaker & "000000000000") + -- ACB: R = B + C/2
 				("000"  & ssg_cn0_b &     "00000") + 
 				("0000"  & ssg_cn0_c &     "0000") + 
