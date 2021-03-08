@@ -4,9 +4,6 @@ use IEEE.numeric_std.ALL;
 use IEEE.std_logic_unsigned.all;
 
 entity osd is
-	generic ( 
-		VER 		: string(1 to 8) := "FIRM_VER"
-	);
 	port (
 		CLK		: in std_logic;
 		CLK2 		: in std_logic;
@@ -88,12 +85,6 @@ architecture rtl of osd is
 
 	signal message_addr : std_logic_vector(7 downto 0);
 
-	-- signals to write version into the ROM
-	signal ver_addr : std_logic_vector(7 downto 0);
-	signal ver_wr : std_logic := '0';
-	signal ver_data : std_logic_vector(7 downto 0);
-	signal ver_wr_cnt : std_logic_vector(4 downto 0) := "11111";
-	
 	-- displayable lines (addresses)
 	signal line1 : std_logic_vector(7 downto 0) := std_logic_vector(to_unsigned(message_empty, 8));
 	signal line2 : std_logic_vector(7 downto 0) := std_logic_vector(to_unsigned(message_empty, 8));
@@ -130,13 +121,10 @@ begin
    );
 	
 	-- message rom
-	U_MESSAGES: entity work.rom_message 
+	U_MESSAGES: entity work.message_rom 
 	port map (
+		address 		=> message_addr,
 		clock   		=> CLK2,
-		wraddress 	=> ver_addr,
-		wren 			=> ver_wr,
-		data 			=> ver_data,
-		rdaddress 	=> message_addr,
 		q       		=> char
 	);
 	 
@@ -192,16 +180,6 @@ begin
 		
 			if CLK2 = '1' then
 	
-				-- write version into ROM
-				if (ver_wr_cnt < 8) then 
-					ver_addr <= std_logic_vector(to_unsigned(message_ver, 8)) + ver_wr_cnt;
-					ver_wr <= '1';
-					ver_data <= std_logic_vector(to_unsigned(character'pos(VER(to_integer(unsigned(ver_wr_cnt))+1)), 8));
-					ver_wr_cnt <= ver_wr_cnt + 1;
-				else 
-					ver_wr <= '0';
-				end if;
-			
 			-- init signal from AVR
 			if (LOADED = '1' and last_loaded = '0') then
 				last_loaded <= '1';
@@ -218,7 +196,6 @@ begin
 				cnt <= "0000";
 				line1 <= std_logic_vector(to_unsigned(message_karabas, 8));
 				line2 <= std_logic_vector(to_unsigned(message_ver, 8));
-				ver_wr_cnt <= "00000";
 				
 			elsif (LOADED = '1') then
 			
