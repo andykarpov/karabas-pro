@@ -54,7 +54,7 @@ loadBuffer:
     jr .loop
 
 download:
-    /*
+
     ld de, historyBlock.locator
     ld hl, de
 .findFileName
@@ -84,31 +84,23 @@ download:
     ld a, b : ld (.fp), a
     ld hl, .progress : call DialogBox.msgNoWait
 .loop
-    ld a, (socket)
-    call TcpIP.stateTcp
-    and a : jp nz, .exit ; If there some error
-    ld a, h : or l : jr nz, .getPacket ; if there some data
-    ld a, b : cp 4 : jp nz, .exit ; If there no established status
-    jr .loop
-.getPacket
-    ld hl, 512
-    ld a, (socket)
-    call TcpIP.recvTCP
-    ld hl, bc, a, (.fp), b, a, de, TcpIP.tcpBuff
+    ld hl, outputBuffer, (Wifi.buffer_pointer), hl
+    call Wifi.getPacket
+    ld a, (Wifi.closed) : and a : jr nz, .exit
+    
+    ld a, (.fp), b, a, de, outputBuffer, hl, (Wifi.bytes_avail)
     call Dos.fwrite
+
     jp .loop
 .exit
     ld a, (.fp), b, a
     call Dos.fclose
-    call TcpIP.closeAll
     jp History.back
 .error
     ld a, (.fp), b, a
     call Dos.fclose
-    call TcpIP.closeAll
     ld hl, .err
     call DialogBox.msgBox
-    */
     jp History.back
 .err db "Operation failed! Sorry! Check filename or disk space!",0
 .progress db "Downloading in progress! Wait a bit!", 0

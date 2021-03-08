@@ -8,7 +8,7 @@ ZXUNO_ADDR = #FC3B
 ZXUNO_REG = #FD3B
 
 
-    ; Enable UART
+; Enable UART
 ; Cleaning all flags by reading UART regs
 ; Wastes AF and BC
 init:
@@ -41,7 +41,7 @@ read:
 ; BC will be wasted
 write:    
     push af
-    ld a, 1 : out (#fe), a
+    ld a, 3 : out (#fe), a
     ld bc, ZXUNO_ADDR : ld a, UART_STAT_REG : out (c), a
     ld bc, ZXUNO_REG : in A, (c) : and UART_BYTE_RECIVED
     jr nz, .is_recvF
