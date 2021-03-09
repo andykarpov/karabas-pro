@@ -179,7 +179,7 @@ pFF_CS <= pFF_CS_profi when ds80 = '1' else pFF_CS_spec;
 	-- 4) при чтении адресом выступает код цвета от видеоконтроллера - YGRB
 			
 	-- запись палитры
-	process(CLK2x, reset, palette_wr, palette_a, palette_wr_data, palette)
+	process(CLK2x, CLK, reset, palette_wr, palette_a, palette_wr_data, palette)
 	begin
 		if reset = '1' then 
 			-- set default palette on reset
@@ -188,7 +188,7 @@ pFF_CS <= pFF_CS_profi when ds80 = '1' else pFF_CS_spec;
 				8 => "000000000", 9 => "000000110", 10 => "000110000", 11 => "000110110", 12 => "110000000", 13 => "110000110", 14 => "110110000", 15 => "110110110"
 			);
 		elsif rising_edge(CLK2x) then 
-			if palette_wr = '1' then
+			if CLK = '1' and palette_wr = '1' then
 					palette(to_integer(unsigned(BORDER(3 downto 0) xor X"F"))) <= (not BUS_A) & '0';
 			end if;
 		end if;

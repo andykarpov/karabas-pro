@@ -42,11 +42,12 @@ timing
 *.sopc_builder
 *.summary
 #*.tcl
-*.txt # Explicitly add any text files used
+#*.txt # Explicitly add any text files used
 *~
 *example*
 *sopc_*
 PLLJ_PLLSPE_INFO.txt
+messages.mif
 
 # KiCAD
 #*-cache.lib

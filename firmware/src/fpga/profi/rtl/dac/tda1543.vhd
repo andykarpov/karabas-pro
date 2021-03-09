@@ -43,7 +43,9 @@ entity tda1543 is
 	Port ( 
 		RESET		: in std_logic;
 		DAC_TYPE : in std_logic := '0'; -- 0 = TDA1543, 1 = TDA1543A
-		CLK		: in std_logic;
+		CLK_BUS 	: in std_logic;
+		CLK_DIV2	: in std_logic;
+		CLK_DIV4 : in std_logic;
 		CS			: in std_logic;
       DATA_L	: in std_logic_vector (15 downto 0);
       DATA_R	: in std_logic_vector (15 downto 0);
@@ -61,11 +63,11 @@ signal cnt : std_logic_vector(5 downto 0) := (others => '0');
 begin
 
 -- counter
-process (RESET, CS, CLK, cnt, DAC_TYPE)
+process (RESET, CS, CLK_BUS, CLK_DIV2, CLK_DIV4, cnt, DAC_TYPE)
 begin 
 	if (RESET = '1' or CS = '0') then 
 		cnt <= (others => '0');
-	elsif (CLK'event and CLK = '0') then
+	elsif (CLK_BUS'event and CLK_BUS = '1' and CLK_DIV2 = '1' and CLK_DIV4 = '0') then
 		case DAC_TYPE is 
 			when '0' => 
 				if (cnt < 31) then 
@@ -85,11 +87,11 @@ begin
 end process;
 
 -- WS
-process (RESET, CS, CLK, cnt, DAC_TYPE)
+process (RESET, CS, CLK_BUS, CLK_DIV2, CLK_DIV4, cnt, DAC_TYPE)
 begin 
 	if (RESET = '1' or CS = '0') then 
 		WS <= '0';		
-	elsif (CLK'event and CLK = '0') then
+	elsif (CLK_BUS'event and CLK_BUS = '1' and CLK_DIV2 = '1' and CLK_DIV4 = '0') then
 		case DAC_TYPE is 
 			when '0' => 
 				if cnt = 0 then 
@@ -109,11 +111,11 @@ begin
 end process;
 
 -- shift register
-process (RESET, CLK, CS, DAC_TYPE, shift_reg, DATA_L, DATA_R)
+process (RESET, CLK_BUS, CLK_DIV2, CLK_DIV4, CS, DAC_TYPE, shift_reg, DATA_L, DATA_R)
 begin
 	if (RESET = '1' or CS = '0') then
 		shift_reg <= (others => '0');
-	elsif (CLK'event and CLK = '0') then
+	elsif (CLK_BUS'event and CLK_BUS = '1' and CLK_DIV2 = '1' and CLK_DIV4 = '0') then
 		case DAC_TYPE is 
 			when '0' =>
 				if cnt = 0 then 
@@ -133,6 +135,6 @@ begin
 end process;
 
 DATA <= shift_reg(47);
-BCK <= CLK when CS = '1' else '1';
+BCK <= CLK_DIV4 when CS = '1' else '1';
 
 end tda1543_arch;
