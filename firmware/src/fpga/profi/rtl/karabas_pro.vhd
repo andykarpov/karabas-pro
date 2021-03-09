@@ -31,6 +31,7 @@ use IEEE.numeric_std.all;
 entity karabas_pro is
 	generic (
 		enable_zxuno_uart  : boolean := true;
+		enable_zxuno_uart2 : boolean := false;
 		enable_saa1099 	 : boolean := false
 	);
 port (
@@ -370,6 +371,11 @@ signal zxuno_addr_oe_n : std_logic;
 signal zxuno_addr_to_cpu : std_logic_vector(7 downto 0);
 signal zxuno_uart_do_bus 	: std_logic_vector(7 downto 0);
 signal zxuno_uart_oe_n 		: std_logic;
+signal zxuno_uart2_do_bus 	: std_logic_vector(7 downto 0);
+signal zxuno_uart2_oe_n 		: std_logic;
+signal uart2_tx : std_logic;
+signal uart2_rx : std_logic;
+signal uart2_cts : std_logic;
 
 -- cpld port
 signal cpld_do 		: std_logic_vector(7 downto 0);
@@ -444,6 +450,10 @@ port (
 end component;
 
 component zxunouart
+generic (
+	UARTDATA : std_logic_vector(7 downto 0) := x"C6";
+	UARTSTAT : std_logic_vector(7 downto 0) := x"C7"
+);
 port (
 	clk_bus : in std_logic;
 	clk_div2 : in std_logic;
@@ -931,6 +941,33 @@ port map(
 	uart_rx => UART_RX,
 	uart_rts => UART_CTS
 );	
+
+G_UNO_UART2: if enable_zxuno_uart2 generate
+U24: zxunouart 
+generic map (
+	UARTDATA => x"C8",
+	UARTSTAT => x"C9"
+)
+port map(
+	clk_bus => clk_bus,
+	clk_div2 => clk_div2,
+	clk_div4 => clk_div4, -- 7 or 6 mhz
+	ds80 => ds80,
+	zxuno_addr => zxuno_addr,
+	zxuno_regrd => zxuno_regrd,
+	zxuno_regwr => zxuno_regwr,
+	din => cpu_do_bus,
+	dout => zxuno_uart2_do_bus,
+	oe_n => zxuno_uart2_oe_n,
+	uart_tx => UART2_TX,
+	uart_rx => UART2_RX,
+	uart_rts => UART2_CTS
+);	
+PIN_141		<= uart2_tx;
+PIN_138 		<= uart2_cts;
+uart2_rx 		<= PIN_121;
+end generate G_UNO_UART2;
+
 end generate G_UNO_UART;
 
 -- board features
@@ -1402,7 +1439,7 @@ ay_bc1 		<= '1' when ay_port = '1' and cpu_a_bus(14) = '1' and cpu_iorq_n = '0' 
 -------------------------------------------------------------------------------
 -- CPU0 Data bus
 
-process (selector, cpu_a_bus, gx0, serial_ms_do_bus, ram_do_bus, mc146818_do_bus, kb_do_bus, zc_do_bus, ssg_cn0_bus, ssg_cn1_bus, port_7ffd_reg, port_dffd_reg, zxuno_uart_do_bus, cpld_do, vid_attr, port_eff7_reg, joy_bus, ms_z, ms_b, ms_x, ms_y, zxuno_addr_to_cpu, port_xxC7_reg, flash_rdy, flash_busy, flash_do_bus)
+process (selector, cpu_a_bus, gx0, serial_ms_do_bus, ram_do_bus, mc146818_do_bus, kb_do_bus, zc_do_bus, ssg_cn0_bus, ssg_cn1_bus, port_7ffd_reg, port_dffd_reg, zxuno_uart_do_bus, zxuno_uart2_do_bus, cpld_do, vid_attr, port_eff7_reg, joy_bus, ms_z, ms_b, ms_x, ms_y, zxuno_addr_to_cpu, port_xxC7_reg, flash_rdy, flash_busy, flash_do_bus)
 begin
 	case selector is
 		when x"00" => cpu_di_bus <= ram_do_bus;
@@ -1418,6 +1455,7 @@ begin
 		when x"0A" => cpu_di_bus <= ms_z(3 downto 0) & '1' & not(ms_b(2)) & not(ms_b(0)) & not(ms_b(1)); -- D0=right, D1 = left, D2 = middle, D3 = fourth, D4..D7 - wheel
 		when x"0B" => cpu_di_bus <= ms_x;
 		when x"0C" => cpu_di_bus <= ms_y;
+		when x"0D" => cpu_di_bus <= zxuno_uart2_do_bus;
 		when x"0E" => cpu_di_bus <= serial_ms_do_bus;
 		when x"0F" => cpu_di_bus <= zxuno_addr_to_cpu;
 		when x"10" => cpu_di_bus <= zxuno_uart_do_bus;
@@ -1441,7 +1479,8 @@ selector <=
 	x"09" when (cs_7ffd = '1' and cpu_rd_n = '0') else										-- port #7FFD
 	x"0A" when (cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_a_bus = X"FADF" and ms_present = '1' and cpm='0') else	-- Mouse0 port key, z
 	x"0B" when (cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_a_bus = X"FBDF" and ms_present = '1' and cpm='0') else	-- Mouse0 port x
-	x"0C" when (cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_a_bus = X"FFDF" and ms_present = '1' and cpm='0') else	-- Mouse0 port y 																
+	x"0C" when (cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_a_bus = X"FFDF" and ms_present = '1' and cpm='0') else	-- Mouse0 port y 
+	x"0D" when (enable_zxuno_uart and cpu_iorq_n = '0' and cpu_rd_n = '0' and zxuno_uart2_oe_n = '0') else -- ZX UNO UART2
 	x"0E" when (serial_ms_oe_n = '0') else -- Serial mouse
 	x"0F" when (enable_zxuno_uart and cpu_iorq_n = '0' and cpu_rd_n = '0' and zxuno_addr_oe_n = '0') else -- ZX UNO Register
 	x"10" when (enable_zxuno_uart and cpu_iorq_n = '0' and cpu_rd_n = '0' and zxuno_uart_oe_n = '0') else -- ZX UNO UART
@@ -1449,17 +1488,5 @@ selector <=
 	x"12" when (cs_xxE7 = '1' and cpu_rd_n = '0') else
 	x"13" when (vid_pff_cs = '1' and cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_a_bus( 7 downto 0) = X"FF") and dos_act='0' else -- Port FF select
 	(others => '1');
-	
--- debug 
---	PIN_141 <= cpu_int_n;
---	PIN_138 <= cpu_wait_n;
---	PIN_121 <= VGA_G(2);
---	PIN_120 <= cpu_iorq_n;
---	PIN_119 <= VGA_VS;
---	PIN_115 <= VGA_HS;
---
---PIN_138 <= locked;
---PIN_120 <= clk_bus;
---PIN_141 <= areset;
 	
 end rtl;
