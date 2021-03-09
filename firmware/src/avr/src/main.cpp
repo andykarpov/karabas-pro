@@ -573,9 +573,18 @@ void fill_kbd_matrix(int sc)
 
     // Tab
     case PS2_TAB:
-      matrix[ZX_K_CS] = !is_up;
-      matrix[ZX_K_I] = !is_up;
-      process_capsed_key(scancode, is_up);
+      if (is_menu || (is_ctrl && is_alt)) {
+        if (!is_up) {
+          // menu + TAB = SW10
+          is_sw10 = !is_sw10;
+          eeprom_store_value(EEPROM_SW10_ADDRESS, is_sw10);
+          matrix[ZX_K_SW10] = is_sw10;
+        }
+      } else {
+        matrix[ZX_K_CS] = !is_up;
+        matrix[ZX_K_I] = !is_up;
+        process_capsed_key(scancode, is_up);
+      }
       break;
 
     // CapsLock
