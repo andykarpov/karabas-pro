@@ -47,13 +47,13 @@ signal bus_d_reg	: std_logic_vector(7 downto 0);
 
 begin
 	
-	CPLD_CLK <= CLK_BUS;
+	CPLD_CLK <= CLK;
 	CPLD_CLK2 <= CLK2;
 	NRESET <= not reset;
 	SA <= cnt;	
 	BUS_DO <= SD(15 downto 8);
 
-	process (CLK_CPU, cnt, BUS_HDD_CS_N, BUS_FDC_NCS, BUS_CSFF, BUS_CS3FX, BUS_RWE, BUS_RWW, BUS_WWE, BUS_WWC, BUS_FDC_STEP, BUS_RD_N, BUS_WR_N, bus_a, bus_di)
+	process (CLK_CPU, BUS_HDD_CS_N, BUS_FDC_NCS, BUS_CSFF, BUS_CS3FX, BUS_RWE, BUS_RWW, BUS_WWE, BUS_WWC, BUS_FDC_STEP, BUS_RD_N, BUS_WR_N, bus_a, bus_di)
 	begin 
 		if CLK_CPU'event and CLK_CPU = '1' then 
 				bus_a_reg <= BUS_HDD_CS_N & BUS_FDC_NCS & BUS_CSFF & BUS_CS3FX & BUS_RWE & BUS_RWW & BUS_WWE & BUS_WWC & BUS_FDC_STEP & BUS_RD_N & BUS_WR_N & bus_a;
@@ -61,10 +61,9 @@ begin
 		end if;
 	end process;
 
-	process (CLK_BUS, CLK_CPU, prev_clk_cpu, cnt)
+	process (CLK, cnt, CLK_CPU, prev_clk_cpu)
 	begin 
-		--if CLK'event and CLK = '1' then
-		if CLK_BUS'event and CLK_BUS = '1' then
+		if CLK'event and CLK = '1' then
 			prev_clk_cpu <= CLK_CPU;
 			if prev_clk_cpu = '0' and CLK_CPU = '1' then 
 				cnt <= "11";
