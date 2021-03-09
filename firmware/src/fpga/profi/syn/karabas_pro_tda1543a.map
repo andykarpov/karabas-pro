@@ -1,0 +1,16 @@
+BLOCK		START ADDRESS		END ADDRESS
+
+Page_0		0x00000000		0x00059D8A
+profi_mainrom_fatall.hex		0x00100000		0x0010FFFF
+bios_pqdos_037.hex		0x00110000		0x0011FFFF
+karabas-pro-flashtool_v2_71.hex		0x00120000		0x0012FFFF
+DiagROM.v50.hex		0x00130000		0x00133FFF
+cfg_revA_tda1543a.hex		0x001F0000		0x001F0000
+
+
+
+Notes:
+
+- Data checksum for this conversion is 0x190BF88A
+
+- All the addresses in this file are byte addresses

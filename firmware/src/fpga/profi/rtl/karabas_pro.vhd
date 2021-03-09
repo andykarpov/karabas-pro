@@ -656,7 +656,7 @@ port map (
 	SSG_STEREO 		=> soft_sw(7),
 	COVOX_EN			=> soft_sw(6),
 	TURBO_FDC		=> soft_sw(5),
-	SSG_MONO 		=> soft_sw(9)--,
+	SSG_MONO 		=> soft_sw(9),
 	FDC_SWAP			=> soft_sw(10)
 
 );
@@ -1187,7 +1187,7 @@ rom2 <= port_xx8b_reg(3);											-- 3 - ROM64Kb PAGE bit 2 Change
 unlock_128 <= port_xx8b_reg(4);									-- 4 - Unlock 128 ROM page for DOS
 turbo_on <=  port_xx8b_reg(5); 									-- 5 - Turbo on
 lock_dffd <= port_xx8b_reg(6);								 	-- 6 - Lock port DFFD
-SDIR <= port_xx8b_reg(7) or soft_sw(5);						-- 7 - Floppy Disk Drive Selector Change
+SDIR <= port_xx8b_reg(7) or soft_sw(10);						-- 7 - Floppy Disk Drive Selector Change
 
 ext_rom_bank_pq <= ext_rom_bank when rom0 = '0' else "01";	-- ROMBANK ALT
 

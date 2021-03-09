@@ -26,7 +26,8 @@ entity osd is
 		SSG_STEREO 		: in std_logic := '0';
 		COVOX_EN 		: in std_logic := '0';
 		TURBO_FDC		: in std_logic := '0';
-		SSG_MONO 		: in std_logic := '0'
+		SSG_MONO 		: in std_logic := '0';
+		FDC_SWAP 		: in std_logic := '0'
 	);
 end entity;
 
@@ -107,6 +108,7 @@ architecture rtl of osd is
 	signal last_turbo_fdc : std_logic := '0';
 	signal last_ssg_mono : std_logic := '0';
 	signal last_loaded : std_logic := '0';
+	signal last_fdc_swap : std_logic := '0';
 	
 	signal cnt : std_logic_vector(3 downto 0) := "1000";
 	signal en : std_logic := '0';
@@ -180,7 +182,7 @@ begin
 	--RGB_O <= "000111000" when en = '1' and pixel = '1' else RGB_I;
 
 	-- display messages for changed sensors
-	process (CLK, BLINK, cnt, KB_WAIT, KB_MODE, TURBO, SCANDOUBLER_EN, MODE60, ROM_BANK, SSG_MODE, SSG_STEREO, last_ssg_mode, last_ssg_stereo, last_kb_wait, last_kb_mode, LOADED, last_loaded, last_turbo, last_scandoubler_en, last_mode60, last_rom_bank, COVOX_EN, last_covox, TURBO_FDC, last_turbo_fdc, SSG_MONO, last_ssg_mono)
+	process (CLK, BLINK, cnt, KB_WAIT, KB_MODE, TURBO, SCANDOUBLER_EN, MODE60, ROM_BANK, SSG_MODE, SSG_STEREO, last_ssg_mode, last_ssg_stereo, last_kb_wait, last_kb_mode, LOADED, last_loaded, last_turbo, last_scandoubler_en, last_mode60, last_rom_bank, COVOX_EN, last_covox, TURBO_FDC, last_turbo_fdc, SSG_MONO, last_ssg_mono, FDC_SWAP, last_fdc_swap)
 	begin 
 		if rising_edge(CLK) then 
 		
@@ -200,6 +202,7 @@ begin
 				last_covox <= COVOX_EN;
 				last_turbo_fdc <= TURBO_FDC;
 				last_ssg_mono <= SSG_MONO;
+				last_fdc_swap <= FDC_SWAP;
 				cnt <= "0000";
 				line1 <= std_logic_vector(to_unsigned(message_karabas, 8));
 				line2 <= std_logic_vector(to_unsigned(message_ver, 8));
@@ -315,6 +318,18 @@ begin
 					cnt <= "0000";
 					line1 <= std_logic_vector(to_unsigned(message_covox, 8));
 					if (covox_en = '0') then 
+						line2 <= std_logic_vector(to_unsigned(message_off, 8));
+					else 
+						line2 <= std_logic_vector(to_unsigned(message_on, 8));
+					end if;
+				end if;
+				
+				-- fdc swap switch
+				if (FDC_SWAP /= last_fdc_swap) then
+					last_fdc_swap <= FDC_SWAP;
+					cnt <= "0000";
+					line1 <= std_logic_vector(to_unsigned(message_fdc_swap, 8));
+					if (FDC_SWAP = '0') then 
 						line2 <= std_logic_vector(to_unsigned(message_off, 8));
 					else 
 						line2 <= std_logic_vector(to_unsigned(message_on, 8));
