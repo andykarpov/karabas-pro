@@ -82,7 +82,11 @@ architecture rtl of osd is
 	constant message_covox:		integer 	:= 192;
 	constant message_turbo_fdc:integer 	:= 200;
 	constant message_karabas:  integer 	:= 208;
-	constant message_ver		:  integer  := 216;
+	constant message_fdc_swap: integer  := 216;
+	constant message_free1:    integer  := 224;
+	constant message_free2:    integer  := 232;
+	constant message_free3:    integer  := 240;
+	constant message_ver:      integer  := 248;
 
 	signal message_addr : std_logic_vector(7 downto 0);
 
