@@ -44,7 +44,7 @@ entity avr is
 	 
 	 CFG 			: in std_logic_vector(7 downto 0);
 	 
-	 SOFT_SW 	: out std_logic_vector(1 to 8) := (others => '0');
+	 SOFT_SW 	: out std_logic_vector(1 to 10) := (others => '0');
 	 
 	 KB_MODE 	: out std_logic := '0';
 	 
@@ -189,6 +189,10 @@ begin
 									  SOFT_SW(7) <= spi_do(6); -- soft switch 7
 									  SOFT_SW(8) <= spi_do(7); -- soft switch 8
 									  LOADED <= '1'; -- loaded
+					when X"09" => 
+									  SOFT_SW(9) <= spi_do(0);
+									  SOFT_SW(10) <= spi_do(1);
+									  -- 6 free signals
 					-- mouse data
 					when X"0A" => mouse_x(7 downto 0) <= signed(spi_do(7 downto 0));
 					when X"0B" => mouse_y(7 downto 0) <= signed(spi_do(7 downto 0));

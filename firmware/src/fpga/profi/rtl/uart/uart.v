@@ -23,7 +23,9 @@
 
 module uart (
     // CPU interface
-    input wire clk,  // 7 MHz or 6 MHz 
+	 input wire clk_bus,
+	 input wire clk_div2,
+    input wire clk_div4,  // 7 MHz or 6 MHz 
 	 input wire ds80, 
     input wire [7:0] txdata,
     input wire txbegin,
@@ -38,7 +40,9 @@ module uart (
     );
 
     uart_tx transmitter (
-        .clk(clk),
+        .clk_bus(clk_bus),
+		  .clk_div2(clk_div2),
+		  .clk_div4(clk_div4),
 		  .ds80(ds80),
         .txdata(txdata),
         .txbegin(txbegin),
@@ -47,7 +51,9 @@ module uart (
     );
 
     uart_rx receiver (
-        .clk(clk),
+        .clk_bus(clk_bus),
+		  .clk_div2(clk_div2),
+		  .clk_div4(clk_div4),
 		  .ds80(ds80),
         .rxdata(rxdata),
         .rxrecv(rxrecv),
@@ -59,7 +65,9 @@ endmodule
 
 module uart_tx (
     // CPU interface
-    input wire clk,  // 7 MHz or 6 MHz
+	 input wire clk_bus,
+	 input wire clk_div2,
+    input wire clk_div4,  // 7 MHz or 6 MHz
 	 input wire ds80,
     input wire [7:0] txdata,
     input wire txbegin,
@@ -89,7 +97,8 @@ module uart_tx (
     reg txbusy_ff = 1'b0;
     assign txbusy = txbusy_ff;
 
-    always @(posedge clk) begin
+    always @(posedge clk_bus) begin
+		  if (clk_div2 == 1'b1 && clk_div4 == 1'b1) begin
         if (txbegin == 1'b1 && txbusy_ff == 1'b0 && state == IDLE) begin
             txdata_reg <= txdata;
             txbusy_ff <= 1'b1;
@@ -138,12 +147,15 @@ module uart_tx (
                     end
             endcase
         end
+		  end
     end
 endmodule
 
 module uart_rx (
     // CPU interface
-    input wire clk,  // 7 MHz or 6 MHz
+	 input wire clk_bus,
+	 input wire clk_div2,
+    input wire clk_div4,  // 7 MHz or 6 MHz
 	 input wire ds80,
     output reg [7:0] rxdata,
     output reg rxrecv,
@@ -173,15 +185,19 @@ module uart_rx (
 
     // Sincronizacin de seales externas
     reg [1:0] rx_ff = 2'b00;
-    always @(posedge clk) begin
-        rx_ff[1] <= rx_ff[0];
-        rx_ff[0] <= rx;
+    always @(posedge clk_bus) begin
+		if (clk_div2 == 1'b1 && clk_div4 == 1'b1) begin
+			  rx_ff[1] <= rx_ff[0];
+			  rx_ff[0] <= rx;
+		  end
     end
     wire rx_int = rx_ff[1];
     
     reg [7:0] rxvalues = 8'h00;
-    always @(posedge clk) begin
-        rxvalues <= {rxvalues[6:0], rx_int};
+    always @(posedge clk_bus) begin
+		if (clk_div2 == 1'b1 && clk_div4 == 1'b1) begin
+			rxvalues <= {rxvalues[6:0], rx_int};
+		  end 
     end
     wire rx_is_1    = (rxvalues==8'hFF)? 1'b1: 1'b0;
     wire rx_is_0    = (rxvalues==8'h00)? 1'b1: 1'b0;
@@ -193,7 +209,8 @@ module uart_rx (
     
     reg [7:0] rxshiftreg;
 
-    always @(posedge clk) begin
+    always @(posedge clk_bus) begin
+		if (clk_div2 == 1'b1 && clk_div4 == 1'b1) begin
         case (state)
             IDLE:
                 begin
@@ -269,5 +286,6 @@ module uart_rx (
                 end
             default: state <= IDLE;
         endcase
+		end 
     end
 endmodule    

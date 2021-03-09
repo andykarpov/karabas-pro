@@ -49,7 +49,7 @@ $(PROJECT).sta.rpt: sta.chg $(PROJECT).fit.rpt
 	quartus_sh -t remove_ver.tcl $(PROJECT)
 
 smart.log: $(ASSIGNMENT_FILES)
-	quartus_sh -t add_ver.tcl --determine_smart_action $(PROJECT) > smart.log
+	quartus_sh -t generate_messages.tcl --determine_smart_action $(PROJECT) > smart.log
 
 ###################################################################
 # Project initialization

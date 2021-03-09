@@ -25,7 +25,7 @@
 
 // Key position in output array
 
-#define ZX_MATRIX_FULL_SIZE 64 // 40 keys + bit6 + reset + turbo + magic + keyboard is_up + 000 +  16 bit scancode
+#define ZX_MATRIX_FULL_SIZE 72 // 40 keys + bit6 + reset + turbo + magic + keyboard is_up + 000 +  16 bit scancode
 #define ZX_MATRIX_SIZE 41 // only mechanical keys state + bit6
 
 #define ZX_K_CS  0
@@ -104,6 +104,11 @@
 #define ZX_K_SW6 61
 #define ZX_K_SW7 62
 #define ZX_K_SW8 63
+
+#define ZX_K_SW9 64
+#define ZX_K_SW10 65
+
+// free 66-71
 
 // Joystick signals
 #define ZX_JOY_FIRE 0
