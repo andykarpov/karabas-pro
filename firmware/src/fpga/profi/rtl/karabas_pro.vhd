@@ -71,7 +71,7 @@ port (
 	NRESET 		: out std_logic;
 	CPLD_CLK 	: out std_logic;
 	CPLD_CLK2 	: out std_logic;
-	SDIR 			: in std_logic;
+	SDIR 			: out std_logic;
 	SA				: out std_logic_vector(1 downto 0);
 	SD				: inout std_logic_vector(15 downto 0) := "ZZZZZZZZZZZZZZZZ";
 	
@@ -135,6 +135,8 @@ signal port_xx7e_aprev   : std_logic_vector(15 downto 8) := "00000000";
 signal port_xx8b_reg	: std_logic_vector(7 downto 0) := "00000000";
 
 -------------8B_PORT------------------
+signal rom0				: std_logic;
+signal rom1				: std_logic;
 signal rom2				: std_logic;
 signal onrom			: std_logic;
 signal turbo_on		: std_logic;
@@ -237,7 +239,6 @@ signal RT_F1_2			:std_logic;
 signal RT_F1			:std_logic;
 signal P0				:std_logic;
 signal fdd_cs_n		:std_logic;
-signal turbo_bl		:std_logic;
 
 -- TurboSound
 signal ssg_sel			: std_logic;
@@ -655,8 +656,9 @@ port map (
 	SSG_STEREO 		=> soft_sw(7),
 	COVOX_EN			=> soft_sw(6),
 	TURBO_FDC		=> soft_sw(5),
-	SSG_MONO 		=> soft_sw(9)--,
---	FDC_SWAP			=> soft_sw(10)
+	SSG_MONO 		=> soft_sw(9),
+	FDC_SWAP			=> soft_sw(10)
+
 );
 
 -- Scandoubler	
@@ -873,7 +875,7 @@ port map (
 	BUS_RWW			=> hdd_rww_n,
 	BUS_RWE			=> hdd_rwe_n,
 	BUS_CS3FX		=> hdd_cs3fx_n,
-	BUS_FDC_STEP	=>	FDC_STEP and soft_sw(5),
+	BUS_FDC_STEP	=>	FDC_STEP,-- and soft_sw(5),
 	BUS_CSFF			=> fdd_cs_pff_n,
 	BUS_FDC_NCS		=> fdd_cs_n
 
@@ -1080,10 +1082,10 @@ clk_cpu <= '0' when kb_wait = '1' else clk_bus and ena_div8 when kb_turbo = '1' 
 
 -- HDD / SD access
 led1_overwrite <= '1';
-process (clk_bus, SDIR, SD_NCS)
+process (clk_bus, hdd_wwe_n, hdd_rww_n, SD_NCS)
 begin
 	if rising_edge(clk_bus) then
-		if SDIR = '1' or SD_NCS = '0' then
+		if (hdd_wwe_n = '0') or (hdd_rww_n = '0') or (SD_NCS = '0') then
 			led1 <= '1';
 		else 
 			led1 <= '0';
@@ -1178,14 +1180,16 @@ end process;
 -- Config PORT X"8B"
 cs_xx8b <='1' when cpu_a_bus(7 downto 0)=X"8B" and cpu_iorq_n='0' and cpu_m1_n = '1' and ((cpm='1' and rom14='1') or (dos_act='1' and rom14='0')) else '0';
 
-																			-- 0 - Reserved
-rom2 <= port_xx8b_reg(1);											-- 1 - ROM Change
-onrom <= port_xx8b_reg(2);											-- 2 - Forced activation of the signal "DOS"
-turbo_on <=  port_xx8b_reg(3); 									-- 3 - Turbo on
-lock_dffd <= port_xx8b_reg(4);								 	-- 4 - Lock port DFFD
-unlock_128 <= port_xx8b_reg(5);									-- 5 - Unlock 128 ROM page for DOS 
+onrom <= port_xx8b_reg(0);											-- 0 - Forced activation of the signal "DOS"
+rom0 <= port_xx8b_reg(1);											-- 1 - ROM64Kb PAGE bit 0 Change
+rom1 <= port_xx8b_reg(2);											-- 2 - ROM64Kb PAGE bit 1 Change
+rom2 <= port_xx8b_reg(3);											-- 3 - ROM64Kb PAGE bit 2 Change
+unlock_128 <= port_xx8b_reg(4);									-- 4 - Unlock 128 ROM page for DOS
+turbo_on <=  port_xx8b_reg(5); 									-- 5 - Turbo on
+lock_dffd <= port_xx8b_reg(6);								 	-- 6 - Lock port DFFD
+SDIR <= port_xx8b_reg(7) or soft_sw(10);						-- 7 - Floppy Disk Drive Selector Change
 
-ext_rom_bank_pq <= ext_rom_bank when rom2 = '0' else "01";	-- ROMBANK ALT
+ext_rom_bank_pq <= ext_rom_bank when rom0 = '0' else "01";	-- ROMBANK ALT
 
 rom14 <= port_7ffd_reg(4); -- rom bank
 cpm 	<= port_dffd_reg(5); -- 1 - блокирует работу контроллера из ПЗУ TR-DOS и включает порты на доступ из ОЗУ (ROM14=0); При ROM14=1 - мод. доступ к расширен. периферии
@@ -1245,8 +1249,6 @@ RT_F1_2 <= '0' when cpu_a_bus(7)='0' and cpu_a_bus(1 downto 0)="11" and cpu_iorq
 RT_F1 <= RT_F1_1 and RT_F1_2;
 P0 <='0' when (cpu_a_bus(7)='1' and cpu_a_bus(4 downto 0)="00011" and cpu_iorq_n='0') and ((cpm='1' and rom14='1') or (dos_act='1' and rom14='0')) else '1';
 fdd_cs_n <= RT_F1 and P0;
-
-turbo_bl <= fdd_cs_pff_n and fdd_cs_n;
 
 ------------------VV55------------------------
 --RT_F5 <='0' when adress(7)='0' and adress(1 downto 0)="11" and iorq='0' and CPM='1' and dos='1' else '1';		-- CPM=0 & BAS=1 ПЗУ 128 1F-7F

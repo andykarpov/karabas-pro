@@ -17,7 +17,7 @@ port (
 	csff			: in std_logic := '1';
 	FDC_NCS		: in std_logic := '1';
 	FDC_STEP		: in std_logic := '0';
-	
+	FDD_CHNG		: in std_logic := '0';
 	OE_N 			: buffer std_logic := '1';
 	
 	FDC_NWR		: out std_logic := '1';
@@ -159,8 +159,8 @@ begin
 
 --	FDC_DS0 <= '1' when pff(1 downto 0) = "00" else '0';
 --	FDC_DS1 <= '1' when pff(1 downto 0) = "01" else '0';
-	FDC_DS0 <= not pff(0);
-	FDC_DS1 <= pff(0) and not pff(1);
+	FDC_DS0 <= not (pff(0) xor FDD_CHNG) and not pff(1);
+	FDC_DS1 <= (pff(0) xor FDD_CHNG) and not pff(1);
 
 	----------------port ff to WG93------------------------------
 	process(CLK,pff,BUS_DI,BUS_WR_N,csff,NRESET)
