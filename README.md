@@ -12,21 +12,21 @@ The idea was to make a smaller Profi (Профи) ZX Spectrum clone, with real F
 
 ## Firmwares
 
-**The main firmware is still in progress. Currently it implements:**
+**The main firmware is almost finished, but some features are still in progress. Currently it implements:**
 
 1) ZX Spectrum classic and profi hi-res hi-color mode (with palette) (512x240)
-2) ZX Profi CMR ports
+2) ZX Profi CMR ports for extended peripherial
 3) FDD controller that works both in CP/M and classic modes
-4) HDD controller (works only in Profi CP/M mode)
+4) HDD controller (works in Profi CP/M mode and PQ-DOS mode)
 5) PS/2 keyboard (XT keyboard emulation)
 6) PS/2 mouse (kempston mouse and serial MS mouse emulation)
 7) VGA output (requires a monitor with 50Hz support)
-8) Turbosound (2 x AY-3-8912), Soundrive and SAA1099
+8) Turbosound (2 x AY-3-8912), Soundrive and SAA1099 (SAA will work only on EP4CE10 due to lack of free LEs in EP4CE6)
 9) Kempston joystick support
 10) RTC (profi), emulated read/write support
 11) SD card access via Z-Controller emulation
 12) Turbo 7 MHz
-13) ZX UNO simple UART @115200 for ESP8266 module
+13) ZX UNO simple UART @115200 for ESP8266 module (with ability to enable a secondary ZX UNO UART on uBus connector)
 
 ## More info
 
