@@ -61,9 +61,7 @@ Your support matters!
 
 ### Pre-production renders:
 
-![image](https://github.com/andykarpov/karabas-pro/raw/master/docs/photos/karabas-pro-revC-top.png)
+![image](https://github.com/andykarpov/karabas-pro/raw/master/docs/photos/karabas-pro-revD-top.png)
 
-![image](https://github.com/andykarpov/karabas-pro/raw/master/docs/photos/karabas-pro-revC-bot.png)
-
-![image](https://github.com/andykarpov/karabas-pro/raw/master/docs/photos/karabas-pro-revC-back.png)
+![image](https://github.com/andykarpov/karabas-pro/raw/master/docs/photos/karabas-pro-revD-bot.png)
 
