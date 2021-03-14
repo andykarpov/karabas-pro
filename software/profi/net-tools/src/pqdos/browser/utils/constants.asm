@@ -1,0 +1,20 @@
+TAB = 9
+CR = 13
+LF = 10
+NULL = 0
+SPACE = ' '
+ESC = 27
+BACKSPACE = #7f
+
+MIME_DOWNLOAD = #19
+MIME_LINK = #1A
+MIME_TEXT = #14
+MIME_IMAGE = #01
+MIME_MUSIC = #02
+MIME_INPUT = #B3
+
+BORDER_TOP    = 7
+BORDER_BOTTOM = 8
+
+sepparators db CR, LF, TAB, NULL, SPACE
+sepparators_len = $ - sepparators
