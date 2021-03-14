@@ -2,7 +2,13 @@
 
 Gopher browser for Karabas Pro with ESP-12 chip.
 
-## Development
+## Usage
+
+Connect to AP via some software(for example NetMan).
+
+Copy `moonr.com` and `index.gph` to any directory(but to the same) of your CF card, load PQ-DOS and start `moonr.com`.
+
+THIS SOFTWARE NOT SUPPORT MICRODOS! It's important!
 
 ## Development
 
