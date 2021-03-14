@@ -8,10 +8,11 @@ inputBox:
     ld de, #0B05 : call TextMode.gotoXY
     ld hl, inputBuffer : call TextMode.printZ
     ld a, MIME_INPUT : call TextMode.putC : ld a, ' ' : call TextMode.putC
+.checkkey
     call Console.getC
     cp BACKSPACE : jr z, .removeChar
     cp CR : ret z
-    cp SPACE : jr c, .loop
+    cp SPACE : jr c, .checkkey
     jr .putC
 .putC
     ld e, a

@@ -16,8 +16,6 @@ print70Text:
     ld a, b : and a: ret z
     jp .loop
 
-    ret
-
 ; HL - string pointer
 print70Goph:
     ld b, 60

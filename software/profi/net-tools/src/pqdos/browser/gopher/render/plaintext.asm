@@ -10,9 +10,11 @@ renderPlainTextScreen:
     ld a, e
     add CURSOR_OFFSET : ld d, a, e, 1 : call TextMode.gotoXY
     call print70Text
-.exit
     pop bc 
     djnz .loop
+    ret
+.exit
+    pop bc
     ret
 
 plainTextLoop:
@@ -32,12 +34,13 @@ plainTextLoop:
     jr plainTextLoop
 
 textDown:
-    ld a, (page_offset) : add PER_PAGE : ld (page_offset), a 
+    ld a, (page_offset) : add PER_PAGE : ld (page_offset), a
     call renderPlainTextScreen
     jp plainTextLoop
 
 textUp:
-    ld a, (page_offset) : and a : jr z, plainTextLoop
-    sub PER_PAGE : ld (page_offset), a
+    ld hl, page_offset 
+    ld a, (hl) : and a : jr z, plainTextLoop
+    sub PER_PAGE : ld (hl), a
     call renderPlainTextScreen
-    jr plainTextLoop
+    jp plainTextLoop

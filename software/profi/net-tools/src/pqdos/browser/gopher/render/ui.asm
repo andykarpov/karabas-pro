@@ -19,12 +19,12 @@ inputHost:
     ld de, #010B : call TextMode.gotoXY : ld hl, hostName : call TextMode.printZ
     ld a, MIME_INPUT : call TextMode.putC
     ld a, ' ' : call TextMode.putC
+.wait
     call Console.getC
     cp BACKSPACE : jr z, .removeChar
     cp CR : jp z, inputNavigate
-    cp 32 : jr c, .loop
+    cp 32 : jr c, .wait
     jr .putC
-    ret
 .putC
     ld e, a
     xor a : ld hl, hostName, bc, 48 : cpir
