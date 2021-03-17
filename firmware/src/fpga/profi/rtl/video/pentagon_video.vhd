@@ -119,12 +119,19 @@ begin
 				end if;
 			
 				-- int
-				if TURBO = '1' then
+				if TURBO = '0' then
 					-- TURBO int
-					if hor_cnt & chr_col_cnt = 318 and ver_cnt & chr_row_cnt = 239 then
-						int_sig <= '0';
-					elsif INTA = '0' then
-						int_sig <= '1';
+--					if hor_cnt & chr_col_cnt = 318 and ver_cnt & chr_row_cnt = 239 then
+--						int_sig <= '0';
+--					elsif INTA = '0' then
+--						int_sig <= '1';
+--					end if;
+					if chr_col_cnt = 6 and hor_cnt(1 downto 0) = "11" then
+						if ver_cnt = 29 and chr_row_cnt = 7 and hor_cnt(5 downto 2) = "1001" then
+							int_sig <= '0';
+						else
+							int_sig <= '1';
+						end if;
 					end if;
 				else 
 					-- PENTAGON int
@@ -144,10 +151,10 @@ begin
 	end process;
 
 	-- r/g/b/i
-	process( CLK2X, CLK, TURBO, ENA, paper_r, shift_r, attr_r, invert, blank_r, BORDER )
+	process( CLK2X, CLK, ENA, paper_r, shift_r, attr_r, invert, blank_r, BORDER )
 	begin
 		if CLK2X'event and CLK2X = '1' then
-		if CLK = '1' and (TURBO = '1' or ENA = '1') then
+		if CLK = '1' and ENA = '1' then
 			if paper_r = '0' then -- paper
 					-- standard RGB
 					if( shift_r(7) xor ( attr_r(7) and invert(4) ) ) = '1' then -- fg pixel
@@ -205,7 +212,7 @@ begin
 
 			if CLK = '1' then
 					-- standard shift register 
-					if TURBO = '1' or ENA = '1' then
+					if ENA = '1' then
 						if chr_col_cnt = 7 then
 							attr_r <= attr;
 							shift_r <= bitmap;

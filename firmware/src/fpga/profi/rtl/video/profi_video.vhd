@@ -75,7 +75,7 @@ architecture rtl of profi_video is
 
 	constant pcpm_h_int_on		: natural := 656; --pspec_sync_h+8;
 	constant pcpm_v_int_on		: natural := 257; --pspec_v_blk_off - 1;
-	constant pcpm_h_int_off		: natural := 128;
+	constant pcpm_h_int_on_turbo	: natural := 706;
 	constant pcpm_v_int_off		: natural := 272;
 
 -- INT  Y303,X752  - Y304,X128
@@ -136,7 +136,7 @@ begin
 				end if;
 
 				
-				if (h_cnt > pcpm_h_int_on  and v_cnt = pcpm_v_int_on) then -- or (h_cnt < pcpm_h_int_off and v_cnt = pcpm_v_int_off) then
+				if (h_cnt > pcpm_h_int_on and v_cnt = pcpm_v_int_on and turbo = '1') or (h_cnt > pcpm_h_int_on_turbo and v_cnt = pcpm_v_int_on and turbo = '0') then -- or (h_cnt < pcpm_h_int_off and v_cnt = pcpm_v_int_off) then
 					int_sig <= '0';
 				else
 					int_sig <= '1';

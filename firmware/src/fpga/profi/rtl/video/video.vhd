@@ -16,7 +16,7 @@ entity video is
 
 		BORDER	: in std_logic_vector(3 downto 0);	-- bordr color (port #xxFE)
 		DI			: in std_logic_vector(7 downto 0);	-- video data from memory
-		TURBO 	: in std_logic := '0'; -- 1 = turbo mode, 0 = normal mode
+		TURBO 	: in std_logic := '0'; -- 0 = turbo mode, 1 = normal mode
 		INTA		: in std_logic := '0'; -- int request for turbo mode
 		MODE60	: in std_logic := '0'; -- 
 		INT		: out std_logic; -- int output

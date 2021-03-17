@@ -606,7 +606,7 @@ port map (
 	RESET 			=> reset,	
 	BORDER 			=> port_xxfe_reg(3 downto 0),
 	DI 				=> SRAM_D,
-	TURBO 			=> '0',
+	TURBO 			=> kb_turbo,	-- turbo signal for int length
 	INTA 				=> cpu_inta_n,
 	INT 				=> cpu_int_n,
 	pFF_CS			=> vid_pff_cs, -- port FF select
@@ -1490,5 +1490,8 @@ selector <=
 	x"12" when (cs_xxE7 = '1' and cpu_rd_n = '0') else
 	x"13" when (vid_pff_cs = '1' and cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_a_bus( 7 downto 0) = X"FF") and dos_act='0' else -- Port FF select
 	(others => '1');
+
+-- Debug
+PIN_121 <= cpu_int_n;
 	
 end rtl;
