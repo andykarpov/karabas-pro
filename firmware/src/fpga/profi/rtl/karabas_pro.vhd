@@ -132,17 +132,34 @@ signal port_dffd_reg : std_logic_vector(7 downto 0) := "00000000";
 signal port_xx7e_reg : std_logic_vector(7 downto 0) := "00000000";
 signal port_xx7e_a   : std_logic_vector(15 downto 8) := "00000000";
 signal port_xx7e_aprev   : std_logic_vector(15 downto 8) := "00000000";
-signal port_xx8b_reg	: std_logic_vector(7 downto 0) := "00000000";
+signal port_008b_reg	: std_logic_vector(7 downto 0) := "00000000";
+signal port_018b_reg	: std_logic_vector(7 downto 0) := "00000000";
+signal port_028b_reg	: std_logic_vector(7 downto 0) := "00000000";
 
 -------------8B_PORT------------------
 signal rom0				: std_logic;
 signal rom1				: std_logic;
 signal rom2				: std_logic;
+signal rom3				: std_logic;
+signal rom4				: std_logic;
+signal rom5				: std_logic;
+signal ram0				: std_logic;
+signal ram1				: std_logic;
+signal ram2				: std_logic;
+signal ram3				: std_logic;
+signal ram4				: std_logic;
+signal ram5				: std_logic;
+signal ram6				: std_logic;
+signal ram7				: std_logic;
 signal onrom			: std_logic;
+signal unlock_128		: std_logic;
+signal turbo_off		: std_logic;
 signal turbo_on		: std_logic;
 signal lock_dffd		: std_logic;
-signal unlock_128		: std_logic;
-signal iorqge_8b		: std_logic;
+signal sound_off		: std_logic;
+signal rtc_off			: std_logic;
+signal fdd_off			: std_logic;
+signal hdd_off			: std_logic;
 
 -- Keyboard
 signal kb_do_bus		: std_logic_vector(5 downto 0);
@@ -219,7 +236,9 @@ signal cs_xxE7 		: std_logic := '0';
 signal cs_xx67 		: std_logic := '0';
 signal cs_rtc_ds 		: std_logic := '0';
 signal cs_rtc_as 		: std_logic := '0';
-signal cs_xx8b			: std_logic := '0';
+signal cs_008b			: std_logic := '0';
+signal cs_018b			: std_logic := '0';
+signal cs_028b			: std_logic := '0';
 
 -- Profi HDD ports
 signal hdd_profi_ebl_n	:std_logic;
@@ -316,6 +335,7 @@ signal vbus_mode 		: std_logic := '0';
 signal vid_rd 			: std_logic := '0';
 signal ext_rom_bank  : std_logic_vector(1 downto 0) := "00";
 signal ext_rom_bank_pq	: std_logic_vector(1 downto 0) := "00";
+signal turbo_cpu 		: std_logic := '0';
 
 -- Loader
 signal loader_ram_di	: std_logic_vector(7 downto 0);
@@ -606,7 +626,7 @@ port map (
 	RESET 			=> reset,	
 	BORDER 			=> port_xxfe_reg(3 downto 0),
 	DI 				=> SRAM_D,
-	TURBO 			=> kb_turbo,	-- turbo signal for int length
+	TURBO 			=> turbo_cpu,	-- turbo signal for int length
 	INTA 				=> cpu_inta_n,
 	INT 				=> cpu_int_n,
 	pFF_CS			=> vid_pff_cs, -- port FF select
@@ -646,7 +666,7 @@ port map (
 	LOADED 			=> kb_loaded,
 	
 	-- sensors
-	TURBO 			=> kb_turbo and (not turbo_on),
+	TURBO 			=> turbo_cpu,
 	SCANDOUBLER_EN => vid_scandoubler_enable,
 	MODE60 			=> soft_sw(2),
 	ROM_BANK 		=> ext_rom_bank_pq,
@@ -1056,7 +1076,8 @@ cpu_inta_n <= cpu_iorq_n or cpu_m1_n;	-- INTA
 cpu_nmi_n <= '0' when kb_magic = '1' else '1'; -- NMI
 --cpu_wait_n <= '0' when kb_wait = '1' else '1'; -- WAIT
 cpu_wait_n <= '1';
-clk_cpu <= '0' when kb_wait = '1' else clk_bus and ena_div8 when kb_turbo = '1' and turbo_on = '0' else clk_bus and ena_div4; -- 3.5 / 7 MHz
+turbo_cpu <= (kb_turbo or turbo_on) and (not turbo_off);
+clk_cpu <= '0' when kb_wait = '1' else clk_bus and ena_div8 when turbo_cpu = '0' else clk_bus and ena_div4; -- 3.5 / 7 MHz
 
 -- odnovibrator - po spadu nIORQ otschityvaet 400ns WAIT proca
 -- dlja rabotosposobnosti periferii v turbe ili v rezhime 
@@ -1177,17 +1198,41 @@ begin
 	end if;
 end process;
 
--- Config PORT X"8B"
-cs_xx8b <='1' when cpu_a_bus(7 downto 0)=X"8B" and cpu_iorq_n='0' and cpu_m1_n = '1' and ((cpm='1' and rom14='1') or (dos_act='1' and rom14='0')) else '0';
+-- Config PORT X"008B"
+cs_008b <='1' when cpu_a_bus(15 downto 0)=X"008B" and cpu_iorq_n='0' and cpu_m1_n = '1' and ((cpm='1' and rom14='1') or (dos_act='1' and rom14='0')) else '0';
 
-onrom <= port_xx8b_reg(0);											-- 0 - Forced activation of the signal "DOS"
-rom0 <= port_xx8b_reg(1);											-- 1 - ROM64Kb PAGE bit 0 Change
-rom1 <= port_xx8b_reg(2);											-- 2 - ROM64Kb PAGE bit 1 Change
-rom2 <= port_xx8b_reg(3);											-- 3 - ROM64Kb PAGE bit 2 Change
-unlock_128 <= port_xx8b_reg(4);									-- 4 - Unlock 128 ROM page for DOS
-turbo_on <=  port_xx8b_reg(5); 									-- 5 - Turbo on
-lock_dffd <= port_xx8b_reg(6);								 	-- 6 - Lock port DFFD
-SDIR <= port_xx8b_reg(7) or soft_sw(10);						-- 7 - Floppy Disk Drive Selector Change
+rom0 <= port_008b_reg(0);											-- 0 - ROM64Kb PAGE bit 0 Change
+rom1 <= port_008b_reg(1);											-- 1 - ROM64Kb PAGE bit 1 Change
+rom2 <= port_008b_reg(2);											-- 2 - ROM64Kb PAGE bit 2 Change
+rom3 <= port_008b_reg(3);											-- 3 - ROM64Kb PAGE bit 3 Change
+rom4 <=  port_008b_reg(4); 										-- 4 - ROM64Kb PAGE bit 4 Change
+rom5 <= port_008b_reg(5);										 	-- 5 - ROM64Kb PAGE bit 5 Change
+onrom <= port_008b_reg(6);											-- 6 - Forced activation of the signal "DOS"
+unlock_128 <= port_008b_reg(7);									-- 7 - Unlock 128 ROM page for DOS
+
+-- Config PORT X"018B"
+cs_018b <='1' when cpu_a_bus(15 downto 0)=X"018B" and cpu_iorq_n='0' and cpu_m1_n = '1' and ((cpm='1' and rom14='1') or (dos_act='1' and rom14='0')) else '0';
+
+ram0 <= port_018b_reg(0);											-- 0 - RAM PAGE bit 0
+ram1 <= port_018b_reg(1); 											-- 1 - RAM PAGE bit 1
+ram2 <= port_018b_reg(2);										 	-- 2 - RAM PAGE bit 2
+ram3 <= port_018b_reg(3);											-- 3 - RAM PAGE bit 3
+ram4 <= port_018b_reg(4);											-- 3 - RAM PAGE bit 4
+ram5 <= port_018b_reg(5);											-- 3 - RAM PAGE bit 5
+ram6 <= port_018b_reg(6);											-- 3 - RAM PAGE bit 6
+ram7 <= port_018b_reg(7);											-- 3 - RAM PAGE bit 7
+
+-- Config PORT X"028B"
+cs_028b <='1' when cpu_a_bus(15 downto 0)=X"028B" and cpu_iorq_n='0' and cpu_m1_n = '1' and ((cpm='1' and rom14='1') or (dos_act='1' and rom14='0')) else '0';
+
+sound_off <= port_028b_reg(0);									-- 0 - Sound_off
+rtc_off <= port_028b_reg(1);										-- 1 - RTC_off
+fdd_off <= port_028b_reg(2);										-- 2 - FDD_off
+SDIR <= port_028b_reg(3) or soft_sw(10);						-- 3 - Floppy Disk Drive Selector Change
+hdd_off <= port_028b_reg(4);										-- 4 - HDD_off
+turbo_off <= port_028b_reg(5);									-- 5 - Forced Turbo Off
+turbo_on <=  port_028b_reg(6); 									-- 6 - Forced Turbo on
+lock_dffd <= port_028b_reg(7);								 	-- 7 - Lock port DFFD
 
 ext_rom_bank_pq <= ext_rom_bank when rom0 = '0' else "01";	-- ROMBANK ALT
 
@@ -1260,7 +1305,7 @@ fdd_cs_n <= RT_F1 and P0;
 --portAS <= '1' when adress(9)='0' and adress(7)='1' and adress(5)='1' and adress(3 downto 0)=X"F" and iorq='0' and cpm='0' and rom14='1' else '0';
 --portDS <= '1' when adress(9)='0' and adress(7)='1' and adress(5)='0' and adress(3 downto 0)=X"F" and iorq='0' and cpm='0' and rom14='1' else '0';
 
-process (reset, areset, clk_bus, cpu_a_bus, dos_act, cs_xxfe, cs_eff7, cs_7ffd, cs_xxfd, port_7ffd_reg, cpu_mreq_n, cpu_m1_n, cpu_wr_n, cpu_do_bus, fd_port, cs_xx8b)
+process (reset, areset, clk_bus, cpu_a_bus, dos_act, cs_xxfe, cs_eff7, cs_7ffd, cs_xxfd, port_7ffd_reg, cpu_mreq_n, cpu_m1_n, cpu_wr_n, cpu_do_bus, fd_port, cs_008b)
 begin
 	if reset = '1' then
 		port_eff7_reg <= (others => '0');
@@ -1271,7 +1316,9 @@ begin
 		port_xxA7_reg <= (others => '0');
 		port_xxE7_reg <= (others => '0');
 		port_xx67_reg <= (others => '0');
-		port_xx8b_reg <= (others => '0');
+		port_008b_reg <= (others => '0');
+		port_018b_reg <= (others => '0');
+		port_028b_reg <= (others => '0');
 		dos_act <= '1';
 	elsif clk_bus'event and clk_bus = '1' then
 
@@ -1323,9 +1370,19 @@ begin
 				port_xx67_reg <= cpu_do_bus;
 			end if;
 			
-			-- #xx8B
-			if cs_xx8b = '1' and cpu_wr_n='0' then
-				port_xx8b_reg <= cpu_do_bus;
+			-- #008B
+			if cs_008b = '1' and cpu_wr_n='0' then
+				port_008b_reg <= cpu_do_bus;
+			end if;
+			
+			-- #018B
+			if cs_018b = '1' and cpu_wr_n='0' then
+				port_018b_reg <= cpu_do_bus;
+			end if;
+
+			-- #028B
+			if cs_028b = '1' and cpu_wr_n='0' then
+				port_028b_reg <= cpu_do_bus;
 			end if;
 			
 			-- TR-DOS FLAG
@@ -1490,8 +1547,5 @@ selector <=
 	x"12" when (cs_xxE7 = '1' and cpu_rd_n = '0') else
 	x"13" when (vid_pff_cs = '1' and cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_a_bus( 7 downto 0) = X"FF") and dos_act='0' else -- Port FF select
 	(others => '1');
-
--- Debug
-PIN_121 <= cpu_int_n;
 	
 end rtl;

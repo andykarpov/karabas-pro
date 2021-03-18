@@ -110,22 +110,11 @@ begin
 						VSYNC <= '1';
 					end if;
 					
---					if hor_cnt & chr_col_cnt = 327 and ver_cnt & chr_row_cnt = 240 then	-- works, but unstable :(
---						int_sig <= '0';
---					elsif INTA = '0' then
---						int_sig <= '1';
---					end if;
-					
 				end if;
 			
 				-- int
-				if TURBO = '0' then
+				if TURBO = '1' then
 					-- TURBO int
---					if hor_cnt & chr_col_cnt = 318 and ver_cnt & chr_row_cnt = 239 then
---						int_sig <= '0';
---					elsif INTA = '0' then
---						int_sig <= '1';
---					end if;
 					if chr_col_cnt = 6 and hor_cnt(1 downto 0) = "11" then
 						if ver_cnt = 29 and chr_row_cnt = 7 and hor_cnt(5 downto 2) = "1001" then
 							int_sig <= '0';

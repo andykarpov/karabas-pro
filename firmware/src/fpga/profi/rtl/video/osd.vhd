@@ -239,9 +239,9 @@ begin
 					cnt <= "0000";
 					line1 <= std_logic_vector(to_unsigned(message_turbo, 8));
 					if (turbo = '0') then 
-						line2 <= std_logic_vector(to_unsigned(message_on, 8));
-					else 
 						line2 <= std_logic_vector(to_unsigned(message_off, 8));
+					else 
+						line2 <= std_logic_vector(to_unsigned(message_on, 8));
 					end if;
 				end if;
 				
