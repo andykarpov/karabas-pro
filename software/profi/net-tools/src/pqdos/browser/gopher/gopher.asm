@@ -86,6 +86,7 @@ download:
 .loop
     ld hl, outputBuffer, (Wifi.buffer_pointer), hl
     call Wifi.getPacket
+    call turboOn
     ld a, (Wifi.closed) : and a : jr nz, .exit
     
     ld a, (.fp), b, a, de, outputBuffer, hl, (Wifi.bytes_avail)

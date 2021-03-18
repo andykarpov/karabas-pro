@@ -24,9 +24,9 @@ init:
     djnz .loop
     ret
 
-
 read:
     ld a, #2 : out (#fe), a
+    call turboOff
 .loop
     call uartRead
     jr nc, .loop
@@ -40,6 +40,7 @@ read:
 ; A - byte to write
 ; BC will be wasted
 write:    
+    call turboOff
     push af
     ld a, 3 : out (#fe), a
     ld bc, ZXUNO_ADDR : ld a, UART_STAT_REG : out (c), a
