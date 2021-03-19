@@ -157,8 +157,9 @@ signal turbo_off		: std_logic;
 signal turbo_on		: std_logic;
 signal lock_dffd		: std_logic;
 signal sound_off		: std_logic;
-signal rtc_off			: std_logic;
-signal fdd_off			: std_logic;
+signal hdd_type		: std_logic;
+signal fdc_swap		: std_logic;
+signal turbo_fdc_off	: std_logic;
 signal hdd_off			: std_logic;
 
 -- Keyboard
@@ -675,9 +676,9 @@ port map (
 	SSG_MODE 		=> soft_sw(8),
 	SSG_STEREO 		=> soft_sw(7),
 	COVOX_EN			=> soft_sw(6),
-	TURBO_FDC		=> soft_sw(5),
+	TURBO_FDC		=> turbo_fdc_off,
 	SSG_MONO 		=> soft_sw(9),
-	FDC_SWAP			=> soft_sw(10)
+	FDC_SWAP			=> fdc_swap
 
 );
 
@@ -895,7 +896,7 @@ port map (
 	BUS_RWW			=> hdd_rww_n,
 	BUS_RWE			=> hdd_rwe_n,
 	BUS_CS3FX		=> hdd_cs3fx_n,
-	BUS_FDC_STEP	=>	FDC_STEP and soft_sw(5),
+	BUS_FDC_STEP	=>	FDC_STEP and turbo_fdc_off,
 	BUS_CSFF			=> fdd_cs_pff_n,
 	BUS_FDC_NCS		=> fdd_cs_n
 
@@ -1225,14 +1226,16 @@ ram7 <= port_018b_reg(7);											-- 3 - RAM PAGE bit 7
 -- Config PORT X"028B"
 cs_028b <='1' when cpu_a_bus(15 downto 0)=X"028B" and cpu_iorq_n='0' and cpu_m1_n = '1' and ((cpm='1' and rom14='1') or (dos_act='1' and rom14='0')) else '0';
 
-sound_off <= port_028b_reg(0);									-- 0 - Sound_off
-rtc_off <= port_028b_reg(1);										-- 1 - RTC_off
-fdd_off <= port_028b_reg(2);										-- 2 - FDD_off
-SDIR <= port_028b_reg(3) or soft_sw(10);						-- 3 - Floppy Disk Drive Selector Change
-hdd_off <= port_028b_reg(4);										-- 4 - HDD_off
+hdd_off <= port_028b_reg(0);										-- 0 - HDD_off
+hdd_type <= port_028b_reg(1);										-- 1 - HDD type Profi/Nemo
+turbo_fdc_off <= not port_028b_reg(2) and soft_sw(5);		-- 2 - TURBO_FDC_off
+fdc_swap <= port_028b_reg(3) or soft_sw(10);					-- 3 - Floppy Disk Drive Selector Change
+sound_off <= port_028b_reg(4);									-- 4 - Sound_off
 turbo_off <= port_028b_reg(5);									-- 5 - Forced Turbo Off
 turbo_on <=  port_028b_reg(6); 									-- 6 - Forced Turbo on
 lock_dffd <= port_028b_reg(7);								 	-- 7 - Lock port DFFD
+
+SDIR <= fdc_swap;
 
 ext_rom_bank_pq <= ext_rom_bank when rom0 = '0' else "01";	-- ROMBANK ALT
 
@@ -1276,12 +1279,12 @@ cs_rtc_ds <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and
 port_xxfe_reg <= cpu_do_bus when cs_xxfe = '1' and (cpu_wr_n'event and cpu_wr_n = '1');
 
 -- порты Profi HDD
-hdd_profi_ebl_n	<='0' when (cpu_a_bus(7)='1' and cpu_a_bus(4 downto 0)="01011" and cpu_iorq_n='0') and ((cpm='1' and rom14='1') or (dos_act='1' and rom14='0')) else '1';	-- ROM14=0 BAS=0 ПЗУ SYS
-hdd_wwc_n 	<='0' when (cpu_wr_n='0' and cpu_a_bus(7 downto 0)="11001011" and cpu_iorq_n='0') and ((cpm='1' and rom14='1') or (dos_act='1' and rom14='0')) else '1'; -- Write High byte from Data bus to "Write register"
-hdd_wwe_n 	<='0' when (cpu_wr_n='0' and cpu_a_bus(7 downto 0)="11101011" and cpu_iorq_n='0') and ((cpm='1' and rom14='1') or (dos_act='1' and rom14='0')) else '1'; -- Read High byte from "Write register" to HDD bus
-hdd_rww_n 	<='0' when (cpu_wr_n='1' and cpu_a_bus(7 downto 0)="11001011" and cpu_iorq_n='0') and ((cpm='1' and rom14='1') or (dos_act='1' and rom14='0')) else '1'; -- Selector Low byte Data bus Buffer Direction: 1 - to HDD bus, 0 - to Data bus
-hdd_rwe_n 	<='0' when (cpu_wr_n='1' and cpu_a_bus(7 downto 0)="11101011" and cpu_iorq_n='0') and ((cpm='1' and rom14='1') or (dos_act='1' and rom14='0')) else '1'; -- Read High byte from "Read register" to Data bus
-hdd_cs3fx_n <='0' when (cpu_wr_n='0' and cpu_a_bus(7 downto 0)="10101011" and cpu_iorq_n='0') and ((cpm='1' and rom14='1') or (dos_act='1' and rom14='0')) else '1';
+hdd_profi_ebl_n	<='0' when (cpu_a_bus(7)='1' and cpu_a_bus(4 downto 0)="01011" and cpu_iorq_n='0') and ((cpm='1' and rom14='1') or (dos_act='1' and rom14='0')) and hdd_off = '0' else '1';	-- ROM14=0 BAS=0 ПЗУ SYS
+hdd_wwc_n 	<='0' when (cpu_wr_n='0' and cpu_a_bus(7 downto 0)="11001011" and cpu_iorq_n='0') and ((cpm='1' and rom14='1') or (dos_act='1' and rom14='0')) and hdd_off = '0' else '1'; -- Write High byte from Data bus to "Write register"
+hdd_wwe_n 	<='0' when (cpu_wr_n='0' and cpu_a_bus(7 downto 0)="11101011" and cpu_iorq_n='0') and ((cpm='1' and rom14='1') or (dos_act='1' and rom14='0')) and hdd_off = '0' else '1'; -- Read High byte from "Write register" to HDD bus
+hdd_rww_n 	<='0' when (cpu_wr_n='1' and cpu_a_bus(7 downto 0)="11001011" and cpu_iorq_n='0') and ((cpm='1' and rom14='1') or (dos_act='1' and rom14='0')) and hdd_off = '0' else '1'; -- Selector Low byte Data bus Buffer Direction: 1 - to HDD bus, 0 - to Data bus
+hdd_rwe_n 	<='0' when (cpu_wr_n='1' and cpu_a_bus(7 downto 0)="11101011" and cpu_iorq_n='0') and ((cpm='1' and rom14='1') or (dos_act='1' and rom14='0')) and hdd_off = '0' else '1'; -- Read High byte from "Read register" to Data bus
+hdd_cs3fx_n <='0' when (cpu_wr_n='0' and cpu_a_bus(7 downto 0)="10101011" and cpu_iorq_n='0') and ((cpm='1' and rom14='1') or (dos_act='1' and rom14='0')) and hdd_off = '0' else '1';
 
 -- порты Profi FDD
 RT_F2_1 <='0' when (cpu_a_bus(7 downto 5)="001" and cpu_a_bus(1 downto 0)="11" and cpu_iorq_n='0') and ((cpm='1' and rom14='1') or (dos_act='1' and rom14='0')) else '1'; --6D
@@ -1413,7 +1416,7 @@ audio_mono <=
 				("0000"  & saa_out_l &     "0000") + 				
 				("0000"  & saa_out_r &     "0000");
 
-audio_l <= "0000000000000000" when loader_act = '1' or kb_wait = '1' else 
+audio_l <= "0000000000000000" when loader_act = '1' or kb_wait = '1' or sound_off = '1' else 
 				audio_mono when soft_sw(9) = '1' else
 				("000" & speaker & "000000000000") + -- ACB: L = A + C/2
 				("000"  & ssg_cn0_a &     "00000") + 
@@ -1434,7 +1437,7 @@ audio_l <= "0000000000000000" when loader_act = '1' or kb_wait = '1' else
 				("000"  & covox_fb &      "00000") + 
 				("000"  & saa_out_l  &    "00000");
 				
-audio_r <= "0000000000000000" when loader_act = '1' or kb_wait = '1' else 
+audio_r <= "0000000000000000" when loader_act = '1' or kb_wait = '1' or sound_off = '1' else 
 				audio_mono when soft_sw(9) = '1' else
 				("000" & speaker & "000000000000") + -- ACB: R = B + C/2
 				("000"  & ssg_cn0_b &     "00000") + 
@@ -1498,7 +1501,9 @@ ay_bc1 		<= '1' when ay_port = '1' and cpu_a_bus(14) = '1' and cpu_iorq_n = '0' 
 -------------------------------------------------------------------------------
 -- CPU0 Data bus
 
-process (selector, cpu_a_bus, gx0, serial_ms_do_bus, ram_do_bus, mc146818_do_bus, kb_do_bus, zc_do_bus, ssg_cn0_bus, ssg_cn1_bus, port_7ffd_reg, port_dffd_reg, zxuno_uart_do_bus, zxuno_uart2_do_bus, cpld_do, vid_attr, port_eff7_reg, joy_bus, ms_z, ms_b, ms_x, ms_y, zxuno_addr_to_cpu, port_xxC7_reg, flash_rdy, flash_busy, flash_do_bus)
+process (selector, cpu_a_bus, gx0, serial_ms_do_bus, ram_do_bus, mc146818_do_bus, kb_do_bus, zc_do_bus, ssg_cn0_bus, ssg_cn1_bus, port_7ffd_reg, port_dffd_reg, zxuno_uart_do_bus,
+			zxuno_uart2_do_bus, cpld_do, vid_attr, port_eff7_reg, joy_bus, ms_z, ms_b, ms_x, ms_y, zxuno_addr_to_cpu, port_xxC7_reg, flash_rdy, flash_busy, flash_do_bus, port_008b_reg,
+			port_018b_reg, port_028b_reg)
 begin
 	case selector is
 		when x"00" => cpu_di_bus <= ram_do_bus;
@@ -1520,7 +1525,10 @@ begin
 		when x"10" => cpu_di_bus <= zxuno_uart_do_bus;
 		when x"11" => cpu_di_bus <= "0000" & port_xxC7_reg(3) & port_xxC7_reg(2) & flash_rdy & flash_busy;
 		when x"12" => cpu_di_bus <= flash_do_bus;
-		when x"13" => cpu_di_bus <= vid_attr;
+		when x"13" => cpu_di_bus <= port_008b_reg;
+		when x"14" => cpu_di_bus <= port_018b_reg;
+		when x"15" => cpu_di_bus <= port_028b_reg;
+		when x"16" => cpu_di_bus <= vid_attr;
 		when others => cpu_di_bus <= cpld_do;
 	end case;
 end process;
@@ -1545,7 +1553,10 @@ selector <=
 	x"10" when (enable_zxuno_uart and cpu_iorq_n = '0' and cpu_rd_n = '0' and zxuno_uart_oe_n = '0') else -- ZX UNO UART
 	x"11" when (cs_xxC7 = '1' and cpu_rd_n = '0') else
 	x"12" when (cs_xxE7 = '1' and cpu_rd_n = '0') else
-	x"13" when (vid_pff_cs = '1' and cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_a_bus( 7 downto 0) = X"FF") and dos_act='0' else -- Port FF select
+	x"13" when (cs_008b = '1' and cpu_rd_n = '0') else										-- port #008B
+	x"14" when (cs_018b = '1' and cpu_rd_n = '0') else										-- port #018B
+	x"15" when (cs_028b = '1' and cpu_rd_n = '0') else										-- port #028B
+	x"16" when (vid_pff_cs = '1' and cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_a_bus( 7 downto 0) = X"FF") and dos_act='0' else -- Port FF select
 	(others => '1');
 	
 end rtl;
