@@ -191,7 +191,7 @@ rk_video vid(.clk(CLK_50MHZ),
 wire[7:0] kbd_o;
 wire[2:0] kbd_shift;
 
-cpld_kbd kbd(.CLK(CLK_50MHZ), .N_RESET(~reset), .AVR_MOSI(AVR_MOSI), .AVR_MISO(AVR_MISO), .AVR_SCK(AVR_SCK), .AVR_SS(AVR_SS),
+cpld_kbd kbd(.CLK(CLK_50MHZ), .N_RESET(~reset), .AVR_MOSI(AVR_MOSI), .AVR_MISO(AVR_MISO), .AVR_SCK(AVR_SCK), .AVR_SS(AVR_SS), .CFG(board_revision),
 	.RESET(kb_reset), .I_ADDR(ppa1_a), .o_data(kbd_o), .o_shift(kbd_shift));
 
 ////////////////////   SYS PPA   ////////////////////

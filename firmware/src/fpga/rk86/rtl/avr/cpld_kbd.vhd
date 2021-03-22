@@ -14,6 +14,8 @@ entity cpld_kbd is
     AVR_SCK     : in std_logic;
 	 AVR_SS 		 : in std_logic;
 	 	 
+	 CFG 			 : in std_logic_vector(7 downto 0) := "00000000";
+		 
 	 RESET		 : out std_logic := '0';
 	 
 	 I_ADDR		 : in std_logic_vector(7 downto 0);
@@ -73,7 +75,7 @@ begin
         spi_miso_o     => AVR_MISO,
 
         di_req_o       => open,
-        di_i           => x"FD00", -- INIT
+        di_i           => x"FD" & CFG, -- INIT
         wren_i         => '1',
         do_valid_o     => spi_do_valid,
         do_o           => spi_do,

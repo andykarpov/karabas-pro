@@ -218,7 +218,7 @@ bool PS2Mouse::waitForClockState(int expectedState) {
 //    Serial.println(c);
     bool res = false;
 
-    while (millis() - c < 1000) {
+    while (millis() - c < 100) {
       res = (digitalRead(_clockPin) == expectedState) ? true : false;
       if (res) break;
     };
