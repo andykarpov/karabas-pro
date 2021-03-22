@@ -1,5 +1,6 @@
     MODULE MediaProcessor
 processResource:
+    call turboOn
     call UrlEncoder.extractHostName
     ld a, (historyBlock.mediaType)
     cp MIME_LINK  : jr z, processPage
