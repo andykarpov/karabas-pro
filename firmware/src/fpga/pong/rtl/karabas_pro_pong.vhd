@@ -1,43 +1,27 @@
--------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------------------------------------
+-- 
+-- 
+-- #       #######                                                 #                                               
+-- #                                                               #                                               
+-- #                                                               #                                               
+-- ############### ############### ############### ############### ############### ############### ############### 
+-- #             #               # #                             # #             #               # #               
+-- #             # ############### #               ############### #             # ############### ############### 
+-- #             # #             # #               #             # #             # #             #               # 
+-- #             # ############### #               ############### ############### ############### ############### 
+--                                                                                                                 
+--         ####### ####### ####### #######                         ############### ############### ############### 
+--                                                                 #             # #               #             # 
+--                                                                 ############### #               #             # 
+--                                                                 #               #               #             # 
+-- https://github.com/andykarpov/karabas-pro                       #               #               ############### 
 --
--- Karabas-pro Pong v1.0
+-- Pong FPGA firmware for Karabas-Pro
 --
--- Copyright (c) 2020 Andy Karpov
---
--------------------------------------------------------------------------------
-
---
--- All rights reserved
---
--- Redistribution and use in source and synthezised forms, with or without
--- modification, are permitted provided that the following conditions are met:
---
--- * Redistributions of source code must retain the above copyright notice,
---   this list of conditions and the following disclaimer.
---
--- * Redistributions in synthesized form must reproduce the above copyright
---   notice, this list of conditions and the following disclaimer in the
---   documentation and/or other materials provided with the distribution.
---
--- * Neither the name of the author nor the names of other contributors may
---   be used to endorse or promote products derived from this software without
---   specific prior written agreement from the author.
---
--- * License is granted for non-commercial use only.  A fee may not be charged
---   for redistributions as source code or in synthesized/hardware form without 
---   specific prior written agreement from the author.
---
--- THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
--- AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
--- THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
--- PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE
--- LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
--- CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
--- SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
--- INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
--- CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
--- ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
--- POSSIBILITY OF SUCH DAMAGE.
+-- @author Andy Karpov <andy.karpov@gmail.com>
+-- @author Oleh Starychenko <solegstar@gmail.com>
+-- Ukraine, 2021
+-------------------------------------------------------------------------------------------------------------------
 
 library IEEE; 
 use IEEE.std_logic_1164.all; 
@@ -63,6 +47,7 @@ port (
 	
 	-- SD/MMC Card
 	SD_NCS		: out std_logic; -- /CS
+	SD_NDET 		: in std_logic; 	  -- /DET
 	
 	-- VGA 
 	VGA_R 		: out std_logic_vector(2 downto 0);
@@ -74,14 +59,14 @@ port (
 	-- AVR SPI slave
 	AVR_SCK 		: in std_logic;
 	AVR_MOSI 	: in std_logic;
-	AVR_MISO 	: out std_logic;
+	AVR_MISO 	: out std_logic := 'Z';
 	AVR_NCS		: in std_logic;
 	
 	-- Parallel bus for CPLD
 	NRESET 		: out std_logic;
 	CPLD_CLK 	: out std_logic;
 	CPLD_CLK2 	: out std_logic;
-	SDIR 			: in std_logic;
+	SDIR 			: out std_logic;
 	SA				: out std_logic_vector(1 downto 0);
 	SD				: inout std_logic_vector(15 downto 0) := "ZZZZZZZZZZZZZZZZ";
 	
@@ -95,8 +80,8 @@ port (
 	PIN_138 		: inout std_logic;
 	PIN_121		: inout std_logic;
 	PIN_120		: inout std_logic;
-	PIN_119		: inout std_logic;
-	PIN_115		: inout std_logic;
+   FDC_STEP    : inout std_logic; -- PIN_119 connected to FDC_STEP for TurboFDC
+   SD_MOSI     : inout std_logic; -- PIN_115 connected to SD_S
 	
 	-- Dip Switches 
 	SW3 			: in std_logic_vector(4 downto 1) := "1111";
@@ -231,6 +216,8 @@ port map (
     AVR_SCK			=> AVR_SCK,
 	 AVR_SS 			=> AVR_NCS,
 	 
+	 CFG 				=> board_revision,
+	 
 	 RESET 			=> kb_reset,
 	 SCANLINES 		=> kb_scanlines,
 	 
@@ -288,7 +275,7 @@ SD_NCS	<= '1';
 SRAM_NWR <= '1';
 SRAM_NRD <= '1';
 CPLD_CLK <= '0';
-CPLD_CLK2 <='0';
+CPLD_CLK2 <='0';	
 SA <= "00";
 
 -------------------------------------------------------------------------------
@@ -304,18 +291,15 @@ process(board_revision)
 begin 
 	case board_revision is 
 		when x"00" => -- revA with TDA1543 
-			enable_switches <= '0';
 			dac_type <= '0';
 		when x"01" => -- revA with TDA1543A
-			enable_switches <= '0';
 			dac_type <= '1';
 		when others => --revC with DIP switches
-			enable_switches <= '1';
 			dac_type <= '0';
 	end case;
 end process;
 
-audio_dac_type <= '0' when ((enable_switches='1' and SW3(2) = '1') or (enable_switches='0' and dac_type = '0')) else '1'; -- default is dac_type for older revisions and switchable by SW3(2) for a newer ones
+audio_dac_type <= dac_type;
 
 -------------------------------------------------------------------------------
 -- Game

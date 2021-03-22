@@ -15,7 +15,7 @@ USE ieee.std_logic_unsigned.all;
 
 entity loader is
 generic (
-	CFG_ADDR 			: std_logic_vector(23 downto 0) := "000011111000000000000000"; -- 1015808; -- 24bit address / config byte address	
+	CFG_ADDR 			: std_logic_vector(23 downto 0) := "000111110000000000000000"; -- 0x1F0000; -- 24bit address / config byte address
 	SPI_CMD_READ  		: std_logic_vector(7 downto 0) := X"03"; -- W25Q16 read command
 	SPI_CMD_POWERON 	: std_logic_vector(7 downto 0) := X"AB" -- W25Q16 power on command
 );

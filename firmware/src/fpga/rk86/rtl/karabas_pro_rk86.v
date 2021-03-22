@@ -54,8 +54,8 @@ module karabas_pro_rk86(
 	output 			PIN_138,
 	output 			PIN_121,
 	output 			PIN_120,
-	output 			PIN_119,
-	output 			PIN_115,
+	inout 			FDC_STEP, // -- PIN_119 connected to FDC_STEP for TurboFDC
+	inout 			SD_MOSI,  // -- PIN_115 connected to SD_S	
 	
 	input[4:1]		SW3,
 		
@@ -255,7 +255,7 @@ always @(*) begin
 	endcase
 end
 
-wire audio_dac_type = ~((enable_switches && SW3[2]) || (~enable_switches && ~dac_type)); // default is dac_type for older revisions and switchable by SW3(2) for a newer ones
+wire audio_dac_type = dac_type;
 
 wire[15:0] audio_l = {3'b000,ppa1_c[0]^inte,12'b0000000000000};
 wire[15:0] audio_r = {3'b000,ppa1_c[0]^inte,12'b0000000000000};
@@ -268,8 +268,9 @@ reg[6:0] sddata;
 wire[7:0] sd_o = {sddata, DATA0};
 
 assign SD_NCS = (loader_act) ? 1'b1 : ~sdcs;
-assign ASDO = (loader_act) ? loader_asdo : sdcmd;
+assign ASDO = (loader_act) ? loader_asdo : 1'b1;
 assign DCLK = (loader_act) ? loader_dclk : sdclk;
+assign SD_MOSI = sdcmd;
 
 always @(posedge CLK_50MHZ or posedge reset) begin
 	if (reset) begin
