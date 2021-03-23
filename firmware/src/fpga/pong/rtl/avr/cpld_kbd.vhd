@@ -13,6 +13,8 @@ entity cpld_kbd is
     AVR_MISO    : out std_logic;
     AVR_SCK     : in std_logic;
 	 AVR_SS 		 : in std_logic;
+	 
+	 CFG			: in std_logic_vector(7 downto 0) := "00000000";
 	 	 
 	 RESET		: out std_logic := '0';
 	 SCANLINES  : out std_logic := '0';
@@ -49,7 +51,7 @@ U_SPI: entity work.spi_slave
         spi_miso_o     => AVR_MISO,
 
         di_req_o       => open,
-        di_i           => x"FD00", -- init
+        di_i           => x"FD" & CFG, -- AVR init command
         wren_i         => '1',
         do_valid_o     => spi_do_valid,
         do_o           => spi_do,
@@ -75,8 +77,8 @@ begin
 				when X"04" => kb_data(31 downto 24) <= spi_do (7 downto 0);
 				when X"05" => kb_data(39 downto 32) <= spi_do (7 downto 0);
 				when X"06" => kb_data(40) <= spi_do (0); 
-								  rst <= spi_do(1);
-								  SCANLINES <= spi_do(2);
+								  rst <= spi_do(1);			-- RESET hotkey
+								  SCANLINES <= spi_do(2);  -- TURBO hotkey
 				-- joy data
 				when X"0D" => joy(4 downto 0) <= spi_do(5 downto 2) & spi_do(0); -- right, left,  down, up, fire2, fire
 				
