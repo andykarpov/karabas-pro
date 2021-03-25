@@ -57,7 +57,7 @@ entity avr is
 	 
 	 LOADED 		: out std_logic := '0';
 	 
-	 JOY			: out std_logic_vector(4 downto 0) := "00000"
+	 JOY			: out std_logic_vector(5 downto 0) := "000000"
 	 
 	);
     end avr;
@@ -202,8 +202,8 @@ begin
 									  joy(1) <= spi_do(4); -- left 
 									  joy(2) <= spi_do(3); -- down 
 									  joy(3) <= spi_do(2); -- up
-									  --        not(spi_do(1)); -- fire2
-									  joy(4) <= spi_do(0); -- fire	
+									  joy(4) <= spi_do(0); -- fire
+									  joy(5) <= spi_do(1); -- fire2
 					-- rtc registers
 					when others => 
 							rtc_cmd <= spi_do(15 downto 8);
