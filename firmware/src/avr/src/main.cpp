@@ -1332,7 +1332,6 @@ void loop()
 
   if (kbd.available()) {
     int c = kbd.read();
-    blink_state = true;
     tl = n;
     if (!led1_overwrite) {
       digitalWrite(PIN_LED1, HIGH);
@@ -1528,13 +1527,17 @@ void loop()
   }
 #else 
   if (is_wait) {
-    digitalWrite(PIN_LED2, led2_state);
     if (n - tl2 >= 500) {
       tl2 = n;
-      led2_state != led2_state;
+      blink_state = !blink_state;
+      digitalWrite(PIN_LED2, blink_state);
     }
   } else {
     digitalWrite(PIN_LED2, HIGH);
+  }
+
+  if (n - tl >= 100) {
+    digitalWrite(PIN_LED1, LOW);
   }
 #endif
 
