@@ -189,11 +189,11 @@ begin
 									  SOFT_SW(6) <= spi_do(5); -- soft switch 6
 									  SOFT_SW(7) <= spi_do(6); -- soft switch 7
 									  SOFT_SW(8) <= spi_do(7); -- soft switch 8
-									  LOADED <= '1'; -- loaded
 					when X"09" => 
 									  SOFT_SW(9) <= spi_do(0);
 									  SOFT_SW(10) <= spi_do(1);
-									  JOY_TYPE <= spi_do(3);
+									  JOY_TYPE <= spi_do(2);
+									  LOADED <= '1'; -- loaded
 									  -- 5 free signals
 					-- mouse data
 					when X"0A" => mouse_x(7 downto 0) <= signed(spi_do(7 downto 0));
