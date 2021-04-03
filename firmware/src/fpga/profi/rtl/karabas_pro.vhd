@@ -170,10 +170,11 @@ signal kb_special 	: std_logic := '0';
 signal kb_turbo 		: std_logic := '0';
 signal kb_wait 		: std_logic := '0';
 signal kb_mode 		: std_logic := '1';
+signal joy_type 		: std_logic := '0';
 signal kb_loaded 		: std_logic := '0';
 
 -- Joy
-signal joy_bus 		: std_logic_vector(5 downto 0) := "111111";
+signal joy_bus 		: std_logic_vector(7 downto 0) := "00000000";
 
 -- Mouse
 signal ms_x				: std_logic_vector(7 downto 0);
@@ -678,7 +679,8 @@ port map (
 	COVOX_EN			=> soft_sw(6),
 	TURBO_FDC		=> turbo_fdc_off,
 	SSG_MONO 		=> soft_sw(9),
-	FDC_SWAP			=> fdc_swap
+	FDC_SWAP			=> fdc_swap,
+	JOY_TYPE 		=> joy_type
 
 );
 
@@ -848,6 +850,7 @@ port map (
 	 TURBO 			=> kb_turbo,
 	 MAGICK 			=> kb_magic,
 	 WAIT_CPU 		=> kb_wait,
+	 JOY_TYPE 		=> joy_type,
 	 
 	 LOADED 			=> kb_loaded,
 	 
@@ -1511,7 +1514,7 @@ begin
 		when x"02" => cpu_di_bus <= GX0 & "1" & kb_do_bus;
 		when x"03" => cpu_di_bus <= zc_do_bus;
 		when x"04" => cpu_di_bus <= "11111100";		
-		when x"05" => cpu_di_bus <= "00" & joy_bus;
+		when x"05" => cpu_di_bus <= joy_bus;
 		when x"06" => cpu_di_bus <= ssg_cn0_bus;
 		when x"07" => cpu_di_bus <= ssg_cn1_bus;
 		when x"08" => cpu_di_bus <= port_dffd_reg;

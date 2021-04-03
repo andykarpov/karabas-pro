@@ -27,7 +27,8 @@ entity osd is
 		COVOX_EN 		: in std_logic := '0';
 		TURBO_FDC		: in std_logic := '0';
 		SSG_MONO 		: in std_logic := '0';
-		FDC_SWAP 		: in std_logic := '0'
+		FDC_SWAP 		: in std_logic := '0';
+		JOY_TYPE 		: in std_logic := '0'
 	);
 end entity;
 
@@ -84,9 +85,9 @@ architecture rtl of osd is
 	constant message_turbo_fdc:integer 	:= 200;
 	constant message_karabas:  integer 	:= 208;
 	constant message_fdc_swap: integer  := 216;
-	constant message_free1:    integer  := 224;
-	constant message_free2:    integer  := 232;
-	constant message_free3:    integer  := 240;
+	constant message_joystick: integer  := 224;
+	constant message_kempston: integer  := 232;
+	constant message_sega:     integer  := 240;
 	constant message_ver:      integer  := 248;
 
 	signal message_addr : std_logic_vector(7 downto 0);
@@ -109,6 +110,7 @@ architecture rtl of osd is
 	signal last_ssg_mono : std_logic := '0';
 	signal last_loaded : std_logic := '0';
 	signal last_fdc_swap : std_logic := '0';
+	signal last_joy_type: std_logic := '0';
 	
 	signal cnt : std_logic_vector(3 downto 0) := "1000";
 	signal en : std_logic := '0';
@@ -203,6 +205,7 @@ begin
 				last_turbo_fdc <= TURBO_FDC;
 				last_ssg_mono <= SSG_MONO;
 				last_fdc_swap <= FDC_SWAP;
+				last_joy_type <= JOY_TYPE;
 				cnt <= "0000";
 				line1 <= std_logic_vector(to_unsigned(message_karabas, 8));
 				line2 <= std_logic_vector(to_unsigned(message_ver, 8));
@@ -335,6 +338,19 @@ begin
 						line2 <= std_logic_vector(to_unsigned(message_on, 8));
 					end if;
 				end if;
+				
+				-- joy type
+				if (JOY_TYPE /= last_joy_type) then
+					last_joy_type <= JOY_TYPE;
+					cnt <= "0000";
+					line1 <= std_logic_vector(to_unsigned(message_joystick, 8));
+					if (JOY_TYPE = '0') then 
+						line2 <= std_logic_vector(to_unsigned(message_kempston, 8));
+					else 
+						line2 <= std_logic_vector(to_unsigned(message_sega, 8));
+					end if;
+				end if;
+				
 			end if;
 
 			-- enable counter

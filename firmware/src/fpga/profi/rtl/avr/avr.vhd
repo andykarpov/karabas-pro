@@ -54,10 +54,11 @@ entity avr is
 	 TURBO		: out std_logic := '0';
 	 MAGICK		: out std_logic := '0';
 	 WAIT_CPU 	: out std_logic := '0';
+	 JOY_TYPE 	: out std_logic := '0';
 	 
 	 LOADED 		: out std_logic := '0';
-	 
-	 JOY			: out std_logic_vector(5 downto 0) := "000000"
+	 	 
+	 JOY			: out std_logic_vector(7 downto 0) := "00000000"
 	 
 	);
     end avr;
@@ -192,7 +193,8 @@ begin
 					when X"09" => 
 									  SOFT_SW(9) <= spi_do(0);
 									  SOFT_SW(10) <= spi_do(1);
-									  -- 6 free signals
+									  JOY_TYPE <= spi_do(3);
+									  -- 5 free signals
 					-- mouse data
 					when X"0A" => mouse_x(7 downto 0) <= signed(spi_do(7 downto 0));
 					when X"0B" => mouse_y(7 downto 0) <= signed(spi_do(7 downto 0));
@@ -204,6 +206,8 @@ begin
 									  joy(3) <= spi_do(2); -- up
 									  joy(4) <= spi_do(0); -- fire
 									  joy(5) <= spi_do(1); -- fire2
+									  joy(6) <= spi_do(6); -- A
+									  joy(7) <= spi_do(7); -- B
 					-- rtc registers
 					when others => 
 							rtc_cmd <= spi_do(15 downto 8);
