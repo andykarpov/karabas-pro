@@ -1238,7 +1238,7 @@ void eeprom_store_values()
 // update led state
 void update_led(uint8_t led, bool state)
 {
-  if (led == PIN_LED2 && !joy_type) {
+  if (led == PIN_LED2 && joy_type) {
     digitalWrite(PIN_LED2, HIGH);
     return;
   }
