@@ -143,7 +143,7 @@ void eeprom_restore_values();
 void eeprom_store_values();
 void setup();
 void loop();
-
+void update_led(uint8_t led, bool state);
 
 void push_capsed_key(int key)
 {
@@ -1235,6 +1235,16 @@ void eeprom_store_values()
   eeprom_store_value(EEPROM_JOY_TYPE_ADDRESS, joy_type);
 }
 
+// update led state
+void update_led(uint8_t led, bool state)
+{
+  if (led == PIN_LED2 && !joy_type) {
+    digitalWrite(PIN_LED2, HIGH);
+    return;
+  }
+  digitalWrite(led, state);
+}
+
 // initial setup
 void setup()
 {
@@ -1354,7 +1364,7 @@ void loop()
     int c = kbd.read();
     tl = n;
     if (!led1_overwrite) {
-      digitalWrite(PIN_LED1, HIGH);
+      update_led(PIN_LED1, HIGH);
     }
     fill_kbd_matrix(c);
     Serial.print(F("Scancode: "));
@@ -1392,8 +1402,8 @@ void loop()
     joy[ZX_JOY_LEFT] = sega_joy_state & SC_BTN_LEFT;
     joy[ZX_JOY_RIGHT] = sega_joy_state & SC_BTN_RIGHT;
     joy[ZX_JOY_FIRE] = sega_joy_state & SC_BTN_B;
-    joy[ZX_JOY_FIRE2] = sega_joy_state & SC_BTN_A;
-    joy[ZX_JOY_A] = sega_joy_state & SC_BTN_C;
+    joy[ZX_JOY_FIRE2] = sega_joy_state & SC_BTN_C;
+    joy[ZX_JOY_A] = sega_joy_state & SC_BTN_A;
     joy[ZX_JOY_B] = sega_joy_state & SC_BTN_START;
   }
 
@@ -1438,27 +1448,21 @@ void loop()
 #if USE_HW_BUTTONS
   if (n - tb >= 100) {
     if (analogRead(PIN_BTN1) < 3 && (n - tb1 >= 500) ) {
-       tb1 = n;
-       // update LED2 only for kempston joy
-      if (joy_type == false) {
-        digitalWrite(PIN_LED2, HIGH);
-      }
+      tb1 = n;
+      update_led(PIN_LED2, HIGH);
       Serial.print(F("BTN1: Full reset..."));
       do_full_reset();
       Serial.println(F("done"));
-       // update LED2 only for kempston joy
-      if (joy_type == false) {
-        digitalWrite(PIN_LED2, LOW);      
-      }
+       update_led(PIN_LED2, LOW);
     }
 
     if (analogRead(PIN_BTN2) < 3 && (n - tb2 >= 500) ) {
       tb2 = n;
-      digitalWrite(PIN_LED1, HIGH);
+      update_led(PIN_LED1, HIGH);
       Serial.print(F("BTN2: Reset..."));
       do_reset();
       Serial.println(F("done"));
-      digitalWrite(PIN_LED1, LOW);
+      update_led(PIN_LED1, LOW);
     }
     tb = n;
   }
@@ -1543,13 +1547,13 @@ void loop()
     if ((is_menu || (is_ctrl && is_alt)) && ms_btn1) {
       is_mouse_swap = !is_mouse_swap;
       eeprom_store_value(EEPROM_MOUSE_SWAP_ADDRESS, is_mouse_swap);
-      digitalWrite(PIN_LED1, HIGH);
+      update_led(PIN_LED1, HIGH);
       delay(100);
-      digitalWrite(PIN_LED1, LOW);
+      update_led(PIN_LED1, LOW);
       delay(100);
-      digitalWrite(PIN_LED1, HIGH);
+      update_led(PIN_LED1, HIGH);
       delay(100);
-      digitalWrite(PIN_LED1, LOW);      
+      update_led(PIN_LED1, LOW);
     }
     ts = n;
   }
@@ -1558,28 +1562,26 @@ void loop()
 #if ALLOW_LED_OVERRIDE
   if (led1_overwrite) {
     if (led1_state == 1) {
-      digitalWrite(PIN_LED1, HIGH);
+      update_led(PIN_LED1, HIGH);
     }
     if (n - tl1 >= 100) {
       tl1 = n;
       if (led1_state == false) {
-        digitalWrite(PIN_LED1, LOW);
+        update_led(PIN_LED1, LOW);
       }
     }
   }
 
   // control led2
   if (led2_overwrite) {
-    if (joy_type == false) {
       if (led2_state == 1) {
-        digitalWrite(PIN_LED2, HIGH);
+        update_led(PIN_LED2, HIGH);
       }
       if (n - tl2 >= 100) {
         tl2 = n;
         if (led2_state == false) {
-          digitalWrite(PIN_LED2, LOW);
+          update_led(PIN_LED2, LOW);
         }
-      }
     }
   }
 #else 
@@ -1587,24 +1589,14 @@ void loop()
     if (n - tl2 >= 500) {
       tl2 = n;
       blink_state = !blink_state;
-      // update LED2 only for kempston joy
-      if (joy_type == false) {
-        digitalWrite(PIN_LED2, blink_state);
-      }
+      update_led(PIN_LED2, blink_state);
     }
   } else {
-    if (joy_type == false) {
-      digitalWrite(PIN_LED2, HIGH);
-    }
-  }
-
-  // force to use PIN_LED2 as select pin for sega joy
-  if (joy_type == true) {
-    digitalWrite(PIN_LED2, HIGH);
+    update_led(PIN_LED2, HIGH);
   }
 
   if (n - tl >= 100) {
-    digitalWrite(PIN_LED1, LOW);
+    update_led(PIN_LED1, LOW);
   }
 #endif
 
