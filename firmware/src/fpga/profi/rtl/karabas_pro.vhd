@@ -173,7 +173,7 @@ signal kb_mode 		: std_logic := '1';
 signal kb_loaded 		: std_logic := '0';
 
 -- Joy
-signal joy_bus 		: std_logic_vector(4 downto 0) := "11111";
+signal joy_bus 		: std_logic_vector(5 downto 0) := "111111";
 
 -- Mouse
 signal ms_x				: std_logic_vector(7 downto 0);
@@ -1511,7 +1511,7 @@ begin
 		when x"02" => cpu_di_bus <= GX0 & "1" & kb_do_bus;
 		when x"03" => cpu_di_bus <= zc_do_bus;
 		when x"04" => cpu_di_bus <= "11111100";		
-		when x"05" => cpu_di_bus <= "000" & joy_bus;
+		when x"05" => cpu_di_bus <= "00" & joy_bus;
 		when x"06" => cpu_di_bus <= ssg_cn0_bus;
 		when x"07" => cpu_di_bus <= ssg_cn1_bus;
 		when x"08" => cpu_di_bus <= port_dffd_reg;
