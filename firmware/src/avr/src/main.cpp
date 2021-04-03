@@ -24,6 +24,7 @@ Ukraine, 2021
 #include "Arduino.h"
 #include "PS2KeyRaw.h"
 #include "PS2Mouse.h"
+#include "SegaController.h"
 #include "matrix.h"
 #include "ps2_codes.h"
 #include <EEPROM.h>
@@ -35,11 +36,12 @@ Ukraine, 2021
 
 PS2KeyRaw kbd;
 PS2Mouse mice;
+SegaController sega;
 static DS1307 rtc;
 
 bool matrix[ZX_MATRIX_FULL_SIZE]; // matrix of pressed keys + mouse reports to be transmitted on CPLD side by simple serial protocol
-bool joy[6]; // joystic states
-bool last_joy[6];
+bool joy[8]; // joystic states
+bool last_joy[8];
 bool profi_mode = true; // false = zx spectrum mode (switched by PrtSrc button in run-time)
 bool is_turbo = false; // turbo toggle (switched by ScrollLock button)
 bool is_mouse_swap = false; // mouse buttons swap
@@ -56,6 +58,7 @@ bool is_sw7 = false; // SW7 state
 bool is_sw8 = false; // SW8 state
 bool is_sw9 = false; // SW9 state 
 bool is_sw10 = false; // SW10 state
+bool joy_type = false; // joy type - 0 = kempston, 1 = sega
 bool init_done = false; // init done
 
 bool is_wait = false; // wait mode
@@ -372,7 +375,18 @@ void fill_kbd_matrix(int sc)
     case PS2_G: matrix[ZX_K_G] = !is_up; break;
     case PS2_H: matrix[ZX_K_H] = !is_up; break;
     case PS2_I: matrix[ZX_K_I] = !is_up; break;
-    case PS2_J: matrix[ZX_K_J] = !is_up; break;
+    case PS2_J: 
+      if (is_menu || (is_ctrl && is_alt)) {
+        if (!is_up) {
+          // menu + J = JOY_TYPE
+          joy_type = !joy_type;
+          eeprom_store_value(EEPROM_JOY_TYPE_ADDRESS, joy_type);
+          matrix[ZX_K_JOY_TYPE] = joy_type;
+        }
+      } else {
+        matrix[ZX_K_J] = !is_up; 
+      }
+    break;
     case PS2_K: matrix[ZX_K_K] = !is_up; break;
     case PS2_L: matrix[ZX_K_L] = !is_up; break;
     case PS2_M: matrix[ZX_K_M] = !is_up; break;
@@ -1185,6 +1199,7 @@ void eeprom_restore_values()
   is_sw9 = eeprom_restore_value(EEPROM_SW9_ADDRESS, is_sw9);
   is_sw10 = eeprom_restore_value(EEPROM_SW10_ADDRESS, is_sw10);
   is_mouse_swap = eeprom_restore_value(EEPROM_MOUSE_SWAP_ADDRESS, is_mouse_swap);
+  joy_type = eeprom_restore_value(EEPROM_JOY_TYPE_ADDRESS, joy_type);
   
   // apply restored values
   matrix[ZX_K_TURBO] = is_turbo;
@@ -1199,6 +1214,7 @@ void eeprom_restore_values()
   matrix[ZX_K_SW9] = is_sw9;
   matrix[ZX_K_SW10] = is_sw10;
   matrix[ZX_K_KBD_MODE] = profi_mode;
+  matrix[ZX_K_JOY_TYPE] = joy_type;
 }
 
 void eeprom_store_values()
@@ -1216,6 +1232,7 @@ void eeprom_store_values()
   eeprom_store_value(EEPROM_SW9_ADDRESS, is_sw9);
   eeprom_store_value(EEPROM_SW10_ADDRESS, is_sw10);
   eeprom_store_value(EEPROM_MOUSE_SWAP_ADDRESS, is_mouse_swap);
+  eeprom_store_value(EEPROM_JOY_TYPE_ADDRESS, joy_type);
 }
 
 // initial setup
@@ -1277,6 +1294,9 @@ void setup()
   while (!init_done) {
     spi_send(CMD_NONE, 0x00);
   }
+
+  // setup sega controller
+  sega.begin(PIN_LED2, PIN_JOY_UP, PIN_JOY_DOWN, PIN_JOY_LEFT, PIN_JOY_RIGHT, PIN_JOY_FIRE1, PIN_JOY_FIRE2);
 
   Serial.print(F("Keyboard init..."));
   kbd.begin(PIN_KBD_DAT, PIN_KBD_CLK);
@@ -1351,13 +1371,33 @@ void loop()
   //interrupts(); // SPI.end() calls noInterrupts()
   SPCR &= ~_BV(SPE);
 
+  // set JOY_RIGHT pin as input to read joystick signal
   pinMode(PIN_JOY_RIGHT, INPUT_PULLUP);
-  joy[ZX_JOY_UP] = digitalRead(PIN_JOY_UP) == LOW;
-  joy[ZX_JOY_DOWN] = digitalRead(PIN_JOY_DOWN) == LOW;
-  joy[ZX_JOY_LEFT] = digitalRead(PIN_JOY_LEFT) == LOW;
-  joy[ZX_JOY_RIGHT] = digitalRead(PIN_JOY_RIGHT) == LOW;
-  joy[ZX_JOY_FIRE] = digitalRead(PIN_JOY_FIRE1) == LOW;
-  joy[ZX_JOY_FIRE2] = digitalRead(PIN_JOY_FIRE2) == LOW;
+
+  if (joy_type == false) {
+    // kempston joy read
+    joy[ZX_JOY_UP] = digitalRead(PIN_JOY_UP) == LOW;
+    joy[ZX_JOY_DOWN] = digitalRead(PIN_JOY_DOWN) == LOW;
+    joy[ZX_JOY_LEFT] = digitalRead(PIN_JOY_LEFT) == LOW;
+    joy[ZX_JOY_RIGHT] = digitalRead(PIN_JOY_RIGHT) == LOW;
+    joy[ZX_JOY_FIRE] = digitalRead(PIN_JOY_FIRE1) == LOW;
+    joy[ZX_JOY_FIRE2] = digitalRead(PIN_JOY_FIRE2) == LOW;
+    joy[ZX_JOY_A] = false;
+    joy[ZX_JOY_B] = false;
+  } else {
+    // sega joy read
+    word sega_joy_state = sega.getState();
+    joy[ZX_JOY_UP] = sega_joy_state & SC_BTN_UP;
+    joy[ZX_JOY_DOWN] = sega_joy_state & SC_BTN_DOWN;
+    joy[ZX_JOY_LEFT] = sega_joy_state & SC_BTN_LEFT;
+    joy[ZX_JOY_RIGHT] = sega_joy_state & SC_BTN_RIGHT;
+    joy[ZX_JOY_FIRE] = sega_joy_state & SC_BTN_B;
+    joy[ZX_JOY_FIRE2] = sega_joy_state & SC_BTN_A;
+    joy[ZX_JOY_A] = sega_joy_state & SC_BTN_C;
+    joy[ZX_JOY_B] = sega_joy_state & SC_BTN_START;
+  }
+
+  // set JOY_RIGHT as output to avoid intersection with hardware SPI SS pin
   pinMode(PIN_JOY_RIGHT, OUTPUT);
   digitalWrite(PIN_JOY_RIGHT, LOW);
 
@@ -1366,20 +1406,29 @@ void loop()
   SPCR |= _BV(MSTR);
   SPCR |= _BV(SPE);
 
-  if (joy[0] != last_joy[0] || joy[1] != last_joy[1] || joy[2] != last_joy[2] || joy[3] != last_joy[3] || joy[4] != last_joy[4] || joy[5] != last_joy[5]) {
+  if (joy[0] != last_joy[0] || joy[1] != last_joy[1] || joy[2] != last_joy[2] || joy[3] != last_joy[3] || joy[4] != last_joy[4] || joy[5] != last_joy[5] || joy[6] != last_joy[6] || joy[7] != last_joy[7]) {
     last_joy[0] = joy[0];
     last_joy[1] = joy[1];
     last_joy[2] = joy[2];
     last_joy[3] = joy[3];
     last_joy[4] = joy[4];
     last_joy[5] = joy[5];
-    Serial.print(F("Joystiсk:"));
-    Serial.print(F(" U:")); Serial.print(joy[ZX_JOY_UP]);
-    Serial.print(F(" D:")); Serial.print(joy[ZX_JOY_DOWN]);
-    Serial.print(F(" L:")); Serial.print(joy[ZX_JOY_LEFT]);
-    Serial.print(F(" R:")); Serial.print(joy[ZX_JOY_RIGHT]);
-    Serial.print(F(" F:")); Serial.print(joy[ZX_JOY_FIRE]);
-    Serial.print(F(" F2:")); Serial.println(joy[ZX_JOY_FIRE2]);
+    last_joy[6] = joy[6];
+    last_joy[7] = joy[7];
+    if (joy_type) {
+      Serial.print(F("SEGA"));
+    } else {
+      Serial.print(F("Kempston"));
+    }
+    Serial.print(F(" Joystiсk:"));
+    Serial.print(F(" UP:")); Serial.print(joy[ZX_JOY_UP]);
+    Serial.print(F(" DOWN:")); Serial.print(joy[ZX_JOY_DOWN]);
+    Serial.print(F(" LEFT:")); Serial.print(joy[ZX_JOY_LEFT]);
+    Serial.print(F(" RIGHT:")); Serial.print(joy[ZX_JOY_RIGHT]);
+    Serial.print(F(" FIRE1:")); Serial.print(joy[ZX_JOY_FIRE]);
+    Serial.print(F(" FIRE2:")); Serial.print(joy[ZX_JOY_FIRE2]);
+    Serial.print(F(" JUMP:")); Serial.print(joy[ZX_JOY_A]);
+    Serial.print(F(" PAUSE:")); Serial.println(joy[ZX_JOY_B]);
   }
 
   // transmit joy matrix
@@ -1390,11 +1439,17 @@ void loop()
   if (n - tb >= 100) {
     if (analogRead(PIN_BTN1) < 3 && (n - tb1 >= 500) ) {
        tb1 = n;
-      digitalWrite(PIN_LED2, HIGH);
+       // update LED2 only for kempston joy
+      if (joy_type == false) {
+        digitalWrite(PIN_LED2, HIGH);
+      }
       Serial.print(F("BTN1: Full reset..."));
       do_full_reset();
       Serial.println(F("done"));
-      digitalWrite(PIN_LED2, LOW);      
+       // update LED2 only for kempston joy
+      if (joy_type == false) {
+        digitalWrite(PIN_LED2, LOW);      
+      }
     }
 
     if (analogRead(PIN_BTN2) < 3 && (n - tb2 >= 500) ) {
@@ -1515,13 +1570,15 @@ void loop()
 
   // control led2
   if (led2_overwrite) {
-    if (led2_state == 1) {
-      digitalWrite(PIN_LED2, HIGH);
-    }
-    if (n - tl2 >= 100) {
-      tl2 = n;
-      if (led2_state == false) {
-        digitalWrite(PIN_LED2, LOW);
+    if (joy_type == false) {
+      if (led2_state == 1) {
+        digitalWrite(PIN_LED2, HIGH);
+      }
+      if (n - tl2 >= 100) {
+        tl2 = n;
+        if (led2_state == false) {
+          digitalWrite(PIN_LED2, LOW);
+        }
       }
     }
   }
@@ -1530,9 +1587,19 @@ void loop()
     if (n - tl2 >= 500) {
       tl2 = n;
       blink_state = !blink_state;
-      digitalWrite(PIN_LED2, blink_state);
+      // update LED2 only for kempston joy
+      if (joy_type == false) {
+        digitalWrite(PIN_LED2, blink_state);
+      }
     }
   } else {
+    if (joy_type == false) {
+      digitalWrite(PIN_LED2, HIGH);
+    }
+  }
+
+  // force to use PIN_LED2 as select pin for sega joy
+  if (joy_type == true) {
     digitalWrite(PIN_LED2, HIGH);
   }
 
