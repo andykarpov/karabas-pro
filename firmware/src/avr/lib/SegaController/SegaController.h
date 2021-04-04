@@ -29,6 +29,8 @@
 #ifndef SegaController_h
 #define SegaController_h
 
+#include <Arduino.h>
+
 enum
 {
     SC_CTL_ON    = 1, // The controller is connected
@@ -59,6 +61,8 @@ class SegaController {
         SegaController();
         void begin(byte db9_pin_7, byte db9_pin_1, byte db9_pin_2, byte db9_pin_3, byte db9_pin_4, byte db9_pin_6, byte db9_pin_9);
         word getState();
+        bool getIsOn();
+        bool getSixButtonMode();
 
     private:
         void readCycle(byte cycle);

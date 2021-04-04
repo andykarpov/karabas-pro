@@ -42,6 +42,7 @@ static DS1307 rtc;
 bool matrix[ZX_MATRIX_FULL_SIZE]; // matrix of pressed keys + mouse reports to be transmitted on CPLD side by simple serial protocol
 bool joy[8]; // joystic states
 bool last_joy[8];
+word sega_joy_state;
 bool profi_mode = true; // false = zx spectrum mode (switched by PrtSrc button in run-time)
 bool is_turbo = false; // turbo toggle (switched by ScrollLock button)
 bool is_mouse_swap = false; // mouse buttons swap
@@ -1396,7 +1397,7 @@ void loop()
     joy[ZX_JOY_B] = false;
   } else {
     // sega joy read
-    word sega_joy_state = sega.getState();
+    sega_joy_state = sega.getState();
     joy[ZX_JOY_UP] = sega_joy_state & SC_BTN_UP;
     joy[ZX_JOY_DOWN] = sega_joy_state & SC_BTN_DOWN;
     joy[ZX_JOY_LEFT] = sega_joy_state & SC_BTN_LEFT;
@@ -1426,19 +1427,20 @@ void loop()
     last_joy[6] = joy[6];
     last_joy[7] = joy[7];
     if (joy_type) {
-      Serial.print(F("SEGA"));
+      Serial.print(F("SEGA Joystick: "));
+      Serial.print(sega.getIsOn() ? F("(ON) ") : F("(OFF) "));
+      Serial.print(sega.getSixButtonMode() ? F("(6 btn) ") : F("(3 btn) "));
     } else {
-      Serial.print(F("Kempston"));
+      Serial.print(F("Kempston Joystick: "));
     }
-    Serial.print(F(" Joystiсk:"));
-    Serial.print(F(" UP:")); Serial.print(joy[ZX_JOY_UP]);
-    Serial.print(F(" DOWN:")); Serial.print(joy[ZX_JOY_DOWN]);
-    Serial.print(F(" LEFT:")); Serial.print(joy[ZX_JOY_LEFT]);
-    Serial.print(F(" RIGHT:")); Serial.print(joy[ZX_JOY_RIGHT]);
-    Serial.print(F(" FIRE1:")); Serial.print(joy[ZX_JOY_FIRE]);
-    Serial.print(F(" FIRE2:")); Serial.print(joy[ZX_JOY_FIRE2]);
-    Serial.print(F(" JUMP:")); Serial.print(joy[ZX_JOY_A]);
-    Serial.print(F(" PAUSE:")); Serial.println(joy[ZX_JOY_B]);
+    Serial.print(F(" U:")); Serial.print(joy[ZX_JOY_UP]);
+    Serial.print(F(" D:")); Serial.print(joy[ZX_JOY_DOWN]);
+    Serial.print(F(" L:")); Serial.print(joy[ZX_JOY_LEFT]);
+    Serial.print(F(" R:")); Serial.print(joy[ZX_JOY_RIGHT]);
+    Serial.print(F(" F1:")); Serial.print(joy[ZX_JOY_FIRE]);
+    Serial.print(F(" F2:")); Serial.print(joy[ZX_JOY_FIRE2]);
+    Serial.print(F(" J:")); Serial.print(joy[ZX_JOY_A]);
+    Serial.print(F(" P:")); Serial.println(joy[ZX_JOY_B]);
   }
 
   // transmit joy matrix

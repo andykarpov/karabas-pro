@@ -69,7 +69,7 @@ word SegaController::getState()
         return _currentState;
     }
     
-    noInterrupts();
+    //noInterrupts();
     
     // Clear current state
     _currentState = 0;
@@ -85,11 +85,21 @@ word SegaController::getState()
         _sixButtonMode = false;
     }
     
-    interrupts();
+    //interrupts();
     
     _lastReadTime = millis();
 
     return _currentState;
+}
+
+bool SegaController::getIsOn()
+{
+    return _currentState & SC_CTL_ON;
+}
+
+bool SegaController::getSixButtonMode()
+{
+    return _sixButtonMode;
 }
 
 void SegaController::readCycle(byte cycle)
@@ -100,7 +110,22 @@ void SegaController::readCycle(byte cycle)
     // Read flags
     switch (cycle)
     {
+        case 0:
+        case 1:
+        case 6:
+        case 7:
+            digitalRead(_inputPins[0]);
+            digitalRead(_inputPins[1]);
+            digitalRead(_inputPins[2]);
+            digitalRead(_inputPins[3]);
+            digitalRead(_inputPins[4]);
+            digitalRead(_inputPins[5]);
+        break;
         case 2:
+
+            digitalRead(_inputPins[0]);
+            digitalRead(_inputPins[1]);
+
             // Check that a controller is connected
             _currentState |= (digitalRead(_inputPins[2]) == LOW && digitalRead(_inputPins[3]) == LOW) * SC_CTL_ON;
             
@@ -123,6 +148,10 @@ void SegaController::readCycle(byte cycle)
             break;
         case 4:
             _sixButtonMode = (digitalRead(_inputPins[0]) == LOW && digitalRead(_inputPins[1]) == LOW);
+            digitalRead(_inputPins[2]);
+            digitalRead(_inputPins[3]);
+            digitalRead(_inputPins[4]);
+            digitalRead(_inputPins[5]);
             break;
         case 5:
             if (_sixButtonMode)
@@ -132,6 +161,11 @@ void SegaController::readCycle(byte cycle)
                 if (digitalRead(_inputPins[1]) == LOW) { _currentState |= SC_BTN_Y; }
                 if (digitalRead(_inputPins[2]) == LOW) { _currentState |= SC_BTN_X; }
                 if (digitalRead(_inputPins[3]) == LOW) { _currentState |= SC_BTN_MODE; }
+            } else {
+                digitalRead(_inputPins[2]);
+                digitalRead(_inputPins[3]);
+                digitalRead(_inputPins[4]);
+                digitalRead(_inputPins[5]);
             }
             break;
     }
