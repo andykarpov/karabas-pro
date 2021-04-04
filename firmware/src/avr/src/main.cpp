@@ -946,7 +946,7 @@ uint8_t get_matrix_byte(uint8_t pos)
 uint8_t get_joy_byte()
 {
   uint8_t result = 0;
-  for (uint8_t i = 0; i < 6; i++) {
+  for (uint8_t i = 0; i < 8; i++) {
     bitWrite(result, i, joy[i]);
   }
   return result;
