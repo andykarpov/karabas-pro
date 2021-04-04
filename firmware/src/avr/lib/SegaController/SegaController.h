@@ -54,7 +54,7 @@ const byte SC_INPUT_PINS = 6;
 
 const byte SC_CYCLES = 8;
 
-const unsigned long SC_READ_DELAY_MS = 15; // Must be >= 3 to give 6-button controller time to reset
+const unsigned long SC_READ_DELAY_MS = 5; // Must be >= 3 to give 6-button controller time to reset
 
 class SegaController {
     public:

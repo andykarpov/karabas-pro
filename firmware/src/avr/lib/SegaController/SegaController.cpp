@@ -107,6 +107,9 @@ void SegaController::readCycle(byte cycle)
     // Set the select pin low/high
     digitalWrite(_selectPin, cycle % 2);
 
+    // a small delay before reading
+    delayMicroseconds(50);
+
     // Read flags
     switch (cycle)
     {
