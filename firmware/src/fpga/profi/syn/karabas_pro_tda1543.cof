@@ -12,7 +12,7 @@
 		<hex_offset>2031616</hex_offset>
 	</hex_block>
 	<hex_block>
-		<hex_filename>../rom/DiagROM.v50.hex</hex_filename>
+		<hex_filename>../rom/fdimage.hex</hex_filename>
 		<hex_addressing>relative</hex_addressing>
 		<hex_offset>1245184</hex_offset>
 	</hex_block>
