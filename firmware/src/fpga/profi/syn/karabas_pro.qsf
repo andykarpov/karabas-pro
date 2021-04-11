@@ -206,6 +206,7 @@ set_global_assignment -name PRE_FLOW_SCRIPT_FILE "quartus_sh:generate_messages.t
 
 set_global_assignment -name OPTIMIZE_HOLD_TIMING "ALL PATHS"
 set_global_assignment -name OPTIMIZE_MULTI_CORNER_TIMING ON
+
 set_global_assignment -name VHDL_FILE ../rtl/karabas_pro.vhd
 set_global_assignment -name QIP_FILE ../rtl/pll/altpll0.qip
 set_global_assignment -name QIP_FILE ../rtl/pll/altpll1.qip
@@ -217,11 +218,10 @@ set_global_assignment -name VHDL_FILE ../rtl/spi/spi_slave.vhd
 set_global_assignment -name VHDL_FILE ../rtl/spi/spi_master.vhd
 set_global_assignment -name VHDL_FILE ../rtl/sd/zc_spi.vhd
 set_global_assignment -name VHDL_FILE ../rtl/memory/memory.vhd
-set_global_assignment -name VHDL_FILE ../rtl/t80se/T80aw.vhd
 set_global_assignment -name VHDL_FILE ../rtl/t80se/T80a.vhd
 set_global_assignment -name VHDL_FILE ../rtl/t80se/T80.vhd
-set_global_assignment -name VHDL_FILE ../rtl/t80se/T80_Reg.vhd
 set_global_assignment -name VHDL_FILE ../rtl/t80se/T80_Pack.vhd
+set_global_assignment -name VHDL_FILE ../rtl/t80se/T80_Reg.vhd
 set_global_assignment -name VHDL_FILE ../rtl/t80se/T80_MCode.vhd
 set_global_assignment -name VHDL_FILE ../rtl/t80se/T80_ALU.vhd
 set_global_assignment -name VHDL_FILE ../rtl/video/video.vhd
@@ -254,5 +254,4 @@ set_global_assignment -name CDF_FILE karabas_pro.cdf
 set_global_assignment -name VHDL_FILE ../rtl/board/board.vhd
 set_global_assignment -name QIP_FILE ../rtl/video/message_rom.qip
 set_global_assignment -name TCL_SCRIPT_FILE generate_messages.tcl
-
 set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top

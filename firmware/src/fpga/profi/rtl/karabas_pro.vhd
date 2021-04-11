@@ -549,11 +549,11 @@ port map(
 );
 
 -- Zilog Z80A CPU
-U5: entity work.T80aw
+U5: entity work.T80a
 port map (
 	RESET_n			=> cpu_reset_n,
-	CLK_n				=> clk_bus,
-	ENA				=> clk_cpu,
+	CLK_n				=> not clk_cpu,
+	CEN				=> '1',
 	WAIT_n			=> cpu_wait_n,
 	INT_n				=> cpu_int_n and serial_ms_int,
 	NMI_n				=> cpu_nmi_n,
@@ -567,8 +567,8 @@ port map (
 	HALT_n			=> open,--cpu_halt_n,
 	BUSAK_n			=> open,--cpu_basak_n,
 	A					=> cpu_a_bus,
-	DI					=> cpu_di_bus,
-	DO					=> cpu_do_bus
+	DIN				=> cpu_di_bus,
+	DOUT				=> cpu_do_bus
 );
 	
 -- memory manager
