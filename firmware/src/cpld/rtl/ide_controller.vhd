@@ -43,8 +43,7 @@ signal cs1fx		: std_logic;
 signal wd_reg_in	: std_logic_vector(15 downto 0);
 signal wd_reg_out	: std_logic_vector(15 downto 0);
 
-signal cs1fx_cnt : std_logic_vector(2 downto 0) := "111";
-signal cs3fx_cnt : std_logic_vector(2 downto 0) := "111";
+signal cnt      : std_logic_vector(6 downto 0);
 
 begin 
 
@@ -56,65 +55,40 @@ cs_hdd_rd <= rww and rwe;
 
 process (CLK,BUS_A,BUS_WR_N,BUS_RD_N,cs1fx,cs3fx,NRESET,profi_ebl)
 begin
-	if NRESET = '0' then
-		IDE_WR_N <='1';
-		IDE_RD_N <='1';
-		IDE_CS0_N <='1';
-		IDE_CS1_N <='1';
-		IDE_A <= "000";
-		cs1fx_cnt <= "111";
-		cs3fx_cnt <= "111";
-	elsif CLK'event and CLK='0' then
---		if profi_ebl = '0' then
---			IDE_WR_N <=BUS_WR_N;
---			IDE_RD_N <=BUS_RD_N;
---			IDE_CS0_N <=cs1fx;
---			IDE_CS1_N <=cs3fx;
---			IDE_A <= BUS_A(2 downto 0);
---		else
---			IDE_WR_N <='1';
---			IDE_RD_N <='1';
---			IDE_CS0_N <='1';
---			IDE_CS1_N <='1';
---			IDE_A <= "000";
---		end if;
-
-		IDE_WR_N <= BUS_WR_N;
-		IDE_RD_N <= BUS_RD_N;
-
-		-- cs1fx counter
-		if (profi_ebl = '0' and cs1fx = '0') then 
-			cs1fx_cnt <= "000";
-		elsif (cs1fx_cnt < 7) then
-			cs1fx_cnt <= cs1fx_cnt + 1;
-		end if;
-
-		-- cs3fx counter		
-		if (profi_ebl = '0' and cs3fx = '0') then 
-			cs3fx_cnt <= "000";
-		elsif (cs3fx_cnt < 7) then 
-			cs3fx_cnt <= cs3fx_cnt + 1;
-		end if;
-		
-		if (profi_ebl = '0' and (cs1fx = '0' or cs3fx = '0')) then 
-			IDE_A <= BUS_A;
-		end if;
-
-		-- /CS0
-		if ((profi_ebl = '0' and cs1fx = '0') or cs1fx_cnt < 7) then 
-			IDE_CS0_N <= '0';
-		else 
-			IDE_CS0_N <= '1';
-		end if;
-
-		-- /CS1
-		if ((profi_ebl = '0' and cs3fx = '0') or cs3fx_cnt < 7) then 
-			IDE_CS1_N <= '0';
-		else 
-			IDE_CS1_N <= '1';
-		end if;
-
-	end if;
+  if NRESET = '0' then
+    IDE_WR_N <='1';
+    IDE_RD_N <='1';
+    IDE_CS0_N <='1';
+    IDE_CS1_N <='1';
+    IDE_A <= "000";
+    cnt <= "0000000";
+  elsif CLK'event and CLK='0' then
+    if profi_ebl = '0' and cnt (6) = '0' then
+      IDE_A <= BUS_A(2 downto 0);
+      if (cnt > 2 and cnt < 63) then
+        IDE_CS0_N <=cs1fx;
+        IDE_CS1_N <=cs3fx;
+      else
+        IDE_CS0_N <='1';
+        IDE_CS1_N <='1';
+      end if;
+      if (cnt > 8 and cnt < 31) then
+          IDE_WR_N <=BUS_WR_N;
+          IDE_RD_N <=BUS_RD_N;
+      else
+          IDE_WR_N <='1';
+          IDE_RD_N <='1';      
+      end if;
+      cnt <= cnt + 1;
+    else
+      IDE_WR_N <='1';
+      IDE_RD_N <='1';
+      IDE_CS0_N <='1';
+      IDE_CS1_N <='1';
+      IDE_A <= "000";
+      cnt <= "0000000";
+    end if;
+  end if;
 end process;
 
 --process (IDE_D, BUS_DI, CLK,cs_hdd_wr,cs_hdd_rd) -- Write low byte Data bus and HDD bus to temp. registers
