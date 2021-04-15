@@ -43,7 +43,7 @@ signal cs1fx		: std_logic;
 signal wd_reg_in	: std_logic_vector(15 downto 0);
 signal wd_reg_out	: std_logic_vector(15 downto 0);
 
-signal cnt      : std_logic_vector(6 downto 0);
+signal cnt      : std_logic_vector(7 downto 0);
 
 begin 
 
@@ -61,11 +61,11 @@ begin
     IDE_CS0_N <='1';
     IDE_CS1_N <='1';
     IDE_A <= "000";
-    cnt <= "0000000";
+    cnt <= "00000000";
   elsif CLK'event and CLK='0' then
-    if profi_ebl = '0' and cnt (6) = '0' then
+    if profi_ebl = '0' and cnt (7) = '0' then
       IDE_A <= BUS_A(2 downto 0);
-      if (cnt > 2 and cnt < 63) then
+      if (cnt > 2 and cnt < 72) then
         IDE_CS0_N <=cs1fx;
         IDE_CS1_N <=cs3fx;
       else
@@ -86,7 +86,7 @@ begin
       IDE_CS0_N <='1';
       IDE_CS1_N <='1';
       IDE_A <= "000";
-      cnt <= "0000000";
+      cnt <= "00000000";
     end if;
   end if;
 end process;
