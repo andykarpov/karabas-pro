@@ -3,7 +3,7 @@
 ## Rev.DS:
 
 - Removed DIP switches from the design
-- Added a connector for external joystick
+- Added an expansion connector for external joystick
 - Added support for SEGA 3-button joysticks (mapped vcc and select pins to atmega)
 - Added (optional) tape in/out connectors and logic
 - Added on-board buzzer with jumper to disable it
