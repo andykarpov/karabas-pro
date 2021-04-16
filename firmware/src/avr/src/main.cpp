@@ -1452,8 +1452,8 @@ void loop()
     if (analogRead(PIN_BTN1) < 3 && (n - tb1 >= 500) ) {
       tb1 = n;
       update_led(PIN_LED2, HIGH);
-      Serial.print(F("BTN1: Full reset..."));
-      do_full_reset();
+      Serial.print(F("BTN1: Magic..."));
+      do_magic();
       Serial.println(F("done"));
        update_led(PIN_LED2, LOW);
     }

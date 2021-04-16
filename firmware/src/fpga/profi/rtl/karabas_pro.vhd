@@ -549,11 +549,10 @@ port map(
 );
 
 -- Zilog Z80A CPU
-U5: entity work.T80aw
+U5: entity work.T80a
 port map (
 	RESET_n			=> cpu_reset_n,
-	CLK_n				=> clk_bus,
-	ENA				=> clk_cpu,
+	CLK_n				=> not clk_cpu,
 	WAIT_n			=> cpu_wait_n,
 	INT_n				=> cpu_int_n and serial_ms_int,
 	NMI_n				=> cpu_nmi_n,
@@ -567,8 +566,14 @@ port map (
 	HALT_n			=> open,--cpu_halt_n,
 	BUSAK_n			=> open,--cpu_basak_n,
 	A					=> cpu_a_bus,
-	DI					=> cpu_di_bus,
-	DO					=> cpu_do_bus
+	DIN					=> cpu_di_bus,
+	DOUT					=> cpu_do_bus,
+	
+	SavePC      	=> open,
+	SaveINT     	=> open,
+	RestorePC   	=> (others => '0'),
+	RestoreINT  	=> (others => '0'),	
+	RestorePC_n 	=> '1'
 );
 	
 -- memory manager
@@ -1077,37 +1082,11 @@ reset <= areset or kb_reset or loader_reset or loader_act or board_reset; -- hot
 
 cpu_reset_n <= not(reset) and not(loader_reset); -- CPU reset
 cpu_inta_n <= cpu_iorq_n or cpu_m1_n;	-- INTA
---cpu_nmi_n <= '0' when kb_magic = '1' else '1'; -- NMI
+cpu_nmi_n <= '0' when kb_magic = '1' and cpu_m1_n = '0' and cpu_mreq_n = '0' and (cpu_a_bus(15 downto 14) /= "00") and cpm='0' else '1'; -- NMI
 --cpu_wait_n <= '0' when kb_wait = '1' else '1'; -- WAIT
 cpu_wait_n <= '1';
 turbo_cpu <= (kb_turbo or turbo_on) and (not turbo_off);
 clk_cpu <= '0' when kb_wait = '1' else clk_bus and ena_div8 when turbo_cpu = '0' else clk_bus and ena_div4; -- 3.5 / 7 MHz
-
-process (kb_magic, dos_act, cpu_m1_n, cpu_mreq_n, cpu_a_bus, worom, cpu_nmi_n)
-begin
-	if dos_act = '1' then
-		cpu_nmi_n <= '1';
-	elsif (cpu_m1_n = '0' and cpu_mreq_n = '0' and cpu_a_bus(15 downto 14) /= "00") then
-		if rising_edge(kb_magic) then
-			cpu_nmi_n <= not worom;
---		else 
---			cpu_nmi_n <= '1';
-		end if;
-	end if;
-end process;
-
---process (kb_magic, dos_act, cpu_m1_n, cpu_mreq_n, cpu_a_bus, worom, cpu_nmi_n, clk_cpu)
---begin
---	if rising_edge(clk_cpu) then
---		if dos_act = '1' then
---			cpu_nmi_n <= '1';
---		elsif (cpu_m1_n = '0' and cpu_mreq_n = '0' and cpu_a_bus(15 downto 14) /= "00" and kb_magic = '1') then
---			cpu_nmi_n <= not worom;
---		else 
---			cpu_nmi_n <= '1';
---		end if;
---	end if;
---end process;
 
 -- odnovibrator - po spadu nIORQ otschityvaet 400ns WAIT proca
 -- dlja rabotosposobnosti periferii v turbe ili v rezhime 
