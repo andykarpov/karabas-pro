@@ -170,7 +170,7 @@ begin
 			A => A_i,
 			DInst => DIN,
 			DI => DI_Reg,
-			DO => DOUT,
+			DO => DO,
 			MC => MCycle,
 			TS => TState,
 			IntCycle_n => IntCycle_n,
