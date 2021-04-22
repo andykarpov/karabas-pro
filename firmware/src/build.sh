@@ -45,6 +45,7 @@ make jic
 cp karabas_pro_tda1543.jic ../../../../releases/profi/karabas_pro_tda1543.jic
 cp karabas_pro_tda1543a.jic ../../../../releases/profi/karabas_pro_tda1543a.jic
 cp karabas_pro.rbf ../../../../releases/profi/karabas_pro.rbf
+cp karabas_pro.sof ../../../../releases/profi/karabas_pro.sof
 
 make clean
 
