@@ -47,6 +47,7 @@ bool profi_mode = true; // false = zx spectrum mode (switched by PrtSrc button i
 bool is_turbo = false; // turbo toggle (switched by ScrollLock button)
 bool is_mouse_swap = false; // mouse buttons swap
 bool is_menu = false; // menu button pressed
+bool is_win = false; // win button pressed
 bool is_ctrl = false; // Ctrl button
 bool is_alt = false;  // Alt button
 bool is_sw1 = false; // SW1 state
@@ -198,7 +199,7 @@ void fill_kbd_matrix(int sc)
 {
 
   static bool is_up = false, is_e = false, is_e1 = false;
-  static bool is_del = false, is_win = false, is_bksp = false, is_shift = false, is_esc = false, is_ss_used = false, is_pscr1 = false;
+  static bool is_del = false, is_bksp = false, is_shift = false, is_esc = false, is_ss_used = false, is_pscr1 = false;
   static int scancode = 0;
 
   // is extended scancode prefix
@@ -377,7 +378,7 @@ void fill_kbd_matrix(int sc)
     case PS2_H: matrix[ZX_K_H] = !is_up; break;
     case PS2_I: matrix[ZX_K_I] = !is_up; break;
     case PS2_J: 
-      if (is_menu || (is_ctrl && is_alt)) {
+      if (is_menu || is_win || (is_ctrl && is_alt)) {
         if (!is_up) {
           // menu + J = JOY_TYPE
           joy_type = !joy_type;
@@ -588,7 +589,7 @@ void fill_kbd_matrix(int sc)
 
     // Tab
     case PS2_TAB:
-      if (is_menu || (is_ctrl && is_alt)) {
+      if (is_menu || is_win || (is_ctrl && is_alt)) {
         if (!is_up) {
           // menu + TAB = SW10
           is_sw10 = !is_sw10;
@@ -655,7 +656,7 @@ void fill_kbd_matrix(int sc)
 
     // Fn keys
     case PS2_F1:
-      if (is_menu || (is_ctrl && is_alt)) {
+      if (is_menu || is_win || (is_ctrl && is_alt)) {
         if (!is_up) {
           // menu + F1, ctrl+alt = ROMSET 00
           is_sw3 = false;
@@ -670,7 +671,7 @@ void fill_kbd_matrix(int sc)
       }
       break;
     case PS2_F2:
-      if (is_menu || (is_ctrl && is_alt)) {
+      if (is_menu || is_win || (is_ctrl && is_alt)) {
         if (!is_up) {
           // menu + F2 = ROMSET 01
           is_sw3 = true;
@@ -685,7 +686,7 @@ void fill_kbd_matrix(int sc)
       }
       break;
     case PS2_F3:
-      if (is_menu || (is_ctrl && is_alt)) {
+      if (is_menu || is_win || (is_ctrl && is_alt)) {
         if (!is_up) {
           // menu + F3 = ROMSET 10
           is_sw3 = false;
@@ -700,7 +701,7 @@ void fill_kbd_matrix(int sc)
       }
       break;
     case PS2_F4:
-      if (is_menu || (is_ctrl && is_alt)) {
+      if (is_menu || is_win || (is_ctrl && is_alt)) {
         if (!is_up) {
           // menu + F4 = ROMSET 11
           is_sw3 = true;
@@ -715,7 +716,7 @@ void fill_kbd_matrix(int sc)
       }
       break;
     case PS2_F5:
-      if (is_menu || (is_ctrl && is_alt)) {
+      if (is_menu || is_win || (is_ctrl && is_alt)) {
         if (!is_up) {
           // menu + F5 = SW5
           is_sw5 = !is_sw5;
@@ -728,7 +729,7 @@ void fill_kbd_matrix(int sc)
       break;
 
     case PS2_F6: 
-      if (is_menu || (is_ctrl && is_alt)) {
+      if (is_menu || is_win || (is_ctrl && is_alt)) {
         if (!is_up) {
           // menu + F6 = SW6
           is_sw6 = !is_sw6;
@@ -740,7 +741,7 @@ void fill_kbd_matrix(int sc)
       }
       break;
     case PS2_F7: 
-      if (is_menu || (is_ctrl && is_alt)) {
+      if (is_menu || is_win || (is_ctrl && is_alt)) {
         if (!is_up) {
           // menu + F7 = SW7, !SW7, SW9, !SW9
           if (!is_sw9 && !is_sw7) {
@@ -776,7 +777,7 @@ void fill_kbd_matrix(int sc)
       }
       break;
     case PS2_F9: 
-      if (is_menu || (is_ctrl && is_alt)) {
+      if (is_menu || is_win || (is_ctrl && is_alt)) {
         if (!is_up) {
           // menu + F9 = SW1
           is_sw1 = !is_sw1;
@@ -788,7 +789,7 @@ void fill_kbd_matrix(int sc)
       }
       break;
     case PS2_F10: 
-      if (is_menu || (is_ctrl && is_alt)) {
+      if (is_menu || is_win || (is_ctrl && is_alt)) {
         if (!is_up) {
           // menu + F10 = SW2
           is_sw2 = !is_sw2;
@@ -800,7 +801,7 @@ void fill_kbd_matrix(int sc)
       }
       break;    
     case PS2_F11:
-      if (is_menu || (is_ctrl && is_alt)) {
+      if (is_menu || is_win || (is_ctrl && is_alt)) {
         if (!is_up) {
           // menu + F11 = turbo
           is_turbo = !is_turbo;
@@ -812,7 +813,7 @@ void fill_kbd_matrix(int sc)
       }
       break;
     case PS2_F12:
-      if (is_menu || (is_ctrl && is_alt)) {
+      if (is_menu || is_win || (is_ctrl && is_alt)) {
         if (!is_up) {
           // menu + F12 = magic
           do_magic();
@@ -1546,7 +1547,7 @@ void loop()
 
   // swap mouse buttons
   if (mouse_present && n - ts > MOUSE_SWAP_INTERVAL) {
-    if ((is_menu || (is_ctrl && is_alt)) && ms_btn1) {
+    if ((is_menu || is_win || (is_ctrl && is_alt)) && ms_btn1) {
       is_mouse_swap = !is_mouse_swap;
       eeprom_store_value(EEPROM_MOUSE_SWAP_ADDRESS, is_mouse_swap);
       update_led(PIN_LED1, HIGH);
