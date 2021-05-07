@@ -217,7 +217,6 @@ set_global_assignment -name VHDL_FILE ../rtl/spi/spi_slave.vhd
 set_global_assignment -name VHDL_FILE ../rtl/spi/spi_master.vhd
 set_global_assignment -name VHDL_FILE ../rtl/sd/zc_spi.vhd
 set_global_assignment -name VHDL_FILE ../rtl/memory/memory.vhd
-set_global_assignment -name VHDL_FILE ../rtl/t80se/T80aw.vhd
 set_global_assignment -name VHDL_FILE ../rtl/t80se/T80a.vhd
 set_global_assignment -name VHDL_FILE ../rtl/t80se/T80.vhd
 set_global_assignment -name VHDL_FILE ../rtl/t80se/T80_Reg.vhd

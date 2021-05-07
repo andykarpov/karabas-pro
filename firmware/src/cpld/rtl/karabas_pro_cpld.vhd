@@ -96,7 +96,7 @@ begin
 	-- rx
 	process (CLK, SA)
 	begin 
-		if falling_edge(CLK) then
+		if rising_edge(CLK) then
 			case SA is 
 				when "00" => 
 					rx_buf <= SD(7 downto 0); -- rx

@@ -549,11 +549,10 @@ port map(
 );
 
 -- Zilog Z80A CPU
-U5: entity work.T80aw
+U5: entity work.T80a
 port map (
 	RESET_n			=> cpu_reset_n,
-	CLK_n				=> clk_bus,
-	ENA				=> clk_cpu,
+	CLK_n				=> not clk_cpu,
 	WAIT_n			=> cpu_wait_n,
 	INT_n				=> cpu_int_n and serial_ms_int,
 	NMI_n				=> cpu_nmi_n,
@@ -567,8 +566,14 @@ port map (
 	HALT_n			=> open,--cpu_halt_n,
 	BUSAK_n			=> open,--cpu_basak_n,
 	A					=> cpu_a_bus,
-	DI					=> cpu_di_bus,
-	DO					=> cpu_do_bus
+	DIN					=> cpu_di_bus,
+	DOUT					=> cpu_do_bus,
+	
+	SavePC      	=> open,
+	SaveINT     	=> open,
+	RestorePC   	=> (others => '0'),
+	RestoreINT  	=> (others => '0'),	
+	RestorePC_n 	=> '1'
 );
 	
 -- memory manager
@@ -1077,7 +1082,7 @@ reset <= areset or kb_reset or loader_reset or loader_act or board_reset; -- hot
 
 cpu_reset_n <= not(reset) and not(loader_reset); -- CPU reset
 cpu_inta_n <= cpu_iorq_n or cpu_m1_n;	-- INTA
-cpu_nmi_n <= '0' when kb_magic = '1' else '1'; -- NMI
+cpu_nmi_n <= '0' when kb_magic = '1' and cpu_m1_n = '0' and cpu_mreq_n = '0' and (cpu_a_bus(15 downto 14) /= "00") else '1'; -- NMI
 --cpu_wait_n <= '0' when kb_wait = '1' else '1'; -- WAIT
 cpu_wait_n <= '1';
 turbo_cpu <= (kb_turbo or turbo_on) and (not turbo_off);
@@ -1209,7 +1214,7 @@ rom0 <= port_008b_reg(0);											-- 0 - ROM64Kb PAGE bit 0 Change
 rom1 <= port_008b_reg(1);											-- 1 - ROM64Kb PAGE bit 1 Change
 rom2 <= port_008b_reg(2);											-- 2 - ROM64Kb PAGE bit 2 Change
 rom3 <= port_008b_reg(3);											-- 3 - ROM64Kb PAGE bit 3 Change
-rom4 <=  port_008b_reg(4); 										-- 4 - ROM64Kb PAGE bit 4 Change
+rom4 <= port_008b_reg(4); 											-- 4 - ROM64Kb PAGE bit 4 Change
 rom5 <= port_008b_reg(5);										 	-- 5 - ROM64Kb PAGE bit 5 Change
 onrom <= port_008b_reg(6);											-- 6 - Forced activation of the signal "DOS"
 unlock_128 <= port_008b_reg(7);									-- 7 - Unlock 128 ROM page for DOS
@@ -1392,7 +1397,7 @@ begin
 			end if;
 			
 			-- TR-DOS FLAG
-			if (cpu_m1_n = '0' and cpu_mreq_n = '0' and cpu_a_bus(15 downto 8) = X"3D" and (rom14 = '1' or unlock_128 = '1') and port_dffd_reg(4) = '0') or (onrom = '1') then dos_act <= '1';
+			if (((cpu_m1_n = '0' and cpu_mreq_n = '0' and cpu_a_bus(15 downto 8) = X"3D" and (rom14 = '1' or unlock_128 = '1')) or cpu_nmi_n = '0') and port_dffd_reg(4) = '0') or (onrom = '1') then dos_act <= '1';
 			elsif ((cpu_m1_n = '0' and cpu_mreq_n = '0' and cpu_a_bus(15 downto 14) /= "00") or (port_dffd_reg(4) = '1')) then dos_act <= '0'; end if;
 				
 	end if;
