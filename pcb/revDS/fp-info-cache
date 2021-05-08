@@ -1,4 +1,4 @@
-19079124925715307
+19085609040388307
 Battery
 BatteryHolder_Bulgin_BX0036_1xC
 Bulgin Battery Holder, BX0036, Battery Type C (https://www.bulgin.com/products/pub/media/bulgin/data/Battery_holders.pdf)
@@ -82303,7 +82303,7 @@ TE_1734451-1-LONG
 
 
 0
-54
+56
 52
 footprints
 TP4056_module
@@ -82412,6 +82412,34 @@ karabas_pro_logo2
 0
 footprints
 karabas_pro_logo2-coppermask
+
+
+0
+0
+0
+footprints
+karabas_pro_logo3_copper
+
+
+0
+0
+0
+footprints
+karabas_pro_logo4_copper
+
+
+0
+0
+0
+footprints
+polozhi_chip1
+
+
+0
+0
+0
+footprints
+polozhi_chip2
 
 
 0
