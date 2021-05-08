@@ -72,6 +72,25 @@ echo "Done"
 
 cd ../../../../
 
+echo "Building Profi FPGA sources for EP3C10"
+
+cd fpga/profi/syn/ep3c10
+
+make clean
+make all
+make jic
+
+cp karabas_pro_ep3c10_tda1543.jic ../../../../../releases/profi/ep3c10/karabas_pro_ep3c10_tda1543.jic
+cp karabas_pro_ep3c10_tda1543a.jic ../../../../../releases/profi/ep3c10/karabas_pro_ep3c10_tda1543a.jic
+cp karabas_pro_ep3c10.rbf ../../../../../releases/profi/ep3c10/karabas_pro_ep3c10.rbf
+cp karabas_pro_ep3c10.sof ../../../../../releases/profi/ep3c10/karabas_pro_ep3c10.sof
+
+make clean
+
+echo "Done"
+
+cd ../../../../
+
 echo "Building CPLD sources"
 
 cd cpld/syn
