@@ -85,11 +85,14 @@ port (
 	PIN_138 		: inout std_logic;
 	PIN_121		: inout std_logic;
 	PIN_120		: inout std_logic;
+	PIN_7 		: inout std_logic;
+	PIN_25 		: in std_logic;	 -- dedicated clock input
+	
    FDC_STEP    : inout std_logic; -- PIN_119 connected to FDC_STEP for TurboFDC
    SD_MOSI     : inout std_logic; -- PIN_115 connected to SD_S
-	
-	-- Dip Switches - unused yet
-	SW3 			: in std_logic_vector(4 downto 1) := "1111";
+	TAPE_IN 		: in std_logic := '1';  -- PIN_24
+	TAPE_OUT 	: out std_logic; -- PIN_10
+	BUZZER		: out std_logic; -- PIN_86
 		
 	-- UART / ESP8266
 	UART_RX 		: in std_logic;
@@ -1407,6 +1410,8 @@ end process;
 -- Audio mixer
 
 speaker <= port_xxfe_reg(4);
+BUZZER <= speaker;
+TAPE_OUT <= port_xxfe_reg(3);
 
 audio_mono <= 	
 				("0000" & speaker & "00000000000") +
@@ -1516,7 +1521,7 @@ begin
 	case selector is
 		when x"00" => cpu_di_bus <= ram_do_bus;
 		when x"01" => cpu_di_bus <= mc146818_do_bus;
-		when x"02" => cpu_di_bus <= GX0 & "1" & kb_do_bus;
+		when x"02" => cpu_di_bus <= GX0 & TAPE_IN & kb_do_bus;
 		when x"03" => cpu_di_bus <= zc_do_bus;
 		when x"04" => cpu_di_bus <= "11111100";		
 		when x"05" => cpu_di_bus <= joy_bus;

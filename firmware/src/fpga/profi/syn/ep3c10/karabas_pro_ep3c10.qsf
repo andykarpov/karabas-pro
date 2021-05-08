@@ -36,8 +36,8 @@
 # -------------------------------------------------------------------------- #
 
 
-set_global_assignment -name FAMILY "Cyclone IV E"
-set_global_assignment -name DEVICE EP4CE6E22C8
+set_global_assignment -name FAMILY "Cyclone III"
+set_global_assignment -name DEVICE EP3C10E144C8
 set_global_assignment -name TOP_LEVEL_ENTITY karabas_pro
 set_global_assignment -name ORIGINAL_QUARTUS_VERSION 13.1
 set_global_assignment -name PROJECT_CREATION_TIME_DATE "12:26:48  AUGUST 14, 2017"
@@ -185,6 +185,10 @@ set_instance_assignment -name GLOBAL_SIGNAL "GLOBAL CLOCK" -to CLK_50MHZ
 
 
 set_global_assignment -name EDA_GENERATE_FUNCTIONAL_NETLIST OFF -section_id eda_formal_verification
+#set_location_assignment PIN_7 -to SW3[1]
+#set_location_assignment PIN_10 -to SW3[2]
+#set_location_assignment PIN_24 -to SW3[3]
+#set_location_assignment PIN_25 -to SW3[4]
 
 
 
@@ -199,6 +203,8 @@ set_global_assignment -name PRE_FLOW_SCRIPT_FILE "quartus_sh:generate_messages.t
 #set_global_assignment -name PRE_FLOW_SCRIPT_FILE "quartus_sh:add_ver.tcl"
 #set_global_assignment -name POST_FLOW_SCRIPT_FILE "quartus_sh:remove_ver.tcl"
 
+set_parameter -name enable_saa1099 true
+set_parameter -name enable_zxuno_uart2 true
 
 set_global_assignment -name OPTIMIZE_HOLD_TIMING "ALL PATHS"
 set_global_assignment -name OPTIMIZE_MULTI_CORNER_TIMING ON
@@ -250,10 +256,10 @@ set_global_assignment -name VHDL_FILE ../../rtl/board/board.vhd
 set_global_assignment -name QIP_FILE ../../rtl/video/message_rom.qip
 set_global_assignment -name TCL_SCRIPT_FILE generate_messages.tcl
 
-
 set_location_assignment PIN_7 -to PIN_7
 set_location_assignment PIN_10 -to TAPE_OUT
 set_location_assignment PIN_24 -to TAPE_IN
 set_location_assignment PIN_25 -to PIN_25
 set_location_assignment PIN_86 -to BUZZER
+
 set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
