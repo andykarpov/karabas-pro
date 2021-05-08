@@ -2,7 +2,7 @@
 # Karabas-Pro
 ##################################################################
 
-PROJECT = karabas_pro
+PROJECT = karabas_pro_ep4ce6
 TOP_LEVEL_ENTITY = karabas_pro
 ASSIGNMENT_FILES = $(PROJECT).qpf $(PROJECT).qsf
 

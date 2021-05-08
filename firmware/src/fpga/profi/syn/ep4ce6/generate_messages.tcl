@@ -1,5 +1,5 @@
-set input [open ../rtl/video/messages.txt rb]			
-set fp [open ../rtl/video/messages.mif w]
+set input [open ../../rtl/video/messages.txt rb]
+set fp [open ../../rtl/video/messages.mif w]
 
 set timestamp_decimal [clock format [clock seconds] -format {%y %m %d %H}]
 set fields [split $timestamp_decimal " "]
