@@ -32,7 +32,7 @@ STA_ARGS =
 
 STAMP = echo done >
 
-$(PROJECT).map.rpt: map.chg $(SOURCE_FILES) 
+$(PROJECT).map.rpt: map.chg $(SOURCE_FILES)
 	quartus_map $(MAP_ARGS) $(PROJECT)
 	$(STAMP) fit.chg
 
@@ -74,12 +74,14 @@ jic: $(PROJECT).sof
 	quartus_cpf -c $(PROJECT)_rbf.cof
 	quartus_cpf -c $(PROJECT)_tda1543.cof
 	quartus_cpf -c $(PROJECT)_tda1543a.cof
+	quartus_cpf -c $(PROJECT)_revDS_tda1543.cof
+	quartus_cpf -c $(PROJECT)_revDS_tda1543a.cof
 
 program: $(PROJECT).sof
 	quartus_pgm --no_banner --mode=jtag -o "P;$(PROJECT).sof"
 
-program-jic: $(PROJECT).jic
-	quartus_pgm --no_banner --mode=jtag -o "P;$(PROJECT).cdf"
+program-jic: $(PROJECT)_revDS_tda1543a.jic
+	quartus_pgm --no_banner --mode=jtag -o "P;$(PROJECT)_revDS_tda1543a.cdf"
 
 program-pof: $(PROJECT).pof
 	quartus_pgm --no_banner --mode=jtag -o "BVP;$(PROJECT).pof"
