@@ -433,6 +433,7 @@ signal led2_overwrite: std_logic := '0';
 signal soft_sw 		: std_logic_vector(1 to 10) := (others => '0');
 
 signal board_reset 	: std_logic := '0'; -- board reset on rombank switch
+signal tape_in_out_enable : std_logic := '0'; -- revDS uses SW3 switches as tape in / out
 
 -- debug 
 signal fdd_oe_n 		: std_logic := '1';
@@ -1009,6 +1010,7 @@ U23: entity work.board
 port map(
 	CLK => clk_bus,
 	CFG => board_revision,
+	
 	SOFT_SW1 => soft_sw(1),
 	SOFT_SW2 => soft_sw(2),
 	SOFT_SW3 => soft_sw(3),
@@ -1017,6 +1019,7 @@ port map(
 	AUDIO_DAC_TYPE => audio_dac_type,
 	ROM_BANK => ext_rom_bank,
 	SCANDOUBLER_EN => vid_scandoubler_enable,
+	TAPE_IN_OUT_EN => tape_in_out_enable,
 	
 	BOARD_RESET => board_reset	
 );
@@ -1411,7 +1414,6 @@ end process;
 
 speaker <= port_xxfe_reg(4);
 BUZZER <= speaker;
-TAPE_OUT <= port_xxfe_reg(3);
 
 audio_mono <= 	
 				("0000" & speaker & "00000000000") +
@@ -1470,6 +1472,9 @@ audio_r <= "0000000000000000" when loader_act = '1' or kb_wait = '1' or sound_of
 				("000"  & covox_d &       "00000") + 
 				("000"  & covox_fb &      "00000") + 
 				("000"  & saa_out_r &     "00000");
+				
+-- Tape Out: 1/0 for revDS, open collector output for revA,B,C,D
+TAPE_OUT <= port_xxfe_reg(3) when tape_in_out_enable = '1' else '0' when port_xxfe_reg(3) = '0' else 'Z';
 				
 -- SAA1099
 saa_wr_n <= '0' when (cpu_iorq_n = '0' and cpu_wr_n = '0' and cpu_a_bus(7 downto 0) = X"FF" and dos_act = '0') else '1';

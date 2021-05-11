@@ -19,6 +19,7 @@ port (
 	AUDIO_DAC_TYPE : out std_logic := '0';
 	ROM_BANK 		: buffer std_logic_vector(1 downto 0) := "00";
 	SCANDOUBLER_EN : out std_logic := '1';
+	TAPE_IN_OUT_EN : out std_logic := '0';
 	
 	BOARD_RESET 	: out std_logic := '0'
 );
@@ -33,7 +34,8 @@ begin
 
 SCANDOUBLER_EN <= not(SOFT_SW1); 
 AUDIO_DAC_TYPE <= CFG(0);
-ROM_BANK <= soft_sw4 & soft_sw3;  
+ROM_BANK <= soft_sw4 & soft_sw3; 
+TAPE_IN_OUT_EN <= CFG(2);
 
 process (CLK, old_rom_bank, ROM_BANK, reset_cnt)
 begin
