@@ -434,6 +434,7 @@ signal soft_sw 		: std_logic_vector(1 to 10) := (others => '0');
 
 signal board_reset 	: std_logic := '0'; -- board reset on rombank switch
 signal tape_in_out_enable : std_logic := '0'; -- revDS uses SW3 switches as tape in / out
+signal tape_in_monitor : std_logic := '0';
 
 -- debug 
 signal fdd_oe_n 		: std_logic := '1';
@@ -765,6 +766,8 @@ port map (
 	I_IORQ_N			=> cpu_iorq_n,
 	I_M1_N			=> cpu_m1_n,
 	I_RESET_N		=> cpu_reset_n,
+	I_BDIR 			=> ay_bdir,
+	I_BC1 			=> ay_bc1,
 	O_SEL				=> ssg_sel,
 	I_MODE 			=> soft_sw(8),
 	-- ssg0
@@ -1411,9 +1414,11 @@ end process;
 
 speaker <= port_xxfe_reg(4);
 BUZZER <= speaker;
+tape_in_monitor <= TAPE_IN when tape_in_out_enable = '1' else '0';
 
 audio_mono <= 	
 				("0000" & speaker & "00000000000") +
+				("00000" & tape_in_monitor & "0000000000") +				
 				("0000"  & ssg_cn0_a &     "0000") + 
 				("0000"  & ssg_cn0_b &     "0000") + 
 				("0000"  & ssg_cn0_c &     "0000") + 
@@ -1431,6 +1436,7 @@ audio_mono <=
 audio_l <= "0000000000000000" when loader_act = '1' or kb_wait = '1' or sound_off = '1' else 
 				audio_mono when soft_sw(9) = '1' else
 				("000" & speaker & "000000000000") + -- ACB: L = A + C/2
+				("00000" & tape_in_monitor & "0000000000") +	
 				("000"  & ssg_cn0_a &     "00000") + 
 				("0000"  & ssg_cn0_c &     "0000") + 
 				("000"  & ssg_cn1_a &     "00000") + 
@@ -1440,6 +1446,7 @@ audio_l <= "0000000000000000" when loader_act = '1' or kb_wait = '1' or sound_of
 				("000"  & covox_fb &      "00000") + 
 				("000"  & saa_out_l  &    "00000") when soft_sw(7) = '0' else 
 				("000" & speaker & "000000000000") +  -- ABC: L = A + B/2
+				("00000" & tape_in_monitor & "0000000000") +	
 				("000"  & ssg_cn0_a &     "00000") + 
 				("0000"  & ssg_cn0_b &     "0000") + 
 				("000"  & ssg_cn1_a &     "00000") + 
@@ -1452,6 +1459,7 @@ audio_l <= "0000000000000000" when loader_act = '1' or kb_wait = '1' or sound_of
 audio_r <= "0000000000000000" when loader_act = '1' or kb_wait = '1' or sound_off = '1' else 
 				audio_mono when soft_sw(9) = '1' else
 				("000" & speaker & "000000000000") + -- ACB: R = B + C/2
+				("00000" & tape_in_monitor & "0000000000") +	
 				("000"  & ssg_cn0_b &     "00000") + 
 				("0000"  & ssg_cn0_c &     "0000") + 
 				("000"  & ssg_cn1_b &     "00000") + 
@@ -1461,6 +1469,7 @@ audio_r <= "0000000000000000" when loader_act = '1' or kb_wait = '1' or sound_of
 				("000"  & covox_fb &      "00000") + 
 				("000"  & saa_out_r &     "00000") when soft_sw(7) = '0' else
 				("000" & speaker & "000000000000") + -- ABC: R = C + B/2
+				("00000" & tape_in_monitor & "0000000000") +	
 				("000"  & ssg_cn0_c &     "00000") + 
 				("0000"  & ssg_cn0_b &     "0000") + 
 				("000"  & ssg_cn1_c &     "00000") + 
@@ -1509,9 +1518,9 @@ port map(
 	MOSI    		=> zc_mosi
 );
 
-ay_port 		<= '1' when cpu_a_bus(7 downto 0) = x"FD" and cpu_a_bus(15)='1' and fd_port = '1' else '0';
+ay_port 		<= '1' when cpu_a_bus(1 downto 0) = "01" and cpu_a_bus(15)='1' and fd_port = '1' else '0';
 ay_bdir 		<= '1' when ay_port = '1' and cpu_iorq_n = '0' and cpu_wr_n = '0' else '0';
-ay_bc1 		<= '1' when ay_port = '1' and cpu_a_bus(14) = '1' and cpu_iorq_n = '0' and (cpu_wr_n='0' or cpu_rd_n='0') else '0';
+ay_bc1 		<= '1' when ay_port = '1' and cpu_a_bus(14) = '1' and cpu_iorq_n = '0' else '0';
 
 -------------------------------------------------------------------------------
 -- CPU0 Data bus
