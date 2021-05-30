@@ -30,7 +30,7 @@ The idea was to make a smaller Profi (Профи) ZX Spectrum clone, with real F
 14) ZX UNO simple UART @115200 for ESP8266 module (with ability to enable a secondary ZX UNO UART on uBus connector)
 15) An additional ROM bank with **PQ-DOS BIOS**
 16) An additional ROM bank with **Flash Tool** by **Doctor Max** to upgrade the FGPA firmware and ROM banks without programmer
-17) An additional ROM bank with **FDImage Tool** by **Doctor Max** to extract TRD, SCL, PRO and FDI images on real floppies
+17) An additional ROM bank with **FDImage Tool** by **Doctor Max** to extract TRD, SCL, PRO, TD0 and FDI images on real floppies
 
 ## More info
 
