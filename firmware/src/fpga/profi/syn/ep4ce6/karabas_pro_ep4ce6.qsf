@@ -244,8 +244,8 @@ set_global_assignment -name QIP_FILE ../../rtl/avr/queue.qip
 set_global_assignment -name VHDL_FILE ../../rtl/mouse/serial_mouse.vhd
 set_global_assignment -name VHDL_FILE ../../rtl/mouse/hw_int.vhd
 set_global_assignment -name QIP_FILE ../../rtl/mouse/mmux.qip
-set_global_assignment -name SDC_FILE karabas_pro.sdc
-set_global_assignment -name CDF_FILE karabas_pro.cdf
+set_global_assignment -name SDC_FILE karabas_pro_ep4ce6.sdc
+set_global_assignment -name CDF_FILE karabas_pro_ep4ce6.cdf
 set_global_assignment -name VHDL_FILE ../../rtl/board/board.vhd
 set_global_assignment -name QIP_FILE ../../rtl/video/message_rom.qip
 set_global_assignment -name TCL_SCRIPT_FILE generate_messages.tcl
