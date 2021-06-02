@@ -622,6 +622,8 @@ port map (
 	-- ram pages
 	RAM_BANK 		=> port_7ffd_reg(2 downto 0),
 	RAM_EXT 			=> ram_ext, -- seg A3 - seg A5
+	P3_MEM_MODE		=> p3_mem_mode, -- 0 - Normal, 1 - Special
+	P3_RAM_MODE		=> p3_ram_pg, -- Special 4 modes
 	-- video
 	VA 				=> vid_a_bus,
 	VID_PAGE 		=> port_7ffd_reg(3), -- seg A0 - seg A2
@@ -775,8 +777,8 @@ port map (
 	I_IORQ_N			=> cpu_iorq_n,
 	I_M1_N			=> cpu_m1_n,
 	I_RESET_N		=> cpu_reset_n,
-	I_BDIR 			=> ay_bdir,
-	I_BC1 			=> ay_bc1,
+	I_BDIR 			=> '1',-- ay_bdir,
+	I_BC1 			=> '1',-- ay_bc1,
 	O_SEL				=> ssg_sel,
 	I_MODE 			=> soft_sw(8),
 	-- ssg0
@@ -1557,9 +1559,9 @@ port map(
 	MOSI    		=> zc_mosi
 );
 
-ay_port 		<= '1' when cpu_a_bus(1 downto 0) = "01" and cpu_a_bus(15)='1' and fd_port = '1' else '0';
-ay_bdir 		<= '1' when ay_port = '1' and cpu_iorq_n = '0' and cpu_wr_n = '0' else '0';
-ay_bc1 		<= '1' when ay_port = '1' and cpu_a_bus(14) = '1' and cpu_iorq_n = '0' else '0';
+--ay_port 		<= '1' when cpu_a_bus(1 downto 0) = "01" and cpu_a_bus(15)='1' and fd_port = '1' else '0';
+--ay_bdir 		<= '1' when ay_port = '1' and cpu_iorq_n = '0' and cpu_wr_n = '0' else '0';
+--ay_bc1 		<= '1' when ay_port = '1' and cpu_a_bus(14) = '1' and cpu_iorq_n = '0' else '0';
 
 -------------------------------------------------------------------------------
 -- CPU0 Data bus

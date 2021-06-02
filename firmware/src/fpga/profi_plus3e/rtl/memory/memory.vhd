@@ -39,6 +39,8 @@ port (
 	
 	RAM_BANK		: in std_logic_vector(2 downto 0);
 	RAM_EXT 		: in std_logic_vector(2 downto 0);
+	P3_MEM_MODE	: in std_logic := '0'; -- 0 - Normal, 1 - Special
+	P3_RAM_MODE	: in std_logic_vector(1 downto 0) := "00"; -- Special 4 modes
 	
 	VA				: in std_logic_vector(13 downto 0);
 	VID_PAGE 	: in std_logic := '0';
@@ -110,21 +112,51 @@ begin
 		
 	mux <= A(15 downto 14);
 		
-	process (mux, RAM_EXT, RAM_BANK, SCR, SCO)
+	process (mux, RAM_EXT, RAM_BANK, SCR, SCO, P3_MEM_MODE, P3_RAM_MODE)
 	begin
 		case mux is
-			when "00" => ram_page <= "0000000";                 -- Seg0 ROM 0000-3FFF or Seg0 RAM 0000-3FFF	
-			when "01" => if SCO='0' then 
+			when "00" => if P3_MEM_MODE='1' then
+								case P3_RAM_MODE is
+									when "00" => ram_page <= "0000000";
+									when "01" => ram_page <= "0000100";
+									when "10" => ram_page <= "0000100";
+									when "11" => ram_page <= "0000100";
+								end case;
+							 else
+								ram_page <= "0000000";                 -- Seg0 ROM 0000-3FFF or Seg0 RAM 0000-3FFF	
+							 end if;
+			when "01" => if P3_MEM_MODE='1' then
+								case P3_RAM_MODE is
+									when "00" => ram_page <= "0000001";
+									when "01" => ram_page <= "0000101";
+									when "10" => ram_page <= "0000101";
+									when "11" => ram_page <= "0000111";
+								end case;
+							 elsif SCO='0' then 
 								ram_page <= "0000101";
 							 else 
 								ram_page <= "0" & RAM_EXT(2 downto 0) & RAM_BANK(2 downto 0); 
 							 end if;	                               -- Seg1 RAM 4000-7FFF	
-			when "10" => if SCR='0' then 
+			when "10" => if P3_MEM_MODE='1' then
+								case P3_RAM_MODE is
+									when "00" => ram_page <= "0000010";
+									when "01" => ram_page <= "0000110";
+									when "10" => ram_page <= "0000110";
+									when "11" => ram_page <= "0000110";
+								end case;
+							 elsif SCR='0' then 
 								ram_page <= "0000010"; 	
 							 else 
 								ram_page <= "0000110"; 
 							 end if;                                -- Seg2 RAM 8000-BFFF
-			when "11" => if SCO='0' then 
+			when "11" => if P3_MEM_MODE='1' then
+								case P3_RAM_MODE is
+									when "00" => ram_page <= "0000011";
+									when "01" => ram_page <= "0000111";
+									when "10" => ram_page <= "0000011";
+									when "11" => ram_page <= "0000011";
+								end case;
+							 elsif SCO='0' then 
 								ram_page <= "0" & RAM_EXT(2 downto 0) & RAM_BANK(2 downto 0);	
 							 else 
 								ram_page <= "0000111";               -- Seg3 RAM C000-FFFF	
