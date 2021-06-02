@@ -64,10 +64,11 @@ end component;
 	
 	
 begin
-	--bdir	<= '1' when (I_M1_N = '1' and I_IORQ_N = '0' and I_WR_N = '0' and I_ADDR(15) = '1' and I_ADDR(1) = '0') else '0';
-	--bc1	<= '1' when (I_M1_N = '1' and I_IORQ_N = '0' and I_ADDR(15) = '1' and I_ADDR(14) = '1' and I_ADDR(1) = '0') else '0';
-	bdir <= I_BDIR;
-	bc1 <= I_BC1;
+
+bdir	<= '1' when (I_M1_N = '1' and I_IORQ_N = '0' and I_WR_N = '0' and I_ADDR(15) = '1' and I_ADDR(1) = '0') else '0';
+bc1	<= '1' when (I_M1_N = '1' and I_IORQ_N = '0' and I_ADDR(15) = '1' and I_ADDR(14) = '1' and I_ADDR(1) = '0') else '0';
+--	bdir <= I_BDIR;
+--	bc1 <= I_BC1;
 	
 	O_SEL	<= ssg;
 	

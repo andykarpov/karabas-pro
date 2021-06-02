@@ -276,9 +276,9 @@ signal ssg_cn1_b		: std_logic_vector(7 downto 0);
 signal ssg_cn1_c		: std_logic_vector(7 downto 0);
 
 -- AY UART signals
-signal ay_bdir 		: std_logic;
-signal ay_bc1			: std_logic;
-signal ay_port 		: std_logic := '0';
+--signal ay_bdir 		: std_logic;
+--signal ay_bc1			: std_logic;
+--signal ay_port 		: std_logic := '0';
 
 -- Covox
 signal covox_a			: std_logic_vector(7 downto 0);
@@ -766,8 +766,8 @@ port map (
 	I_IORQ_N			=> cpu_iorq_n,
 	I_M1_N			=> cpu_m1_n,
 	I_RESET_N		=> cpu_reset_n,
-	I_BDIR 			=> ay_bdir,
-	I_BC1 			=> ay_bc1,
+	I_BDIR 			=> '1', --ay_bdir,
+	I_BC1 			=> '1', --ay_bc1,
 	O_SEL				=> ssg_sel,
 	I_MODE 			=> soft_sw(8),
 	-- ssg0
@@ -1518,9 +1518,9 @@ port map(
 	MOSI    		=> zc_mosi
 );
 
-ay_port 		<= '1' when cpu_a_bus(1 downto 0) = "01" and cpu_a_bus(15)='1' and fd_port = '1' else '0';
-ay_bdir 		<= '1' when ay_port = '1' and cpu_iorq_n = '0' and cpu_wr_n = '0' else '0';
-ay_bc1 		<= '1' when ay_port = '1' and cpu_a_bus(14) = '1' and cpu_iorq_n = '0' else '0';
+--ay_port 		<= '1' when cpu_a_bus(1) = '0' and cpu_a_bus(15)='1' and cpu_iorq_n = '0' and fd_port = '1' else '0';
+--ay_bdir 		<= '1' when ay_port = '1' and cpu_wr_n = '0' else '0';
+--ay_bc1 		<= '1' when ay_port = '1' and cpu_a_bus(14) = '1' and cpu_m1_n = '1' else '0';
 
 -------------------------------------------------------------------------------
 -- CPU0 Data bus
