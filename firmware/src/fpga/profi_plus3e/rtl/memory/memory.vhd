@@ -79,7 +79,7 @@ architecture RTL of memory is
 
 begin
 
-	is_rom <= '1' when N_MREQ = '0' and A(15 downto 14)  = "00" and WOROM = '0' else '0';
+	is_rom <= '1' when N_MREQ = '0' and A(15 downto 14)  = "00" and WOROM = '0' and P3_MEM_MODE = '0' else '0';
 	is_ram <= '1' when N_MREQ = '0' and is_rom = '0' else '0';
 	
 	-- 00 - bank 0, CPM
