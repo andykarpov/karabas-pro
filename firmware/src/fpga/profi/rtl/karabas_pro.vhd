@@ -557,7 +557,8 @@ port map(
 U5: entity work.T80a
 port map (
 	RESET_n			=> cpu_reset_n,
-	CLK_n				=> not clk_cpu,
+	CLK_n			=> clk_bus,
+	CEN			=> not clk_cpu,
 	WAIT_n			=> cpu_wait_n,
 	INT_n				=> cpu_int_n and serial_ms_int,
 	NMI_n				=> cpu_nmi_n,
@@ -572,13 +573,7 @@ port map (
 	BUSAK_n			=> open,--cpu_basak_n,
 	A					=> cpu_a_bus,
 	DIN					=> cpu_di_bus,
-	DOUT					=> cpu_do_bus,
-	
-	SavePC      	=> open,
-	SaveINT     	=> open,
-	RestorePC   	=> (others => '0'),
-	RestoreINT  	=> (others => '0'),	
-	RestorePC_n 	=> '1'
+	DOUT					=> cpu_do_bus
 );
 	
 -- memory manager
