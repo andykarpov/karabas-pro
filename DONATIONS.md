@@ -17,7 +17,7 @@ Card: 4817 7601 6316 7095
 
 ### Wi-Fi support and gopher browser by nihirash
 
-It would be great to buy some coffee for **nihirash** - author of great tools to support internet on karabas-pro: ![](https://nihirash.net).
+It would be great to buy some coffee for **nihirash** - author of great tools to support internet on karabas-pro: https://nihirash.net.
 
 Feel free to send any amount of USD/EUR/etc to support **nihirash**:
 
