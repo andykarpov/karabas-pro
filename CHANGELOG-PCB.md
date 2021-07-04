@@ -1,5 +1,9 @@
 # Karabas-Pro PCB changelog:
 
+## Rev.DS':
+- Fixed Q2 footprint 
+- Updated R nominals for buzzer and tape in for better compatibility
+
 ## Rev.DS:
 
 - Removed DIP switches from the design
