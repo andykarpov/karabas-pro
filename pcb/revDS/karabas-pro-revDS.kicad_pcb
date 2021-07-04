@@ -10845,7 +10845,7 @@
   (gr_text "Rev.DS'\n" (at 136.144 132.334) (layer F.SilkS) (tstamp 609B5246)
     (effects (font (size 1.5 1.5) (thickness 0.3)))
   )
-  (gr_text "Rev.DS'\n" (at 161.544 134.366) (layer B.Mask) (tstamp 609AFD7C)
+  (gr_text "Rev.DS\n" (at 161.544 134.366) (layer B.Mask) (tstamp 609AFD7C)
     (effects (font (size 1.5 1.5) (thickness 0.3)) (justify mirror))
   )
   (gr_text "EXT JOYSTICK" (at 104.2035 163.195) (layer F.SilkS) (tstamp 607C0CBC)
