@@ -5,8 +5,8 @@ $Descr A2 23386 16535
 encoding utf-8
 Sheet 1 1
 Title "Karabas Pro"
-Date "2020-11-11"
-Rev "D"
+Date "2021-07-06"
+Rev "E"
 Comp ""
 Comment1 ""
 Comment2 ""
