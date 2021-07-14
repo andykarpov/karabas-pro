@@ -207,9 +207,6 @@ void fill_kbd_matrix(uint16_t sc)
   is_ss_used = false;
 
   matrix[ZX_K_IS_UP] = is_up;
-  
-  //TODO: refactor this a bit
-  matrix[ZX_K_SCANCODE8] = bitRead(status, 1); // extended bit e / e1
   matrix[ZX_K_SCANCODE7] = bitRead(code, 7);
   matrix[ZX_K_SCANCODE6] = bitRead(code, 6);
   matrix[ZX_K_SCANCODE5] = bitRead(code, 5);
@@ -217,8 +214,7 @@ void fill_kbd_matrix(uint16_t sc)
   matrix[ZX_K_SCANCODE3] = bitRead(code, 3);
   matrix[ZX_K_SCANCODE2] = bitRead(code, 2);
   matrix[ZX_K_SCANCODE1] = bitRead(code, 1);
-  matrix[ZX_K_SCANCODE0] = bitRead(code, 0);
-  
+  matrix[ZX_K_SCANCODE0] = bitRead(code, 0); 
 
   switch (code) {
 
@@ -1289,6 +1285,10 @@ void setup()
   uint16_t c = kbd.read();
   if( (c & 0xFF) == PS2_KEY_ECHO || (c & 0xFF) == PS2_KEY_BAT ) {
     Serial.println(F("done")); // Response was Echo or power up
+    //kbd.setNoBreak(0);
+    //kbd.setNoRepeat(0);
+    //kbd.typematic(0xb, 1);
+    kbd.setLock(PS2_LOCK_SCROLL);
   } else {
     if( ( c & 0xFF ) == 0 ) {
       Serial.println(F("not found"));
