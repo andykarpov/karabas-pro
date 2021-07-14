@@ -22,11 +22,10 @@ Ukraine, 2021
 */
 
 #include "Arduino.h"
-#include "PS2KeyRaw.h"
+#include "PS2KeyAdvanced.h"
 #include "PS2Mouse.h"
 #include "SegaController.h"
 #include "matrix.h"
-#include "ps2_codes.h"
 #include <EEPROM.h>
 #include "SBWire.h"
 #include "RTC.h"
@@ -34,7 +33,7 @@ Ukraine, 2021
 #include "config.h"
 #include "utils.h"
 
-PS2KeyRaw kbd;
+PS2KeyAdvanced kbd;
 PS2Mouse mice;
 SegaController sega;
 static DS1307 rtc;
@@ -121,7 +120,7 @@ SPISettings settingsA(1000000, MSBFIRST, SPI_MODE0); // SPI transmission setting
 void push_capsed_key(int key);
 void pop_capsed_key(int key);
 void process_capsed_key(int key, bool up);
-void fill_kbd_matrix(int sc);
+void fill_kbd_matrix(uint16_t sc);
 void send_macros(uint8_t pos);
 uint8_t get_matrix_byte(uint8_t pos);
 uint8_t get_joy_byte();
@@ -195,85 +194,62 @@ void process_capsed_key(int key, bool up)
 }
 
 // transform PS/2 scancodes into internal matrix of pressed keys
-void fill_kbd_matrix(int sc)
+void fill_kbd_matrix(uint16_t sc)
 {
 
-  static bool is_up = false, is_e = false, is_e1 = false;
-  static bool is_del = false, is_bksp = false, is_shift = false, is_esc = false, is_ss_used = false, is_pscr1 = false;
-  static int scancode = 0;
+  static bool is_up = false;
+  static bool is_del = false, is_bksp = false, is_shift = false, is_esc = false, is_ss_used = false;
+  static bool is_alt_l = false, is_alt_r = false;
 
-  // is extended scancode prefix
-  if (sc == 0xE0) {
-    is_e = 1;
-    return;
-  }
-
-  if (sc == 0xE1) {
-    is_e = 1;
-    is_e1 = 1;
-    return;
-  }
-
-  // is key released prefix
-  if (sc == 0xF0 && !is_up) {
-    is_up = 1;
-    return;
-  }
-
-  scancode = sc + ((is_e || is_e1) ? 0x100 : 0);
+  uint8_t code = sc & 0xFF;
+  uint8_t status = sc >> 8;
+  is_up = sc & PS2_BREAK;
 
   is_ss_used = false;
 
   matrix[ZX_K_IS_UP] = is_up;
   
-  matrix[ZX_K_SCANCODE8] = bitRead(scancode, 8); // extended bit e / e1
-  matrix[ZX_K_SCANCODE7] = bitRead(scancode, 7);
-  matrix[ZX_K_SCANCODE6] = bitRead(scancode, 6);
-  matrix[ZX_K_SCANCODE5] = bitRead(scancode, 5);
-  matrix[ZX_K_SCANCODE4] = bitRead(scancode, 4);
-  matrix[ZX_K_SCANCODE3] = bitRead(scancode, 3);
-  matrix[ZX_K_SCANCODE2] = bitRead(scancode, 2);
-  matrix[ZX_K_SCANCODE1] = bitRead(scancode, 1);
-  matrix[ZX_K_SCANCODE0] = bitRead(scancode, 0);
+  /* 
+  TODO: refactor this a bit
+  matrix[ZX_K_SCANCODE8] = bitRead(status, 1); // extended bit e / e1
+  matrix[ZX_K_SCANCODE7] = bitRead(code, 7);
+  matrix[ZX_K_SCANCODE6] = bitRead(code, 6);
+  matrix[ZX_K_SCANCODE5] = bitRead(code, 5);
+  matrix[ZX_K_SCANCODE4] = bitRead(code, 4);
+  matrix[ZX_K_SCANCODE3] = bitRead(code, 3);
+  matrix[ZX_K_SCANCODE2] = bitRead(code, 2);
+  matrix[ZX_K_SCANCODE1] = bitRead(code, 1);
+  matrix[ZX_K_SCANCODE0] = bitRead(code, 0);
+  */
 
-  switch (scancode) {
+  is_shift = (sc & PS2_SHIFT);
+  is_ctrl = (sc & PS2_CTRL);
+  is_alt_l = (sc & PS2_ALT);
+  is_alt_r = (sc & PS2_ALT_GR);
+  is_alt = is_alt_l || is_alt_r;
+  is_win = sc & PS2_GUI;
 
-    // Shift -> SS for Profi, CS for ZX
-    case PS2_L_SHIFT:
-    case PS2_R_SHIFT:
-      matrix[profi_mode ? ZX_K_SS : ZX_K_CS] = !is_up;
-      is_shift = !is_up;
-      break;
+  // Shift -> SS for Profi, CS for ZX
+  matrix[profi_mode ? ZX_K_SS : ZX_K_CS] = is_shift;
 
-    // Ctrl -> CS for Profi, SS for ZX
-    case PS2_L_CTRL:
-    case PS2_R_CTRL:
-      matrix[profi_mode ? ZX_K_CS : ZX_K_SS] = !is_up;
-      is_ctrl = !is_up;
-      break;
+  // Ctrl -> CS for Profi, SS for ZX
+  matrix[profi_mode ? ZX_K_CS : ZX_K_SS] = is_ctrl;
 
-    // Alt (L) -> SS+Enter for Profi, SS+CS for ZX
-    case PS2_L_ALT:
-      matrix[ZX_K_SS] = !is_up;
-      matrix[profi_mode ? ZX_K_ENT : ZX_K_CS] = !is_up;
-      if (!profi_mode) {
-        process_capsed_key(scancode, is_up);
-      }
-      is_alt = !is_up;
-      break;
+  // Alt (L) -> SS+Enter for Profi, SS+CS for ZX
+  // Alt (R) -> SS + Space for Profi, SS+CS for ZX
+  matrix[ZX_K_SS] = is_alt;
+  if (is_alt && profi_mode) {
+    matrix[ZX_K_ENT] = is_alt_l;
+    matrix[ZX_K_SP] = is_alt_r;
+  } else {
+    matrix[ZX_K_CS] = is_alt;
+  }
 
-    // Alt (R) -> SS + Space for Profi, SS+CS for ZX
-    case PS2_R_ALT:
-      matrix[ZX_K_SS] = !is_up;
-      matrix[profi_mode ? ZX_K_SP : ZX_K_CS] = !is_up;
-      if (!profi_mode) {
-        process_capsed_key(scancode, is_up);
-      }
-      is_alt = !is_up;
-      break;
+  switch (code) {
+
 
     // Del -> P+b6 for Profi, SS+C for ZX
-    case PS2_DELETE:
+    case PS2_KEY_DELETE:
       if (!is_shift) {
         if (profi_mode) {
           matrix[ZX_K_P] = !is_up;
@@ -286,19 +262,13 @@ void fill_kbd_matrix(int sc)
       }
       break;
 
-    // Win
-    case PS2_L_WIN:
-    case PS2_R_WIN:
-      is_win = !is_up;
-      break;
-
     // Menu
-    case PS2_MENU:
+    case PS2_KEY_MENU:
       is_menu = !is_up;
       break;
 
     // Ins -> O+b6 for Profi, SS+A for ZX
-    case PS2_INSERT:
+    case PS2_KEY_INSERT:
       if (!is_shift) {
         if (profi_mode) {
           matrix[ZX_K_O] = !is_up;
@@ -311,73 +281,73 @@ void fill_kbd_matrix(int sc)
       break;
 
     // Cursor -> CS + 5,6,7,8
-    case PS2_UP:
+    case PS2_KEY_UP_ARROW:
       if (!is_shift) {
         matrix[ZX_K_CS] = !is_up;
         matrix[ZX_K_7] = !is_up;
-        process_capsed_key(scancode, is_up);
+        process_capsed_key(code, is_up);
       }
       break;
-    case PS2_DOWN:
+    case PS2_KEY_DN_ARROW:
       if (!is_shift) {
         matrix[ZX_K_CS] = !is_up;
         matrix[ZX_K_6] = !is_up;
-        process_capsed_key(scancode, is_up);
+        process_capsed_key(code, is_up);
       }
       break;
-    case PS2_LEFT:
+    case PS2_KEY_L_ARROW:
       if (!is_shift) {
         matrix[ZX_K_CS] = !is_up;
         matrix[ZX_K_5] = !is_up;
-        process_capsed_key(scancode, is_up);
+        process_capsed_key(code, is_up);
       }
       break;
-    case PS2_RIGHT:
+    case PS2_KEY_R_ARROW:
       if (!is_shift) {
         matrix[ZX_K_CS] = !is_up;
         matrix[ZX_K_8] = !is_up;
-        process_capsed_key(scancode, is_up);
+        process_capsed_key(code, is_up);
       }
       break;
 
     // ESC -> CS+1 for Profi, CS+SPACE for ZX
-    case PS2_ESC:
+    case PS2_KEY_ESC:
       matrix[ZX_K_CS] = !is_up;
       matrix[profi_mode ? ZX_K_1 : ZX_K_SP] = !is_up;
-      process_capsed_key(scancode, is_up);
+      process_capsed_key(code, is_up);
       is_esc = !is_up;
       break;
 
     // Backspace -> CS+0
-    case PS2_BACKSPACE:
+    case PS2_KEY_BACK:
       matrix[ZX_K_CS] = !is_up;
       matrix[ZX_K_0] = !is_up;
-      process_capsed_key(scancode, is_up);
+      process_capsed_key(code, is_up);
       is_bksp = !is_up;
       break;
 
     // Enter
-    case PS2_ENTER:
-    case PS2_KP_ENTER:
+    case PS2_KEY_ENTER:
+    case PS2_KEY_KP_ENTER:
       matrix[ZX_K_ENT] = !is_up;
       break;
 
     // Space
-    case PS2_SPACE:
+    case PS2_KEY_SPACE:
       matrix[ZX_K_SP] = !is_up;
       break;
 
     // Letters & numbers
-    case PS2_A: matrix[ZX_K_A] = !is_up; break;
-    case PS2_B: matrix[ZX_K_B] = !is_up; break;
-    case PS2_C: matrix[ZX_K_C] = !is_up; break;
-    case PS2_D: matrix[ZX_K_D] = !is_up; break;
-    case PS2_E: matrix[ZX_K_E] = !is_up; break;
-    case PS2_F: matrix[ZX_K_F] = !is_up; break;
-    case PS2_G: matrix[ZX_K_G] = !is_up; break;
-    case PS2_H: matrix[ZX_K_H] = !is_up; break;
-    case PS2_I: matrix[ZX_K_I] = !is_up; break;
-    case PS2_J: 
+    case PS2_KEY_A: matrix[ZX_K_A] = !is_up; break;
+    case PS2_KEY_B: matrix[ZX_K_B] = !is_up; break;
+    case PS2_KEY_C: matrix[ZX_K_C] = !is_up; break;
+    case PS2_KEY_D: matrix[ZX_K_D] = !is_up; break;
+    case PS2_KEY_E: matrix[ZX_K_E] = !is_up; break;
+    case PS2_KEY_F: matrix[ZX_K_F] = !is_up; break;
+    case PS2_KEY_G: matrix[ZX_K_G] = !is_up; break;
+    case PS2_KEY_H: matrix[ZX_K_H] = !is_up; break;
+    case PS2_KEY_I: matrix[ZX_K_I] = !is_up; break;
+    case PS2_KEY_J: 
       if (is_menu || is_win || (is_ctrl && is_alt)) {
         if (!is_up) {
           // menu + J = JOY_TYPE
@@ -389,49 +359,49 @@ void fill_kbd_matrix(int sc)
         matrix[ZX_K_J] = !is_up; 
       }
     break;
-    case PS2_K: matrix[ZX_K_K] = !is_up; break;
-    case PS2_L: matrix[ZX_K_L] = !is_up; break;
-    case PS2_M: matrix[ZX_K_M] = !is_up; break;
-    case PS2_N: matrix[ZX_K_N] = !is_up; break;
-    case PS2_O: matrix[ZX_K_O] = !is_up; break;
-    case PS2_P: matrix[ZX_K_P] = !is_up; break;
-    case PS2_Q: matrix[ZX_K_Q] = !is_up; break;
-    case PS2_R: matrix[ZX_K_R] = !is_up; break;
-    case PS2_S: matrix[ZX_K_S] = !is_up; break;
-    case PS2_T: matrix[ZX_K_T] = !is_up; break;
-    case PS2_U: matrix[ZX_K_U] = !is_up; break;
-    case PS2_V: matrix[ZX_K_V] = !is_up; break;
-    case PS2_W: matrix[ZX_K_W] = !is_up; break;
-    case PS2_X: matrix[ZX_K_X] = !is_up; break;
-    case PS2_Y: matrix[ZX_K_Y] = !is_up; break;
-    case PS2_Z: matrix[ZX_K_Z] = !is_up; break;
+    case PS2_KEY_K: matrix[ZX_K_K] = !is_up; break;
+    case PS2_KEY_L: matrix[ZX_K_L] = !is_up; break;
+    case PS2_KEY_M: matrix[ZX_K_M] = !is_up; break;
+    case PS2_KEY_N: matrix[ZX_K_N] = !is_up; break;
+    case PS2_KEY_O: matrix[ZX_K_O] = !is_up; break;
+    case PS2_KEY_P: matrix[ZX_K_P] = !is_up; break;
+    case PS2_KEY_Q: matrix[ZX_K_Q] = !is_up; break;
+    case PS2_KEY_R: matrix[ZX_K_R] = !is_up; break;
+    case PS2_KEY_S: matrix[ZX_K_S] = !is_up; break;
+    case PS2_KEY_T: matrix[ZX_K_T] = !is_up; break;
+    case PS2_KEY_U: matrix[ZX_K_U] = !is_up; break;
+    case PS2_KEY_V: matrix[ZX_K_V] = !is_up; break;
+    case PS2_KEY_W: matrix[ZX_K_W] = !is_up; break;
+    case PS2_KEY_X: matrix[ZX_K_X] = !is_up; break;
+    case PS2_KEY_Y: matrix[ZX_K_Y] = !is_up; break;
+    case PS2_KEY_Z: matrix[ZX_K_Z] = !is_up; break;
 
     // digits
-    case PS2_0: matrix[ZX_K_0] = !is_up; break;
-    case PS2_1: matrix[ZX_K_1] = !is_up; break;
-    case PS2_2: matrix[ZX_K_2] = !is_up; break;
-    case PS2_3: matrix[ZX_K_3] = !is_up; break;
-    case PS2_4: matrix[ZX_K_4] = !is_up; break;
-    case PS2_5: matrix[ZX_K_5] = !is_up; break;
-    case PS2_6: matrix[ZX_K_6] = !is_up; break;
-    case PS2_7: matrix[ZX_K_7] = !is_up; break;
-    case PS2_8: matrix[ZX_K_8] = !is_up; break;
-    case PS2_9: matrix[ZX_K_9] = !is_up; break;
+    case PS2_KEY_0: matrix[ZX_K_0] = !is_up; break;
+    case PS2_KEY_1: matrix[ZX_K_1] = !is_up; break;
+    case PS2_KEY_2: matrix[ZX_K_2] = !is_up; break;
+    case PS2_KEY_3: matrix[ZX_K_3] = !is_up; break;
+    case PS2_KEY_4: matrix[ZX_K_4] = !is_up; break;
+    case PS2_KEY_5: matrix[ZX_K_5] = !is_up; break;
+    case PS2_KEY_6: matrix[ZX_K_6] = !is_up; break;
+    case PS2_KEY_7: matrix[ZX_K_7] = !is_up; break;
+    case PS2_KEY_8: matrix[ZX_K_8] = !is_up; break;
+    case PS2_KEY_9: matrix[ZX_K_9] = !is_up; break;
 
     // Keypad digits
-    case PS2_KP_0: matrix[ZX_K_0] = !is_up; break;
-    case PS2_KP_1: matrix[ZX_K_1] = !is_up; break;
-    case PS2_KP_2: matrix[ZX_K_2] = !is_up; break;
-    case PS2_KP_3: matrix[ZX_K_3] = !is_up; break;
-    case PS2_KP_4: matrix[ZX_K_4] = !is_up; break;
-    case PS2_KP_5: matrix[ZX_K_5] = !is_up; break;
-    case PS2_KP_6: matrix[ZX_K_6] = !is_up; break;
-    case PS2_KP_7: matrix[ZX_K_7] = !is_up; break;
-    case PS2_KP_8: matrix[ZX_K_8] = !is_up; break;
-    case PS2_KP_9: matrix[ZX_K_9] = !is_up; break;
+    case PS2_KEY_KP0: matrix[ZX_K_0] = !is_up; break;
+    case PS2_KEY_KP1: matrix[ZX_K_1] = !is_up; break;
+    case PS2_KEY_KP2: matrix[ZX_K_2] = !is_up; break;
+    case PS2_KEY_KP3: matrix[ZX_K_3] = !is_up; break;
+    case PS2_KEY_KP4: matrix[ZX_K_4] = !is_up; break;
+    case PS2_KEY_KP5: matrix[ZX_K_5] = !is_up; break;
+    case PS2_KEY_KP6: matrix[ZX_K_6] = !is_up; break;
+    case PS2_KEY_KP7: matrix[ZX_K_7] = !is_up; break;
+    case PS2_KEY_KP8: matrix[ZX_K_8] = !is_up; break;
+    case PS2_KEY_KP9: matrix[ZX_K_9] = !is_up; break;
 
     // '/" -> SS+P / SS+7
-    case PS2_QUOTE:
+    case PS2_KEY_SINGLE:
       matrix[ZX_K_SS] = !is_up;
       matrix[is_shift ? ZX_K_P : ZX_K_7] = !is_up;
       if (is_up) {
@@ -442,7 +412,7 @@ void fill_kbd_matrix(int sc)
       break;
 
     // ,/< -> SS+N / SS+R
-    case PS2_COMMA:
+    case PS2_KEY_COMMA:
       matrix[ZX_K_SS] = !is_up;
       matrix[is_shift ? ZX_K_R : ZX_K_N] = !is_up;
       if (is_up) {
@@ -453,8 +423,8 @@ void fill_kbd_matrix(int sc)
       break;
 
     // ./> -> SS+M / SS+T
-    case PS2_PERIOD:
-    case PS2_KP_PERIOD:
+    case PS2_KEY_DOT:
+    case PS2_KEY_KP_DOT:
       matrix[ZX_K_SS] = !is_up;
       matrix[is_shift ? ZX_K_T : ZX_K_M] = !is_up;
       if (is_up) {
@@ -465,7 +435,7 @@ void fill_kbd_matrix(int sc)
       break;
 
     // ;/: -> SS+O / SS+Z
-    case PS2_SEMICOLON:
+    case PS2_KEY_SEMI:
       matrix[ZX_K_SS] = !is_up;
       matrix[is_shift ? ZX_K_Z : ZX_K_O] = !is_up;
       if (is_up) {
@@ -476,7 +446,7 @@ void fill_kbd_matrix(int sc)
       break;
 
     // [,{ -> SS+Y / SS+F
-    case PS2_L_BRACKET:
+    case PS2_KEY_OPEN_SQ:
       if (!profi_mode) {
         if (!is_up) {
           send_macros(is_shift ? ZX_K_F : ZX_K_Y);
@@ -492,7 +462,7 @@ void fill_kbd_matrix(int sc)
       break;
 
     // ],} -> SS+U / SS+G
-    case PS2_R_BRACKET:
+    case PS2_KEY_CLOSE_SQ:
       if (!profi_mode) {
         if (!is_up) {
           send_macros(is_shift ? ZX_K_G : ZX_K_U);
@@ -508,8 +478,8 @@ void fill_kbd_matrix(int sc)
       break;
 
     // /,? -> SS+V / SS+C
-    case PS2_SLASH:
-    case PS2_KP_SLASH:
+    case PS2_KEY_DIV:
+    case PS2_KEY_KP_DIV:
       matrix[ZX_K_SS] = !is_up;
       matrix[is_shift ? ZX_K_C : ZX_K_V] = !is_up;
       if (is_up) {
@@ -520,7 +490,7 @@ void fill_kbd_matrix(int sc)
       break;
 
     // \,| -> SS+D / SS+S
-    case PS2_BACK_SLASH:
+    case PS2_KEY_BS:
       if (!profi_mode) {
         if (!is_up) {
           send_macros(is_shift ? ZX_K_S : ZX_K_D);
@@ -536,7 +506,7 @@ void fill_kbd_matrix(int sc)
       break;
 
     // =,+ -> SS+L / SS+K
-    case PS2_EQUALS:
+    case PS2_KEY_EQUAL:
       matrix[ZX_K_SS] = !is_up;
       matrix[is_shift ? ZX_K_K : ZX_K_L] = !is_up;
       if (is_up) {
@@ -547,7 +517,7 @@ void fill_kbd_matrix(int sc)
       break;
 
     // -,_ -> SS+J / SS+0
-    case PS2_MINUS:
+    case PS2_KEY_MINUS:
       matrix[ZX_K_SS] = !is_up;
       matrix[is_shift ? ZX_K_0 : ZX_K_J] = !is_up;
       if (is_up) {
@@ -558,7 +528,7 @@ void fill_kbd_matrix(int sc)
       break;
 
     // `,~ -> SS+X / SS+A
-    case PS2_ACCENT:
+    case PS2_KEY_APOS:
       if (is_shift and !is_up) {
         send_macros(is_shift ? ZX_K_A : ZX_K_X);
       }
@@ -570,25 +540,25 @@ void fill_kbd_matrix(int sc)
       break;
 
     // Keypad * -> SS+B
-    case PS2_KP_STAR:
+    case PS2_KEY_KP_TIMES:
       matrix[ZX_K_SS] = !is_up;
       matrix[ZX_K_B] = !is_up;
       break;
 
     // Keypad - -> SS+J
-    case PS2_KP_MINUS:
+    case PS2_KEY_KP_MINUS:
       matrix[ZX_K_SS] = !is_up;
       matrix[ZX_K_J] = !is_up;
       break;
 
     // Keypad + -> SS+K
-    case PS2_KP_PLUS:
+    case PS2_KEY_KP_PLUS:
       matrix[ZX_K_SS] = !is_up;
       matrix[ZX_K_K] = !is_up;
       break;
 
     // Tab
-    case PS2_TAB:
+    case PS2_KEY_TAB:
       if (is_menu || is_win || (is_ctrl && is_alt)) {
         if (!is_up) {
           // menu + TAB = SW10
@@ -599,19 +569,19 @@ void fill_kbd_matrix(int sc)
       } else {
         matrix[ZX_K_CS] = !is_up;
         matrix[ZX_K_I] = !is_up;
-        process_capsed_key(scancode, is_up);
+        process_capsed_key(code, is_up);
       }
       break;
 
     // CapsLock
-    case PS2_CAPS:
+    case PS2_KEY_CAPS:
       matrix[ZX_K_SS] = !is_up;
       matrix[ZX_K_CS] = !is_up;
-      process_capsed_key(scancode, is_up);
+      process_capsed_key(code, is_up);
       break;
 
     // PgUp -> M+BIT6 for Profi, CS+3 for ZX
-    case PS2_PGUP:
+    case PS2_KEY_PGUP:
       if (!is_shift) {
         if (profi_mode) {
           matrix[ZX_K_M] = !is_up;
@@ -619,13 +589,13 @@ void fill_kbd_matrix(int sc)
         } else {
           matrix[ZX_K_CS] = !is_up;
           matrix[ZX_K_3] = !is_up;
-          process_capsed_key(scancode, is_up);
+          process_capsed_key(code, is_up);
         }
       }
       break;
 
     // PgDn -> N+BIT6 for Profi, CS+4 for ZX
-    case PS2_PGDN:
+    case PS2_KEY_PGDN:
       if (!is_shift) {
         if (profi_mode) {
           matrix[ZX_K_N] = !is_up;
@@ -633,13 +603,13 @@ void fill_kbd_matrix(int sc)
         } else {
           matrix[ZX_K_CS] = !is_up;
           matrix[ZX_K_4] = !is_up;
-          process_capsed_key(scancode, is_up);
+          process_capsed_key(code, is_up);
         }
       }
       break;
 
     // Home -> K+BIT6 for Profi
-    case PS2_HOME:
+    case PS2_KEY_HOME:
       if (!is_shift) {
         matrix[ZX_K_K] = !is_up;
         matrix[ZX_K_BIT6] = !is_up;
@@ -647,7 +617,7 @@ void fill_kbd_matrix(int sc)
       break;
 
     // End -> L+BIT6 for Profi
-    case PS2_END:
+    case PS2_KEY_END:
       if (!is_shift) {
         matrix[ZX_K_L] = !is_up;
         matrix[ZX_K_BIT6] = !is_up;
@@ -655,7 +625,7 @@ void fill_kbd_matrix(int sc)
       break;
 
     // Fn keys
-    case PS2_F1:
+    case PS2_KEY_F1:
       if (is_menu || is_win || (is_ctrl && is_alt)) {
         if (!is_up) {
           // menu + F1, ctrl+alt = ROMSET 00
@@ -670,7 +640,7 @@ void fill_kbd_matrix(int sc)
         matrix[ZX_K_A] = !is_up; matrix[ZX_K_BIT6] = !is_up;
       }
       break;
-    case PS2_F2:
+    case PS2_KEY_F2:
       if (is_menu || is_win || (is_ctrl && is_alt)) {
         if (!is_up) {
           // menu + F2 = ROMSET 01
@@ -685,7 +655,7 @@ void fill_kbd_matrix(int sc)
         matrix[ZX_K_B] = !is_up; matrix[ZX_K_BIT6] = !is_up; 
       }
       break;
-    case PS2_F3:
+    case PS2_KEY_F3:
       if (is_menu || is_win || (is_ctrl && is_alt)) {
         if (!is_up) {
           // menu + F3 = ROMSET 10
@@ -700,7 +670,7 @@ void fill_kbd_matrix(int sc)
         matrix[ZX_K_C] = !is_up; matrix[ZX_K_BIT6] = !is_up; 
       }
       break;
-    case PS2_F4:
+    case PS2_KEY_F4:
       if (is_menu || is_win || (is_ctrl && is_alt)) {
         if (!is_up) {
           // menu + F4 = ROMSET 11
@@ -715,7 +685,7 @@ void fill_kbd_matrix(int sc)
         matrix[ZX_K_D] = !is_up; matrix[ZX_K_BIT6] = !is_up; 
       }
       break;
-    case PS2_F5:
+    case PS2_KEY_F5:
       if (is_menu || is_win || (is_ctrl && is_alt)) {
         if (!is_up) {
           // menu + F5 = SW5
@@ -728,7 +698,7 @@ void fill_kbd_matrix(int sc)
       }
       break;
 
-    case PS2_F6: 
+    case PS2_KEY_F6: 
       if (is_menu || is_win || (is_ctrl && is_alt)) {
         if (!is_up) {
           // menu + F6 = SW6
@@ -740,7 +710,7 @@ void fill_kbd_matrix(int sc)
         matrix[ZX_K_F] = !is_up; matrix[ZX_K_BIT6] = !is_up;
       }
       break;
-    case PS2_F7: 
+    case PS2_KEY_F7: 
       if (is_menu || is_win || (is_ctrl && is_alt)) {
         if (!is_up) {
           // menu + F7 = SW7, !SW7, SW9, !SW9
@@ -764,7 +734,7 @@ void fill_kbd_matrix(int sc)
         matrix[ZX_K_G] = !is_up; matrix[ZX_K_BIT6] = !is_up; 
       }
       break;
-    case PS2_F8: 
+    case PS2_KEY_F8: 
       if (is_menu || (is_ctrl && is_alt)) {
         if (!is_up) {
           // menu + F8 = SW8
@@ -776,7 +746,7 @@ void fill_kbd_matrix(int sc)
         matrix[ZX_K_H] = !is_up; matrix[ZX_K_BIT6] = !is_up;
       }
       break;
-    case PS2_F9: 
+    case PS2_KEY_F9: 
       if (is_menu || is_win || (is_ctrl && is_alt)) {
         if (!is_up) {
           // menu + F9 = SW1
@@ -788,7 +758,7 @@ void fill_kbd_matrix(int sc)
           matrix[ZX_K_I] = !is_up; matrix[ZX_K_BIT6] = !is_up;
       }
       break;
-    case PS2_F10: 
+    case PS2_KEY_F10: 
       if (is_menu || is_win || (is_ctrl && is_alt)) {
         if (!is_up) {
           // menu + F10 = SW2
@@ -800,7 +770,7 @@ void fill_kbd_matrix(int sc)
         matrix[ZX_K_J] = !is_up; matrix[ZX_K_BIT6] = !is_up;
       }
       break;    
-    case PS2_F11:
+    case PS2_KEY_F11:
       if (is_menu || is_win || (is_ctrl && is_alt)) {
         if (!is_up) {
           // menu + F11 = turbo
@@ -812,7 +782,7 @@ void fill_kbd_matrix(int sc)
         matrix[ZX_K_Q] = !is_up; matrix[ZX_K_SS] = !is_up;
       }
       break;
-    case PS2_F12:
+    case PS2_KEY_F12:
       if (is_menu || is_win || (is_ctrl && is_alt)) {
         if (!is_up) {
           // menu + F12 = magic
@@ -824,17 +794,13 @@ void fill_kbd_matrix(int sc)
       break;
 
     // Scroll Lock -> Nothing
-    case PS2_SCROLL:
+    case PS2_KEY_SCROLL:
       // TODO
     break;
 
     // PrtScr -> Mode profi / zx
-    case PS2_PSCR1:
-      is_pscr1 = !is_up;
-    break;
-
-    case PS2_PSCR2:
-      if (!is_shift && is_pscr1) {
+    case PS2_KEY_PRTSCR:
+      if (!is_shift) {
         if (!is_up) {
           profi_mode = !profi_mode;
           eeprom_store_value(EEPROM_MODE_ADDRESS, profi_mode);
@@ -844,7 +810,7 @@ void fill_kbd_matrix(int sc)
     break;
 
     // Pause -> Wait
-    case PS2_PAUSE:
+    case PS2_KEY_PAUSE:
       if (is_up) {
         is_wait = !is_wait;
         matrix[ZX_K_WAIT] = is_wait;
@@ -897,14 +863,6 @@ void fill_kbd_matrix(int sc)
     is_ss_used = false;
     capsed_keys_size = 0;
     do_full_reset();
-  }
-
-  // clear flags
-  is_up = 0;
-  if (is_e1) {
-    is_e1 = 0;
-  } else {
-    is_e = 0;
   }
 }
 
@@ -1312,7 +1270,19 @@ void setup()
 
   Serial.print(F("Keyboard init..."));
   kbd.begin(PIN_KBD_DAT, PIN_KBD_CLK);
-  Serial.println("done");
+  kbd.echo(); // ping keyboard to see if there
+  delay(6);
+  uint16_t c = kbd.read();
+  if( (c & 0xFF) == PS2_KEY_ECHO || (c & 0xFF) == PS2_KEY_BAT ) {
+    Serial.println(F("done")); // Response was Echo or power up
+  } else {
+    if( ( c & 0xFF ) == 0 ) {
+      Serial.println(F("not found"));
+    } else {
+      Serial.print( F("invalid code received of "));
+      Serial.println( c, HEX );
+    }
+  }
 
   mouse_tries = MOUSE_INIT_TRIES;
 
@@ -1363,14 +1333,18 @@ void loop()
   unsigned long n = millis();
 
   if (kbd.available()) {
-    int c = kbd.read();
+    uint16_t c = kbd.read();
     tl = n;
     if (!led1_overwrite) {
       update_led(PIN_LED1, HIGH);
     }
     fill_kbd_matrix(c);
-    Serial.print(F("Scancode: "));
-    Serial.println(c, HEX);
+    Serial.print(F("Value: "));
+    Serial.print(c, HEX);
+    Serial.print(F(" Status bits: "));
+    Serial.print(c >> 8, HEX);
+    Serial.print(F(" Code: "));
+    Serial.println(c & 0xFF, HEX);
   }
 
   // transmit kbd always
