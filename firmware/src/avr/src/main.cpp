@@ -199,7 +199,6 @@ void fill_kbd_matrix(uint16_t sc)
 
   static bool is_up = false;
   static bool is_del = false, is_bksp = false, is_shift = false, is_esc = false, is_ss_used = false;
-  static bool is_alt_l = false, is_alt_r = false;
 
   uint8_t code = sc & 0xFF;
   uint8_t status = sc >> 8;
@@ -209,8 +208,7 @@ void fill_kbd_matrix(uint16_t sc)
 
   matrix[ZX_K_IS_UP] = is_up;
   
-  /* 
-  TODO: refactor this a bit
+  //TODO: refactor this a bit
   matrix[ZX_K_SCANCODE8] = bitRead(status, 1); // extended bit e / e1
   matrix[ZX_K_SCANCODE7] = bitRead(code, 7);
   matrix[ZX_K_SCANCODE6] = bitRead(code, 6);
@@ -220,33 +218,43 @@ void fill_kbd_matrix(uint16_t sc)
   matrix[ZX_K_SCANCODE2] = bitRead(code, 2);
   matrix[ZX_K_SCANCODE1] = bitRead(code, 1);
   matrix[ZX_K_SCANCODE0] = bitRead(code, 0);
-  */
-
-  is_shift = (sc & PS2_SHIFT);
-  is_ctrl = (sc & PS2_CTRL);
-  is_alt_l = (sc & PS2_ALT);
-  is_alt_r = (sc & PS2_ALT_GR);
-  is_alt = is_alt_l || is_alt_r;
-  is_win = sc & PS2_GUI;
-
-  // Shift -> SS for Profi, CS for ZX
-  matrix[profi_mode ? ZX_K_SS : ZX_K_CS] = is_shift;
-
-  // Ctrl -> CS for Profi, SS for ZX
-  matrix[profi_mode ? ZX_K_CS : ZX_K_SS] = is_ctrl;
-
-  // Alt (L) -> SS+Enter for Profi, SS+CS for ZX
-  // Alt (R) -> SS + Space for Profi, SS+CS for ZX
-  matrix[ZX_K_SS] = is_alt;
-  if (is_alt && profi_mode) {
-    matrix[ZX_K_ENT] = is_alt_l;
-    matrix[ZX_K_SP] = is_alt_r;
-  } else {
-    matrix[ZX_K_CS] = is_alt;
-  }
+  
 
   switch (code) {
 
+    // Shift -> SS for Profi, CS for ZX
+    case PS2_KEY_L_SHIFT:
+    case PS2_KEY_R_SHIFT:
+      matrix[profi_mode ? ZX_K_SS : ZX_K_CS] = !is_up;
+      is_shift = !is_up;
+      break;
+
+    // Ctrl -> CS for Profi, SS for ZX
+    case PS2_KEY_L_CTRL:
+    case PS2_KEY_R_CTRL:
+      matrix[profi_mode ? ZX_K_CS : ZX_K_SS] = !is_up;
+      is_ctrl = !is_up;
+      break;
+
+    // Alt (L) -> SS+Enter for Profi, SS+CS for ZX
+    case PS2_KEY_L_ALT:
+      matrix[ZX_K_SS] = !is_up;
+      matrix[profi_mode ? ZX_K_ENT : ZX_K_CS] = !is_up;
+      if (!profi_mode) {
+        process_capsed_key(code, is_up);
+      }
+      is_alt = !is_up;
+      break;
+
+    // Alt (R) -> SS + Space for Profi, SS+CS for ZX
+    case PS2_KEY_R_ALT:
+      matrix[ZX_K_SS] = !is_up;
+      matrix[profi_mode ? ZX_K_SP : ZX_K_CS] = !is_up;
+      if (!profi_mode) {
+        process_capsed_key(code, is_up);
+      }
+      is_alt = !is_up;
+      break;
 
     // Del -> P+b6 for Profi, SS+C for ZX
     case PS2_KEY_DELETE:
@@ -261,6 +269,12 @@ void fill_kbd_matrix(uint16_t sc)
         is_del = !is_up;
       }
       break;
+
+    // Win
+    case PS2_KEY_L_GUI:
+    case PS2_KEY_R_GUI:
+      is_win = !is_up;
+    break;
 
     // Menu
     case PS2_KEY_MENU:
