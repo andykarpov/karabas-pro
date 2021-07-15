@@ -1023,13 +1023,16 @@ void process_in_cmd(uint8_t cmd, uint8_t data)
       Serial.print(F("FPGA board revision is: "));
       switch (data) {
         case 0:
-          Serial.println(F("Rev.A with TDA1543 DAC"));
+          Serial.println(F("Rev.A/B/C/D with TDA1543 DAC"));
         break;
         case 1:
-          Serial.println(F("Rev.A with TDA1543A DAC"));
+          Serial.println(F("Rev.A/B/C/D with TDA1543A DAC"));
         break;
-        case 2:
-          Serial.println(F("Rev.C"));
+        case 4:
+          Serial.println(F("Rev.DS with TDA1543 DAC"));
+        break;
+        case 5:
+          Serial.println(F("Rev.DS with TDA1543A DAC"));
         break;
         default:
           Serial.println(F("Unknown"));
