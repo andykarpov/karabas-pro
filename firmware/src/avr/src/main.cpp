@@ -329,7 +329,7 @@ void fill_kbd_matrix(uint16_t sc)
       break;
 
     // Backspace -> CS+0
-    case PS2_KEY_BACK:
+    case PS2_KEY_BS:
       matrix[ZX_K_CS] = !is_up;
       matrix[ZX_K_0] = !is_up;
       process_capsed_key(code, is_up);
@@ -411,7 +411,7 @@ void fill_kbd_matrix(uint16_t sc)
     case PS2_KEY_KP9: matrix[ZX_K_9] = !is_up; break;
 
     // '/" -> SS+P / SS+7
-    case PS2_KEY_SINGLE:
+    case PS2_KEY_APOS:
       matrix[ZX_K_SS] = !is_up;
       matrix[is_shift ? ZX_K_P : ZX_K_7] = !is_up;
       if (is_up) {
@@ -500,7 +500,7 @@ void fill_kbd_matrix(uint16_t sc)
       break;
 
     // \,| -> SS+D / SS+S
-    case PS2_KEY_BS:
+    case PS2_KEY_BACK:
       if (!profi_mode) {
         if (!is_up) {
           send_macros(is_shift ? ZX_K_S : ZX_K_D);
@@ -538,7 +538,7 @@ void fill_kbd_matrix(uint16_t sc)
       break;
 
     // `,~ -> SS+X / SS+A
-    case PS2_KEY_APOS:
+    case PS2_KEY_SINGLE:
       if (is_shift and !is_up) {
         send_macros(is_shift ? ZX_K_A : ZX_K_X);
       }
