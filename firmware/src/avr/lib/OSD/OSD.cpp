@@ -60,8 +60,6 @@ void OSD::setPos(uint8_t x, uint8_t y)
     current_y = 0;
     current_x = 0;
   }
-  action(CMD_SET_POS_X, current_x);
-  action(CMD_SET_POS_Y, current_y);
 }
 
 /****************************************************************************/
@@ -125,9 +123,12 @@ void OSD::frame(uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2, uint8_t thicknes
 
 size_t OSD::write(uint8_t chr)
 {
-  uint8_t color = fg_color << 4;
-  action(CMD_ATTR, bg_color + color);
+  uint8_t color = fg_color << 4;  
+  action(CMD_SET_POS_X, current_x);
+  action(CMD_SET_POS_Y, current_y);
+//  action(CMD_CHAR, chr-32);
   action(CMD_CHAR, chr);
+  action(CMD_ATTR, bg_color + color);
   setPos(current_x+1, current_y);
   return 1; 
 }

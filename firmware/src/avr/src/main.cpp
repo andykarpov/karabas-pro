@@ -88,6 +88,7 @@ unsigned long tr = 0; // rtc poll time
 unsigned long te = 0; // eeprom store time
 unsigned long tb, tb1, tb2 = 0; // hw buttons poll time
 unsigned long ts = 0; // mouse swap time
+unsigned long tosd = 0; // osd last press toggle time
 
 int mouse_tries; // number of triers to init mouse
 
@@ -124,7 +125,7 @@ SPISettings settingsA(1000000, MSBFIRST, SPI_MODE0); // SPI transmission setting
 void push_capsed_key(int key);
 void pop_capsed_key(int key);
 void process_capsed_key(int key, bool up);
-void fill_kbd_matrix(uint16_t sc);
+void fill_kbd_matrix(uint16_t sc, unsigned long n);
 void send_macros(uint8_t pos);
 uint8_t get_matrix_byte(uint8_t pos);
 uint8_t get_joy_byte();
@@ -199,7 +200,7 @@ void process_capsed_key(int key, bool up)
 }
 
 // transform PS/2 scancodes into internal matrix of pressed keys
-void fill_kbd_matrix(uint16_t sc)
+void fill_kbd_matrix(uint16_t sc, unsigned long n)
 {
 
   static bool is_up = false;
@@ -331,8 +332,11 @@ void fill_kbd_matrix(uint16_t sc)
       if (is_menu || is_win || (is_ctrl && is_alt)) {
         if (!is_up) {
           // menu + ESC = OSD_OVERLAY
-          osd_overlay = !osd_overlay;
-          matrix[ZX_K_OSD_OVERLAY] = osd_overlay;
+          if (n - tosd > 200) {
+            osd_overlay = !osd_overlay;
+            matrix[ZX_K_OSD_OVERLAY] = osd_overlay;
+            tosd = n;
+          }
         }
       } else {
         matrix[ZX_K_CS] = !is_up;
@@ -1389,7 +1393,7 @@ void loop()
     if (!led1_overwrite) {
       update_led(PIN_LED1, HIGH);
     }
-    fill_kbd_matrix(c);
+    fill_kbd_matrix(c, n);
     Serial.print(F("Value: "));
     Serial.print(c, HEX);
     Serial.print(F(" Status bits: "));
@@ -1509,6 +1513,16 @@ void loop()
     rtc_seconds = rtc.getSeconds();
 
     rtc_send_time();
+
+      // test
+      osd.setPos(0,3);
+      osd.setColor(OSD::COLOR_RED, OSD::COLOR_BLACK);
+      osd.print(rtc_hours, DEC);
+      osd.print(F(":"));
+      osd.print(rtc_minutes, DEC);
+      osd.print(F(":"));
+      osd.print(rtc_seconds, DEC);
+      osd.print(F("   "));
 
     tr = n;
   }
