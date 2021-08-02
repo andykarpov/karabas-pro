@@ -4,6 +4,9 @@ use IEEE.numeric_std.ALL;
 use IEEE.std_logic_unsigned.all;
 
 entity osd is
+	generic (
+		enable_osd_overlay : boolean := true
+	);
 	port (
 		CLK		: in std_logic;
 		CLK2 		: in std_logic;
@@ -28,7 +31,11 @@ entity osd is
 		TURBO_FDC		: in std_logic := '0';
 		SSG_MONO 		: in std_logic := '0';
 		FDC_SWAP 		: in std_logic := '0';
-		JOY_TYPE 		: in std_logic := '0'
+		JOY_TYPE 		: in std_logic := '0';
+		
+		-- osd overlay 
+		OSD_OVERLAY 	: in std_logic := '0';
+		OSD_COMMAND 	: in std_logic_vector(15 downto 0) := (others => '0')
 	);
 end entity;
 
@@ -41,7 +48,7 @@ architecture rtl of osd is
         q       : out std_logic_vector(7 downto 0)
     );
     end component;
-
+	 
 	signal hcnt : std_logic_vector(9 downto 0);
 	signal vcnt : std_logic_vector(8 downto 0);
 	
@@ -116,13 +123,14 @@ architecture rtl of osd is
 	signal en : std_logic := '0';
 	
 	signal last_blink : std_logic := '0';
+	signal osd_overlay_rgb : std_logic_vector(8 downto 0);
 	
 begin
 
 	hcnt <= HCNT_I;
 	vcnt <= VCNT_I;
 	
-	-- font rom
+	-- osd font rom
 	U_FONT: rom_font
    port map (
 		address => rom_addr,
@@ -137,6 +145,26 @@ begin
 		clock   		=> CLK2,
 		q       		=> char
 	);
+	
+	-- osd overlay
+	G_OSD_OVERLAY: if enable_osd_overlay generate 
+	
+		U_OVERLAY: entity work.overlay
+		port map (
+			CLK => CLK,
+			CLK2 => CLK2,
+			RGB_I => RGB_I,
+			RGB_O => osd_overlay_rgb,
+			DS80 => DS80,
+			HCNT_I => HCNT_I,
+			VCNT_I => VCNT_I,
+			BLINK => BLINK,
+		
+			OSD_OVERLAY 	=> OSD_OVERLAY,
+			OSD_COMMAND 	=> OSD_COMMAND	
+		);
+		
+	end generate G_OSD_OVERLAY;
 	 
 	char_x <= hcnt(3 downto 1) when DS80='1' else hcnt(2 downto 0);
    char_y <= vcnt(3 downto 0);
@@ -172,7 +200,9 @@ begin
 	begin
 		if rising_edge(CLK) then
 			if (CLK2 = '1') then 
-				if (en = '1' and pixel = '1') then 
+				if (enable_osd_overlay and osd_overlay = '1') then 
+						RGB_O <= osd_overlay_rgb;
+				elsif (en = '1' and pixel = '1') then 
 					RGB_O <= "000111000";
 				else 
 					RGB_O <= RGB_I;
@@ -181,8 +211,6 @@ begin
 		end if;
 	end process;
 				 
-	--RGB_O <= "000111000" when en = '1' and pixel = '1' else RGB_I;
-
 	-- display messages for changed sensors
 	process (CLK, BLINK, cnt, KB_WAIT, KB_MODE, TURBO, SCANDOUBLER_EN, MODE60, ROM_BANK, SSG_MODE, SSG_STEREO, last_ssg_mode, last_ssg_stereo, last_kb_wait, last_kb_mode, LOADED, last_loaded, last_turbo, last_scandoubler_en, last_mode60, last_rom_bank, COVOX_EN, last_covox, TURBO_FDC, last_turbo_fdc, SSG_MONO, last_ssg_mono, FDC_SWAP, last_fdc_swap)
 	begin 
