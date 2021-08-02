@@ -28,6 +28,7 @@ entity profi_video is
 		VSYNC		: out std_logic;		
 		HCNT 		: out std_logic_vector(9 downto 0);
 		VCNT 		: out std_logic_vector(8 downto 0);	
+		ISPAPER  : out std_logic := '0';
 		DS80 		: in std_logic;
 		VBUS_MODE : in std_logic := '0';
 		VID_RD : in std_logic
@@ -217,6 +218,7 @@ HSYNC 		<= h_sync;
 VSYNC 		<= v_sync;
 HCNT <= std_logic_vector(h_cnt);
 VCNT <= std_logic_vector(v_cnt);
+ISPAPER <= '1' when paper1='1' and blank1 = '0' else '0';
 BLANK <= blank1;
 
 end architecture;

@@ -151,6 +151,16 @@ void setup();
 void loop();
 void update_led(uint8_t led, bool state);
 void osd_init();
+void osd_update_rombank();
+void osd_update_turbofdc();
+void osd_update_covox();
+void osd_update_stereo();
+void osd_update_ssg();
+void osd_update_video();
+void osd_update_vsync();
+void osd_update_turbo();
+void osd_update_swap_ab();
+void osd_update_joystick();
 
 void push_capsed_key(int key)
 {
@@ -662,6 +672,7 @@ void fill_kbd_matrix(uint16_t sc, unsigned long n)
           eeprom_store_value(EEPROM_SW4_ADDRESS, is_sw4);
           matrix[ZX_K_SW3] = is_sw3;
           matrix[ZX_K_SW4] = is_sw4;
+          osd_update_rombank();
         }
       } else {
         matrix[ZX_K_A] = !is_up; matrix[ZX_K_BIT6] = !is_up;
@@ -677,6 +688,7 @@ void fill_kbd_matrix(uint16_t sc, unsigned long n)
           eeprom_store_value(EEPROM_SW4_ADDRESS, is_sw4);
           matrix[ZX_K_SW3] = is_sw3;
           matrix[ZX_K_SW4] = is_sw4;
+          osd_update_rombank();
         }
       } else {
         matrix[ZX_K_B] = !is_up; matrix[ZX_K_BIT6] = !is_up; 
@@ -692,6 +704,7 @@ void fill_kbd_matrix(uint16_t sc, unsigned long n)
           eeprom_store_value(EEPROM_SW4_ADDRESS, is_sw4);
           matrix[ZX_K_SW3] = is_sw3;
           matrix[ZX_K_SW4] = is_sw4;
+          osd_update_rombank();
         }
       } else {
         matrix[ZX_K_C] = !is_up; matrix[ZX_K_BIT6] = !is_up; 
@@ -707,6 +720,7 @@ void fill_kbd_matrix(uint16_t sc, unsigned long n)
           eeprom_store_value(EEPROM_SW4_ADDRESS, is_sw4);
           matrix[ZX_K_SW3] = is_sw3;
           matrix[ZX_K_SW4] = is_sw4;          
+          osd_update_rombank();
         }
       } else {
         matrix[ZX_K_D] = !is_up; matrix[ZX_K_BIT6] = !is_up; 
@@ -719,6 +733,7 @@ void fill_kbd_matrix(uint16_t sc, unsigned long n)
           is_sw5 = !is_sw5;
           eeprom_store_value(EEPROM_SW5_ADDRESS, is_sw5);
           matrix[ZX_K_SW5] = is_sw5;
+          osd_update_turbofdc();
         }
       } else {
         matrix[ZX_K_E] = !is_up; matrix[ZX_K_BIT6] = !is_up; 
@@ -732,6 +747,7 @@ void fill_kbd_matrix(uint16_t sc, unsigned long n)
           is_sw6 = !is_sw6;
           eeprom_store_value(EEPROM_SW6_ADDRESS, is_sw6);
           matrix[ZX_K_SW6] = is_sw6;
+          osd_update_covox();
         }
       } else {
         matrix[ZX_K_F] = !is_up; matrix[ZX_K_BIT6] = !is_up;
@@ -1228,10 +1244,13 @@ void update_led(uint8_t led, bool state)
 // init osd
 void osd_init()
 {
+  // OSD Header
   osd.setPos(0,0);
   osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
   osd.print(F("Karabas-Pro"));
   osd.setPos(0,1);
+  osd.print(F("_______________________________"));
+  osd.setPos(0,2);
   switch (cfg) {
     case 0:
       osd.print(F("Rev.A / TDA1543 "));
@@ -1246,7 +1265,138 @@ void osd_init()
       osd.print(F("Rev.DS / TDA1543A"));
       break;
   }
-  // TODO: print other parameters
+  // ROM Bank
+  osd.setColor(OSD::COLOR_GREEN_I, OSD::COLOR_BLACK);
+  osd.setPos(0,5); osd.print(F("ROM Bank:"));
+  osd_update_rombank();
+  osd.setColor(OSD::COLOR_CYAN_I, OSD::COLOR_BLACK);
+  osd.setPos(20,5); osd.print(F("Menu+F1-F4"));
+
+  // Turbo FDC
+  osd.setColor(OSD::COLOR_GREEN_I, OSD::COLOR_BLACK);
+  osd.setPos(0,6); osd.print(F("TurboFDC:"));
+  osd_update_turbofdc();
+  osd.setColor(OSD::COLOR_CYAN_I, OSD::COLOR_BLACK);
+  osd.setPos(20,6); osd.print(F("Menu+F5"));
+
+  // Covox
+  osd.setColor(OSD::COLOR_GREEN_I, OSD::COLOR_BLACK);
+  osd.setPos(0,7); osd.print(F("Covox:"));
+  osd_update_covox();
+  osd.setColor(OSD::COLOR_CYAN_I, OSD::COLOR_BLACK);
+  osd.setPos(20,7); osd.print(F("Menu+F6"));
+
+  // Stereo
+  osd.setColor(OSD::COLOR_GREEN_I, OSD::COLOR_BLACK);
+  osd.setPos(0,8); osd.print(F("Stereo:"));
+  osd_update_stereo();
+  osd.setColor(OSD::COLOR_CYAN_I, OSD::COLOR_BLACK);
+  osd.setPos(20,8); osd.print(F("Menu+F7"));
+
+  // SSG type
+  osd.setColor(OSD::COLOR_GREEN_I, OSD::COLOR_BLACK);
+  osd.setPos(0,9); osd.print(F("SSG type:"));
+  osd_update_ssg();
+  osd.setColor(OSD::COLOR_CYAN_I, OSD::COLOR_BLACK);
+  osd.setPos(20,9); osd.print(F("Menu+F8"));
+
+  // RGB/VGA
+  osd.setColor(OSD::COLOR_GREEN_I, OSD::COLOR_BLACK);
+  osd.setPos(0,10); osd.print(F("Video:"));
+  osd_update_video();
+  osd.setColor(OSD::COLOR_CYAN_I, OSD::COLOR_BLACK);
+  osd.setPos(20,10); osd.print(F("Menu+F9"));
+
+  // VSync
+  osd.setColor(OSD::COLOR_GREEN_I, OSD::COLOR_BLACK);
+  osd.setPos(0,11); osd.print(F("VSync:"));
+  osd_update_vsync();
+  osd.setColor(OSD::COLOR_CYAN_I, OSD::COLOR_BLACK);
+  osd.setPos(20,11); osd.print(F("Menu+F10"));
+
+  // Turbo
+  osd.setColor(OSD::COLOR_GREEN_I, OSD::COLOR_BLACK);
+  osd.setPos(0,12); osd.print(F("Turbo:"));
+  osd_update_turbo();
+  osd.setColor(OSD::COLOR_CYAN_I, OSD::COLOR_BLACK);
+  osd.setPos(20,12); osd.print(F("Menu+F11"));
+
+  // FDC Swap
+  osd.setColor(OSD::COLOR_GREEN_I, OSD::COLOR_BLACK);
+  osd.setPos(0,13); osd.print(F("Swap FDD:"));
+  osd_update_swap_ab();
+  osd.setColor(OSD::COLOR_CYAN_I, OSD::COLOR_BLACK);
+  osd.setPos(20,13); osd.print(F("Menu+Tab"));
+
+  // Joy type
+  osd.setColor(OSD::COLOR_GREEN_I, OSD::COLOR_BLACK);
+  osd.setPos(0,14); osd.print(F("Joystick:"));
+  osd_update_joystick();
+  osd.setColor(OSD::COLOR_CYAN_I, OSD::COLOR_BLACK);
+  osd.setPos(20,14); osd.print(F("Menu+J"));
+
+  // footer
+  osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
+  osd.setPos(0,22); osd.print(F("Press "));
+  osd.setColor(OSD::COLOR_CYAN_I, OSD::COLOR_BLACK);
+  osd.print(F("Menu+ESC"));
+  osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
+  osd.print(F(" to close OSD"));
+}
+
+void osd_update_rombank()
+{
+  osd.setColor(OSD::COLOR_MAGENTA_I, OSD::COLOR_BLACK);
+  osd.setPos(10,5);
+  uint8_t romset = 0;
+  bitWrite(romset, 0, is_sw3);
+  bitWrite(romset, 1, is_sw4);
+  switch (romset) {
+    case 0: osd.print(F("Default ")); break;
+    case 1: osd.print(F("PQ-DOS  ")); break;
+    case 2: osd.print(F("Flasher ")); break;
+    case 3: osd.print(F("FDImage ")); break;
+  }
+}
+
+void osd_update_turbofdc() {
+  osd.setColor(OSD::COLOR_MAGENTA_I, OSD::COLOR_BLACK);
+  osd.setPos(10,6);
+  if (is_sw5) { osd.print(F("On ")); } else { osd.print(F("Off")); }
+}
+
+void osd_update_covox() {
+  osd.setColor(OSD::COLOR_MAGENTA_I, OSD::COLOR_BLACK);
+  osd.setPos(10,7);
+  if (is_sw6) { osd.print(F("On ")); } else { osd.print(F("Off")); }
+}
+
+void osd_update_stereo() {
+  // sw7,sw9
+}
+
+void osd_update_ssg() {
+  // sw8
+}
+
+void osd_update_video() {
+  // sw10
+}
+
+void osd_update_vsync() {
+  // 
+}
+
+void osd_update_turbo() {
+  // sw11
+}
+
+void osd_update_swap_ab() {
+
+}
+
+void osd_update_joystick() {
+
 }
 
 // initial setup
@@ -1515,6 +1665,7 @@ void loop()
     rtc_send_time();
 
       // test
+      /*
       osd.setPos(0,3);
       osd.setColor(OSD::COLOR_RED, OSD::COLOR_BLACK);
       osd.print(rtc_hours, DEC);
@@ -1523,6 +1674,7 @@ void loop()
       osd.print(F(":"));
       osd.print(rtc_seconds, DEC);
       osd.print(F("   "));
+      */
 
     tr = n;
   }

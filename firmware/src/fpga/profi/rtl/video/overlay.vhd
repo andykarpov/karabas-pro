@@ -12,6 +12,7 @@ entity overlay is
 		DS80		: in std_logic;
 		HCNT_I	: in std_logic_vector(9 downto 0);
 		VCNT_I	: in std_logic_vector(8 downto 0);
+		PAPER_I  : in std_logic;
 		BLINK 	: in std_logic;
 		
 		OSD_OVERLAY 	: in std_logic := '0';
@@ -43,8 +44,8 @@ architecture rtl of overlay is
 
     signal video_on : std_logic;
 
-    signal char: std_logic_vector(7 downto 0);
-    signal attr, last_attr, cur_attr: std_logic_vector(7 downto 0);
+    signal char, char2: std_logic_vector(7 downto 0);
+    signal attr, attr2: std_logic_vector(7 downto 0);
 
     signal char_x: std_logic_vector(2 downto 0);
     signal char_y: std_logic_vector(2 downto 0);
@@ -54,7 +55,7 @@ architecture rtl of overlay is
     signal bit_addr: std_logic_vector(2 downto 0);
     signal font_word: std_logic_vector(7 downto 0);
     signal font_reg : std_logic_vector(7 downto 0);	 
-    signal font_bit: std_logic;
+    signal pixel: std_logic;
     
     signal addr_read: std_logic_vector(9 downto 0);
     signal addr_write: std_logic_vector(9 downto 0);
@@ -70,6 +71,11 @@ architecture rtl of overlay is
     signal selector : std_logic_vector(3 downto 0);
 	 signal last_osd_command : std_logic_vector(15 downto 0);
 	 signal char_buf : std_logic_vector(7 downto 0);
+	 signal paper : std_logic := '0';
+	 signal last_paper : std_logic := '0';
+	 
+	 signal hcnt : std_logic_vector(9 downto 0) := (others => '0');
+	 signal vcnt : std_logic_vector(9 downto 0) := (others => '0');
 	
 begin
 
@@ -91,50 +97,77 @@ begin
         q         => vram_do
     );
 
-	 video_on <= '1' when (OSD_OVERLAY = '1') else '0';
-	 flash <= BLINK;
-
-    char_x <= HCNT_I(2 downto 0); -- TODO: DS80
-    char_y <= VCNT_I(2 downto 0);
-
-    addr_read <= VCNT_I(7 downto 3) & HCNT_I(7 downto 3);
-    char <= vram_do(15 downto 8); 
-    cur_attr <= vram_do(7 downto 0); 
-    rom_addr <= char & char_y;
-    font_reg <= font_word;
-
-    process(CLK, CLK2, bit_addr)
-    begin
-        if rising_edge(CLK) then
-			   if (CLK2 = '1') then 
-					if (bit_addr = "010") then
-						 last_attr <= cur_attr;
-					end if;
+	 process (CLK, CLK2, hcnt_i, vcnt_i, hcnt, vcnt, paper_i, last_paper)
+	 begin 
+		if rising_edge(CLK) then 
+			if (CLK2 = '1') then 
+				last_paper <= paper;
+				-- paper start
+				if (paper_i = '1' and last_paper = '0') then 
+					hcnt <= (others => '0');
+				-- paper 
+				elsif (paper_i = '1' and last_paper = '1') then 
+					hcnt <= hcnt + 1;
 				end if;
-        end if;
-    end process;
+			end if;
+		end if;
+	 end process;
 
-    attr <= last_attr when bit_addr <= 1 else cur_attr;
+	flash <= BLINK;
+	vcnt <= '0' & vcnt_i;
+	 
+    char_x <= hcnt(3 downto 1);
+    char_y <= VCNT(2 downto 0);
+	 paper <= PAPER_I;	 
+    video_on <= '1' when (OSD_OVERLAY = '1') else '0';
+
+	 -- todo: 
+	 process (CLK, CLK2, vram_do)
+	 begin
+		if (rising_edge(CLK)) then 
+			if (CLK2 = '1') then 
+				case (char_x) is
+					when "110" =>
+						-- задаем адрес для чтения char и attr из видео памяти
+						addr_read <= VCNT(7 downto 3) & HCNT(8 downto 4);
+					when "111" => 
+						-- задаем адрес знакоместа из шрифта для чтения
+						rom_addr <= vram_do(15 downto 8) & char_y;
+						char2 <= vram_do(15 downto 8);
+						attr2 <= vram_do(7 downto 0);
+					when "000" => 
+						-- читаем строку знакоместа 
+						font_reg <= font_word;
+						-- читаем char и attr 
+						char <= char2;
+						attr <= attr2;
+						when others => null;						
+				end case;
+			end if;
+		end if;
+	 end process;
+	 
 
     -- getting font pixel of the current char line
     bit_addr <= char_x(2 downto 0);
-    font_bit <=
-                font_reg(0) when bit_addr = "000" else 
-                font_reg(7) when bit_addr = "001" else 
-                font_reg(6) when bit_addr = "010" else 
-                font_reg(5) when bit_addr = "011" else 
-                font_reg(4) when bit_addr = "100" else 
-                font_reg(3) when bit_addr = "101" else
-                font_reg(2) when bit_addr = "110" else
-                font_reg(1) when bit_addr = "111";
+    pixel <= -- delayed
+                font_reg(7) when bit_addr = "000" else 
+                font_reg(6) when bit_addr = "001" else 
+                font_reg(5) when bit_addr = "010" else 
+                font_reg(4) when bit_addr = "011" else 
+                font_reg(3) when bit_addr = "100" else 
+                font_reg(2) when bit_addr = "101" else
+                font_reg(1) when bit_addr = "110" else
+                font_reg(0) when bit_addr = "111";
 
     -- rgb multiplexing
     is_flash <= '1' when attr(3 downto 0) = "0001" else '0';
-    selector <= video_on & font_bit & flash & is_flash;
+    selector <= video_on & pixel & flash & is_flash;
     rgb_fg <= (attr(7) and attr(4)) & attr(7) & attr(7) & (attr(6) and attr(4)) & attr(6) & attr(6) & (attr(5) and attr(4)) & attr(5) & attr(5);
     rgb_bg <= (attr(3) and attr(0)) & attr(3) & attr(3) & (attr(2) and attr(0)) & attr(2) & attr(2) & (attr(1) and attr(0)) & attr(1) & attr(1);
-    RGB_O <= rgb_fg when (selector="1111" or selector="1001" or selector="1100" or selector="1110") else 
-             rgb_bg when (selector="1011" or selector="1101" or selector="1000" or selector="1010") else 
+    RGB_O <= rgb_fg when paper = '1' and (selector="1111" or selector="1001" or selector="1100" or selector="1110") else 
+             rgb_bg when paper = '1' and (selector="1011" or selector="1101" or selector="1000" or selector="1010") else 
+				 "000000000" when video_on = '1' else
              RGB_I;
 
 		process(CLK, osd_command, last_osd_command)

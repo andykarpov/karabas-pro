@@ -203,6 +203,7 @@ signal vid_rgb_osd 	: std_logic_vector(8 downto 0);
 signal vid_invert 	: std_logic;
 signal vid_hcnt 		: std_logic_vector(9 downto 0);
 signal vid_vcnt 		: std_logic_vector(8 downto 0);
+signal vid_ispaper   : std_logic;
 signal vid_scandoubler_enable : std_logic := '1';
 signal blink 			: std_logic;
 
@@ -660,6 +661,7 @@ port map (
 	VID_RD 			=> vid_rd,	
 	HCNT 				=> vid_hcnt,
 	VCNT 				=> vid_vcnt,
+	ISPAPER 			=> vid_ispaper,
 	BLINK 			=> blink
 );
 
@@ -676,6 +678,7 @@ port map (
 	RGB_O 			=> vid_rgb_osd,
 	HCNT_I 			=> vid_hcnt,
 	VCNT_I 			=> vid_vcnt,
+	PAPER_I 			=> vid_ispaper,
 	BLINK 			=> blink,
 
 	LOADED 			=> kb_loaded,

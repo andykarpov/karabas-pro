@@ -15,6 +15,7 @@ entity osd is
 		DS80		: in std_logic;
 		HCNT_I	: in std_logic_vector(9 downto 0);
 		VCNT_I	: in std_logic_vector(8 downto 0);
+		PAPER_I 	: in std_logic;
 		BLINK 	: in std_logic;
 		LOADED 	: in std_logic;
 		
@@ -158,6 +159,7 @@ begin
 			DS80 => DS80,
 			HCNT_I => HCNT_I,
 			VCNT_I => VCNT_I,
+			PAPER_I => PAPER_I,
 			BLINK => BLINK,
 		
 			OSD_OVERLAY 	=> OSD_OVERLAY,
