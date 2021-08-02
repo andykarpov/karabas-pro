@@ -29,6 +29,7 @@ Ukraine, 2021
 #include <EEPROM.h>
 #include "SBWire.h"
 #include "RTC.h"
+#include "OSD.h"
 #include <SPI.h>
 #include "config.h"
 #include "utils.h"
@@ -37,6 +38,7 @@ PS2KeyAdvanced kbd;
 PS2Mouse mice;
 SegaController sega;
 static DS1307 rtc;
+OSD osd;
 
 bool matrix[ZX_MATRIX_FULL_SIZE]; // matrix of pressed keys + mouse reports to be transmitted on CPLD side by simple serial protocol
 bool joy[8]; // joystic states
@@ -60,7 +62,9 @@ bool is_sw8 = false; // SW8 state
 bool is_sw9 = false; // SW9 state 
 bool is_sw10 = false; // SW10 state
 bool joy_type = false; // joy type - 0 = kempston, 1 = sega
+bool osd_overlay = false; // osd overlay enable
 bool init_done = false; // init done
+uint8_t cfg = 0; // cfg byte from fpga side
 
 bool is_wait = false; // wait mode
 bool mouse_present = false; // mouse present flag (detected by signal change on CLKM pin)
@@ -145,6 +149,7 @@ void eeprom_store_values();
 void setup();
 void loop();
 void update_led(uint8_t led, bool state);
+void osd_init();
 
 void push_capsed_key(int key)
 {
@@ -198,7 +203,7 @@ void fill_kbd_matrix(uint16_t sc)
 {
 
   static bool is_up = false;
-  static bool is_del = false, is_bksp = false, is_shift = false, is_esc = false, is_ss_used = false;
+  static bool is_del = false, is_bksp = false, is_shift = false, is_ss_used = false;
 
   uint8_t code = sc & 0xFF;
   uint8_t status = sc >> 8;
@@ -322,10 +327,18 @@ void fill_kbd_matrix(uint16_t sc)
 
     // ESC -> CS+1 for Profi, CS+SPACE for ZX
     case PS2_KEY_ESC:
-      matrix[ZX_K_CS] = !is_up;
-      matrix[profi_mode ? ZX_K_1 : ZX_K_SP] = !is_up;
-      process_capsed_key(code, is_up);
-      is_esc = !is_up;
+
+      if (is_menu || is_win || (is_ctrl && is_alt)) {
+        if (!is_up) {
+          // menu + ESC = OSD_OVERLAY
+          osd_overlay = !osd_overlay;
+          matrix[ZX_K_OSD_OVERLAY] = osd_overlay;
+        }
+      } else {
+        matrix[ZX_K_CS] = !is_up;
+        matrix[profi_mode ? ZX_K_1 : ZX_K_SP] = !is_up;
+        process_capsed_key(code, is_up);
+      }
       break;
 
     // Backspace -> CS+0
@@ -853,17 +866,6 @@ void fill_kbd_matrix(uint16_t sc)
   }
   //digitalWrite(PIN_RESET, (is_ctrl && is_alt && is_del) ? LOW : HIGH);
 
-  // Ctrl+Alt+Esc -> MAGIC
-  if (is_ctrl && is_alt && is_esc) {
-    is_ctrl = false;
-    is_alt = false;
-    is_esc = false;
-    is_shift = false;
-    is_ss_used = false;
-    capsed_keys_size = 0;
-    do_magic();
-  }
-
   // Ctrl+Alt+Bksp -> REINIT controller
   if (is_ctrl && is_alt && is_bksp) {
     is_ctrl = false;
@@ -1020,6 +1022,7 @@ void process_in_cmd(uint8_t cmd, uint8_t data)
       rtc_send_all();
       do_reset();
       Serial.println(F("done"));
+      cfg = data;
       Serial.print(F("FPGA board revision is: "));
       switch (data) {
         case 0:
@@ -1218,6 +1221,30 @@ void update_led(uint8_t led, bool state)
   digitalWrite(led, state);
 }
 
+// init osd
+void osd_init()
+{
+  osd.setPos(0,0);
+  osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
+  osd.print(F("Karabas-Pro"));
+  osd.setPos(0,1);
+  switch (cfg) {
+    case 0:
+      osd.print(F("Rev.A / TDA1543 "));
+      break;
+    case 1:
+      osd.print(F("Rev.A / TDA1543A"));
+      break;
+    case 4:
+      osd.print(F("Rev.DS / TDA1543 "));
+      break;
+    case 5:
+      osd.print(F("Rev.DS / TDA1543A"));
+      break;
+  }
+  // TODO: print other parameters
+}
+
 // initial setup
 void setup()
 {
@@ -1277,6 +1304,9 @@ void setup()
   while (!init_done) {
     spi_send(CMD_NONE, 0x00);
   }
+
+  // setup osd library with callback to send spi command
+  osd.begin(spi_send);
 
   // setup sega controller
   sega.begin(PIN_LED2, PIN_JOY_UP, PIN_JOY_DOWN, PIN_JOY_LEFT, PIN_JOY_RIGHT, PIN_JOY_FIRE1, PIN_JOY_FIRE2);
@@ -1338,6 +1368,10 @@ void setup()
     rtc_send_all();
     Serial.println(F("done"));  
   }
+
+  Serial.print(F("OSD init..."));
+  osd_init();
+  Serial.println(F("done"));
 
   Serial.println(F("Starting main loop"));
   digitalWrite(PIN_LED1, LOW);
