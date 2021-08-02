@@ -32,7 +32,8 @@ entity karabas_pro is
 	generic (
 		enable_zxuno_uart  : boolean := true;
 		enable_zxuno_uart2 : boolean := false;
-		enable_saa1099 	 : boolean := false
+		enable_saa1099 	 : boolean := false;
+		enable_osd_overlay : boolean := true
 	);
 port (
 	-- Clock (50MHz)
@@ -204,6 +205,10 @@ signal vid_hcnt 		: std_logic_vector(9 downto 0);
 signal vid_vcnt 		: std_logic_vector(8 downto 0);
 signal vid_scandoubler_enable : std_logic := '1';
 signal blink 			: std_logic;
+
+-- OSD overlay
+signal osd_overlay 	: std_logic := '0';
+signal osd_command 	: std_logic_vector(15 downto 0);
 
 -- Z-Controller
 signal zc_do_bus		: std_logic_vector(7 downto 0);
@@ -660,6 +665,9 @@ port map (
 
 -- osd (debug)
 U8: entity work.osd
+generic map (
+	enable_osd_overlay => enable_osd_overlay
+)
 port map (
 	CLK 				=> clk_bus,
 	CLK2 				=> clk_div2,
@@ -685,8 +693,11 @@ port map (
 	TURBO_FDC		=> turbo_fdc_off,
 	SSG_MONO 		=> soft_sw(9),
 	FDC_SWAP			=> fdc_swap,
-	JOY_TYPE 		=> joy_type
-
+	JOY_TYPE 		=> joy_type,
+	
+	-- osd overlay
+	OSD_OVERLAY		=> osd_overlay,
+	OSD_COMMAND 	=> osd_command
 );
 
 -- Scandoubler	
@@ -858,6 +869,8 @@ port map (
 	 MAGICK 			=> kb_magic,
 	 WAIT_CPU 		=> kb_wait,
 	 JOY_TYPE 		=> joy_type,
+	 OSD_OVERLAY 	=> osd_overlay,
+	 OSD_COMMAND	=> osd_command,
 	 
 	 LOADED 			=> kb_loaded,
 	 
