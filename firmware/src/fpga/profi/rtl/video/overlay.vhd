@@ -72,8 +72,7 @@ architecture rtl of overlay is
 	 signal last_osd_command : std_logic_vector(15 downto 0);
 	 signal char_buf : std_logic_vector(7 downto 0);
 	 signal paper : std_logic := '0';
-	 signal paper2 : std_logic := '0';
-	 signal last_paper : std_logic := '0';
+--	 signal last_paper : std_logic := '0';
 	 
 	 signal hcnt : std_logic_vector(9 downto 0) := (others => '0');
 	 signal vcnt : std_logic_vector(9 downto 0) := (others => '0');
@@ -98,16 +97,16 @@ begin
         q         => vram_do
     );
 
-	 process (CLK, CLK2, hcnt_i, vcnt_i, hcnt, vcnt, paper_i, last_paper)
+	 process (CLK, CLK2, hcnt_i, vcnt_i, hcnt, vcnt, paper_i)
 	 begin 
 		if rising_edge(CLK) then 
 			if (CLK2 = '1') then 
-				last_paper <= paper;
+--				last_paper <= paper;
 				-- paper start
-				if (paper_i = '1' and last_paper = '0') then 
+				if paper_i = '0' then 
 					hcnt <= (others => '0');
 				-- paper 
-				else
+				else 
 					hcnt <= hcnt + 1;
 				end if;
 			end if;
@@ -120,7 +119,6 @@ begin
     char_x <= hcnt(3 downto 1);
     char_y <= VCNT(2 downto 0);
 	 paper <= PAPER_I;	 
-	 paper2 <= '1' when hcnt(9 downto 1) >= 8 and hcnt(9 downto 1) < 264 and vcnt >=0 and vcnt < 192 else '0'; -- видимая область со сдвигом на одно знакоместо 
     video_on <= '1' when (OSD_OVERLAY = '1') else '0';
 
 	 -- todo: 
@@ -167,8 +165,8 @@ begin
     selector <= video_on & pixel & flash & is_flash;
     rgb_fg <= (attr(7) and attr(4)) & attr(7) & attr(7) & (attr(6) and attr(4)) & attr(6) & attr(6) & (attr(5) and attr(4)) & attr(5) & attr(5);
     rgb_bg <= (attr(3) and attr(0)) & attr(3) & attr(3) & (attr(2) and attr(0)) & attr(2) & attr(2) & (attr(1) and attr(0)) & attr(1) & attr(1);
-    RGB_O <= rgb_fg when paper2 = '1' and (selector="1111" or selector="1001" or selector="1100" or selector="1110") else 
-             rgb_bg when paper2 = '1' and (selector="1011" or selector="1101" or selector="1000" or selector="1010") else 
+    RGB_O <= rgb_fg when paper = '1' and (selector="1111" or selector="1001" or selector="1100" or selector="1110") else 
+             rgb_bg when paper = '1' and (selector="1011" or selector="1101" or selector="1000" or selector="1010") else 
 				 "000000000" when video_on = '1' else
              RGB_I;
 

@@ -248,7 +248,7 @@ begin
 	
 	HCNT <= '0' & std_logic_vector(hor_cnt) & std_logic_vector(chr_col_cnt);
 	VCNT <= std_logic_vector(ver_cnt) & std_logic_vector(chr_row_cnt);
-	ISPAPER <= '1' when paper_r = '0' and blank_r = '1' else '0';
+	ISPAPER <= '1' when paper = '0' and blank_r = '1' else '0';
 
 	BLINK <= invert(4);
 

@@ -218,7 +218,7 @@ HSYNC 		<= h_sync;
 VSYNC 		<= v_sync;
 HCNT <= std_logic_vector(h_cnt);
 VCNT <= std_logic_vector(v_cnt);
-ISPAPER <= '1' when paper1='1' and blank1 = '0' else '0';
+ISPAPER <= '1' when paper='1' and blank1 = '0' else '0';
 BLANK <= blank1;
 
 end architecture;
