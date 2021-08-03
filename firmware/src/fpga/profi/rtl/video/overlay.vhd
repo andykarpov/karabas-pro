@@ -44,7 +44,6 @@ architecture rtl of overlay is
 
     signal video_on : std_logic;
 
-    signal char, char2: std_logic_vector(7 downto 0);
     signal attr, attr2: std_logic_vector(7 downto 0);
 
     signal char_x: std_logic_vector(2 downto 0);
@@ -72,13 +71,14 @@ architecture rtl of overlay is
 	 signal last_osd_command : std_logic_vector(15 downto 0);
 	 signal char_buf : std_logic_vector(7 downto 0);
 	 signal paper : std_logic := '0';
---	 signal last_paper : std_logic := '0';
+	 signal paper2 : std_logic := '0';
 	 
 	 signal hcnt : std_logic_vector(9 downto 0) := (others => '0');
-	 signal vcnt : std_logic_vector(9 downto 0) := (others => '0');
+	 signal vcnt : std_logic_vector(8 downto 0) := (others => '0');
 	
 begin
 
+	-- знакогенератор
 	 U_FONT: rom_font2
     port map (
         address => rom_addr,
@@ -97,31 +97,18 @@ begin
         q         => vram_do
     );
 
-	 process (CLK, CLK2, hcnt_i, vcnt_i, hcnt, vcnt, paper_i)
-	 begin 
-		if rising_edge(CLK) then 
-			if (CLK2 = '1') then 
---				last_paper <= paper;
-				-- paper start
-				if paper_i = '0' then 
-					hcnt <= (others => '0');
-				-- paper 
-				else 
-					hcnt <= hcnt + 1;
-				end if;
-			end if;
-		end if;
-	 end process;
-
 	flash <= BLINK;
-	vcnt <= '0' & vcnt_i;
+	hcnt <= '0' & hcnt_i(9 downto 1) when DS80='1' else hcnt_i;
+	vcnt <= vcnt_i;
 	 
-    char_x <= hcnt(3 downto 1);
+    char_x <= hcnt(2 downto 0);
     char_y <= VCNT(2 downto 0);
-	 paper <= PAPER_I;	 
+	 paper2 <= '1' when hcnt >= 0 and hcnt < 256 and vcnt >= 0 and vcnt < 192 else '0'; 
+	 paper <= '1' when hcnt >= 8 and hcnt < 264 and vcnt >= 0 and vcnt < 192 else '0'; -- активная зона со сдвигом на одно знакоместо
     video_on <= '1' when (OSD_OVERLAY = '1') else '0';
 
-	 -- todo: 
+	 -- чтение символа из видеопамяти и строчки знакоместа из шрифта
+	 -- задержка на одно знакоместо
 	 process (CLK, CLK2, vram_do)
 	 begin
 		if (rising_edge(CLK)) then 
@@ -129,17 +116,15 @@ begin
 				case (char_x) is
 					when "110" =>
 						-- задаем адрес для чтения char и attr из видео памяти
-						addr_read <= VCNT(7 downto 3) & HCNT(8 downto 4);
+						if (paper2 = '1') then
+							addr_read <= VCNT(7 downto 3) & HCNT(7 downto 3);
+						end if;
 					when "111" => 
 						-- задаем адрес знакоместа из шрифта для чтения
 						rom_addr <= vram_do(15 downto 8) & char_y;
-						char2 <= vram_do(15 downto 8);
 						attr2 <= vram_do(7 downto 0);
 					when "000" => 
-						-- читаем строку знакоместа 
-						font_reg <= font_word;
-						-- читаем char и attr 
-						char <= char2;
+						-- назначаем attr для нового знакоместа 
 						attr <= attr2;
 						when others => null;						
 				end case;
@@ -147,10 +132,12 @@ begin
 		end if;
 	 end process;
 	 
+	 -- читаем строку знакоместа 
+	 font_reg <= font_word;	 
 
-    -- getting font pixel of the current char line
+    -- получение пикселя из строчки знакоместа шрифта
     bit_addr <= char_x(2 downto 0);
-    pixel <= -- delayed
+    pixel <= 
                 font_reg(7) when bit_addr = "000" else 
                 font_reg(6) when bit_addr = "001" else 
                 font_reg(5) when bit_addr = "010" else 
@@ -160,7 +147,7 @@ begin
                 font_reg(1) when bit_addr = "110" else
                 font_reg(0) when bit_addr = "111";
 
-    -- rgb multiplexing
+    -- формирование RGB
     is_flash <= '1' when attr(3 downto 0) = "0001" else '0';
     selector <= video_on & pixel & flash & is_flash;
     rgb_fg <= (attr(7) and attr(4)) & attr(7) & attr(7) & (attr(6) and attr(4)) & attr(6) & attr(6) & (attr(5) and attr(4)) & attr(5) & attr(5);
@@ -170,6 +157,7 @@ begin
 				 "000000000" when video_on = '1' else
              RGB_I;
 
+		-- заполнение видеопамяти AVR'кой по SPI
 		process(CLK, osd_command, last_osd_command)
 		begin
 			  if rising_edge(CLK) then
