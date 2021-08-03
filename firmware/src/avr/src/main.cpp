@@ -142,6 +142,8 @@ void init_mouse();
 void do_reset();
 void do_full_reset();
 void do_magic();
+void do_caps();
+void do_pause();
 void clear_matrix(int clear_size);
 bool eeprom_restore_value(int addr, bool default_value);
 void eeprom_store_value(int addr, bool value);
@@ -238,7 +240,18 @@ void fill_kbd_matrix(uint16_t sc, unsigned long n)
   matrix[ZX_K_SCANCODE1] = bitRead(code, 1);
   matrix[ZX_K_SCANCODE0] = bitRead(code, 0); 
 
+  // hotfix
+  if ((status == 0) && (code == PS2_KEY_L_SHIFT )) {
+    do_pause();
+    return;
+  }
+
   switch (code) {
+
+    // Pause -> Wait
+    case PS2_KEY_PAUSE:
+      do_pause();
+    break;
 
     // Shift -> SS for Profi, CS for ZX
     case PS2_KEY_L_SHIFT:
@@ -620,9 +633,7 @@ void fill_kbd_matrix(uint16_t sc, unsigned long n)
 
     // CapsLock
     case PS2_KEY_CAPS:
-      matrix[ZX_K_SS] = !is_up;
-      matrix[ZX_K_CS] = !is_up;
-      process_capsed_key(code, is_up);
+      do_caps();
       break;
 
     // PgUp -> M+BIT6 for Profi, CS+3 for ZX
@@ -864,15 +875,6 @@ void fill_kbd_matrix(uint16_t sc, unsigned long n)
           osd_update_keyboard_type();
         }
       }
-    break;
-
-    // Pause -> Wait
-    case PS2_KEY_PAUSE:
-      if (is_up) {
-        is_wait = !is_wait;
-        matrix[ZX_K_WAIT] = is_wait;
-        osd_update_pause();
-      }      
     break;
 
       // TODO:
@@ -1167,6 +1169,23 @@ void do_magic()
   clear_matrix(ZX_MATRIX_SIZE);
   matrix[ZX_K_MAGICK] = 0;
   transmit_keyboard_matrix();
+}
+
+void do_caps()
+{
+  matrix[ZX_K_SS] = true;
+  matrix[ZX_K_CS] = true;
+  transmit_keyboard_matrix();
+  delay(100);
+  matrix[ZX_K_SS] = false;
+  matrix[ZX_K_CS] = false;
+}
+
+void do_pause()
+{
+  is_wait = !is_wait;
+  matrix[ZX_K_WAIT] = is_wait;
+  osd_update_pause();
 }
 
 void clear_matrix(int clear_size)
