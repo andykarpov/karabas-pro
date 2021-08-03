@@ -164,6 +164,9 @@ void osd_update_joystick();
 void osd_update_keyboard_type();
 void osd_update_pause();
 void osd_update_time();
+void osd_update_scancode(uint16_t c);
+void osd_update_mouse();
+void osd_update_joy_state();
 
 void push_capsed_key(int key)
 {
@@ -1361,16 +1364,31 @@ void osd_init()
   osd.setColor(OSD::COLOR_CYAN_I, OSD::COLOR_BLACK);
   osd.setPos(20,16); osd.print(F("Pause"));
 
+  // Scancode
+  osd.setColor(OSD::COLOR_GREEN_I, OSD::COLOR_BLACK);
+  osd.setPos(0,18); osd.print(F("Scancode:"));
+  osd_update_scancode(0);
+
+  // Mouse
+  osd.setColor(OSD::COLOR_GREEN_I, OSD::COLOR_BLACK);
+  osd.setPos(0,19); osd.print(F("Mouse:"));
+  osd_update_mouse();
+
+  // Joy
+  osd.setColor(OSD::COLOR_GREEN_I, OSD::COLOR_BLACK);
+  osd.setPos(0,20); osd.print(F("Joy:"));
+  osd_update_joy_state();
+
   // footer
   osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
-  osd.setPos(0,20); osd.print(F("Press "));
+  osd.setPos(0,22); osd.print(F("Press "));
   osd.setColor(OSD::COLOR_CYAN_I, OSD::COLOR_BLACK);
   osd.print(F("Ctrl+Alt+Del"));
   osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
   osd.print(F(" to reboot"));
 
   osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
-  osd.setPos(0,22); osd.print(F("Press "));
+  osd.setPos(0,23); osd.print(F("Press "));
   osd.setColor(OSD::COLOR_CYAN_I, OSD::COLOR_BLACK);
   osd.print(F("Menu+ESC"));
   osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
@@ -1489,6 +1507,38 @@ void osd_update_time() {
   osd.print(rtc_month, DEC); osd.print(F("."));
   osd.print(rtc_year, DEC);
 }
+
+void osd_update_scancode(uint16_t c) {
+  osd.setColor(OSD::COLOR_RED_I, OSD::COLOR_BLACK);
+  osd.setPos(10,18);
+  if ((c >> 8) < 0x10) osd.print(F("0")); osd.print(c >> 8, HEX);
+  osd.print(F(" "));
+  if ((c & 0xFF) < 0x10) osd.print(F("0")); osd.print(c & 0xFF, HEX);
+}
+
+void osd_update_mouse() {
+  osd.setColor(OSD::COLOR_RED_I, OSD::COLOR_BLACK);
+  osd.setPos(10,19);
+  if (mouse_x < 0x10) osd.print(F("0")); osd.print(mouse_x, HEX);
+  osd.print(F(" "));
+  if (mouse_y < 0x10) osd.print(F("0")); osd.print(mouse_y, HEX);
+  osd.print(F(" "));
+  if (mouse_z < 0x10) osd.print(F("0")); osd.print(mouse_z, HEX);
+}
+
+void osd_update_joy_state() {
+  osd.setColor(OSD::COLOR_RED_I, OSD::COLOR_BLACK);
+  osd.setPos(10,20);
+  osd.print(joy[ZX_JOY_UP], DEC);
+  osd.print(joy[ZX_JOY_DOWN], DEC);
+  osd.print(joy[ZX_JOY_LEFT], DEC);
+  osd.print(joy[ZX_JOY_RIGHT], DEC);
+  osd.print(joy[ZX_JOY_FIRE], DEC);
+  osd.print(joy[ZX_JOY_FIRE2], DEC);
+  osd.print(joy[ZX_JOY_A], DEC);
+  osd.print(joy[ZX_JOY_B], DEC);
+}
+
 
 // initial setup
 void setup()
@@ -1641,6 +1691,9 @@ void loop()
     Serial.print(c >> 8, HEX);
     Serial.print(F(" Code: "));
     Serial.println(c & 0xFF, HEX);
+    if (matrix[ZX_K_OSD_OVERLAY]) {
+      osd_update_scancode(c);
+    }
   }
 
   // transmit kbd always
@@ -1712,6 +1765,11 @@ void loop()
     Serial.print(F(" F2:")); Serial.print(joy[ZX_JOY_FIRE2]);
     Serial.print(F(" J:")); Serial.print(joy[ZX_JOY_A]);
     Serial.print(F(" P:")); Serial.println(joy[ZX_JOY_B]);
+
+    if (matrix[ZX_K_OSD_OVERLAY]) {
+      osd_update_joy_state();
+    }
+
   }
 
   // transmit joy matrix
@@ -1793,6 +1851,10 @@ void loop()
 
     transmit_mouse_data();
 
+    if (matrix[ZX_K_OSD_OVERLAY]) {
+      osd_update_mouse();
+    }
+
     t = n;
   }
   #else
@@ -1815,6 +1877,10 @@ void loop()
       bitWrite(mouse_z, 7, mouse_new_packet);
   
       transmit_mouse_data();    
+
+      if (matrix[ZX_K_OSD_OVERLAY]) {
+        osd_update_mouse();
+      }
     //}
   }
 
