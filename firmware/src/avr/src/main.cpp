@@ -22,22 +22,23 @@ Ukraine, 2021
 */
 
 #include "Arduino.h"
-#include "PS2KeyRaw.h"
+#include "PS2KeyAdvanced.h"
 #include "PS2Mouse.h"
 #include "SegaController.h"
 #include "matrix.h"
-#include "ps2_codes.h"
 #include <EEPROM.h>
 #include "SBWire.h"
 #include "RTC.h"
+#include "OSD.h"
 #include <SPI.h>
 #include "config.h"
 #include "utils.h"
 
-PS2KeyRaw kbd;
+PS2KeyAdvanced kbd;
 PS2Mouse mice;
 SegaController sega;
 static DS1307 rtc;
+OSD osd;
 
 bool matrix[ZX_MATRIX_FULL_SIZE]; // matrix of pressed keys + mouse reports to be transmitted on CPLD side by simple serial protocol
 bool joy[8]; // joystic states
@@ -61,7 +62,9 @@ bool is_sw8 = false; // SW8 state
 bool is_sw9 = false; // SW9 state 
 bool is_sw10 = false; // SW10 state
 bool joy_type = false; // joy type - 0 = kempston, 1 = sega
+bool osd_overlay = false; // osd overlay enable
 bool init_done = false; // init done
+uint8_t cfg = 0; // cfg byte from fpga side
 
 bool is_wait = false; // wait mode
 bool mouse_present = false; // mouse present flag (detected by signal change on CLKM pin)
@@ -85,6 +88,7 @@ unsigned long tr = 0; // rtc poll time
 unsigned long te = 0; // eeprom store time
 unsigned long tb, tb1, tb2 = 0; // hw buttons poll time
 unsigned long ts = 0; // mouse swap time
+unsigned long tosd = 0; // osd last press toggle time
 
 int mouse_tries; // number of triers to init mouse
 
@@ -121,7 +125,7 @@ SPISettings settingsA(1000000, MSBFIRST, SPI_MODE0); // SPI transmission setting
 void push_capsed_key(int key);
 void pop_capsed_key(int key);
 void process_capsed_key(int key, bool up);
-void fill_kbd_matrix(int sc);
+void fill_kbd_matrix(uint16_t sc, unsigned long n);
 void send_macros(uint8_t pos);
 uint8_t get_matrix_byte(uint8_t pos);
 uint8_t get_joy_byte();
@@ -138,6 +142,8 @@ void init_mouse();
 void do_reset();
 void do_full_reset();
 void do_magic();
+void do_caps();
+void do_pause();
 void clear_matrix(int clear_size);
 bool eeprom_restore_value(int addr, bool default_value);
 void eeprom_store_value(int addr, bool value);
@@ -146,6 +152,23 @@ void eeprom_store_values();
 void setup();
 void loop();
 void update_led(uint8_t led, bool state);
+void osd_init();
+void osd_update_rombank();
+void osd_update_turbofdc();
+void osd_update_covox();
+void osd_update_stereo();
+void osd_update_ssg();
+void osd_update_video();
+void osd_update_vsync();
+void osd_update_turbo();
+void osd_update_swap_ab();
+void osd_update_joystick();
+void osd_update_keyboard_type();
+void osd_update_pause();
+void osd_update_time();
+void osd_update_scancode(uint16_t c);
+void osd_update_mouse();
+void osd_update_joy_state();
 
 void push_capsed_key(int key)
 {
@@ -195,85 +218,77 @@ void process_capsed_key(int key, bool up)
 }
 
 // transform PS/2 scancodes into internal matrix of pressed keys
-void fill_kbd_matrix(int sc)
+void fill_kbd_matrix(uint16_t sc, unsigned long n)
 {
 
-  static bool is_up = false, is_e = false, is_e1 = false;
-  static bool is_del = false, is_bksp = false, is_shift = false, is_esc = false, is_ss_used = false, is_pscr1 = false;
-  static int scancode = 0;
+  static bool is_up = false;
+  static bool is_del = false, is_bksp = false, is_shift = false, is_ss_used = false;
 
-  // is extended scancode prefix
-  if (sc == 0xE0) {
-    is_e = 1;
-    return;
-  }
-
-  if (sc == 0xE1) {
-    is_e = 1;
-    is_e1 = 1;
-    return;
-  }
-
-  // is key released prefix
-  if (sc == 0xF0 && !is_up) {
-    is_up = 1;
-    return;
-  }
-
-  scancode = sc + ((is_e || is_e1) ? 0x100 : 0);
+  uint8_t code = sc & 0xFF;
+  uint8_t status = sc >> 8;
+  is_up = sc & PS2_BREAK;
 
   is_ss_used = false;
 
   matrix[ZX_K_IS_UP] = is_up;
-  
-  matrix[ZX_K_SCANCODE8] = bitRead(scancode, 8); // extended bit e / e1
-  matrix[ZX_K_SCANCODE7] = bitRead(scancode, 7);
-  matrix[ZX_K_SCANCODE6] = bitRead(scancode, 6);
-  matrix[ZX_K_SCANCODE5] = bitRead(scancode, 5);
-  matrix[ZX_K_SCANCODE4] = bitRead(scancode, 4);
-  matrix[ZX_K_SCANCODE3] = bitRead(scancode, 3);
-  matrix[ZX_K_SCANCODE2] = bitRead(scancode, 2);
-  matrix[ZX_K_SCANCODE1] = bitRead(scancode, 1);
-  matrix[ZX_K_SCANCODE0] = bitRead(scancode, 0);
+  matrix[ZX_K_SCANCODE7] = bitRead(code, 7);
+  matrix[ZX_K_SCANCODE6] = bitRead(code, 6);
+  matrix[ZX_K_SCANCODE5] = bitRead(code, 5);
+  matrix[ZX_K_SCANCODE4] = bitRead(code, 4);
+  matrix[ZX_K_SCANCODE3] = bitRead(code, 3);
+  matrix[ZX_K_SCANCODE2] = bitRead(code, 2);
+  matrix[ZX_K_SCANCODE1] = bitRead(code, 1);
+  matrix[ZX_K_SCANCODE0] = bitRead(code, 0); 
 
-  switch (scancode) {
+  // hotfix
+  if ((status == 0) && (code == PS2_KEY_L_SHIFT )) {
+    do_pause();
+    return;
+  }
+
+  switch (code) {
+
+    // Pause -> Wait
+    case PS2_KEY_PAUSE:
+      do_pause();
+    break;
 
     // Shift -> SS for Profi, CS for ZX
-    case PS2_L_SHIFT:
-    case PS2_R_SHIFT:
+    case PS2_KEY_L_SHIFT:
+    case PS2_KEY_R_SHIFT:
       matrix[profi_mode ? ZX_K_SS : ZX_K_CS] = !is_up;
       is_shift = !is_up;
       break;
 
     // Ctrl -> CS for Profi, SS for ZX
-    case PS2_L_CTRL:
-    case PS2_R_CTRL:
+    case PS2_KEY_L_CTRL:
+    case PS2_KEY_R_CTRL:
       matrix[profi_mode ? ZX_K_CS : ZX_K_SS] = !is_up;
       is_ctrl = !is_up;
       break;
 
     // Alt (L) -> SS+Enter for Profi, SS+CS for ZX
-    case PS2_L_ALT:
+    case PS2_KEY_L_ALT:
       matrix[ZX_K_SS] = !is_up;
       matrix[profi_mode ? ZX_K_ENT : ZX_K_CS] = !is_up;
       if (!profi_mode) {
-        process_capsed_key(scancode, is_up);
+        process_capsed_key(code, is_up);
       }
       is_alt = !is_up;
       break;
 
     // Alt (R) -> SS + Space for Profi, SS+CS for ZX
-    case PS2_R_ALT:
+    case PS2_KEY_R_ALT:
       matrix[ZX_K_SS] = !is_up;
       matrix[profi_mode ? ZX_K_SP : ZX_K_CS] = !is_up;
       if (!profi_mode) {
-        process_capsed_key(scancode, is_up);
+        process_capsed_key(code, is_up);
       }
       is_alt = !is_up;
       break;
 
     // Del -> P+b6 for Profi, SS+C for ZX
-    case PS2_DELETE:
+    case PS2_KEY_DELETE:
       if (!is_shift) {
         if (profi_mode) {
           matrix[ZX_K_P] = !is_up;
@@ -287,18 +302,18 @@ void fill_kbd_matrix(int sc)
       break;
 
     // Win
-    case PS2_L_WIN:
-    case PS2_R_WIN:
+    case PS2_KEY_L_GUI:
+    case PS2_KEY_R_GUI:
       is_win = !is_up;
-      break;
+    break;
 
     // Menu
-    case PS2_MENU:
+    case PS2_KEY_MENU:
       is_menu = !is_up;
       break;
 
     // Ins -> O+b6 for Profi, SS+A for ZX
-    case PS2_INSERT:
+    case PS2_KEY_INSERT:
       if (!is_shift) {
         if (profi_mode) {
           matrix[ZX_K_O] = !is_up;
@@ -311,127 +326,139 @@ void fill_kbd_matrix(int sc)
       break;
 
     // Cursor -> CS + 5,6,7,8
-    case PS2_UP:
+    case PS2_KEY_UP_ARROW:
       if (!is_shift) {
         matrix[ZX_K_CS] = !is_up;
         matrix[ZX_K_7] = !is_up;
-        process_capsed_key(scancode, is_up);
+        process_capsed_key(code, is_up);
       }
       break;
-    case PS2_DOWN:
+    case PS2_KEY_DN_ARROW:
       if (!is_shift) {
         matrix[ZX_K_CS] = !is_up;
         matrix[ZX_K_6] = !is_up;
-        process_capsed_key(scancode, is_up);
+        process_capsed_key(code, is_up);
       }
       break;
-    case PS2_LEFT:
+    case PS2_KEY_L_ARROW:
       if (!is_shift) {
         matrix[ZX_K_CS] = !is_up;
         matrix[ZX_K_5] = !is_up;
-        process_capsed_key(scancode, is_up);
+        process_capsed_key(code, is_up);
       }
       break;
-    case PS2_RIGHT:
+    case PS2_KEY_R_ARROW:
       if (!is_shift) {
         matrix[ZX_K_CS] = !is_up;
         matrix[ZX_K_8] = !is_up;
-        process_capsed_key(scancode, is_up);
+        process_capsed_key(code, is_up);
       }
       break;
 
     // ESC -> CS+1 for Profi, CS+SPACE for ZX
-    case PS2_ESC:
-      matrix[ZX_K_CS] = !is_up;
-      matrix[profi_mode ? ZX_K_1 : ZX_K_SP] = !is_up;
-      process_capsed_key(scancode, is_up);
-      is_esc = !is_up;
+    case PS2_KEY_ESC:
+
+      if (is_menu || is_win || (is_ctrl && is_alt)) {
+        if (!is_up) {
+          // menu + ESC = OSD_OVERLAY
+          if (n - tosd > 200) {
+            osd_overlay = !osd_overlay;
+            matrix[ZX_K_OSD_OVERLAY] = osd_overlay;
+            tosd = n;
+          }
+        }
+      } else {
+        matrix[ZX_K_CS] = !is_up;
+        matrix[profi_mode ? ZX_K_1 : ZX_K_SP] = !is_up;
+        process_capsed_key(code, is_up);
+      }
       break;
 
     // Backspace -> CS+0
-    case PS2_BACKSPACE:
+    case PS2_KEY_BS:
       matrix[ZX_K_CS] = !is_up;
       matrix[ZX_K_0] = !is_up;
-      process_capsed_key(scancode, is_up);
+      process_capsed_key(code, is_up);
       is_bksp = !is_up;
       break;
 
     // Enter
-    case PS2_ENTER:
-    case PS2_KP_ENTER:
+    case PS2_KEY_ENTER:
+    case PS2_KEY_KP_ENTER:
       matrix[ZX_K_ENT] = !is_up;
       break;
 
     // Space
-    case PS2_SPACE:
+    case PS2_KEY_SPACE:
       matrix[ZX_K_SP] = !is_up;
       break;
 
     // Letters & numbers
-    case PS2_A: matrix[ZX_K_A] = !is_up; break;
-    case PS2_B: matrix[ZX_K_B] = !is_up; break;
-    case PS2_C: matrix[ZX_K_C] = !is_up; break;
-    case PS2_D: matrix[ZX_K_D] = !is_up; break;
-    case PS2_E: matrix[ZX_K_E] = !is_up; break;
-    case PS2_F: matrix[ZX_K_F] = !is_up; break;
-    case PS2_G: matrix[ZX_K_G] = !is_up; break;
-    case PS2_H: matrix[ZX_K_H] = !is_up; break;
-    case PS2_I: matrix[ZX_K_I] = !is_up; break;
-    case PS2_J: 
+    case PS2_KEY_A: matrix[ZX_K_A] = !is_up; break;
+    case PS2_KEY_B: matrix[ZX_K_B] = !is_up; break;
+    case PS2_KEY_C: matrix[ZX_K_C] = !is_up; break;
+    case PS2_KEY_D: matrix[ZX_K_D] = !is_up; break;
+    case PS2_KEY_E: matrix[ZX_K_E] = !is_up; break;
+    case PS2_KEY_F: matrix[ZX_K_F] = !is_up; break;
+    case PS2_KEY_G: matrix[ZX_K_G] = !is_up; break;
+    case PS2_KEY_H: matrix[ZX_K_H] = !is_up; break;
+    case PS2_KEY_I: matrix[ZX_K_I] = !is_up; break;
+    case PS2_KEY_J: 
       if (is_menu || is_win || (is_ctrl && is_alt)) {
         if (!is_up) {
           // menu + J = JOY_TYPE
           joy_type = !joy_type;
           eeprom_store_value(EEPROM_JOY_TYPE_ADDRESS, joy_type);
           matrix[ZX_K_JOY_TYPE] = joy_type;
+          osd_update_joystick();
         }
       } else {
         matrix[ZX_K_J] = !is_up; 
       }
     break;
-    case PS2_K: matrix[ZX_K_K] = !is_up; break;
-    case PS2_L: matrix[ZX_K_L] = !is_up; break;
-    case PS2_M: matrix[ZX_K_M] = !is_up; break;
-    case PS2_N: matrix[ZX_K_N] = !is_up; break;
-    case PS2_O: matrix[ZX_K_O] = !is_up; break;
-    case PS2_P: matrix[ZX_K_P] = !is_up; break;
-    case PS2_Q: matrix[ZX_K_Q] = !is_up; break;
-    case PS2_R: matrix[ZX_K_R] = !is_up; break;
-    case PS2_S: matrix[ZX_K_S] = !is_up; break;
-    case PS2_T: matrix[ZX_K_T] = !is_up; break;
-    case PS2_U: matrix[ZX_K_U] = !is_up; break;
-    case PS2_V: matrix[ZX_K_V] = !is_up; break;
-    case PS2_W: matrix[ZX_K_W] = !is_up; break;
-    case PS2_X: matrix[ZX_K_X] = !is_up; break;
-    case PS2_Y: matrix[ZX_K_Y] = !is_up; break;
-    case PS2_Z: matrix[ZX_K_Z] = !is_up; break;
+    case PS2_KEY_K: matrix[ZX_K_K] = !is_up; break;
+    case PS2_KEY_L: matrix[ZX_K_L] = !is_up; break;
+    case PS2_KEY_M: matrix[ZX_K_M] = !is_up; break;
+    case PS2_KEY_N: matrix[ZX_K_N] = !is_up; break;
+    case PS2_KEY_O: matrix[ZX_K_O] = !is_up; break;
+    case PS2_KEY_P: matrix[ZX_K_P] = !is_up; break;
+    case PS2_KEY_Q: matrix[ZX_K_Q] = !is_up; break;
+    case PS2_KEY_R: matrix[ZX_K_R] = !is_up; break;
+    case PS2_KEY_S: matrix[ZX_K_S] = !is_up; break;
+    case PS2_KEY_T: matrix[ZX_K_T] = !is_up; break;
+    case PS2_KEY_U: matrix[ZX_K_U] = !is_up; break;
+    case PS2_KEY_V: matrix[ZX_K_V] = !is_up; break;
+    case PS2_KEY_W: matrix[ZX_K_W] = !is_up; break;
+    case PS2_KEY_X: matrix[ZX_K_X] = !is_up; break;
+    case PS2_KEY_Y: matrix[ZX_K_Y] = !is_up; break;
+    case PS2_KEY_Z: matrix[ZX_K_Z] = !is_up; break;
 
     // digits
-    case PS2_0: matrix[ZX_K_0] = !is_up; break;
-    case PS2_1: matrix[ZX_K_1] = !is_up; break;
-    case PS2_2: matrix[ZX_K_2] = !is_up; break;
-    case PS2_3: matrix[ZX_K_3] = !is_up; break;
-    case PS2_4: matrix[ZX_K_4] = !is_up; break;
-    case PS2_5: matrix[ZX_K_5] = !is_up; break;
-    case PS2_6: matrix[ZX_K_6] = !is_up; break;
-    case PS2_7: matrix[ZX_K_7] = !is_up; break;
-    case PS2_8: matrix[ZX_K_8] = !is_up; break;
-    case PS2_9: matrix[ZX_K_9] = !is_up; break;
+    case PS2_KEY_0: matrix[ZX_K_0] = !is_up; break;
+    case PS2_KEY_1: matrix[ZX_K_1] = !is_up; break;
+    case PS2_KEY_2: matrix[ZX_K_2] = !is_up; break;
+    case PS2_KEY_3: matrix[ZX_K_3] = !is_up; break;
+    case PS2_KEY_4: matrix[ZX_K_4] = !is_up; break;
+    case PS2_KEY_5: matrix[ZX_K_5] = !is_up; break;
+    case PS2_KEY_6: matrix[ZX_K_6] = !is_up; break;
+    case PS2_KEY_7: matrix[ZX_K_7] = !is_up; break;
+    case PS2_KEY_8: matrix[ZX_K_8] = !is_up; break;
+    case PS2_KEY_9: matrix[ZX_K_9] = !is_up; break;
 
     // Keypad digits
-    case PS2_KP_0: matrix[ZX_K_0] = !is_up; break;
-    case PS2_KP_1: matrix[ZX_K_1] = !is_up; break;
-    case PS2_KP_2: matrix[ZX_K_2] = !is_up; break;
-    case PS2_KP_3: matrix[ZX_K_3] = !is_up; break;
-    case PS2_KP_4: matrix[ZX_K_4] = !is_up; break;
-    case PS2_KP_5: matrix[ZX_K_5] = !is_up; break;
-    case PS2_KP_6: matrix[ZX_K_6] = !is_up; break;
-    case PS2_KP_7: matrix[ZX_K_7] = !is_up; break;
-    case PS2_KP_8: matrix[ZX_K_8] = !is_up; break;
-    case PS2_KP_9: matrix[ZX_K_9] = !is_up; break;
+    case PS2_KEY_KP0: matrix[ZX_K_0] = !is_up; break;
+    case PS2_KEY_KP1: matrix[ZX_K_1] = !is_up; break;
+    case PS2_KEY_KP2: matrix[ZX_K_2] = !is_up; break;
+    case PS2_KEY_KP3: matrix[ZX_K_3] = !is_up; break;
+    case PS2_KEY_KP4: matrix[ZX_K_4] = !is_up; break;
+    case PS2_KEY_KP5: matrix[ZX_K_5] = !is_up; break;
+    case PS2_KEY_KP6: matrix[ZX_K_6] = !is_up; break;
+    case PS2_KEY_KP7: matrix[ZX_K_7] = !is_up; break;
+    case PS2_KEY_KP8: matrix[ZX_K_8] = !is_up; break;
+    case PS2_KEY_KP9: matrix[ZX_K_9] = !is_up; break;
 
     // '/" -> SS+P / SS+7
-    case PS2_QUOTE:
+    case PS2_KEY_APOS:
       matrix[ZX_K_SS] = !is_up;
       matrix[is_shift ? ZX_K_P : ZX_K_7] = !is_up;
       if (is_up) {
@@ -442,7 +469,7 @@ void fill_kbd_matrix(int sc)
       break;
 
     // ,/< -> SS+N / SS+R
-    case PS2_COMMA:
+    case PS2_KEY_COMMA:
       matrix[ZX_K_SS] = !is_up;
       matrix[is_shift ? ZX_K_R : ZX_K_N] = !is_up;
       if (is_up) {
@@ -453,8 +480,8 @@ void fill_kbd_matrix(int sc)
       break;
 
     // ./> -> SS+M / SS+T
-    case PS2_PERIOD:
-    case PS2_KP_PERIOD:
+    case PS2_KEY_DOT:
+    case PS2_KEY_KP_DOT:
       matrix[ZX_K_SS] = !is_up;
       matrix[is_shift ? ZX_K_T : ZX_K_M] = !is_up;
       if (is_up) {
@@ -465,7 +492,7 @@ void fill_kbd_matrix(int sc)
       break;
 
     // ;/: -> SS+O / SS+Z
-    case PS2_SEMICOLON:
+    case PS2_KEY_SEMI:
       matrix[ZX_K_SS] = !is_up;
       matrix[is_shift ? ZX_K_Z : ZX_K_O] = !is_up;
       if (is_up) {
@@ -476,7 +503,7 @@ void fill_kbd_matrix(int sc)
       break;
 
     // [,{ -> SS+Y / SS+F
-    case PS2_L_BRACKET:
+    case PS2_KEY_OPEN_SQ:
       if (!profi_mode) {
         if (!is_up) {
           send_macros(is_shift ? ZX_K_F : ZX_K_Y);
@@ -492,7 +519,7 @@ void fill_kbd_matrix(int sc)
       break;
 
     // ],} -> SS+U / SS+G
-    case PS2_R_BRACKET:
+    case PS2_KEY_CLOSE_SQ:
       if (!profi_mode) {
         if (!is_up) {
           send_macros(is_shift ? ZX_K_G : ZX_K_U);
@@ -508,8 +535,8 @@ void fill_kbd_matrix(int sc)
       break;
 
     // /,? -> SS+V / SS+C
-    case PS2_SLASH:
-    case PS2_KP_SLASH:
+    case PS2_KEY_DIV:
+    case PS2_KEY_KP_DIV:
       matrix[ZX_K_SS] = !is_up;
       matrix[is_shift ? ZX_K_C : ZX_K_V] = !is_up;
       if (is_up) {
@@ -520,7 +547,7 @@ void fill_kbd_matrix(int sc)
       break;
 
     // \,| -> SS+D / SS+S
-    case PS2_BACK_SLASH:
+    case PS2_KEY_BACK:
       if (!profi_mode) {
         if (!is_up) {
           send_macros(is_shift ? ZX_K_S : ZX_K_D);
@@ -536,7 +563,7 @@ void fill_kbd_matrix(int sc)
       break;
 
     // =,+ -> SS+L / SS+K
-    case PS2_EQUALS:
+    case PS2_KEY_EQUAL:
       matrix[ZX_K_SS] = !is_up;
       matrix[is_shift ? ZX_K_K : ZX_K_L] = !is_up;
       if (is_up) {
@@ -547,7 +574,7 @@ void fill_kbd_matrix(int sc)
       break;
 
     // -,_ -> SS+J / SS+0
-    case PS2_MINUS:
+    case PS2_KEY_MINUS:
       matrix[ZX_K_SS] = !is_up;
       matrix[is_shift ? ZX_K_0 : ZX_K_J] = !is_up;
       if (is_up) {
@@ -558,7 +585,7 @@ void fill_kbd_matrix(int sc)
       break;
 
     // `,~ -> SS+X / SS+A
-    case PS2_ACCENT:
+    case PS2_KEY_SINGLE:
       if (is_shift and !is_up) {
         send_macros(is_shift ? ZX_K_A : ZX_K_X);
       }
@@ -570,48 +597,47 @@ void fill_kbd_matrix(int sc)
       break;
 
     // Keypad * -> SS+B
-    case PS2_KP_STAR:
+    case PS2_KEY_KP_TIMES:
       matrix[ZX_K_SS] = !is_up;
       matrix[ZX_K_B] = !is_up;
       break;
 
     // Keypad - -> SS+J
-    case PS2_KP_MINUS:
+    case PS2_KEY_KP_MINUS:
       matrix[ZX_K_SS] = !is_up;
       matrix[ZX_K_J] = !is_up;
       break;
 
     // Keypad + -> SS+K
-    case PS2_KP_PLUS:
+    case PS2_KEY_KP_PLUS:
       matrix[ZX_K_SS] = !is_up;
       matrix[ZX_K_K] = !is_up;
       break;
 
     // Tab
-    case PS2_TAB:
+    case PS2_KEY_TAB:
       if (is_menu || is_win || (is_ctrl && is_alt)) {
         if (!is_up) {
           // menu + TAB = SW10
           is_sw10 = !is_sw10;
           eeprom_store_value(EEPROM_SW10_ADDRESS, is_sw10);
           matrix[ZX_K_SW10] = is_sw10;
+          osd_update_swap_ab();
         }
       } else {
         matrix[ZX_K_CS] = !is_up;
         matrix[ZX_K_I] = !is_up;
-        process_capsed_key(scancode, is_up);
+        process_capsed_key(code, is_up);
       }
       break;
 
     // CapsLock
-    case PS2_CAPS:
-      matrix[ZX_K_SS] = !is_up;
-      matrix[ZX_K_CS] = !is_up;
-      process_capsed_key(scancode, is_up);
+    case PS2_KEY_CAPS:
+      do_caps();
       break;
 
     // PgUp -> M+BIT6 for Profi, CS+3 for ZX
-    case PS2_PGUP:
+    case PS2_KEY_PGUP:
       if (!is_shift) {
         if (profi_mode) {
           matrix[ZX_K_M] = !is_up;
@@ -619,13 +645,13 @@ void fill_kbd_matrix(int sc)
         } else {
           matrix[ZX_K_CS] = !is_up;
           matrix[ZX_K_3] = !is_up;
-          process_capsed_key(scancode, is_up);
+          process_capsed_key(code, is_up);
         }
       }
       break;
 
     // PgDn -> N+BIT6 for Profi, CS+4 for ZX
-    case PS2_PGDN:
+    case PS2_KEY_PGDN:
       if (!is_shift) {
         if (profi_mode) {
           matrix[ZX_K_N] = !is_up;
@@ -633,13 +659,13 @@ void fill_kbd_matrix(int sc)
         } else {
           matrix[ZX_K_CS] = !is_up;
           matrix[ZX_K_4] = !is_up;
-          process_capsed_key(scancode, is_up);
+          process_capsed_key(code, is_up);
         }
       }
       break;
 
     // Home -> K+BIT6 for Profi
-    case PS2_HOME:
+    case PS2_KEY_HOME:
       if (!is_shift) {
         matrix[ZX_K_K] = !is_up;
         matrix[ZX_K_BIT6] = !is_up;
@@ -647,7 +673,7 @@ void fill_kbd_matrix(int sc)
       break;
 
     // End -> L+BIT6 for Profi
-    case PS2_END:
+    case PS2_KEY_END:
       if (!is_shift) {
         matrix[ZX_K_L] = !is_up;
         matrix[ZX_K_BIT6] = !is_up;
@@ -655,7 +681,7 @@ void fill_kbd_matrix(int sc)
       break;
 
     // Fn keys
-    case PS2_F1:
+    case PS2_KEY_F1:
       if (is_menu || is_win || (is_ctrl && is_alt)) {
         if (!is_up) {
           // menu + F1, ctrl+alt = ROMSET 00
@@ -665,12 +691,13 @@ void fill_kbd_matrix(int sc)
           eeprom_store_value(EEPROM_SW4_ADDRESS, is_sw4);
           matrix[ZX_K_SW3] = is_sw3;
           matrix[ZX_K_SW4] = is_sw4;
+          osd_update_rombank();
         }
       } else {
         matrix[ZX_K_A] = !is_up; matrix[ZX_K_BIT6] = !is_up;
       }
       break;
-    case PS2_F2:
+    case PS2_KEY_F2:
       if (is_menu || is_win || (is_ctrl && is_alt)) {
         if (!is_up) {
           // menu + F2 = ROMSET 01
@@ -680,12 +707,13 @@ void fill_kbd_matrix(int sc)
           eeprom_store_value(EEPROM_SW4_ADDRESS, is_sw4);
           matrix[ZX_K_SW3] = is_sw3;
           matrix[ZX_K_SW4] = is_sw4;
+          osd_update_rombank();
         }
       } else {
         matrix[ZX_K_B] = !is_up; matrix[ZX_K_BIT6] = !is_up; 
       }
       break;
-    case PS2_F3:
+    case PS2_KEY_F3:
       if (is_menu || is_win || (is_ctrl && is_alt)) {
         if (!is_up) {
           // menu + F3 = ROMSET 10
@@ -695,12 +723,13 @@ void fill_kbd_matrix(int sc)
           eeprom_store_value(EEPROM_SW4_ADDRESS, is_sw4);
           matrix[ZX_K_SW3] = is_sw3;
           matrix[ZX_K_SW4] = is_sw4;
+          osd_update_rombank();
         }
       } else {
         matrix[ZX_K_C] = !is_up; matrix[ZX_K_BIT6] = !is_up; 
       }
       break;
-    case PS2_F4:
+    case PS2_KEY_F4:
       if (is_menu || is_win || (is_ctrl && is_alt)) {
         if (!is_up) {
           // menu + F4 = ROMSET 11
@@ -710,37 +739,40 @@ void fill_kbd_matrix(int sc)
           eeprom_store_value(EEPROM_SW4_ADDRESS, is_sw4);
           matrix[ZX_K_SW3] = is_sw3;
           matrix[ZX_K_SW4] = is_sw4;          
+          osd_update_rombank();
         }
       } else {
         matrix[ZX_K_D] = !is_up; matrix[ZX_K_BIT6] = !is_up; 
       }
       break;
-    case PS2_F5:
+    case PS2_KEY_F5:
       if (is_menu || is_win || (is_ctrl && is_alt)) {
         if (!is_up) {
           // menu + F5 = SW5
           is_sw5 = !is_sw5;
           eeprom_store_value(EEPROM_SW5_ADDRESS, is_sw5);
           matrix[ZX_K_SW5] = is_sw5;
+          osd_update_turbofdc();
         }
       } else {
         matrix[ZX_K_E] = !is_up; matrix[ZX_K_BIT6] = !is_up; 
       }
       break;
 
-    case PS2_F6: 
+    case PS2_KEY_F6: 
       if (is_menu || is_win || (is_ctrl && is_alt)) {
         if (!is_up) {
           // menu + F6 = SW6
           is_sw6 = !is_sw6;
           eeprom_store_value(EEPROM_SW6_ADDRESS, is_sw6);
           matrix[ZX_K_SW6] = is_sw6;
+          osd_update_covox();
         }
       } else {
         matrix[ZX_K_F] = !is_up; matrix[ZX_K_BIT6] = !is_up;
       }
       break;
-    case PS2_F7: 
+    case PS2_KEY_F7: 
       if (is_menu || is_win || (is_ctrl && is_alt)) {
         if (!is_up) {
           // menu + F7 = SW7, !SW7, SW9, !SW9
@@ -759,60 +791,65 @@ void fill_kbd_matrix(int sc)
           eeprom_store_value(EEPROM_SW9_ADDRESS, is_sw9);
           matrix[ZX_K_SW7] = is_sw7;
           matrix[ZX_K_SW9] = is_sw9;
+          osd_update_stereo();
         }
       } else {
         matrix[ZX_K_G] = !is_up; matrix[ZX_K_BIT6] = !is_up; 
       }
       break;
-    case PS2_F8: 
+    case PS2_KEY_F8: 
       if (is_menu || (is_ctrl && is_alt)) {
         if (!is_up) {
           // menu + F8 = SW8
           is_sw8 = !is_sw8;
           eeprom_store_value(EEPROM_SW8_ADDRESS, is_sw8);
           matrix[ZX_K_SW8] = is_sw8;
+          osd_update_ssg();
         }
       } else {
         matrix[ZX_K_H] = !is_up; matrix[ZX_K_BIT6] = !is_up;
       }
       break;
-    case PS2_F9: 
+    case PS2_KEY_F9: 
       if (is_menu || is_win || (is_ctrl && is_alt)) {
         if (!is_up) {
           // menu + F9 = SW1
           is_sw1 = !is_sw1;
           eeprom_store_value(EEPROM_SW1_ADDRESS, is_sw1);
           matrix[ZX_K_SW1] = is_sw1;
+          osd_update_video();
         }
       } else {
           matrix[ZX_K_I] = !is_up; matrix[ZX_K_BIT6] = !is_up;
       }
       break;
-    case PS2_F10: 
+    case PS2_KEY_F10: 
       if (is_menu || is_win || (is_ctrl && is_alt)) {
         if (!is_up) {
           // menu + F10 = SW2
           is_sw2 = !is_sw2;
           eeprom_store_value(EEPROM_SW2_ADDRESS, is_sw2);
           matrix[ZX_K_SW2] = is_sw2;
+          osd_update_vsync();
         }
       } else {
         matrix[ZX_K_J] = !is_up; matrix[ZX_K_BIT6] = !is_up;
       }
       break;    
-    case PS2_F11:
+    case PS2_KEY_F11:
       if (is_menu || is_win || (is_ctrl && is_alt)) {
         if (!is_up) {
           // menu + F11 = turbo
           is_turbo = !is_turbo;
           eeprom_store_value(EEPROM_TURBO_ADDRESS, is_turbo);
           matrix[ZX_K_TURBO] = is_turbo;
+          osd_update_turbo();
         }
       } else {
         matrix[ZX_K_Q] = !is_up; matrix[ZX_K_SS] = !is_up;
       }
       break;
-    case PS2_F12:
+    case PS2_KEY_F12:
       if (is_menu || is_win || (is_ctrl && is_alt)) {
         if (!is_up) {
           // menu + F12 = magic
@@ -824,31 +861,20 @@ void fill_kbd_matrix(int sc)
       break;
 
     // Scroll Lock -> Nothing
-    case PS2_SCROLL:
+    case PS2_KEY_SCROLL:
       // TODO
     break;
 
     // PrtScr -> Mode profi / zx
-    case PS2_PSCR1:
-      is_pscr1 = !is_up;
-    break;
-
-    case PS2_PSCR2:
-      if (!is_shift && is_pscr1) {
+    case PS2_KEY_PRTSCR:
+      if (!is_shift) {
         if (!is_up) {
           profi_mode = !profi_mode;
           eeprom_store_value(EEPROM_MODE_ADDRESS, profi_mode);
           matrix[ZX_K_KBD_MODE] = profi_mode;
+          osd_update_keyboard_type();
         }
       }
-    break;
-
-    // Pause -> Wait
-    case PS2_PAUSE:
-      if (is_up) {
-        is_wait = !is_wait;
-        matrix[ZX_K_WAIT] = is_wait;
-      }      
     break;
 
       // TODO:
@@ -877,17 +903,6 @@ void fill_kbd_matrix(int sc)
   }
   //digitalWrite(PIN_RESET, (is_ctrl && is_alt && is_del) ? LOW : HIGH);
 
-  // Ctrl+Alt+Esc -> MAGIC
-  if (is_ctrl && is_alt && is_esc) {
-    is_ctrl = false;
-    is_alt = false;
-    is_esc = false;
-    is_shift = false;
-    is_ss_used = false;
-    capsed_keys_size = 0;
-    do_magic();
-  }
-
   // Ctrl+Alt+Bksp -> REINIT controller
   if (is_ctrl && is_alt && is_bksp) {
     is_ctrl = false;
@@ -897,14 +912,6 @@ void fill_kbd_matrix(int sc)
     is_ss_used = false;
     capsed_keys_size = 0;
     do_full_reset();
-  }
-
-  // clear flags
-  is_up = 0;
-  if (is_e1) {
-    is_e1 = 0;
-  } else {
-    is_e = 0;
   }
 }
 
@@ -1052,16 +1059,20 @@ void process_in_cmd(uint8_t cmd, uint8_t data)
       rtc_send_all();
       do_reset();
       Serial.println(F("done"));
+      cfg = data;
       Serial.print(F("FPGA board revision is: "));
       switch (data) {
         case 0:
-          Serial.println(F("Rev.A with TDA1543 DAC"));
+          Serial.println(F("Rev.A/B/C/D with TDA1543 DAC"));
         break;
         case 1:
-          Serial.println(F("Rev.A with TDA1543A DAC"));
+          Serial.println(F("Rev.A/B/C/D with TDA1543A DAC"));
         break;
-        case 2:
-          Serial.println(F("Rev.C"));
+        case 4:
+          Serial.println(F("Rev.DS with TDA1543 DAC"));
+        break;
+        case 5:
+          Serial.println(F("Rev.DS with TDA1543A DAC"));
         break;
         default:
           Serial.println(F("Unknown"));
@@ -1160,6 +1171,23 @@ void do_magic()
   transmit_keyboard_matrix();
 }
 
+void do_caps()
+{
+  matrix[ZX_K_SS] = true;
+  matrix[ZX_K_CS] = true;
+  transmit_keyboard_matrix();
+  delay(100);
+  matrix[ZX_K_SS] = false;
+  matrix[ZX_K_CS] = false;
+}
+
+void do_pause()
+{
+  is_wait = !is_wait;
+  matrix[ZX_K_WAIT] = is_wait;
+  osd_update_pause();
+}
+
 void clear_matrix(int clear_size)
 {
   // all keys up
@@ -1247,6 +1275,290 @@ void update_led(uint8_t led, bool state)
   digitalWrite(led, state);
 }
 
+// init osd
+void osd_init()
+{
+  // OSD Header
+  osd.setPos(0,0);
+  osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
+  osd.print(F("Karabas-Pro"));
+  osd.setPos(0,1);
+  osd.print(F("_______________________________"));
+  osd.setPos(0,2);
+  switch (cfg) {
+    case 0:
+      osd.print(F("Rev.A / TDA1543 "));
+      break;
+    case 1:
+      osd.print(F("Rev.A / TDA1543A"));
+      break;
+    case 4:
+      osd.print(F("Rev.DS / TDA1543 "));
+      break;
+    case 5:
+      osd.print(F("Rev.DS / TDA1543A"));
+      break;
+  }
+  // ROM Bank
+  osd.setColor(OSD::COLOR_GREEN_I, OSD::COLOR_BLACK);
+  osd.setPos(0,5); osd.print(F("ROM Bank:"));
+  osd_update_rombank();
+  osd.setColor(OSD::COLOR_CYAN_I, OSD::COLOR_BLACK);
+  osd.setPos(20,5); osd.print(F("Menu+F1-F4"));
+
+  // Turbo FDC
+  osd.setColor(OSD::COLOR_GREEN_I, OSD::COLOR_BLACK);
+  osd.setPos(0,6); osd.print(F("TurboFDC:"));
+  osd_update_turbofdc();
+  osd.setColor(OSD::COLOR_CYAN_I, OSD::COLOR_BLACK);
+  osd.setPos(20,6); osd.print(F("Menu+F5"));
+
+  // Covox
+  osd.setColor(OSD::COLOR_GREEN_I, OSD::COLOR_BLACK);
+  osd.setPos(0,7); osd.print(F("Covox:"));
+  osd_update_covox();
+  osd.setColor(OSD::COLOR_CYAN_I, OSD::COLOR_BLACK);
+  osd.setPos(20,7); osd.print(F("Menu+F6"));
+
+  // Stereo
+  osd.setColor(OSD::COLOR_GREEN_I, OSD::COLOR_BLACK);
+  osd.setPos(0,8); osd.print(F("Stereo:"));
+  osd_update_stereo();
+  osd.setColor(OSD::COLOR_CYAN_I, OSD::COLOR_BLACK);
+  osd.setPos(20,8); osd.print(F("Menu+F7"));
+
+  // SSG type
+  osd.setColor(OSD::COLOR_GREEN_I, OSD::COLOR_BLACK);
+  osd.setPos(0,9); osd.print(F("SSG type:"));
+  osd_update_ssg();
+  osd.setColor(OSD::COLOR_CYAN_I, OSD::COLOR_BLACK);
+  osd.setPos(20,9); osd.print(F("Menu+F8"));
+
+  // RGB/VGA
+  osd.setColor(OSD::COLOR_GREEN_I, OSD::COLOR_BLACK);
+  osd.setPos(0,10); osd.print(F("Video:"));
+  osd_update_video();
+  osd.setColor(OSD::COLOR_CYAN_I, OSD::COLOR_BLACK);
+  osd.setPos(20,10); osd.print(F("Menu+F9"));
+
+  // VSync
+  osd.setColor(OSD::COLOR_GREEN_I, OSD::COLOR_BLACK);
+  osd.setPos(0,11); osd.print(F("VSync:"));
+  osd_update_vsync();
+  osd.setColor(OSD::COLOR_CYAN_I, OSD::COLOR_BLACK);
+  osd.setPos(20,11); osd.print(F("Menu+F10"));
+
+  // Turbo
+  osd.setColor(OSD::COLOR_GREEN_I, OSD::COLOR_BLACK);
+  osd.setPos(0,12); osd.print(F("Turbo:"));
+  osd_update_turbo();
+  osd.setColor(OSD::COLOR_CYAN_I, OSD::COLOR_BLACK);
+  osd.setPos(20,12); osd.print(F("Menu+F11"));
+
+  // FDC Swap
+  osd.setColor(OSD::COLOR_GREEN_I, OSD::COLOR_BLACK);
+  osd.setPos(0,13); osd.print(F("Swap FDD:"));
+  osd_update_swap_ab();
+  osd.setColor(OSD::COLOR_CYAN_I, OSD::COLOR_BLACK);
+  osd.setPos(20,13); osd.print(F("Menu+Tab"));
+
+  // Joy type
+  osd.setColor(OSD::COLOR_GREEN_I, OSD::COLOR_BLACK);
+  osd.setPos(0,14); osd.print(F("Joystick:"));
+  osd_update_joystick();
+  osd.setColor(OSD::COLOR_CYAN_I, OSD::COLOR_BLACK);
+  osd.setPos(20,14); osd.print(F("Menu+J"));
+
+  // Keyboard
+  osd.setColor(OSD::COLOR_GREEN_I, OSD::COLOR_BLACK);
+  osd.setPos(0,15); osd.print(F("Keyboard:"));
+  osd_update_keyboard_type();
+  osd.setColor(OSD::COLOR_CYAN_I, OSD::COLOR_BLACK);
+  osd.setPos(20,15); osd.print(F("PrtScr"));
+
+  // Pause
+  osd.setColor(OSD::COLOR_GREEN_I, OSD::COLOR_BLACK);
+  osd.setPos(0,16); osd.print(F("Pause:"));
+  osd_update_pause();
+  osd.setColor(OSD::COLOR_CYAN_I, OSD::COLOR_BLACK);
+  osd.setPos(20,16); osd.print(F("Pause"));
+
+  // Scancode
+  osd.setColor(OSD::COLOR_GREEN_I, OSD::COLOR_BLACK);
+  osd.setPos(0,18); osd.print(F("Scancode:"));
+  osd_update_scancode(0);
+
+  // Mouse
+  osd.setColor(OSD::COLOR_GREEN_I, OSD::COLOR_BLACK);
+  osd.setPos(0,19); osd.print(F("Mouse:"));
+  osd_update_mouse();
+
+  // Joy
+  osd.setColor(OSD::COLOR_GREEN_I, OSD::COLOR_BLACK);
+  osd.setPos(0,20); osd.print(F("Joy:"));
+  osd_update_joy_state();
+
+  // footer
+  osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
+  osd.setPos(0,22); osd.print(F("Press "));
+  osd.setColor(OSD::COLOR_CYAN_I, OSD::COLOR_BLACK);
+  osd.print(F("Ctrl+Alt+Del"));
+  osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
+  osd.print(F(" to reboot"));
+
+  osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
+  osd.setPos(0,23); osd.print(F("Press "));
+  osd.setColor(OSD::COLOR_CYAN_I, OSD::COLOR_BLACK);
+  osd.print(F("Menu+ESC"));
+  osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
+  osd.print(F(" to toggle OSD"));
+}
+
+void osd_update_rombank()
+{
+  osd.setColor(OSD::COLOR_MAGENTA_I, OSD::COLOR_BLACK);
+  osd.setPos(10,5);
+  uint8_t romset = 0;
+  bitWrite(romset, 0, is_sw3);
+  bitWrite(romset, 1, is_sw4);
+  switch (romset) {
+    case 0: osd.print(F("Default ")); break;
+    case 1: osd.print(F("PQ-DOS  ")); break;
+    case 2: osd.print(F("Flasher ")); break;
+    case 3: osd.print(F("FDImage ")); break;
+  }
+}
+
+void osd_update_turbofdc() {
+  osd.setColor(OSD::COLOR_MAGENTA_I, OSD::COLOR_BLACK);
+  osd.setPos(10,6);
+  if (is_sw5) { osd.print(F("On ")); } else { osd.print(F("Off")); }
+}
+
+void osd_update_covox() {
+  osd.setColor(OSD::COLOR_MAGENTA_I, OSD::COLOR_BLACK);
+  osd.setPos(10,7);
+  if (is_sw6) { osd.print(F("On ")); } else { osd.print(F("Off")); }
+}
+
+void osd_update_stereo() {
+  // sw7,sw9
+  osd.setColor(OSD::COLOR_MAGENTA_I, OSD::COLOR_BLACK);
+  osd.setPos(10,8);
+  uint8_t stereo = 0;
+  bitWrite(stereo, 0, is_sw7);
+  bitWrite(stereo, 1, is_sw9);
+  switch (stereo) {
+    case 1: osd.print(F("ABC ")); break;
+    case 0: osd.print(F("ACB ")); break;
+    default: osd.print(F("Mono")); 
+  }
+}
+
+void osd_update_ssg() {
+  osd.setColor(OSD::COLOR_MAGENTA_I, OSD::COLOR_BLACK);
+  osd.setPos(10,9);
+  if (is_sw8) { osd.print(F("AY3-8912")); } else { osd.print(F("YM2149F ")); }
+}
+
+void osd_update_video() {
+  // sw1
+  osd.setColor(OSD::COLOR_MAGENTA_I, OSD::COLOR_BLACK);
+  osd.setPos(10,10);
+  if (is_sw1) { osd.print(F("RGB 15kHz")); } else { osd.print(F("VGA 30kHz")); }
+}
+
+void osd_update_vsync() {
+  // sw2
+  osd.setColor(OSD::COLOR_MAGENTA_I, OSD::COLOR_BLACK);
+  osd.setPos(10,11);
+  if (is_sw2) { osd.print(F("60 Hz")); } else { osd.print(F("50 Hz")); }
+}
+
+void osd_update_turbo() {
+  // is_turbo
+  osd.setColor(OSD::COLOR_MAGENTA_I, OSD::COLOR_BLACK);
+  osd.setPos(10,12);
+  if (is_turbo) { osd.print(F("On ")); } else { osd.print(F("Off")); }
+}
+
+void osd_update_swap_ab() {
+  // sw10
+  osd.setColor(OSD::COLOR_MAGENTA_I, OSD::COLOR_BLACK);
+  osd.setPos(10,13);
+  if (is_sw10) { osd.print(F("On ")); } else { osd.print(F("Off")); }
+}
+
+void osd_update_joystick() {
+  // joy_type
+  osd.setColor(OSD::COLOR_MAGENTA_I, OSD::COLOR_BLACK);
+  osd.setPos(10,14);
+  if (joy_type) { osd.print(F("SEGA ")); } else { osd.print(F("Atari")); }
+}
+
+void osd_update_keyboard_type() {
+  // profi_mode
+  osd.setColor(OSD::COLOR_MAGENTA_I, OSD::COLOR_BLACK);
+  osd.setPos(10,15);
+  if (profi_mode) { osd.print(F("Profi XT")); } else { osd.print(F("Spectrum")); }
+}
+
+void osd_update_pause() {
+  // is_wait
+  osd.setColor(OSD::COLOR_MAGENTA_I, OSD::COLOR_BLACK);
+  osd.setPos(10,16);
+  if (is_wait) { osd.print(F("On ")); } else { osd.print(F("Off")); }
+}
+
+void osd_update_time() {
+  osd.setColor(OSD::COLOR_YELLOW_I, OSD::COLOR_BLACK);
+  osd.setPos(23,0);
+  if (rtc_hours < 10) osd.print("0"); 
+  osd.print(rtc_hours, DEC); osd.print(F(":"));
+  if (rtc_minutes < 10) osd.print("0"); 
+  osd.print(rtc_minutes, DEC); osd.print(F(":"));
+  if (rtc_seconds < 10) osd.print("0"); 
+  osd.print(rtc_seconds, DEC); osd.print(F(" "));
+  osd.setPos(21,2);
+  if (rtc_day < 10) osd.print("0"); 
+  osd.print(rtc_day, DEC); osd.print(F("."));
+  if (rtc_month < 10) osd.print("0"); 
+  osd.print(rtc_month, DEC); osd.print(F("."));
+  osd.print(rtc_year, DEC);
+}
+
+void osd_update_scancode(uint16_t c) {
+  osd.setColor(OSD::COLOR_RED_I, OSD::COLOR_BLACK);
+  osd.setPos(10,18);
+  if ((c >> 8) < 0x10) osd.print(F("0")); osd.print(c >> 8, HEX);
+  osd.print(F(" "));
+  if ((c & 0xFF) < 0x10) osd.print(F("0")); osd.print(c & 0xFF, HEX);
+}
+
+void osd_update_mouse() {
+  osd.setColor(OSD::COLOR_RED_I, OSD::COLOR_BLACK);
+  osd.setPos(10,19);
+  if (mouse_x < 0x10) osd.print(F("0")); osd.print(mouse_x, HEX);
+  osd.print(F(" "));
+  if (mouse_y < 0x10) osd.print(F("0")); osd.print(mouse_y, HEX);
+  osd.print(F(" "));
+  if (mouse_z < 0x10) osd.print(F("0")); osd.print(mouse_z, HEX);
+}
+
+void osd_update_joy_state() {
+  osd.setColor(OSD::COLOR_RED_I, OSD::COLOR_BLACK);
+  osd.setPos(10,20);
+  osd.print(joy[ZX_JOY_UP], DEC);
+  osd.print(joy[ZX_JOY_DOWN], DEC);
+  osd.print(joy[ZX_JOY_LEFT], DEC);
+  osd.print(joy[ZX_JOY_RIGHT], DEC);
+  osd.print(joy[ZX_JOY_FIRE], DEC);
+  osd.print(joy[ZX_JOY_FIRE2], DEC);
+  osd.print(joy[ZX_JOY_A], DEC);
+  osd.print(joy[ZX_JOY_B], DEC);
+}
+
+
 // initial setup
 void setup()
 {
@@ -1307,12 +1619,31 @@ void setup()
     spi_send(CMD_NONE, 0x00);
   }
 
+  // setup osd library with callback to send spi command
+  osd.begin(spi_send);
+
   // setup sega controller
   sega.begin(PIN_LED2, PIN_JOY_UP, PIN_JOY_DOWN, PIN_JOY_LEFT, PIN_JOY_RIGHT, PIN_JOY_FIRE1, PIN_JOY_FIRE2);
 
   Serial.print(F("Keyboard init..."));
   kbd.begin(PIN_KBD_DAT, PIN_KBD_CLK);
-  Serial.println("done");
+  kbd.echo(); // ping keyboard to see if there
+  delay(6);
+  uint16_t c = kbd.read();
+  if( (c & 0xFF) == PS2_KEY_ECHO || (c & 0xFF) == PS2_KEY_BAT ) {
+    Serial.println(F("done")); // Response was Echo or power up
+    //kbd.setNoBreak(0);
+    //kbd.setNoRepeat(0);
+    //kbd.typematic(0xb, 1);
+    kbd.setLock(PS2_LOCK_SCROLL);
+  } else {
+    if( ( c & 0xFF ) == 0 ) {
+      Serial.println(F("not found"));
+    } else {
+      Serial.print( F("invalid code received of "));
+      Serial.println( c, HEX );
+    }
+  }
 
   mouse_tries = MOUSE_INIT_TRIES;
 
@@ -1352,6 +1683,10 @@ void setup()
     Serial.println(F("done"));  
   }
 
+  Serial.print(F("OSD init..."));
+  osd_init();
+  Serial.println(F("done"));
+
   Serial.println(F("Starting main loop"));
   digitalWrite(PIN_LED1, LOW);
 }
@@ -1363,14 +1698,21 @@ void loop()
   unsigned long n = millis();
 
   if (kbd.available()) {
-    int c = kbd.read();
+    uint16_t c = kbd.read();
     tl = n;
     if (!led1_overwrite) {
       update_led(PIN_LED1, HIGH);
     }
-    fill_kbd_matrix(c);
-    Serial.print(F("Scancode: "));
-    Serial.println(c, HEX);
+    fill_kbd_matrix(c, n);
+    Serial.print(F("Value: "));
+    Serial.print(c, HEX);
+    Serial.print(F(" Status bits: "));
+    Serial.print(c >> 8, HEX);
+    Serial.print(F(" Code: "));
+    Serial.println(c & 0xFF, HEX);
+    if (matrix[ZX_K_OSD_OVERLAY]) {
+      osd_update_scancode(c);
+    }
   }
 
   // transmit kbd always
@@ -1442,6 +1784,11 @@ void loop()
     Serial.print(F(" F2:")); Serial.print(joy[ZX_JOY_FIRE2]);
     Serial.print(F(" J:")); Serial.print(joy[ZX_JOY_A]);
     Serial.print(F(" P:")); Serial.println(joy[ZX_JOY_B]);
+
+    if (matrix[ZX_K_OSD_OVERLAY]) {
+      osd_update_joy_state();
+    }
+
   }
 
   // transmit joy matrix
@@ -1485,6 +1832,11 @@ void loop()
 
     rtc_send_time();
 
+    // show time in the overlay
+    if (matrix[ZX_K_OSD_OVERLAY]) {
+      osd_update_time();
+    }
+
     tr = n;
   }
 
@@ -1518,6 +1870,10 @@ void loop()
 
     transmit_mouse_data();
 
+    if (matrix[ZX_K_OSD_OVERLAY]) {
+      osd_update_mouse();
+    }
+
     t = n;
   }
   #else
@@ -1540,6 +1896,10 @@ void loop()
       bitWrite(mouse_z, 7, mouse_new_packet);
   
       transmit_mouse_data();    
+
+      if (matrix[ZX_K_OSD_OVERLAY]) {
+        osd_update_mouse();
+      }
     //}
   }
 

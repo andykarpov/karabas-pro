@@ -109,7 +109,9 @@
 #define ZX_K_SW10 65
 
 #define ZX_K_JOY_TYPE 66
-// free 67-71
+#define ZX_K_OSD_OVERLAY 67
+
+// free 68-71
 
 // Joystick signals
 #define ZX_JOY_FIRE 0
@@ -141,13 +143,21 @@
 // joystick commands
 #define CMD_JOY 0x0D
 
+// LED command
+#define CMD_LED_WRITE 0x0E
+
+// OSD commands
+#define CMD_OSD_CLS 0x0F
+#define CMD_OSD_SET_X 0x10
+#define CMD_OSD_SET_Y 0x11
+#define CMD_OSD_PUT_C 0x12
+#define CMD_OSD_ATTR  0x13
+
 // RTC RD command
 #define CMD_RTC_READ 0x40 // + regnum 0e-3f (64 ... 127)
 
 // Incoming commands:
 
-// LED command
-#define CMD_LED_WRITE 0x0E
 // RTC WR command 
 #define CMD_RTC_WRITE 0x80 // + regnum 0e-3f (128 ... 191)
 // RTC INIT command

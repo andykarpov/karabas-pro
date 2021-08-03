@@ -55,6 +55,8 @@ entity avr is
 	 MAGICK		: out std_logic := '0';
 	 WAIT_CPU 	: out std_logic := '0';
 	 JOY_TYPE 	: out std_logic := '0';
+	 OSD_OVERLAY: out std_logic := '0';
+	 OSD_COMMAND: out std_logic_vector(15 downto 0);
 	 
 	 LOADED 		: out std_logic := '0';
 	 	 
@@ -193,8 +195,9 @@ begin
 									  SOFT_SW(9) <= spi_do(0);
 									  SOFT_SW(10) <= spi_do(1);
 									  JOY_TYPE <= spi_do(2);
+									  OSD_OVERLAY <= spi_do(3);
 									  LOADED <= '1'; -- loaded
-									  -- 5 free signals
+									  -- 4 free signals
 					-- mouse data
 					when X"0A" => mouse_x(7 downto 0) <= signed(spi_do(7 downto 0));
 					when X"0B" => mouse_y(7 downto 0) <= signed(spi_do(7 downto 0));
@@ -208,6 +211,12 @@ begin
 									  joy(5) <= spi_do(1); -- fire2
 									  joy(6) <= spi_do(6); -- A
 									  joy(7) <= spi_do(7); -- B
+					-- led write
+					when X"0E" => null;
+					-- osd commands
+					when X"0F"|X"10"|x"11"|x"12"|x"13" => 
+									  OSD_COMMAND <= spi_do(15 downto 0);
+					
 					-- rtc registers
 					when others => 
 							rtc_cmd <= spi_do(15 downto 8);
