@@ -163,6 +163,7 @@ void osd_update_swap_ab();
 void osd_update_joystick();
 void osd_update_keyboard_type();
 void osd_update_pause();
+void osd_update_time();
 
 void push_capsed_key(int key)
 {
@@ -1472,6 +1473,22 @@ void osd_update_pause() {
   if (is_wait) { osd.print(F("On ")); } else { osd.print(F("Off")); }
 }
 
+void osd_update_time() {
+  osd.setColor(OSD::COLOR_YELLOW_I, OSD::COLOR_BLACK);
+  osd.setPos(23,0);
+  if (rtc_hours < 10) osd.print("0"); 
+  osd.print(rtc_hours, DEC); osd.print(F(":"));
+  if (rtc_minutes < 10) osd.print("0"); 
+  osd.print(rtc_minutes, DEC); osd.print(F(":"));
+  if (rtc_seconds < 10) osd.print("0"); 
+  osd.print(rtc_seconds, DEC); osd.print(F(" "));
+  osd.setPos(21,2);
+  if (rtc_day < 10) osd.print("0"); 
+  osd.print(rtc_day, DEC); osd.print(F("."));
+  if (rtc_month < 10) osd.print("0"); 
+  osd.print(rtc_month, DEC); osd.print(F("."));
+  osd.print(rtc_year, DEC);
+}
 
 // initial setup
 void setup()
@@ -1738,17 +1755,10 @@ void loop()
 
     rtc_send_time();
 
-      // test
-      /*
-      osd.setPos(0,3);
-      osd.setColor(OSD::COLOR_RED, OSD::COLOR_BLACK);
-      osd.print(rtc_hours, DEC);
-      osd.print(F(":"));
-      osd.print(rtc_minutes, DEC);
-      osd.print(F(":"));
-      osd.print(rtc_seconds, DEC);
-      osd.print(F("   "));
-      */
+    // show time in the overlay
+    if (matrix[ZX_K_OSD_OVERLAY]) {
+      osd_update_time();
+    }
 
     tr = n;
   }
