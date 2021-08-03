@@ -161,6 +161,8 @@ void osd_update_vsync();
 void osd_update_turbo();
 void osd_update_swap_ab();
 void osd_update_joystick();
+void osd_update_keyboard_type();
+void osd_update_pause();
 
 void push_capsed_key(int key)
 {
@@ -391,6 +393,7 @@ void fill_kbd_matrix(uint16_t sc, unsigned long n)
           joy_type = !joy_type;
           eeprom_store_value(EEPROM_JOY_TYPE_ADDRESS, joy_type);
           matrix[ZX_K_JOY_TYPE] = joy_type;
+          osd_update_joystick();
         }
       } else {
         matrix[ZX_K_J] = !is_up; 
@@ -602,6 +605,7 @@ void fill_kbd_matrix(uint16_t sc, unsigned long n)
           is_sw10 = !is_sw10;
           eeprom_store_value(EEPROM_SW10_ADDRESS, is_sw10);
           matrix[ZX_K_SW10] = is_sw10;
+          osd_update_swap_ab();
         }
       } else {
         matrix[ZX_K_CS] = !is_up;
@@ -772,6 +776,7 @@ void fill_kbd_matrix(uint16_t sc, unsigned long n)
           eeprom_store_value(EEPROM_SW9_ADDRESS, is_sw9);
           matrix[ZX_K_SW7] = is_sw7;
           matrix[ZX_K_SW9] = is_sw9;
+          osd_update_stereo();
         }
       } else {
         matrix[ZX_K_G] = !is_up; matrix[ZX_K_BIT6] = !is_up; 
@@ -784,6 +789,7 @@ void fill_kbd_matrix(uint16_t sc, unsigned long n)
           is_sw8 = !is_sw8;
           eeprom_store_value(EEPROM_SW8_ADDRESS, is_sw8);
           matrix[ZX_K_SW8] = is_sw8;
+          osd_update_ssg();
         }
       } else {
         matrix[ZX_K_H] = !is_up; matrix[ZX_K_BIT6] = !is_up;
@@ -796,6 +802,7 @@ void fill_kbd_matrix(uint16_t sc, unsigned long n)
           is_sw1 = !is_sw1;
           eeprom_store_value(EEPROM_SW1_ADDRESS, is_sw1);
           matrix[ZX_K_SW1] = is_sw1;
+          osd_update_video();
         }
       } else {
           matrix[ZX_K_I] = !is_up; matrix[ZX_K_BIT6] = !is_up;
@@ -808,6 +815,7 @@ void fill_kbd_matrix(uint16_t sc, unsigned long n)
           is_sw2 = !is_sw2;
           eeprom_store_value(EEPROM_SW2_ADDRESS, is_sw2);
           matrix[ZX_K_SW2] = is_sw2;
+          osd_update_vsync();
         }
       } else {
         matrix[ZX_K_J] = !is_up; matrix[ZX_K_BIT6] = !is_up;
@@ -820,6 +828,7 @@ void fill_kbd_matrix(uint16_t sc, unsigned long n)
           is_turbo = !is_turbo;
           eeprom_store_value(EEPROM_TURBO_ADDRESS, is_turbo);
           matrix[ZX_K_TURBO] = is_turbo;
+          osd_update_turbo();
         }
       } else {
         matrix[ZX_K_Q] = !is_up; matrix[ZX_K_SS] = !is_up;
@@ -848,6 +857,7 @@ void fill_kbd_matrix(uint16_t sc, unsigned long n)
           profi_mode = !profi_mode;
           eeprom_store_value(EEPROM_MODE_ADDRESS, profi_mode);
           matrix[ZX_K_KBD_MODE] = profi_mode;
+          osd_update_keyboard_type();
         }
       }
     break;
@@ -857,6 +867,7 @@ void fill_kbd_matrix(uint16_t sc, unsigned long n)
       if (is_up) {
         is_wait = !is_wait;
         matrix[ZX_K_WAIT] = is_wait;
+        osd_update_pause();
       }      
     break;
 
@@ -1335,13 +1346,34 @@ void osd_init()
   osd.setColor(OSD::COLOR_CYAN_I, OSD::COLOR_BLACK);
   osd.setPos(20,14); osd.print(F("Menu+J"));
 
+  // Keyboard
+  osd.setColor(OSD::COLOR_GREEN_I, OSD::COLOR_BLACK);
+  osd.setPos(0,15); osd.print(F("Keyboard:"));
+  osd_update_keyboard_type();
+  osd.setColor(OSD::COLOR_CYAN_I, OSD::COLOR_BLACK);
+  osd.setPos(20,15); osd.print(F("PrtScr"));
+
+  // Pause
+  osd.setColor(OSD::COLOR_GREEN_I, OSD::COLOR_BLACK);
+  osd.setPos(0,16); osd.print(F("Pause:"));
+  osd_update_pause();
+  osd.setColor(OSD::COLOR_CYAN_I, OSD::COLOR_BLACK);
+  osd.setPos(20,16); osd.print(F("Pause"));
+
   // footer
+  osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
+  osd.setPos(0,20); osd.print(F("Press "));
+  osd.setColor(OSD::COLOR_CYAN_I, OSD::COLOR_BLACK);
+  osd.print(F("Ctrl+Alt+Del"));
+  osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
+  osd.print(F(" to reboot"));
+
   osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
   osd.setPos(0,22); osd.print(F("Press "));
   osd.setColor(OSD::COLOR_CYAN_I, OSD::COLOR_BLACK);
   osd.print(F("Menu+ESC"));
   osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
-  osd.print(F(" to close OSD"));
+  osd.print(F(" to toggle OSD"));
 }
 
 void osd_update_rombank()
@@ -1373,31 +1405,73 @@ void osd_update_covox() {
 
 void osd_update_stereo() {
   // sw7,sw9
+  osd.setColor(OSD::COLOR_MAGENTA_I, OSD::COLOR_BLACK);
+  osd.setPos(10,8);
+  uint8_t stereo = 0;
+  bitWrite(stereo, 0, is_sw7);
+  bitWrite(stereo, 1, is_sw9);
+  switch (stereo) {
+    case 1: osd.print(F("ABC ")); break;
+    case 0: osd.print(F("ACB ")); break;
+    default: osd.print(F("Mono")); 
+  }
 }
 
 void osd_update_ssg() {
-  // sw8
+  osd.setColor(OSD::COLOR_MAGENTA_I, OSD::COLOR_BLACK);
+  osd.setPos(10,9);
+  if (is_sw8) { osd.print(F("AY3-8912")); } else { osd.print(F("YM2149F ")); }
 }
 
 void osd_update_video() {
-  // sw10
+  // sw1
+  osd.setColor(OSD::COLOR_MAGENTA_I, OSD::COLOR_BLACK);
+  osd.setPos(10,10);
+  if (is_sw1) { osd.print(F("RGB 15kHz")); } else { osd.print(F("VGA 30kHz")); }
 }
 
 void osd_update_vsync() {
-  // 
+  // sw2
+  osd.setColor(OSD::COLOR_MAGENTA_I, OSD::COLOR_BLACK);
+  osd.setPos(10,11);
+  if (is_sw2) { osd.print(F("60 Hz")); } else { osd.print(F("50 Hz")); }
 }
 
 void osd_update_turbo() {
-  // sw11
+  // is_turbo
+  osd.setColor(OSD::COLOR_MAGENTA_I, OSD::COLOR_BLACK);
+  osd.setPos(10,12);
+  if (is_turbo) { osd.print(F("On ")); } else { osd.print(F("Off")); }
 }
 
 void osd_update_swap_ab() {
-
+  // sw10
+  osd.setColor(OSD::COLOR_MAGENTA_I, OSD::COLOR_BLACK);
+  osd.setPos(10,13);
+  if (is_sw10) { osd.print(F("On ")); } else { osd.print(F("Off")); }
 }
 
 void osd_update_joystick() {
-
+  // joy_type
+  osd.setColor(OSD::COLOR_MAGENTA_I, OSD::COLOR_BLACK);
+  osd.setPos(10,14);
+  if (joy_type) { osd.print(F("SEGA ")); } else { osd.print(F("Atari")); }
 }
+
+void osd_update_keyboard_type() {
+  // profi_mode
+  osd.setColor(OSD::COLOR_MAGENTA_I, OSD::COLOR_BLACK);
+  osd.setPos(10,15);
+  if (profi_mode) { osd.print(F("Profi XT")); } else { osd.print(F("Spectrum")); }
+}
+
+void osd_update_pause() {
+  // is_wait
+  osd.setColor(OSD::COLOR_MAGENTA_I, OSD::COLOR_BLACK);
+  osd.setPos(10,16);
+  if (is_wait) { osd.print(F("On ")); } else { osd.print(F("Off")); }
+}
+
 
 // initial setup
 void setup()
