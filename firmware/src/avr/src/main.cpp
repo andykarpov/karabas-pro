@@ -63,6 +63,7 @@ bool is_sw9 = false; // SW9 state
 bool is_sw10 = false; // SW10 state
 bool joy_type = false; // joy type - 0 = kempston, 1 = sega
 bool osd_overlay = false; // osd overlay enable
+bool osd_overlay_boot = false; // osd overlay boot
 bool init_done = false; // init done
 uint8_t cfg = 0; // cfg byte from fpga side
 
@@ -89,6 +90,7 @@ unsigned long te = 0; // eeprom store time
 unsigned long tb, tb1, tb2 = 0; // hw buttons poll time
 unsigned long ts = 0; // mouse swap time
 unsigned long tosd = 0; // osd last press toggle time
+unsigned long tosd_boot = 0; // 
 
 int mouse_tries; // number of triers to init mouse
 
@@ -152,7 +154,8 @@ void eeprom_store_values();
 void setup();
 void loop();
 void update_led(uint8_t led, bool state);
-void osd_init();
+void osd_init_overlay();
+void osd_init_boot_overlay();
 void osd_update_rombank();
 void osd_update_turbofdc();
 void osd_update_covox();
@@ -360,11 +363,14 @@ void fill_kbd_matrix(uint16_t sc, unsigned long n)
 
       if (is_menu || is_win || (is_ctrl && is_alt)) {
         if (!is_up) {
+          osd_overlay_boot = false;
           // menu + ESC = OSD_OVERLAY
           if (n - tosd > 200) {
             osd_overlay = !osd_overlay;
             matrix[ZX_K_OSD_OVERLAY] = osd_overlay;
             tosd = n;
+            // re-init osd
+            if (osd_overlay) osd_init_overlay();
           }
         }
       } else {
@@ -1275,15 +1281,14 @@ void update_led(uint8_t led, bool state)
   digitalWrite(led, state);
 }
 
-// init osd
-void osd_init()
+void osd_print_header()
 {
   // OSD Header
   osd.setPos(0,0);
   osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
   osd.print(F("Karabas-Pro"));
   osd.setPos(0,1);
-  osd.print(F("_______________________________"));
+  osd.print(F("________________________________"));
   osd.setPos(0,2);
   switch (cfg) {
     case 0:
@@ -1299,6 +1304,35 @@ void osd_init()
       osd.print(F("Rev.DS / TDA1543A"));
       break;
   }
+}
+
+void osd_init_boot_overlay()
+{
+  osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
+  osd.clear();
+
+  osd_print_header();
+
+  osd.frame(8, 9, 24, 16, 1);
+  osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLUE_I);
+  osd.fill(9,20,23,16, 0);
+  osd.setColor(OSD::COLOR_YELLOW_I, OSD::COLOR_BLACK);
+  osd.setPos(11, 11);
+  osd.print(F("Loading..."));
+  osd.setColor(OSD::COLOR_YELLOW_I, OSD::COLOR_FLASH);
+  osd.setPos(11, 13);
+  osd.print(F("Please wait"));
+
+}
+
+// init osd
+void osd_init_overlay()
+{
+  osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
+  osd.clear();
+
+  osd_print_header();
+
   // ROM Bank
   osd.setColor(OSD::COLOR_GREEN_I, OSD::COLOR_BLACK);
   osd.setPos(0,5); osd.print(F("ROM Bank:"));
@@ -1512,14 +1546,14 @@ void osd_update_pause() {
 
 void osd_update_time() {
   osd.setColor(OSD::COLOR_YELLOW_I, OSD::COLOR_BLACK);
-  osd.setPos(23,0);
+  osd.setPos(24,0);
   if (rtc_hours < 10) osd.print("0"); 
   osd.print(rtc_hours, DEC); osd.print(F(":"));
   if (rtc_minutes < 10) osd.print("0"); 
   osd.print(rtc_minutes, DEC); osd.print(F(":"));
   if (rtc_seconds < 10) osd.print("0"); 
-  osd.print(rtc_seconds, DEC); osd.print(F(" "));
-  osd.setPos(21,2);
+  osd.print(rtc_seconds, DEC);
+  osd.setPos(22,2);
   if (rtc_day < 10) osd.print("0"); 
   osd.print(rtc_day, DEC); osd.print(F("."));
   if (rtc_month < 10) osd.print("0"); 
@@ -1684,7 +1718,11 @@ void setup()
   }
 
   Serial.print(F("OSD init..."));
-  osd_init();
+  osd_overlay = true;
+  osd_overlay_boot = true;
+  matrix[ZX_K_OSD_OVERLAY] = true;
+  tosd_boot = millis();
+  osd_init_boot_overlay();
   Serial.println(F("done"));
 
   Serial.println(F("Starting main loop"));
@@ -1712,6 +1750,15 @@ void loop()
     Serial.println(c & 0xFF, HEX);
     if (matrix[ZX_K_OSD_OVERLAY]) {
       osd_update_scancode(c);
+    }
+  }
+
+  // hide boot osd overlay in 10 seconds after popup
+  if (osd_overlay_boot && (n - tosd_boot > 3000)) {
+    osd_overlay_boot = false;
+    if (osd_overlay) {
+      osd_overlay = false;
+      matrix[ZX_K_OSD_OVERLAY] = false;
     }
   }
 
