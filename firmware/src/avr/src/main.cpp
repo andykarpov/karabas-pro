@@ -63,6 +63,7 @@ bool is_sw9 = false; // SW9 state
 bool is_sw10 = false; // SW10 state
 bool joy_type = false; // joy type - 0 = kempston, 1 = sega
 bool osd_overlay = false; // osd overlay enable
+bool prev_osd_overlay = true; // prev state of osd overlay
 bool init_done = false; // init done
 uint8_t cfg = 0; // cfg byte from fpga side
 
@@ -220,6 +221,13 @@ void osd_update_time();
 void osd_update_scancode(uint16_t c);
 void osd_update_mouse();
 void osd_update_joy_state();
+void osd_update_rtc_hour();
+void osd_update_rtc_minute();
+void osd_update_rtc_second();
+void osd_update_rtc_day();
+void osd_update_rtc_month();
+void osd_update_rtc_year();
+void osd_update_rtc_dow();
 
 void push_capsed_key(int key)
 {
@@ -507,7 +515,10 @@ void fill_kbd_matrix(uint16_t sc, unsigned long n)
             matrix[ZX_K_OSD_OVERLAY] = osd_overlay;
             tosd = n;
             // re-init osd
-            if (osd_overlay) osd_init_overlay();
+            if (osd_overlay) {
+              osd_state = state_main;
+              osd_init_overlay();
+            }
           }
         }
       } else {
@@ -1533,6 +1544,14 @@ void osd_init_overlay()
   osd.setPos(0,20); osd.print(F("Port #1F:"));
   osd_update_joy_state();
 
+  osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
+  osd.setPos(20,19); osd.print(F("Press "));
+  osd.setColor(OSD::COLOR_CYAN_I, OSD::COLOR_FLASH);
+  osd.print(F("E"));
+  osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
+  osd.print(F(" to "));
+  osd.setPos(20,20); osd.print(F("set up RTC"));
+
   // footer
   osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
   osd.setPos(0,22); osd.print(F("Press "));
@@ -1549,8 +1568,59 @@ void osd_init_overlay()
   osd.print(F(" to toggle OSD"));
 }
 
+// init rtc osd
+void osd_init_rtc_overlay()
+{
+  osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
+  osd.clear();
+
+  osd_print_header();
+
+  osd.setPos(0,5);
+  osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
+  osd.print(F("RTC setup:"));
+
+  osd.setColor(OSD::COLOR_GREEN_I, OSD::COLOR_BLACK);
+  osd.setPos(0,7); osd.print(F("Hours:"));
+  osd_update_rtc_hour();
+
+  osd.setColor(OSD::COLOR_GREEN_I, OSD::COLOR_BLACK);
+  osd.setPos(0,8); osd.print(F("Minutes:"));
+  osd_update_rtc_minute();
+
+  osd.setColor(OSD::COLOR_GREEN_I, OSD::COLOR_BLACK);
+  osd.setPos(0,9); osd.print(F("Seconds:"));
+  osd_update_rtc_second();
+
+  osd.setColor(OSD::COLOR_GREEN_I, OSD::COLOR_BLACK);
+  osd.setPos(0,11); osd.print(F("Day:"));
+  osd_update_rtc_day();
+
+  osd.setColor(OSD::COLOR_GREEN_I, OSD::COLOR_BLACK);
+  osd.setPos(0,12); osd.print(F("Month:"));
+  osd_update_rtc_month();
+
+  osd.setColor(OSD::COLOR_GREEN_I, OSD::COLOR_BLACK);
+  osd.setPos(0,13); osd.print(F("Year:"));
+  osd_update_rtc_year();
+
+  osd.setColor(OSD::COLOR_GREEN_I, OSD::COLOR_BLACK);
+  osd.setPos(0,15); osd.print(F("DOW:"));
+  osd_update_rtc_dow();
+
+  // footer
+  osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
+  osd.setPos(0,23); osd.print(F("Press "));
+  osd.setColor(OSD::COLOR_CYAN_I, OSD::COLOR_BLACK);
+  osd.print(F("ESC"));
+  osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
+  osd.print(F(" to return"));
+}
+
 void osd_update_rombank()
 {
+  if (osd_state != state_main) return;
+
   uint8_t romset = 0;
   bitWrite(romset, 0, is_sw3);
   bitWrite(romset, 1, is_sw4);
@@ -1692,7 +1762,128 @@ void osd_handle_pause() {
   }
 }
 
+void osd_handle_rtc_hour() {
+  if (cursor_left) {
+    rtc_hours = rtc_hours-1;
+    if (rtc_hours > 23) rtc_hours = 0;
+    rtc_save();
+    delay(100);
+    osd_update_rtc_hour();
+  }
+  if (cursor_right || is_enter) {
+    rtc_hours = rtc_hours+1;
+    if (rtc_hours >23) rtc_hours = 0;
+    rtc_save();
+    delay(100);
+    osd_update_rtc_hour();
+  }
+}
+
+void osd_handle_rtc_minute() {
+  if (cursor_left) {
+    rtc_minutes = rtc_minutes-1;
+    if (rtc_minutes > 59) rtc_minutes = 59;
+    rtc_save();
+    delay(100);
+    osd_update_rtc_minute();
+  }
+  if (cursor_right || is_enter) {
+    rtc_minutes = rtc_minutes+1;
+    if (rtc_minutes >59) rtc_minutes = 0;
+    rtc_save();
+    delay(100);
+    osd_update_rtc_minute();
+  }
+}
+
+void osd_handle_rtc_second() {
+  if (cursor_left) {
+    rtc_seconds = rtc_seconds-1;
+    if (rtc_seconds > 59) rtc_seconds = 59;
+    rtc_save();
+    delay(100);
+    osd_update_rtc_second();
+  }
+  if (cursor_right || is_enter) {
+    rtc_seconds = rtc_seconds+1;
+    if (rtc_seconds >59) rtc_seconds = 0;
+    rtc_save();
+    delay(100);
+    osd_update_rtc_second();
+  }
+}
+
+void osd_handle_rtc_day() {
+  if (cursor_left) {
+    rtc_day = rtc_day-1;
+    if (rtc_day < 1 || rtc_day > 31) rtc_day = 31;
+    rtc_save();
+    delay(100);
+    osd_update_rtc_day();
+  }
+  if (cursor_right || is_enter) {
+    rtc_day = rtc_day+1;
+    if (rtc_day > 31) rtc_day = 1;
+    rtc_save();
+    delay(100);
+    osd_update_rtc_day();
+  }
+}
+
+void osd_handle_rtc_month() {
+  if (cursor_left) {
+    rtc_month = rtc_month-1;
+    if (rtc_month < 1 || rtc_month > 12) rtc_month = 12;
+    rtc_save();
+    delay(100);
+    osd_update_rtc_month();
+  }
+  if (cursor_right || is_enter) {
+    rtc_month = rtc_month+1;
+    if (rtc_month > 12) rtc_month = 1;
+    rtc_save();
+    delay(100);
+    osd_update_rtc_month();
+  }
+}
+
+void osd_handle_rtc_year() {
+  if (cursor_left) {
+    rtc_year = rtc_year-1;
+    if (rtc_year < 2000 || rtc_year > 4095) rtc_year = 2000;
+    rtc_save();
+    delay(100);
+    osd_update_rtc_year();
+  }
+  if (cursor_right || is_enter) {
+    rtc_year = rtc_year+1;
+    if (rtc_year < 2000 || rtc_year > 4096) rtc_year = 2000;
+    rtc_save();
+    delay(100);
+    osd_update_rtc_year();
+  }
+}
+
+void osd_handle_rtc_dow() {
+  if (cursor_left) {
+    rtc_week = rtc_week-1;
+    if (rtc_week < 1 || rtc_week > 7) rtc_week = 7;
+    rtc_save();
+    delay(100);
+    osd_update_rtc_dow();
+  }
+  if (cursor_right || is_enter) {
+    rtc_week = rtc_week+1;
+    if (rtc_week < 1 || rtc_week > 7) rtc_week = 1;
+    rtc_save();
+    delay(100);
+    osd_update_rtc_dow();
+  }
+}
+
 void osd_update_turbofdc() {
+
+  if (osd_state != state_main) return;
 
   if (osd_main_state == state_main_turbofdc) 
     osd.setColor(OSD::COLOR_BLACK, OSD::COLOR_MAGENTA_I);  
@@ -1704,6 +1895,9 @@ void osd_update_turbofdc() {
 }
 
 void osd_update_covox() {
+
+  if (osd_state != state_main) return;
+
   if (osd_main_state == state_main_covox) 
     osd.setColor(OSD::COLOR_BLACK, OSD::COLOR_MAGENTA_I);  
   else 
@@ -1714,7 +1908,8 @@ void osd_update_covox() {
 }
 
 void osd_update_stereo() {
-  // sw7,sw9
+
+  if (osd_state != state_main) return;
 
   if (osd_main_state == state_main_stereo) 
     osd.setColor(OSD::COLOR_BLACK, OSD::COLOR_MAGENTA_I);  
@@ -1734,6 +1929,8 @@ void osd_update_stereo() {
 
 void osd_update_ssg() {
 
+  if (osd_state != state_main) return;
+
   if (osd_main_state == state_main_ssg) 
     osd.setColor(OSD::COLOR_BLACK, OSD::COLOR_MAGENTA_I);  
   else 
@@ -1744,7 +1941,9 @@ void osd_update_ssg() {
 }
 
 void osd_update_video() {
-  // sw1
+
+  if (osd_state != state_main) return;
+
   if (osd_main_state == state_main_video) 
     osd.setColor(OSD::COLOR_BLACK, OSD::COLOR_MAGENTA_I);  
   else 
@@ -1755,7 +1954,8 @@ void osd_update_video() {
 }
 
 void osd_update_vsync() {
-  // sw2
+
+  if (osd_state != state_main) return;
 
   if (osd_main_state == state_main_sync) 
     osd.setColor(OSD::COLOR_BLACK, OSD::COLOR_MAGENTA_I);  
@@ -1767,7 +1967,9 @@ void osd_update_vsync() {
 }
 
 void osd_update_turbo() {
-  // is_turbo
+
+  if (osd_state != state_main) return;
+
   if (osd_main_state == state_main_turbo) 
     osd.setColor(OSD::COLOR_BLACK, OSD::COLOR_MAGENTA_I);  
   else 
@@ -1778,8 +1980,10 @@ void osd_update_turbo() {
 }
 
 void osd_update_swap_ab() {
-  // sw10
-    if (osd_main_state == state_main_swap_ab) 
+
+  if (osd_state != state_main) return;
+
+  if (osd_main_state == state_main_swap_ab) 
     osd.setColor(OSD::COLOR_BLACK, OSD::COLOR_MAGENTA_I);  
   else 
     osd.setColor(OSD::COLOR_MAGENTA_I, OSD::COLOR_BLACK);
@@ -1788,8 +1992,10 @@ void osd_update_swap_ab() {
 }
 
 void osd_update_joystick() {
-  // joy_type
-    if (osd_main_state == state_main_joy_type) 
+
+  if (osd_state != state_main) return;
+
+  if (osd_main_state == state_main_joy_type) 
     osd.setColor(OSD::COLOR_BLACK, OSD::COLOR_MAGENTA_I);  
   else 
     osd.setColor(OSD::COLOR_MAGENTA_I, OSD::COLOR_BLACK);
@@ -1798,8 +2004,10 @@ void osd_update_joystick() {
 }
 
 void osd_update_keyboard_type() {
-  // profi_mode
-    if (osd_main_state == state_main_keyboard_type) 
+
+  if (osd_state != state_main) return;
+
+  if (osd_main_state == state_main_keyboard_type) 
     osd.setColor(OSD::COLOR_BLACK, OSD::COLOR_MAGENTA_I);  
   else 
     osd.setColor(OSD::COLOR_MAGENTA_I, OSD::COLOR_BLACK);
@@ -1808,14 +2016,116 @@ void osd_update_keyboard_type() {
 }
 
 void osd_update_pause() {
-  // is_wait
-    if (osd_main_state == state_main_pause) 
+
+  if (osd_state != state_main) return;
+
+  if (osd_main_state == state_main_pause) 
     osd.setColor(OSD::COLOR_BLACK, OSD::COLOR_MAGENTA_I);  
   else 
     osd.setColor(OSD::COLOR_MAGENTA_I, OSD::COLOR_BLACK);
 
   osd.setPos(10,16);
   if (is_wait) { osd.print(F("On ")); } else { osd.print(F("Off")); }
+}
+
+void osd_update_rtc_hour() {
+  if (osd_state != state_rtc) return;
+  if (osd_rtc_state == state_rtc_hour) 
+    osd.setColor(OSD::COLOR_BLACK, OSD::COLOR_MAGENTA_I);  
+  else 
+    osd.setColor(OSD::COLOR_MAGENTA_I, OSD::COLOR_BLACK);
+  osd.setPos(10,7);
+  if (rtc_hours < 10) osd.print(F("0"));
+  osd.print(rtc_hours, DEC);
+}
+
+void osd_update_rtc_minute() {
+  if (osd_state != state_rtc) return;
+  if (osd_rtc_state == state_rtc_minute) 
+    osd.setColor(OSD::COLOR_BLACK, OSD::COLOR_MAGENTA_I);  
+  else 
+    osd.setColor(OSD::COLOR_MAGENTA_I, OSD::COLOR_BLACK);
+  osd.setPos(10,8);
+  if (rtc_minutes < 10) osd.print(F("0"));
+  osd.print(rtc_minutes, DEC);
+}
+
+void osd_update_rtc_second() {
+  if (osd_state != state_rtc) return;
+  if (osd_rtc_state == state_rtc_second) 
+    osd.setColor(OSD::COLOR_BLACK, OSD::COLOR_MAGENTA_I);  
+  else 
+    osd.setColor(OSD::COLOR_MAGENTA_I, OSD::COLOR_BLACK);
+  osd.setPos(10,9);
+  if (rtc_seconds < 10) osd.print(F("0"));
+  osd.print(rtc_seconds, DEC);
+}
+
+void osd_update_rtc_day() {
+  if (osd_state != state_rtc) return;
+  if (osd_rtc_state == state_rtc_day) 
+    osd.setColor(OSD::COLOR_BLACK, OSD::COLOR_MAGENTA_I);  
+  else 
+    osd.setColor(OSD::COLOR_MAGENTA_I, OSD::COLOR_BLACK);
+  osd.setPos(10,11);
+  if (rtc_day < 10) osd.print(F("0"));
+  osd.print(rtc_day, DEC);
+}
+
+void osd_update_rtc_month() {
+  if (osd_state != state_rtc) return;
+  if (osd_rtc_state == state_rtc_month) 
+    osd.setColor(OSD::COLOR_BLACK, OSD::COLOR_MAGENTA_I);  
+  else 
+    osd.setColor(OSD::COLOR_MAGENTA_I, OSD::COLOR_BLACK);
+  osd.setPos(10,12);
+  switch (rtc_month) {
+    case 1: osd.print(F("Jan")); break;
+    case 2: osd.print(F("Feb")); break;
+    case 3: osd.print(F("Mar")); break;
+    case 4: osd.print(F("Apr")); break;
+    case 5: osd.print(F("May")); break;
+    case 6: osd.print(F("Jun")); break;
+    case 7: osd.print(F("Jul")); break;
+    case 8: osd.print(F("Aug")); break;
+    case 9: osd.print(F("Sep")); break;
+    case 10: osd.print(F("Oct")); break;
+    case 11: osd.print(F("Nov")); break;
+    case 12: osd.print(F("Dec")); break;
+    default: osd.print(F("___")); 
+  }
+}
+
+void osd_update_rtc_year() {
+  if (osd_state != state_rtc) return;
+  if (osd_rtc_state == state_rtc_year) 
+    osd.setColor(OSD::COLOR_BLACK, OSD::COLOR_MAGENTA_I);  
+  else 
+    osd.setColor(OSD::COLOR_MAGENTA_I, OSD::COLOR_BLACK);
+  osd.setPos(10,13);
+  if (rtc_year < 1000) osd.print(F("0"));
+  if (rtc_year < 100) osd.print(F("0"));
+  if (rtc_year < 10) osd.print(F("0"));
+  osd.print(rtc_year, DEC);
+}
+
+void osd_update_rtc_dow() {
+if (osd_state != state_rtc) return;
+  if (osd_rtc_state == state_rtc_dow) 
+    osd.setColor(OSD::COLOR_BLACK, OSD::COLOR_MAGENTA_I);  
+  else 
+    osd.setColor(OSD::COLOR_MAGENTA_I, OSD::COLOR_BLACK);
+  osd.setPos(10,15);
+  switch (rtc_week) {
+    case 2: osd.print(F("Mon")); break;
+    case 3: osd.print(F("Tue")); break;
+    case 4: osd.print(F("Wed")); break;
+    case 5: osd.print(F("Thu")); break;
+    case 6: osd.print(F("Fri")); break;
+    case 7: osd.print(F("Sat")); break;
+    case 1: osd.print(F("Sun")); break;
+    default: osd.print(F("___")); 
+  }
 }
 
 void osd_update_time() {
@@ -1833,9 +2143,21 @@ void osd_update_time() {
   if (rtc_month < 10) osd.print("0"); 
   osd.print(rtc_month, DEC); osd.print(F("."));
   osd.print(rtc_year, DEC);
+  if (osd_state == state_rtc) {
+    osd_update_rtc_hour();
+    osd_update_rtc_minute();
+    osd_update_rtc_second();
+    osd_update_rtc_day();
+    osd_update_rtc_month();
+    osd_update_rtc_year();
+    osd_update_rtc_dow();
+  }
 }
 
 void osd_update_scancode(uint16_t c) {
+
+  if (osd_state != state_main) return;
+
   osd.setColor(OSD::COLOR_RED_I, OSD::COLOR_BLACK);
   osd.setPos(10,18);
   if ((c >> 8) < 0x10) osd.print(F("0")); osd.print(c >> 8, HEX);
@@ -1844,6 +2166,9 @@ void osd_update_scancode(uint16_t c) {
 }
 
 void osd_update_mouse() {
+
+  if (osd_state != state_main) return;
+
   osd.setColor(OSD::COLOR_RED_I, OSD::COLOR_BLACK);
   osd.setPos(10,19);
   if (mouse_x < 0x10) osd.print(F("0")); osd.print(mouse_x, HEX);
@@ -1854,6 +2179,9 @@ void osd_update_mouse() {
 }
 
 void osd_update_joy_state() {
+
+  if (osd_state != state_main) return;
+
   osd.setColor(OSD::COLOR_RED_I, OSD::COLOR_BLACK);
   osd.setPos(10,20);
   osd.print(joy[ZX_JOY_B], DEC);
@@ -2034,10 +2362,10 @@ void loop()
     switch (osd_state) {
       case state_main:
         if (osd_prev_state != osd_state) {
-          osd_init_overlay();
           osd_prev_state = osd_state;
           osd_main_state = state_main_rom_bank;
           osd_prev_main_state = state_main_rom_bank;
+          osd_init_overlay();
         }
 
         if (osd_main_state != osd_prev_main_state) {
@@ -2061,11 +2389,25 @@ void loop()
       break;
       case state_rtc:
         if (osd_prev_state != osd_state) {
-          osd_init_rtc_overlay();
           osd_prev_state = osd_state;
           osd_rtc_state = state_rtc_hour;
           osd_prev_rtc_state = state_rtc_hour;
+          osd_init_rtc_overlay();
         }
+
+        if (osd_rtc_state != osd_prev_rtc_state) {
+          osd_prev_rtc_state = osd_rtc_state;
+          switch(osd_rtc_state) {
+            case state_rtc_hour: osd_update_rtc_dow(); osd_update_rtc_hour(); osd_update_rtc_minute(); break;
+            case state_rtc_minute: osd_update_rtc_hour(); osd_update_rtc_minute(); osd_update_rtc_second(); break;
+            case state_rtc_second: osd_update_rtc_minute(); osd_update_rtc_second(); osd_update_rtc_day(); break;
+            case state_rtc_day: osd_update_rtc_second(); osd_update_rtc_day(); osd_update_rtc_month(); break;
+            case state_rtc_month: osd_update_rtc_day(); osd_update_rtc_month(); osd_update_rtc_year(); break;
+            case state_rtc_year: osd_update_rtc_month(); osd_update_rtc_year(); osd_update_rtc_dow(); break;
+            case state_rtc_dow: osd_update_rtc_year(); osd_update_rtc_dow(); osd_update_rtc_hour(); break;
+          }
+        }
+
       break;
     }
   }
@@ -2087,6 +2429,11 @@ void loop()
           delay(100);
         }
 
+        if (matrix[ZX_K_E]) {
+          osd_state = state_rtc;
+          delay(100);
+        }
+
         switch (osd_main_state) {
           case state_main_rom_bank: osd_handle_rombank(); break;
           case state_main_turbofdc: osd_handle_turbofdc(); break;
@@ -2100,11 +2447,37 @@ void loop()
           case state_main_joy_type: osd_handle_joy_type(); break;
           case state_main_keyboard_type: osd_handle_keyboard_type(); break;
           case state_main_pause: osd_handle_pause(); break;
-
-          // todo: more actions
         }
       break;
       case state_rtc:
+        // TODO
+
+        if (cursor_down) {
+          osd_rtc_state++;
+          if (osd_rtc_state > state_rtc_dow) osd_rtc_state = state_rtc_hour;
+          delay(100);
+        }
+
+        if (cursor_up) {
+          osd_rtc_state--;
+          if (osd_rtc_state > state_rtc_dow) osd_rtc_state = state_rtc_dow;
+          delay(100);
+        }
+
+        if (is_esc) {
+          osd_state = state_main;
+        }
+
+        switch (osd_rtc_state) {
+          case state_rtc_hour: osd_handle_rtc_hour(); break;
+          case state_rtc_minute: osd_handle_rtc_minute(); break;
+          case state_rtc_second: osd_handle_rtc_second(); break;
+          case state_rtc_day: osd_handle_rtc_day(); break;
+          case state_rtc_month: osd_handle_rtc_month(); break;
+          case state_rtc_year: osd_handle_rtc_year(); break;
+          case state_rtc_dow: osd_handle_rtc_dow(); break;
+        }
+
       break;
     }
   }
