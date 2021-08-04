@@ -1607,14 +1607,14 @@ void osd_update_mouse() {
 void osd_update_joy_state() {
   osd.setColor(OSD::COLOR_RED_I, OSD::COLOR_BLACK);
   osd.setPos(10,20);
+  osd.print(joy[ZX_JOY_B], DEC);
+  osd.print(joy[ZX_JOY_A], DEC);
+  osd.print(joy[ZX_JOY_FIRE2], DEC);
+  osd.print(joy[ZX_JOY_FIRE], DEC);
   osd.print(joy[ZX_JOY_UP], DEC);
   osd.print(joy[ZX_JOY_DOWN], DEC);
   osd.print(joy[ZX_JOY_LEFT], DEC);
   osd.print(joy[ZX_JOY_RIGHT], DEC);
-  osd.print(joy[ZX_JOY_FIRE], DEC);
-  osd.print(joy[ZX_JOY_FIRE2], DEC);
-  osd.print(joy[ZX_JOY_A], DEC);
-  osd.print(joy[ZX_JOY_B], DEC);
 }
 
 
