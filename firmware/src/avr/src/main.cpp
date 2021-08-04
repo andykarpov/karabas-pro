@@ -1678,6 +1678,16 @@ void setup()
     spi_send(CMD_NONE, 0x00);
   }
 
+  // request build num from the fpga
+  spi_send(CMD_BUILD_REQ0, 0x00);
+  spi_send(CMD_BUILD_REQ1, 0x00);
+  spi_send(CMD_BUILD_REQ2, 0x00);
+  spi_send(CMD_BUILD_REQ3, 0x00);
+  spi_send(CMD_BUILD_REQ4, 0x00);
+  spi_send(CMD_BUILD_REQ5, 0x00);
+  spi_send(CMD_BUILD_REQ6, 0x00);
+  spi_send(CMD_BUILD_REQ7, 0x00);
+
   // setup osd library with callback to send spi command
   osd.begin(spi_send);
 

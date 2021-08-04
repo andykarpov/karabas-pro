@@ -6,6 +6,7 @@ library IEEE;
 use IEEE.std_logic_1164.all;
 use IEEE.std_logic_arith.conv_integer;
 use IEEE.numeric_std.all;
+use IEEE.std_logic_unsigned.all;
 
 entity avr is
 	port
@@ -58,7 +59,7 @@ entity avr is
 	 OSD_OVERLAY: out std_logic := '0';
 	 OSD_COMMAND: out std_logic_vector(15 downto 0);
 	 
-	 LOADED 		: out std_logic := '0';
+	 LOADED 		: buffer std_logic := '0';
 	 	 
 	 JOY			: out std_logic_vector(7 downto 0) := "00000000"
 	 
@@ -121,6 +122,10 @@ architecture RTL of avr is
 	
 	type qmachine IS(q_idle, q_init, q_init_done, q_rtcw, q_rtcw_done, q_avrw, q_avrw_done, q_led, q_led_done, q_nop, q_nop_done); --state machine for queue writes
 	signal qstate : qmachine := q_idle;
+	
+	signal tx_build 			: std_logic := '0';
+	signal tx_build_pos 		: std_logic_vector(2 downto 0) := "000";
+	signal tx_build_data		: std_logic_vector(7 downto 0) := "00000000";
 
 		 
 begin
@@ -162,6 +167,7 @@ begin
 	begin
 		if (rising_edge(CLK)) then
 			if spi_do_valid = '1' then
+				tx_build <= '0';
 				case spi_do(15 downto 8) is 
 					-- keyboard matrix
 					when X"01" => kb_data_tmp(7 downto 0) <= spi_do (7 downto 0);
@@ -216,6 +222,11 @@ begin
 					-- osd commands
 					when X"0F"|X"10"|x"11"|x"12"|x"13" => 
 									  OSD_COMMAND <= spi_do(15 downto 0);
+							
+					-- build num request
+					when X"F0"|X"F1"|X"F2"|X"F3"|X"F4"|X"F5"|X"F6"|X"F7" =>
+						tx_build <= '1';
+						tx_build_pos <= spi_do(10 downto 8);
 					
 					-- rtc registers
 					when others => 
@@ -384,6 +395,29 @@ begin
 		q 			=> queue_do,
 		rdempty 	=> queue_rd_empty
 	);
+	
+	-- messages rom (to get a build num)
+	U_MESSAGES: entity work.message_rom 
+	port map (
+		address 		=> "11111" & tx_build_pos, -- build version starts from 248
+		clock   		=> CLK,
+		q       		=> tx_build_data
+	);
+	
+	-- ferch 8 bytes of build version into queue
+--	process (CLK, loaded)
+--	begin 
+--		if (rising_edge(CLK)) then 
+--			if (loaded = '1') then 
+--				if (tx_build_pos /= "11111111") then 
+--					tx_build <= '1';
+--					tx_build_pos <= tx_build_pos + 1;
+--				elsif (tx_build = '1') then 
+--					tx_build <= '0';
+--				end if;
+--			end if;
+--		end if;	
+--	end process;
 		
 	-- fifo handling / queue commands to avr side
 	process(CLK, CLKEN, N_RESET, INIT, CFG, RTC_WR_N, RTC_CS, last_queue_di, queue_wr_full, RTC_A, RTC_DI, cnt_led, LED1, LED2, LED1_OWR, LED2_OWR, queue_wr_req, queue_rd_empty)
@@ -394,6 +428,10 @@ begin
 				queue_di <= x"FD" & CFG;
 				last_queue_di <= x"FD" & CFG;
 				queue_wr_req <= '1';
+			elsif tx_build = '1' then -- TX build number
+				queue_di <= "1111" & '0' & tx_build_pos & tx_build_data; -- F0 - F7
+				last_queue_di <= "1111" & '0' & tx_build_pos & tx_build_data;
+				queue_wr_req <= '1';				
 			elsif CLKEN = '0' and RTC_WR_N = '0' AND RTC_CS = '1' then -- and last_queue_di /= ("10" & RTC_A & RTC_DI) then 
 				-- push address and data into the FIFO queue to send via SPI
 				queue_di <= "10" & RTC_A & RTC_DI;
