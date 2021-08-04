@@ -1783,7 +1783,7 @@ void loop()
     Serial.print(c >> 8, HEX);
     Serial.print(F(" Code: "));
     Serial.println(c & 0xFF, HEX);
-    if (matrix[ZX_K_OSD_OVERLAY]) {
+    if (osd_overlay) {
       osd_update_scancode(c);
     }
   }
@@ -1795,6 +1795,15 @@ void loop()
       osd_overlay = false;
       matrix[ZX_K_OSD_OVERLAY] = false;
     }
+  }
+
+  
+  // TODO: process osd overlay keyboard actions here
+
+
+  // empty keyboard matrix in overlay mode before transmitting it onto FPGA side
+  if (osd_overlay) {
+    clear_matrix(ZX_MATRIX_SIZE);
   }
 
   // transmit kbd always
@@ -1867,7 +1876,7 @@ void loop()
     Serial.print(F(" J:")); Serial.print(joy[ZX_JOY_A]);
     Serial.print(F(" P:")); Serial.println(joy[ZX_JOY_B]);
 
-    if (matrix[ZX_K_OSD_OVERLAY]) {
+    if (osd_overlay) {
       osd_update_joy_state();
     }
 
@@ -1915,7 +1924,7 @@ void loop()
     rtc_send_time();
 
     // show time in the overlay
-    if (matrix[ZX_K_OSD_OVERLAY]) {
+    if (osd_overlay) {
       osd_update_time();
     }
 
@@ -1952,7 +1961,7 @@ void loop()
 
     transmit_mouse_data();
 
-    if (matrix[ZX_K_OSD_OVERLAY]) {
+    if (osd_overlay) {
       osd_update_mouse();
     }
 
@@ -1979,7 +1988,7 @@ void loop()
   
       transmit_mouse_data();    
 
-      if (matrix[ZX_K_OSD_OVERLAY]) {
+      if (osd_overlay) {
         osd_update_mouse();
       }
     //}
