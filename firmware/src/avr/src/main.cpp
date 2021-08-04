@@ -122,6 +122,8 @@ bool rtc_is_24h = true;
 int capsed_keys[20] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 int capsed_keys_size = 0;
 
+uint8_t build_num[8] = {0,0,0,0,0,0,0,0};
+
 SPISettings settingsA(1000000, MSBFIRST, SPI_MODE0); // SPI transmission settings
 
 void push_capsed_key(int key);
@@ -1092,6 +1094,19 @@ void process_in_cmd(uint8_t cmd, uint8_t data)
     Serial.println(F("done"));
   }
 
+  if (cmd >= CMD_BUILD_REQ0 && cmd <= CMD_BUILD_REQ7) {
+    switch(cmd) {
+      case CMD_BUILD_REQ0: build_num[0] = data; break;
+      case CMD_BUILD_REQ1: build_num[1] = data; break;
+      case CMD_BUILD_REQ2: build_num[2] = data; break;
+      case CMD_BUILD_REQ3: build_num[3] = data; break;
+      case CMD_BUILD_REQ4: build_num[4] = data; break;
+      case CMD_BUILD_REQ5: build_num[5] = data; break;
+      case CMD_BUILD_REQ6: build_num[6] = data; break;
+      case CMD_BUILD_REQ7: build_num[7] = data; break;
+    }
+  }
+
 #if ALLOW_LED_OVERRIDE
   if (cmd == CMD_LED_WRITE) {
     led1_state = bitRead(data, 0);
@@ -1304,6 +1319,16 @@ void osd_print_header()
       osd.print(F("Rev.DS / TDA1543A"));
       break;
   }
+  osd.setPos(0,3);
+  osd.print(F("Build: "));
+  osd.write(build_num[0]);
+  osd.write(build_num[1]);
+  osd.write(build_num[2]);
+  osd.write(build_num[3]);
+  osd.write(build_num[4]);
+  osd.write(build_num[5]);
+  osd.write(build_num[6]);
+  osd.write(build_num[7]);
 }
 
 void osd_init_boot_overlay()
