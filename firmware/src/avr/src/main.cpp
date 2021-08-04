@@ -63,7 +63,6 @@ bool is_sw9 = false; // SW9 state
 bool is_sw10 = false; // SW10 state
 bool joy_type = false; // joy type - 0 = kempston, 1 = sega
 bool osd_overlay = false; // osd overlay enable
-bool osd_overlay_boot = false; // osd overlay boot
 bool init_done = false; // init done
 uint8_t cfg = 0; // cfg byte from fpga side
 
@@ -90,7 +89,7 @@ unsigned long te = 0; // eeprom store time
 unsigned long tb, tb1, tb2 = 0; // hw buttons poll time
 unsigned long ts = 0; // mouse swap time
 unsigned long tosd = 0; // osd last press toggle time
-unsigned long tosd_boot = 0; // 
+unsigned long tk = 0; // last keypress
 
 int mouse_tries; // number of triers to init mouse
 
@@ -123,6 +122,53 @@ int capsed_keys[20] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 int capsed_keys_size = 0;
 
 uint8_t build_num[8] = {0,0,0,0,0,0,0,0};
+
+// osd global states
+enum osd_state_e {
+  state_main = 0,
+  state_rtc
+};
+
+// osd main states
+enum osd_main_state_e {
+  state_main_rom_bank = 0,
+  state_main_turbofdc,
+  state_main_covox,
+  state_main_stereo,
+  state_main_ssg,
+  state_main_video,
+  state_main_sync,
+  state_main_turbo,
+  state_main_swap_ab,
+  state_main_joy_type,
+  state_main_keyboard_type,
+  state_main_pause
+};
+
+// osd rtc states
+enum osd_rtc_state_e {
+  state_rtc_hour = 0,
+  state_rtc_minute,
+  state_rtc_second,
+  state_rtc_day,
+  state_rtc_month,
+  state_rtc_year,
+  state_rtc_dow
+};
+
+uint8_t osd_state = state_main;
+uint8_t osd_prev_state = state_main;
+uint8_t osd_main_state = state_main_rom_bank;
+uint8_t osd_prev_main_state = state_main_rom_bank;
+uint8_t osd_rtc_state = state_rtc_dow;
+uint8_t osd_prev_rtc_state = state_rtc_dow;
+
+bool cursor_up = false;
+bool cursor_down = false;
+bool cursor_left = false;
+bool cursor_right = false;
+bool is_enter = false;
+bool is_esc = false;
 
 SPISettings settingsA(1000000, MSBFIRST, SPI_MODE0); // SPI transmission settings
 
@@ -157,7 +203,7 @@ void setup();
 void loop();
 void update_led(uint8_t led, bool state);
 void osd_init_overlay();
-void osd_init_boot_overlay();
+void osd_init_rtc_overlay();
 void osd_update_rombank();
 void osd_update_turbofdc();
 void osd_update_covox();
@@ -220,6 +266,92 @@ void process_capsed_key(int key, bool up)
   } else {
     pop_capsed_key(key);
   }
+}
+
+void set_rombank(uint8_t bank) {
+  switch (bank) {
+    case 0: is_sw3 = false; is_sw4 = false; break;
+    case 1: is_sw3 = true; is_sw4 = false; break;
+    case 2: is_sw3 = false; is_sw4 = true; break;
+    case 3: is_sw3 = true; is_sw4 = true; break;
+  }
+  eeprom_store_value(EEPROM_SW3_ADDRESS, is_sw3);
+  eeprom_store_value(EEPROM_SW4_ADDRESS, is_sw4);
+  matrix[ZX_K_SW3] = is_sw3;
+  matrix[ZX_K_SW4] = is_sw4;
+}
+
+void set_turbofdc() {
+  // menu + F5 = SW5
+  is_sw5 = !is_sw5;
+  eeprom_store_value(EEPROM_SW5_ADDRESS, is_sw5);
+  matrix[ZX_K_SW5] = is_sw5;
+}
+
+void set_covox() {
+  // menu + F6 = SW6
+  is_sw6 = !is_sw6;
+  eeprom_store_value(EEPROM_SW6_ADDRESS, is_sw6);
+  matrix[ZX_K_SW6] = is_sw6;
+}
+
+void set_stereo(uint8_t stereo) {
+
+  is_sw7 = bitRead(stereo, 0);
+  is_sw9 = bitRead(stereo, 1);
+
+  eeprom_store_value(EEPROM_SW7_ADDRESS, is_sw7);
+  eeprom_store_value(EEPROM_SW9_ADDRESS, is_sw9);
+  matrix[ZX_K_SW7] = is_sw7;
+  matrix[ZX_K_SW9] = is_sw9;
+}
+
+void set_ssg() {
+  // menu + F8 = SW8
+  is_sw8 = !is_sw8;
+  eeprom_store_value(EEPROM_SW8_ADDRESS, is_sw8);
+  matrix[ZX_K_SW8] = is_sw8;
+}
+
+void set_video() {
+    // menu + F9 = SW1
+  is_sw1 = !is_sw1;
+  eeprom_store_value(EEPROM_SW1_ADDRESS, is_sw1);
+  matrix[ZX_K_SW1] = is_sw1;
+}
+
+void set_vsync() {
+  // menu + F10 = SW2
+  is_sw2 = !is_sw2;
+  eeprom_store_value(EEPROM_SW2_ADDRESS, is_sw2);
+  matrix[ZX_K_SW2] = is_sw2;
+}
+
+void set_turbo() {
+  // menu + F11 = turbo
+  is_turbo = !is_turbo;
+  eeprom_store_value(EEPROM_TURBO_ADDRESS, is_turbo);
+  matrix[ZX_K_TURBO] = is_turbo;
+}
+
+void set_swap_ab() {
+    // menu + TAB = SW10
+  is_sw10 = !is_sw10;
+  eeprom_store_value(EEPROM_SW10_ADDRESS, is_sw10);
+  matrix[ZX_K_SW10] = is_sw10;
+}
+
+void set_joy_type() {
+  // menu + J = JOY_TYPE
+  joy_type = !joy_type;
+  eeprom_store_value(EEPROM_JOY_TYPE_ADDRESS, joy_type);
+  matrix[ZX_K_JOY_TYPE] = joy_type;
+}
+
+void set_keyboard_type() {
+  profi_mode = !profi_mode;
+  eeprom_store_value(EEPROM_MODE_ADDRESS, profi_mode);
+  matrix[ZX_K_KBD_MODE] = profi_mode;
 }
 
 // transform PS/2 scancodes into internal matrix of pressed keys
@@ -333,6 +465,7 @@ void fill_kbd_matrix(uint16_t sc, unsigned long n)
     // Cursor -> CS + 5,6,7,8
     case PS2_KEY_UP_ARROW:
       if (!is_shift) {
+        cursor_up = !is_up;
         matrix[ZX_K_CS] = !is_up;
         matrix[ZX_K_7] = !is_up;
         process_capsed_key(code, is_up);
@@ -340,6 +473,7 @@ void fill_kbd_matrix(uint16_t sc, unsigned long n)
       break;
     case PS2_KEY_DN_ARROW:
       if (!is_shift) {
+        cursor_down = !is_up;
         matrix[ZX_K_CS] = !is_up;
         matrix[ZX_K_6] = !is_up;
         process_capsed_key(code, is_up);
@@ -347,6 +481,7 @@ void fill_kbd_matrix(uint16_t sc, unsigned long n)
       break;
     case PS2_KEY_L_ARROW:
       if (!is_shift) {
+        cursor_left = !is_up;
         matrix[ZX_K_CS] = !is_up;
         matrix[ZX_K_5] = !is_up;
         process_capsed_key(code, is_up);
@@ -354,6 +489,7 @@ void fill_kbd_matrix(uint16_t sc, unsigned long n)
       break;
     case PS2_KEY_R_ARROW:
       if (!is_shift) {
+        cursor_right = !is_up;
         matrix[ZX_K_CS] = !is_up;
         matrix[ZX_K_8] = !is_up;
         process_capsed_key(code, is_up);
@@ -365,7 +501,6 @@ void fill_kbd_matrix(uint16_t sc, unsigned long n)
 
       if (is_menu || is_win || (is_ctrl && is_alt)) {
         if (!is_up) {
-          osd_overlay_boot = false;
           // menu + ESC = OSD_OVERLAY
           if (n - tosd > 200) {
             osd_overlay = !osd_overlay;
@@ -376,6 +511,7 @@ void fill_kbd_matrix(uint16_t sc, unsigned long n)
           }
         }
       } else {
+        is_esc = !is_up;
         matrix[ZX_K_CS] = !is_up;
         matrix[profi_mode ? ZX_K_1 : ZX_K_SP] = !is_up;
         process_capsed_key(code, is_up);
@@ -394,6 +530,7 @@ void fill_kbd_matrix(uint16_t sc, unsigned long n)
     case PS2_KEY_ENTER:
     case PS2_KEY_KP_ENTER:
       matrix[ZX_K_ENT] = !is_up;
+      is_enter = !is_up;
       break;
 
     // Space
@@ -414,10 +551,7 @@ void fill_kbd_matrix(uint16_t sc, unsigned long n)
     case PS2_KEY_J: 
       if (is_menu || is_win || (is_ctrl && is_alt)) {
         if (!is_up) {
-          // menu + J = JOY_TYPE
-          joy_type = !joy_type;
-          eeprom_store_value(EEPROM_JOY_TYPE_ADDRESS, joy_type);
-          matrix[ZX_K_JOY_TYPE] = joy_type;
+          set_joy_type();
           osd_update_joystick();
         }
       } else {
@@ -626,10 +760,7 @@ void fill_kbd_matrix(uint16_t sc, unsigned long n)
     case PS2_KEY_TAB:
       if (is_menu || is_win || (is_ctrl && is_alt)) {
         if (!is_up) {
-          // menu + TAB = SW10
-          is_sw10 = !is_sw10;
-          eeprom_store_value(EEPROM_SW10_ADDRESS, is_sw10);
-          matrix[ZX_K_SW10] = is_sw10;
+          set_swap_ab();
           osd_update_swap_ab();
         }
       } else {
@@ -693,12 +824,7 @@ void fill_kbd_matrix(uint16_t sc, unsigned long n)
       if (is_menu || is_win || (is_ctrl && is_alt)) {
         if (!is_up) {
           // menu + F1, ctrl+alt = ROMSET 00
-          is_sw3 = false;
-          is_sw4 = false;
-          eeprom_store_value(EEPROM_SW3_ADDRESS, is_sw3);
-          eeprom_store_value(EEPROM_SW4_ADDRESS, is_sw4);
-          matrix[ZX_K_SW3] = is_sw3;
-          matrix[ZX_K_SW4] = is_sw4;
+          set_rombank(0);
           osd_update_rombank();
         }
       } else {
@@ -709,12 +835,7 @@ void fill_kbd_matrix(uint16_t sc, unsigned long n)
       if (is_menu || is_win || (is_ctrl && is_alt)) {
         if (!is_up) {
           // menu + F2 = ROMSET 01
-          is_sw3 = true;
-          is_sw4 = false;
-          eeprom_store_value(EEPROM_SW3_ADDRESS, is_sw3);
-          eeprom_store_value(EEPROM_SW4_ADDRESS, is_sw4);
-          matrix[ZX_K_SW3] = is_sw3;
-          matrix[ZX_K_SW4] = is_sw4;
+          set_rombank(1);
           osd_update_rombank();
         }
       } else {
@@ -725,12 +846,7 @@ void fill_kbd_matrix(uint16_t sc, unsigned long n)
       if (is_menu || is_win || (is_ctrl && is_alt)) {
         if (!is_up) {
           // menu + F3 = ROMSET 10
-          is_sw3 = false;
-          is_sw4 = true;
-          eeprom_store_value(EEPROM_SW3_ADDRESS, is_sw3);
-          eeprom_store_value(EEPROM_SW4_ADDRESS, is_sw4);
-          matrix[ZX_K_SW3] = is_sw3;
-          matrix[ZX_K_SW4] = is_sw4;
+          set_rombank(2);
           osd_update_rombank();
         }
       } else {
@@ -741,12 +857,7 @@ void fill_kbd_matrix(uint16_t sc, unsigned long n)
       if (is_menu || is_win || (is_ctrl && is_alt)) {
         if (!is_up) {
           // menu + F4 = ROMSET 11
-          is_sw3 = true;
-          is_sw4 = true;
-          eeprom_store_value(EEPROM_SW3_ADDRESS, is_sw3);
-          eeprom_store_value(EEPROM_SW4_ADDRESS, is_sw4);
-          matrix[ZX_K_SW3] = is_sw3;
-          matrix[ZX_K_SW4] = is_sw4;          
+          set_rombank(3);         
           osd_update_rombank();
         }
       } else {
@@ -756,10 +867,7 @@ void fill_kbd_matrix(uint16_t sc, unsigned long n)
     case PS2_KEY_F5:
       if (is_menu || is_win || (is_ctrl && is_alt)) {
         if (!is_up) {
-          // menu + F5 = SW5
-          is_sw5 = !is_sw5;
-          eeprom_store_value(EEPROM_SW5_ADDRESS, is_sw5);
-          matrix[ZX_K_SW5] = is_sw5;
+          set_turbofdc();
           osd_update_turbofdc();
         }
       } else {
@@ -770,10 +878,7 @@ void fill_kbd_matrix(uint16_t sc, unsigned long n)
     case PS2_KEY_F6: 
       if (is_menu || is_win || (is_ctrl && is_alt)) {
         if (!is_up) {
-          // menu + F6 = SW6
-          is_sw6 = !is_sw6;
-          eeprom_store_value(EEPROM_SW6_ADDRESS, is_sw6);
-          matrix[ZX_K_SW6] = is_sw6;
+          set_covox();
           osd_update_covox();
         }
       } else {
@@ -783,22 +888,14 @@ void fill_kbd_matrix(uint16_t sc, unsigned long n)
     case PS2_KEY_F7: 
       if (is_menu || is_win || (is_ctrl && is_alt)) {
         if (!is_up) {
-          // menu + F7 = SW7, !SW7, SW9, !SW9
-          if (!is_sw9 && !is_sw7) {
-            is_sw7 = true;
-            is_sw9 = false;
-          } else if (!is_sw9 && is_sw7) {
-            is_sw7 = false;
-            is_sw9 = true;
-          } else {
-            is_sw7 = false;
-            is_sw9 = false;
-          }
-          
-          eeprom_store_value(EEPROM_SW7_ADDRESS, is_sw7);
-          eeprom_store_value(EEPROM_SW9_ADDRESS, is_sw9);
-          matrix[ZX_K_SW7] = is_sw7;
-          matrix[ZX_K_SW9] = is_sw9;
+          uint8_t stereo = 0;
+          bitWrite(stereo, 0, is_sw7);
+          bitWrite(stereo, 1, is_sw9);
+          if (stereo < 2) 
+            stereo++; 
+          else 
+            stereo = 0;
+          set_stereo(stereo);
           osd_update_stereo();
         }
       } else {
@@ -808,10 +905,7 @@ void fill_kbd_matrix(uint16_t sc, unsigned long n)
     case PS2_KEY_F8: 
       if (is_menu || (is_ctrl && is_alt)) {
         if (!is_up) {
-          // menu + F8 = SW8
-          is_sw8 = !is_sw8;
-          eeprom_store_value(EEPROM_SW8_ADDRESS, is_sw8);
-          matrix[ZX_K_SW8] = is_sw8;
+          set_ssg();
           osd_update_ssg();
         }
       } else {
@@ -821,10 +915,7 @@ void fill_kbd_matrix(uint16_t sc, unsigned long n)
     case PS2_KEY_F9: 
       if (is_menu || is_win || (is_ctrl && is_alt)) {
         if (!is_up) {
-          // menu + F9 = SW1
-          is_sw1 = !is_sw1;
-          eeprom_store_value(EEPROM_SW1_ADDRESS, is_sw1);
-          matrix[ZX_K_SW1] = is_sw1;
+          set_video();
           osd_update_video();
         }
       } else {
@@ -834,10 +925,7 @@ void fill_kbd_matrix(uint16_t sc, unsigned long n)
     case PS2_KEY_F10: 
       if (is_menu || is_win || (is_ctrl && is_alt)) {
         if (!is_up) {
-          // menu + F10 = SW2
-          is_sw2 = !is_sw2;
-          eeprom_store_value(EEPROM_SW2_ADDRESS, is_sw2);
-          matrix[ZX_K_SW2] = is_sw2;
+          set_vsync();
           osd_update_vsync();
         }
       } else {
@@ -847,10 +935,7 @@ void fill_kbd_matrix(uint16_t sc, unsigned long n)
     case PS2_KEY_F11:
       if (is_menu || is_win || (is_ctrl && is_alt)) {
         if (!is_up) {
-          // menu + F11 = turbo
-          is_turbo = !is_turbo;
-          eeprom_store_value(EEPROM_TURBO_ADDRESS, is_turbo);
-          matrix[ZX_K_TURBO] = is_turbo;
+          set_turbo();
           osd_update_turbo();
         }
       } else {
@@ -877,9 +962,7 @@ void fill_kbd_matrix(uint16_t sc, unsigned long n)
     case PS2_KEY_PRTSCR:
       if (!is_shift) {
         if (!is_up) {
-          profi_mode = !profi_mode;
-          eeprom_store_value(EEPROM_MODE_ADDRESS, profi_mode);
-          matrix[ZX_K_KBD_MODE] = profi_mode;
+          set_keyboard_type();
           osd_update_keyboard_type();
         }
       }
@@ -1301,26 +1384,38 @@ void osd_print_header()
   // OSD Header
   osd.setPos(0,0);
   osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
-  osd.print(F("Karabas-Pro"));
+  osd.print(F("Karabas Pro"));
   osd.setPos(0,1);
-  osd.print(F("________________________________"));
+  for (uint8_t i=0; i<32; i++) {
+    osd.print(F("_"));
+  }
   osd.setPos(0,2);
+
+  // board revision
   switch (cfg) {
     case 0:
-      osd.print(F("Rev.A / TDA1543 "));
-      break;
     case 1:
-      osd.print(F("Rev.A / TDA1543A"));
+      osd.print(F("Rev.A  "));
       break;
     case 4:
-      osd.print(F("Rev.DS / TDA1543 "));
-      break;
     case 5:
-      osd.print(F("Rev.DS / TDA1543A"));
+      osd.print(F("Rev.DS "));
+      break;
+  }
+
+  // dac type
+  switch (cfg) {
+    case 0:
+    case 4:
+      osd.print(F("TDA1543 "));
+      break;
+    case 1:
+    case 5:
+      osd.print(F("TDA1543A"));
       break;
   }
   osd.setPos(0,3);
-  osd.print(F("Build: "));
+  osd.print(F("Build  "));
   osd.write(build_num[0]);
   osd.write(build_num[1]);
   osd.write(build_num[2]);
@@ -1329,25 +1424,6 @@ void osd_print_header()
   osd.write(build_num[5]);
   osd.write(build_num[6]);
   osd.write(build_num[7]);
-}
-
-void osd_init_boot_overlay()
-{
-  osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
-  osd.clear();
-
-  osd_print_header();
-
-  osd.frame(8, 9, 24, 16, 1);
-  osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLUE_I);
-  osd.fill(9,20,23,16, 0);
-  osd.setColor(OSD::COLOR_YELLOW_I, OSD::COLOR_BLACK);
-  osd.setPos(11, 11);
-  osd.print(F("Loading..."));
-  osd.setColor(OSD::COLOR_YELLOW_I, OSD::COLOR_FLASH);
-  osd.setPos(11, 13);
-  osd.print(F("Please wait"));
-
 }
 
 // init osd
@@ -1381,14 +1457,14 @@ void osd_init_overlay()
 
   // Stereo
   osd.setColor(OSD::COLOR_GREEN_I, OSD::COLOR_BLACK);
-  osd.setPos(0,8); osd.print(F("Stereo:"));
+  osd.setPos(0,8); osd.print(F("PSG mix:"));
   osd_update_stereo();
   osd.setColor(OSD::COLOR_CYAN_I, OSD::COLOR_BLACK);
   osd.setPos(20,8); osd.print(F("Menu+F7"));
 
   // SSG type
   osd.setColor(OSD::COLOR_GREEN_I, OSD::COLOR_BLACK);
-  osd.setPos(0,9); osd.print(F("SSG type:"));
+  osd.setPos(0,9); osd.print(F("PSG type:"));
   osd_update_ssg();
   osd.setColor(OSD::COLOR_CYAN_I, OSD::COLOR_BLACK);
   osd.setPos(20,9); osd.print(F("Menu+F8"));
@@ -1409,7 +1485,7 @@ void osd_init_overlay()
 
   // Turbo
   osd.setColor(OSD::COLOR_GREEN_I, OSD::COLOR_BLACK);
-  osd.setPos(0,12); osd.print(F("Turbo:"));
+  osd.setPos(0,12); osd.print(F("Turbo 2x:"));
   osd_update_turbo();
   osd.setColor(OSD::COLOR_CYAN_I, OSD::COLOR_BLACK);
   osd.setPos(20,12); osd.print(F("Menu+F11"));
@@ -1423,7 +1499,7 @@ void osd_init_overlay()
 
   // Joy type
   osd.setColor(OSD::COLOR_GREEN_I, OSD::COLOR_BLACK);
-  osd.setPos(0,14); osd.print(F("Joystick:"));
+  osd.setPos(0,14); osd.print(F("Joy type:"));
   osd_update_joystick();
   osd.setColor(OSD::COLOR_CYAN_I, OSD::COLOR_BLACK);
   osd.setPos(20,14); osd.print(F("Menu+J"));
@@ -1454,7 +1530,7 @@ void osd_init_overlay()
 
   // Joy
   osd.setColor(OSD::COLOR_GREEN_I, OSD::COLOR_BLACK);
-  osd.setPos(0,20); osd.print(F("Joy:"));
+  osd.setPos(0,20); osd.print(F("Port #1F:"));
   osd_update_joy_state();
 
   // footer
@@ -1475,11 +1551,16 @@ void osd_init_overlay()
 
 void osd_update_rombank()
 {
-  osd.setColor(OSD::COLOR_MAGENTA_I, OSD::COLOR_BLACK);
-  osd.setPos(10,5);
   uint8_t romset = 0;
   bitWrite(romset, 0, is_sw3);
   bitWrite(romset, 1, is_sw4);
+
+  if (osd_main_state == state_main_rom_bank) 
+    osd.setColor(OSD::COLOR_BLACK, OSD::COLOR_MAGENTA_I);  
+  else 
+    osd.setColor(OSD::COLOR_MAGENTA_I, OSD::COLOR_BLACK);
+
+  osd.setPos(10,5);
   switch (romset) {
     case 0: osd.print(F("Default ")); break;
     case 1: osd.print(F("PQ-DOS  ")); break;
@@ -1488,21 +1569,158 @@ void osd_update_rombank()
   }
 }
 
+void osd_handle_rombank() {
+  uint8_t romset = 0;
+  bitWrite(romset, 0, is_sw3);
+  bitWrite(romset, 1, is_sw4);
+
+  if (cursor_left) {
+    romset = romset-1;
+    if (romset > 3) romset = 3;
+    set_rombank(romset);
+    delay(100);
+    osd_update_rombank();
+  }
+  if (cursor_right || is_enter) {
+    romset = romset+1;
+    if (romset >3) romset = 0;
+    set_rombank(romset);
+    delay(100);
+    osd_update_rombank();
+  }
+}
+
+void osd_handle_turbofdc() {
+  if (cursor_left || cursor_right || is_enter) {
+    set_turbofdc();
+    delay(100);
+    osd_update_turbofdc();
+  }
+}
+
+void osd_handle_covox() {
+  if (cursor_left || cursor_right || is_enter) {
+    set_covox();
+    delay(100);
+    osd_update_covox();
+  }
+}
+
+void osd_handle_stereo() {
+
+  uint8_t stereo = 0;
+  bitWrite(stereo, 0, is_sw7);
+  bitWrite(stereo, 1, is_sw9);
+
+  if (cursor_left) {
+    stereo = stereo-1;
+    if (stereo > 2) stereo = 2;
+    set_stereo(stereo);
+    delay(100);
+    osd_update_stereo();
+  }
+  if (cursor_right || is_enter) {
+    stereo = stereo+1;
+    if (stereo >2) stereo = 0;
+    set_stereo(stereo);
+    delay(100);
+    osd_update_stereo();
+  }
+}
+
+void osd_handle_ssg() {
+  if (cursor_left || cursor_right || is_enter) {
+    set_ssg();
+    delay(100);
+    osd_update_ssg();
+  }
+}
+
+void osd_handle_video() {
+  if (cursor_left || cursor_right || is_enter) {
+    set_video();
+    delay(100);
+    osd_update_video();
+  }
+}
+
+void osd_handle_vsync() {
+  if (cursor_left || cursor_right || is_enter) {
+    set_vsync();
+    delay(100);
+    osd_update_vsync();
+  }
+}
+
+void osd_handle_turbo() {
+  if (cursor_left || cursor_right || is_enter) {
+    set_turbo();
+    delay(100);
+    osd_update_turbo();
+  }
+}
+
+void osd_handle_swap_ab() {
+  if (cursor_left || cursor_right || is_enter) {
+    set_swap_ab();
+    delay(100);
+    osd_update_swap_ab();
+  }
+}
+
+void osd_handle_joy_type() {
+  if (cursor_left || cursor_right || is_enter) {
+    set_joy_type();
+    delay(100);
+    osd_update_joystick();
+  }
+}
+
+void osd_handle_keyboard_type() {
+  if (cursor_left || cursor_right || is_enter) {
+    set_keyboard_type();
+    delay(100);
+    osd_update_keyboard_type();
+  }
+}
+
+void osd_handle_pause() {
+  if (cursor_left || cursor_right || is_enter) {
+    do_pause();
+    delay(100);
+    osd_update_pause();
+  }
+}
+
 void osd_update_turbofdc() {
-  osd.setColor(OSD::COLOR_MAGENTA_I, OSD::COLOR_BLACK);
+
+  if (osd_main_state == state_main_turbofdc) 
+    osd.setColor(OSD::COLOR_BLACK, OSD::COLOR_MAGENTA_I);  
+  else 
+    osd.setColor(OSD::COLOR_MAGENTA_I, OSD::COLOR_BLACK);
+
   osd.setPos(10,6);
   if (is_sw5) { osd.print(F("On ")); } else { osd.print(F("Off")); }
 }
 
 void osd_update_covox() {
-  osd.setColor(OSD::COLOR_MAGENTA_I, OSD::COLOR_BLACK);
+  if (osd_main_state == state_main_covox) 
+    osd.setColor(OSD::COLOR_BLACK, OSD::COLOR_MAGENTA_I);  
+  else 
+    osd.setColor(OSD::COLOR_MAGENTA_I, OSD::COLOR_BLACK);
+
   osd.setPos(10,7);
   if (is_sw6) { osd.print(F("On ")); } else { osd.print(F("Off")); }
 }
 
 void osd_update_stereo() {
   // sw7,sw9
-  osd.setColor(OSD::COLOR_MAGENTA_I, OSD::COLOR_BLACK);
+
+  if (osd_main_state == state_main_stereo) 
+    osd.setColor(OSD::COLOR_BLACK, OSD::COLOR_MAGENTA_I);  
+  else 
+    osd.setColor(OSD::COLOR_MAGENTA_I, OSD::COLOR_BLACK);
+
   osd.setPos(10,8);
   uint8_t stereo = 0;
   bitWrite(stereo, 0, is_sw7);
@@ -1515,56 +1733,87 @@ void osd_update_stereo() {
 }
 
 void osd_update_ssg() {
-  osd.setColor(OSD::COLOR_MAGENTA_I, OSD::COLOR_BLACK);
+
+  if (osd_main_state == state_main_ssg) 
+    osd.setColor(OSD::COLOR_BLACK, OSD::COLOR_MAGENTA_I);  
+  else 
+    osd.setColor(OSD::COLOR_MAGENTA_I, OSD::COLOR_BLACK);
+
   osd.setPos(10,9);
   if (is_sw8) { osd.print(F("AY3-8912")); } else { osd.print(F("YM2149F ")); }
 }
 
 void osd_update_video() {
   // sw1
-  osd.setColor(OSD::COLOR_MAGENTA_I, OSD::COLOR_BLACK);
+  if (osd_main_state == state_main_video) 
+    osd.setColor(OSD::COLOR_BLACK, OSD::COLOR_MAGENTA_I);  
+  else 
+    osd.setColor(OSD::COLOR_MAGENTA_I, OSD::COLOR_BLACK);
+
   osd.setPos(10,10);
   if (is_sw1) { osd.print(F("RGB 15kHz")); } else { osd.print(F("VGA 30kHz")); }
 }
 
 void osd_update_vsync() {
   // sw2
-  osd.setColor(OSD::COLOR_MAGENTA_I, OSD::COLOR_BLACK);
+
+  if (osd_main_state == state_main_sync) 
+    osd.setColor(OSD::COLOR_BLACK, OSD::COLOR_MAGENTA_I);  
+  else 
+    osd.setColor(OSD::COLOR_MAGENTA_I, OSD::COLOR_BLACK);
+
   osd.setPos(10,11);
   if (is_sw2) { osd.print(F("60 Hz")); } else { osd.print(F("50 Hz")); }
 }
 
 void osd_update_turbo() {
   // is_turbo
-  osd.setColor(OSD::COLOR_MAGENTA_I, OSD::COLOR_BLACK);
+  if (osd_main_state == state_main_turbo) 
+    osd.setColor(OSD::COLOR_BLACK, OSD::COLOR_MAGENTA_I);  
+  else 
+    osd.setColor(OSD::COLOR_MAGENTA_I, OSD::COLOR_BLACK);
+
   osd.setPos(10,12);
   if (is_turbo) { osd.print(F("On ")); } else { osd.print(F("Off")); }
 }
 
 void osd_update_swap_ab() {
   // sw10
-  osd.setColor(OSD::COLOR_MAGENTA_I, OSD::COLOR_BLACK);
+    if (osd_main_state == state_main_swap_ab) 
+    osd.setColor(OSD::COLOR_BLACK, OSD::COLOR_MAGENTA_I);  
+  else 
+    osd.setColor(OSD::COLOR_MAGENTA_I, OSD::COLOR_BLACK);
   osd.setPos(10,13);
   if (is_sw10) { osd.print(F("On ")); } else { osd.print(F("Off")); }
 }
 
 void osd_update_joystick() {
   // joy_type
-  osd.setColor(OSD::COLOR_MAGENTA_I, OSD::COLOR_BLACK);
+    if (osd_main_state == state_main_joy_type) 
+    osd.setColor(OSD::COLOR_BLACK, OSD::COLOR_MAGENTA_I);  
+  else 
+    osd.setColor(OSD::COLOR_MAGENTA_I, OSD::COLOR_BLACK);
   osd.setPos(10,14);
   if (joy_type) { osd.print(F("SEGA ")); } else { osd.print(F("Atari")); }
 }
 
 void osd_update_keyboard_type() {
   // profi_mode
-  osd.setColor(OSD::COLOR_MAGENTA_I, OSD::COLOR_BLACK);
+    if (osd_main_state == state_main_keyboard_type) 
+    osd.setColor(OSD::COLOR_BLACK, OSD::COLOR_MAGENTA_I);  
+  else 
+    osd.setColor(OSD::COLOR_MAGENTA_I, OSD::COLOR_BLACK);
   osd.setPos(10,15);
   if (profi_mode) { osd.print(F("Profi XT")); } else { osd.print(F("Spectrum")); }
 }
 
 void osd_update_pause() {
   // is_wait
-  osd.setColor(OSD::COLOR_MAGENTA_I, OSD::COLOR_BLACK);
+    if (osd_main_state == state_main_pause) 
+    osd.setColor(OSD::COLOR_BLACK, OSD::COLOR_MAGENTA_I);  
+  else 
+    osd.setColor(OSD::COLOR_MAGENTA_I, OSD::COLOR_BLACK);
+
   osd.setPos(10,16);
   if (is_wait) { osd.print(F("On ")); } else { osd.print(F("Off")); }
 }
@@ -1752,14 +2001,6 @@ void setup()
     Serial.println(F("done"));  
   }
 
-  Serial.print(F("OSD init..."));
-  osd_overlay = true;
-  osd_overlay_boot = true;
-  matrix[ZX_K_OSD_OVERLAY] = true;
-  tosd_boot = millis();
-  osd_init_boot_overlay();
-  Serial.println(F("done"));
-
   Serial.println(F("Starting main loop"));
   digitalWrite(PIN_LED1, LOW);
 }
@@ -1788,17 +2029,85 @@ void loop()
     }
   }
 
-  // hide boot osd overlay in 10 seconds after popup
-  if (osd_overlay_boot && (n - tosd_boot > 3000)) {
-    osd_overlay_boot = false;
-    if (osd_overlay) {
-      osd_overlay = false;
-      matrix[ZX_K_OSD_OVERLAY] = false;
+  // switch betweeen main osd states
+  if (osd_overlay) {
+    switch (osd_state) {
+      case state_main:
+        if (osd_prev_state != osd_state) {
+          osd_init_overlay();
+          osd_prev_state = osd_state;
+          osd_main_state = state_main_rom_bank;
+          osd_prev_main_state = state_main_rom_bank;
+        }
+
+        if (osd_main_state != osd_prev_main_state) {
+          osd_prev_main_state = osd_main_state;
+          switch(osd_main_state) {
+            case state_main_rom_bank: osd_update_pause(); osd_update_rombank(); osd_update_turbofdc(); break;
+            case state_main_turbofdc: osd_update_rombank(); osd_update_turbofdc(); osd_update_covox(); break;
+            case state_main_covox: osd_update_turbofdc(); osd_update_covox(); osd_update_stereo(); break;
+            case state_main_stereo: osd_update_covox(); osd_update_stereo(); osd_update_ssg(); break;
+            case state_main_ssg: osd_update_stereo(); osd_update_ssg(); osd_update_video(); break;
+            case state_main_video: osd_update_ssg(); osd_update_video(); osd_update_vsync(); break;
+            case state_main_sync: osd_update_video(); osd_update_vsync(); osd_update_turbo(); break;
+            case state_main_turbo: osd_update_vsync(); osd_update_turbo(); osd_update_swap_ab(); break;
+            case state_main_swap_ab: osd_update_turbo(); osd_update_swap_ab(); osd_update_joystick(); break;
+            case state_main_joy_type: osd_update_swap_ab(); osd_update_joystick(); osd_update_keyboard_type(); break;
+            case state_main_keyboard_type: osd_update_joystick(); osd_update_keyboard_type(); osd_update_pause(); break;
+            case state_main_pause: osd_update_keyboard_type(); osd_update_pause(); osd_update_rombank(); break;
+          }
+        }
+
+      break;
+      case state_rtc:
+        if (osd_prev_state != osd_state) {
+          osd_init_rtc_overlay();
+          osd_prev_state = osd_state;
+          osd_rtc_state = state_rtc_hour;
+          osd_prev_rtc_state = state_rtc_hour;
+        }
+      break;
     }
   }
 
-  
-  // TODO: process osd overlay keyboard actions here
+  // process osd overlay keyboard actions here
+  if (osd_overlay) {
+    switch (osd_state) {
+      case state_main:
+
+        if (cursor_down) {
+          osd_main_state++;
+          if (osd_main_state > state_main_pause) osd_main_state = state_main_rom_bank;
+          delay(100);
+        }
+
+        if (cursor_up) {
+          osd_main_state--;
+          if (osd_main_state > state_main_pause) osd_main_state = state_main_pause;
+          delay(100);
+        }
+
+        switch (osd_main_state) {
+          case state_main_rom_bank: osd_handle_rombank(); break;
+          case state_main_turbofdc: osd_handle_turbofdc(); break;
+          case state_main_covox: osd_handle_covox(); break;
+          case state_main_stereo: osd_handle_stereo(); break;
+          case state_main_ssg: osd_handle_ssg(); break;
+          case state_main_video: osd_handle_video(); break;
+          case state_main_sync: osd_handle_vsync(); break;
+          case state_main_turbo: osd_handle_turbo(); break;
+          case state_main_swap_ab: osd_handle_swap_ab(); break;
+          case state_main_joy_type: osd_handle_joy_type(); break;
+          case state_main_keyboard_type: osd_handle_keyboard_type(); break;
+          case state_main_pause: osd_handle_pause(); break;
+
+          // todo: more actions
+        }
+      break;
+      case state_rtc:
+      break;
+    }
+  }
 
 
   // empty keyboard matrix in overlay mode before transmitting it onto FPGA side
