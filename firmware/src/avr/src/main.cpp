@@ -1608,6 +1608,28 @@ void osd_init_rtc_overlay()
   osd.setPos(0,15); osd.print(F("DOW:"));
   osd_update_rtc_dow();
 
+  osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
+  osd.setPos(0, 17);
+  osd.print(F("Please use arrows "));
+  osd.setColor(OSD::COLOR_CYAN_I, OSD::COLOR_BLACK);
+  osd.write(17);
+  osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
+  osd.print(F(" and "));
+  osd.setColor(OSD::COLOR_CYAN_I, OSD::COLOR_BLACK);
+  osd.write(16);
+  osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
+  osd.setPos(0, 18);
+  osd.print(F("to change values, "));
+  osd.setColor(OSD::COLOR_CYAN_I, OSD::COLOR_BLACK);
+  osd.write(30);
+  osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
+  osd.print(F(" and "));
+  osd.setColor(OSD::COLOR_CYAN_I, OSD::COLOR_BLACK);
+  osd.write(31);
+  osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
+  osd.setPos(0, 19);
+  osd.print(F("to navigate by menu items"));
+
   // footer
   osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
   osd.setPos(0,23); osd.print(F("Press "));
@@ -1615,28 +1637,6 @@ void osd_init_rtc_overlay()
   osd.print(F("ESC"));
   osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
   osd.print(F(" to return"));
-}
-
-void osd_update_rombank()
-{
-  if (osd_state != state_main) return;
-
-  uint8_t romset = 0;
-  bitWrite(romset, 0, is_sw3);
-  bitWrite(romset, 1, is_sw4);
-
-  if (osd_main_state == state_main_rom_bank) 
-    osd.setColor(OSD::COLOR_BLACK, OSD::COLOR_MAGENTA_I);  
-  else 
-    osd.setColor(OSD::COLOR_MAGENTA_I, OSD::COLOR_BLACK);
-
-  osd.setPos(10,5);
-  switch (romset) {
-    case 0: osd.print(F("Default ")); break;
-    case 1: osd.print(F("PQ-DOS  ")); break;
-    case 2: osd.print(F("Flasher ")); break;
-    case 3: osd.print(F("FDImage ")); break;
-  }
 }
 
 void osd_handle_rombank() {
@@ -1881,6 +1881,28 @@ void osd_handle_rtc_dow() {
   }
 }
 
+void osd_update_rombank()
+{
+  if (osd_state != state_main) return;
+
+  uint8_t romset = 0;
+  bitWrite(romset, 0, is_sw3);
+  bitWrite(romset, 1, is_sw4);
+
+  if (osd_main_state == state_main_rom_bank) 
+    osd.setColor(OSD::COLOR_BLACK, OSD::COLOR_MAGENTA_I);  
+  else 
+    osd.setColor(OSD::COLOR_MAGENTA_I, OSD::COLOR_BLACK);
+
+  osd.setPos(10,5);
+  switch (romset) {
+    case 0: osd.print(F("Default")); break;
+    case 1: osd.print(F("PQ-DOS")); osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK); osd.print(F(" ")); break;
+    case 2: osd.print(F("Flasher")); break;
+    case 3: osd.print(F("FDImage")); break;
+  }
+}
+
 void osd_update_turbofdc() {
 
   if (osd_state != state_main) return;
@@ -1891,7 +1913,12 @@ void osd_update_turbofdc() {
     osd.setColor(OSD::COLOR_MAGENTA_I, OSD::COLOR_BLACK);
 
   osd.setPos(10,6);
-  if (is_sw5) { osd.print(F("On ")); } else { osd.print(F("Off")); }
+  if (is_sw5) { 
+    osd.print(F("On")); 
+    osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK); osd.print(F(" "));
+  } else { 
+    osd.print(F("Off")); 
+  }
 }
 
 void osd_update_covox() {
@@ -1904,7 +1931,12 @@ void osd_update_covox() {
     osd.setColor(OSD::COLOR_MAGENTA_I, OSD::COLOR_BLACK);
 
   osd.setPos(10,7);
-  if (is_sw6) { osd.print(F("On ")); } else { osd.print(F("Off")); }
+  if (is_sw6) { 
+    osd.print(F("On"));
+    osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK); osd.print(F(" ")); 
+  } else { 
+    osd.print(F("Off")); 
+  }
 }
 
 void osd_update_stereo() {
@@ -1921,8 +1953,8 @@ void osd_update_stereo() {
   bitWrite(stereo, 0, is_sw7);
   bitWrite(stereo, 1, is_sw9);
   switch (stereo) {
-    case 1: osd.print(F("ABC ")); break;
-    case 0: osd.print(F("ACB ")); break;
+    case 1: osd.print(F("ABC")); osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK); osd.print(F(" ")); break;
+    case 0: osd.print(F("ACB")); osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK); osd.print(F(" ")); break;
     default: osd.print(F("Mono")); 
   }
 }
@@ -1937,7 +1969,7 @@ void osd_update_ssg() {
     osd.setColor(OSD::COLOR_MAGENTA_I, OSD::COLOR_BLACK);
 
   osd.setPos(10,9);
-  if (is_sw8) { osd.print(F("AY3-8912")); } else { osd.print(F("YM2149F ")); }
+  if (is_sw8) { osd.print(F("AY3-8912")); } else { osd.print(F("YM2149F")); osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK); osd.print(F(" ")); }
 }
 
 void osd_update_video() {
@@ -1976,7 +2008,12 @@ void osd_update_turbo() {
     osd.setColor(OSD::COLOR_MAGENTA_I, OSD::COLOR_BLACK);
 
   osd.setPos(10,12);
-  if (is_turbo) { osd.print(F("On ")); } else { osd.print(F("Off")); }
+  if (is_turbo) { 
+    osd.print(F("On")); 
+    osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK); osd.print(F(" ")); 
+  } else { 
+    osd.print(F("Off")); 
+  }
 }
 
 void osd_update_swap_ab() {
@@ -1988,7 +2025,12 @@ void osd_update_swap_ab() {
   else 
     osd.setColor(OSD::COLOR_MAGENTA_I, OSD::COLOR_BLACK);
   osd.setPos(10,13);
-  if (is_sw10) { osd.print(F("On ")); } else { osd.print(F("Off")); }
+  if (is_sw10) { 
+    osd.print(F("On")); 
+    osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK); osd.print(F(" ")); 
+  } else { 
+    osd.print(F("Off")); 
+  }
 }
 
 void osd_update_joystick() {
@@ -2000,7 +2042,12 @@ void osd_update_joystick() {
   else 
     osd.setColor(OSD::COLOR_MAGENTA_I, OSD::COLOR_BLACK);
   osd.setPos(10,14);
-  if (joy_type) { osd.print(F("SEGA ")); } else { osd.print(F("Atari")); }
+  if (joy_type) { 
+    osd.print(F("SEGA")); 
+    osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK); osd.print(F(" ")); 
+  } else { 
+    osd.print(F("Atari")); 
+  }
 }
 
 void osd_update_keyboard_type() {
@@ -2025,7 +2072,7 @@ void osd_update_pause() {
     osd.setColor(OSD::COLOR_MAGENTA_I, OSD::COLOR_BLACK);
 
   osd.setPos(10,16);
-  if (is_wait) { osd.print(F("On ")); } else { osd.print(F("Off")); }
+  if (is_wait) { osd.print(F("On")); osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK); osd.print(F(" ")); } else { osd.print(F("Off")); }
 }
 
 void osd_update_rtc_hour() {
@@ -2080,18 +2127,18 @@ void osd_update_rtc_month() {
     osd.setColor(OSD::COLOR_MAGENTA_I, OSD::COLOR_BLACK);
   osd.setPos(10,12);
   switch (rtc_month) {
-    case 1: osd.print(F("Jan")); break;
-    case 2: osd.print(F("Feb")); break;
-    case 3: osd.print(F("Mar")); break;
-    case 4: osd.print(F("Apr")); break;
-    case 5: osd.print(F("May")); break;
-    case 6: osd.print(F("Jun")); break;
-    case 7: osd.print(F("Jul")); break;
-    case 8: osd.print(F("Aug")); break;
-    case 9: osd.print(F("Sep")); break;
-    case 10: osd.print(F("Oct")); break;
-    case 11: osd.print(F("Nov")); break;
-    case 12: osd.print(F("Dec")); break;
+    case 1:  osd.print(F("January"));  osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK); osd.print(F("  ")); break;
+    case 2:  osd.print(F("February")); osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK); osd.print(F(" ")); break;
+    case 3:  osd.print(F("March"));    osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK); osd.print(F("    ")); break;
+    case 4:  osd.print(F("April"));    osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK); osd.print(F("    ")); break;
+    case 5:  osd.print(F("May"));      osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK); osd.print(F("      ")); break;
+    case 6:  osd.print(F("June"));     osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK); osd.print(F("     ")); break;
+    case 7:  osd.print(F("July"));     osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK); osd.print(F("     ")); break;
+    case 8:  osd.print(F("August"));   osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK); osd.print(F("   ")); break;
+    case 9:  osd.print(F("September")); break;
+    case 10: osd.print(F("October"));  osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK); osd.print(F("  ")); break;
+    case 11: osd.print(F("November")); osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK); osd.print(F(" ")); break;
+    case 12: osd.print(F("December")); osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK); osd.print(F(" ")); break;
     default: osd.print(F("___")); 
   }
 }
