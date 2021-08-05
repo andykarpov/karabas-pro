@@ -1112,6 +1112,17 @@ void rtc_save() {
   }
 }
 
+void rtc_fix_invalid_time() {
+  if (rtc_day < 1 || rtc_day > 31) rtc_day = 1;
+  if (rtc_month < 1 || rtc_month > 12) rtc_month = 1;
+  if (rtc_year < 2000 || rtc_year > 4095) rtc_year = 2000;
+  if (rtc_hours > 23) rtc_hours = 0;
+  if (rtc_minutes > 59) rtc_minutes = 0;
+  if (rtc_seconds > 59) rtc_seconds = 0;
+  if (rtc_week < 1 || rtc_week > 7) rtc_week = 1;
+  rtc_save();
+}
+
 void rtc_send(uint8_t reg, uint8_t data) {
   spi_send(CMD_RTC_READ + reg, data);
 }
@@ -1574,6 +1585,8 @@ void osd_init_overlay()
 // init rtc osd
 void osd_init_rtc_overlay()
 {
+  rtc_fix_invalid_time(); // try to fix invalid time
+
   osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
   osd.clear();
 
