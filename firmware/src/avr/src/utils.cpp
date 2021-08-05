@@ -1,20 +1,6 @@
 #include "utils.h"
 #include "Arduino.h"
 
-int stringToInt(String s) {
-  char this_char[s.length() + 1];
-  s.toCharArray(this_char, sizeof(this_char));
-  int result = atoi(this_char);
-  return result;
-}
-
-uint8_t stringToByte(String s) {
-  char this_char[s.length() + 1];
-  s.toCharArray(this_char, sizeof(this_char));
-  int result = atoi(this_char);
-  return lowByte(result);
-}
-
 uint8_t bin2bcd(uint8_t val) {
   return val + 6 * (val / 10);
 }
