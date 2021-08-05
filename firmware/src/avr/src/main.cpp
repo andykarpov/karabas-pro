@@ -1728,26 +1728,28 @@ void osd_init_test_overlay()
   osd.print(F("Color test:"));
 
   uint8_t color = 0;
-  for (uint8_t x = 0; x<28; x++) {
+  for (uint8_t x = 0; x<32; x++) {
     for (uint8_t y = 7; y<22; y++) {
       color = x/2;
       switch (color) {
-        case 0: osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK); break;
-        case 1: osd.setColor(OSD::COLOR_GREY, OSD::COLOR_BLACK); break;
-        case 2: osd.setColor(OSD::COLOR_YELLOW, OSD::COLOR_BLACK); break;
-        case 3: osd.setColor(OSD::COLOR_YELLOW_I, OSD::COLOR_BLACK); break;
-        case 4: osd.setColor(OSD::COLOR_GREEN, OSD::COLOR_BLACK); break;
-        case 5: osd.setColor(OSD::COLOR_GREEN_I, OSD::COLOR_BLACK); break;
-        case 6: osd.setColor(OSD::COLOR_CYAN, OSD::COLOR_BLACK); break;
-        case 7: osd.setColor(OSD::COLOR_CYAN_I, OSD::COLOR_BLACK); break;
-        case 8: osd.setColor(OSD::COLOR_MAGENTA, OSD::COLOR_BLACK); break;
-        case 9: osd.setColor(OSD::COLOR_MAGENTA_I, OSD::COLOR_BLACK); break;
-        case 10: osd.setColor(OSD::COLOR_BLUE, OSD::COLOR_BLACK); break;
-        case 11: osd.setColor(OSD::COLOR_BLUE_I, OSD::COLOR_BLACK); break;
-        case 12: osd.setColor(OSD::COLOR_RED, OSD::COLOR_BLACK); break;
-        case 13: osd.setColor(OSD::COLOR_RED_I, OSD::COLOR_BLACK); break;
+        case 0: osd.setColor(OSD::COLOR_BLACK, OSD::COLOR_BLACK); break;
+        case 1: osd.setColor(OSD::COLOR_RED, OSD::COLOR_BLACK); break;
+        case 2: osd.setColor(OSD::COLOR_RED_I, OSD::COLOR_BLACK); break;
+        case 3: osd.setColor(OSD::COLOR_YELLOW, OSD::COLOR_BLACK); break;
+        case 4: osd.setColor(OSD::COLOR_YELLOW_I, OSD::COLOR_BLACK); break;
+        case 5: osd.setColor(OSD::COLOR_GREEN, OSD::COLOR_BLACK); break;
+        case 6: osd.setColor(OSD::COLOR_GREEN_I, OSD::COLOR_BLACK); break;
+        case 7: osd.setColor(OSD::COLOR_CYAN, OSD::COLOR_BLACK); break;
+        case 8: osd.setColor(OSD::COLOR_CYAN_I, OSD::COLOR_BLACK); break;
+        case 9: osd.setColor(OSD::COLOR_BLUE, OSD::COLOR_BLACK); break;
+        case 10: osd.setColor(OSD::COLOR_BLUE_I, OSD::COLOR_BLACK); break;
+        case 11: osd.setColor(OSD::COLOR_MAGENTA, OSD::COLOR_BLACK); break;
+        case 12: osd.setColor(OSD::COLOR_MAGENTA_I, OSD::COLOR_BLACK); break;
+        case 13: osd.setColor(OSD::COLOR_GREY, OSD::COLOR_BLACK); break;
+        case 14: osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK); break;
+        case 15: osd.setColor(OSD::COLOR_BLACK, OSD::COLOR_BLACK); break;
       }
-      osd.setPos(x+2, y); osd.write(219);
+      osd.setPos(x, y); osd.write(219);
     }
   }
 
