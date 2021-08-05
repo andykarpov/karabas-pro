@@ -1722,14 +1722,12 @@ void osd_handle_rombank() {
     romset = romset-1;
     if (romset > 3) romset = 3;
     set_rombank(romset);
-    delay(100);
     osd_update_rombank();
   }
   if (cursor_right || is_enter) {
     romset = romset+1;
     if (romset >3) romset = 0;
     set_rombank(romset);
-    delay(100);
     osd_update_rombank();
   }
 }
@@ -1737,7 +1735,6 @@ void osd_handle_rombank() {
 void osd_handle_turbofdc() {
   if (cursor_left || cursor_right || is_enter) {
     set_turbofdc();
-    delay(100);
     osd_update_turbofdc();
   }
 }
@@ -1745,7 +1742,6 @@ void osd_handle_turbofdc() {
 void osd_handle_covox() {
   if (cursor_left || cursor_right || is_enter) {
     set_covox();
-    delay(100);
     osd_update_covox();
   }
 }
@@ -1760,14 +1756,12 @@ void osd_handle_stereo() {
     stereo = stereo-1;
     if (stereo > 2) stereo = 2;
     set_stereo(stereo);
-    delay(100);
     osd_update_stereo();
   }
   if (cursor_right || is_enter) {
     stereo = stereo+1;
     if (stereo >2) stereo = 0;
     set_stereo(stereo);
-    delay(100);
     osd_update_stereo();
   }
 }
@@ -1775,7 +1769,6 @@ void osd_handle_stereo() {
 void osd_handle_ssg() {
   if (cursor_left || cursor_right || is_enter) {
     set_ssg();
-    delay(100);
     osd_update_ssg();
   }
 }
@@ -1783,7 +1776,6 @@ void osd_handle_ssg() {
 void osd_handle_video() {
   if (cursor_left || cursor_right || is_enter) {
     set_video();
-    delay(100);
     osd_update_video();
   }
 }
@@ -1791,7 +1783,6 @@ void osd_handle_video() {
 void osd_handle_vsync() {
   if (cursor_left || cursor_right || is_enter) {
     set_vsync();
-    delay(100);
     osd_update_vsync();
   }
 }
@@ -1799,7 +1790,6 @@ void osd_handle_vsync() {
 void osd_handle_turbo() {
   if (cursor_left || cursor_right || is_enter) {
     set_turbo();
-    delay(100);
     osd_update_turbo();
   }
 }
@@ -1807,7 +1797,6 @@ void osd_handle_turbo() {
 void osd_handle_swap_ab() {
   if (cursor_left || cursor_right || is_enter) {
     set_swap_ab();
-    delay(100);
     osd_update_swap_ab();
   }
 }
@@ -1815,7 +1804,6 @@ void osd_handle_swap_ab() {
 void osd_handle_joy_type() {
   if (cursor_left || cursor_right || is_enter) {
     set_joy_type();
-    delay(100);
     osd_update_joystick();
   }
 }
@@ -1823,7 +1811,6 @@ void osd_handle_joy_type() {
 void osd_handle_keyboard_type() {
   if (cursor_left || cursor_right || is_enter) {
     set_keyboard_type();
-    delay(100);
     osd_update_keyboard_type();
   }
 }
@@ -1831,7 +1818,6 @@ void osd_handle_keyboard_type() {
 void osd_handle_pause() {
   if (cursor_left || cursor_right || is_enter) {
     do_pause();
-    delay(100);
     osd_update_pause();
   }
 }
@@ -1841,14 +1827,12 @@ void osd_handle_rtc_hour() {
     rtc_hours = rtc_hours-1;
     if (rtc_hours > 23) rtc_hours = 0;
     rtc_save();
-    delay(100);
     osd_update_rtc_hour();
   }
   if (cursor_right || is_enter) {
     rtc_hours = rtc_hours+1;
     if (rtc_hours >23) rtc_hours = 0;
     rtc_save();
-    delay(100);
     osd_update_rtc_hour();
   }
 }
@@ -1858,14 +1842,12 @@ void osd_handle_rtc_minute() {
     rtc_minutes = rtc_minutes-1;
     if (rtc_minutes > 59) rtc_minutes = 59;
     rtc_save();
-    delay(100);
     osd_update_rtc_minute();
   }
   if (cursor_right || is_enter) {
     rtc_minutes = rtc_minutes+1;
     if (rtc_minutes >59) rtc_minutes = 0;
     rtc_save();
-    delay(100);
     osd_update_rtc_minute();
   }
 }
@@ -1875,14 +1857,12 @@ void osd_handle_rtc_second() {
     rtc_seconds = rtc_seconds-1;
     if (rtc_seconds > 59) rtc_seconds = 59;
     rtc_save();
-    delay(100);
     osd_update_rtc_second();
   }
   if (cursor_right || is_enter) {
     rtc_seconds = rtc_seconds+1;
     if (rtc_seconds >59) rtc_seconds = 0;
     rtc_save();
-    delay(100);
     osd_update_rtc_second();
   }
 }
@@ -1892,14 +1872,12 @@ void osd_handle_rtc_day() {
     rtc_day = rtc_day-1;
     if (rtc_day < 1 || rtc_day > 31) rtc_day = 31;
     rtc_save();
-    delay(100);
     osd_update_rtc_day();
   }
   if (cursor_right || is_enter) {
     rtc_day = rtc_day+1;
     if (rtc_day > 31) rtc_day = 1;
     rtc_save();
-    delay(100);
     osd_update_rtc_day();
   }
 }
@@ -1909,14 +1887,12 @@ void osd_handle_rtc_month() {
     rtc_month = rtc_month-1;
     if (rtc_month < 1 || rtc_month > 12) rtc_month = 12;
     rtc_save();
-    delay(100);
     osd_update_rtc_month();
   }
   if (cursor_right || is_enter) {
     rtc_month = rtc_month+1;
     if (rtc_month > 12) rtc_month = 1;
     rtc_save();
-    delay(100);
     osd_update_rtc_month();
   }
 }
@@ -1926,14 +1902,12 @@ void osd_handle_rtc_year() {
     rtc_year = rtc_year-1;
     if (rtc_year < 2000 || rtc_year > 4095) rtc_year = 2000;
     rtc_save();
-    delay(100);
     osd_update_rtc_year();
   }
   if (cursor_right || is_enter) {
     rtc_year = rtc_year+1;
     if (rtc_year < 2000 || rtc_year > 4096) rtc_year = 2000;
     rtc_save();
-    delay(100);
     osd_update_rtc_year();
   }
 }
@@ -1943,14 +1917,12 @@ void osd_handle_rtc_dow() {
     rtc_week = rtc_week-1;
     if (rtc_week < 1 || rtc_week > 7) rtc_week = 7;
     rtc_save();
-    delay(100);
     osd_update_rtc_dow();
   }
   if (cursor_right || is_enter) {
     rtc_week = rtc_week+1;
     if (rtc_week < 1 || rtc_week > 7) rtc_week = 1;
     rtc_save();
-    delay(100);
     osd_update_rtc_dow();
   }
 }
@@ -2541,18 +2513,15 @@ void loop()
         if (cursor_down) {
           osd_main_state++;
           if (osd_main_state > state_main_pause) osd_main_state = state_main_rom_bank;
-          delay(100);
         }
 
         if (cursor_up) {
           osd_main_state--;
           if (osd_main_state > state_main_pause) osd_main_state = state_main_pause;
-          delay(100);
         }
 
         if (matrix[ZX_K_E]) {
           osd_state = state_rtc;
-          delay(100);
         }
 
         switch (osd_main_state) {
@@ -2576,13 +2545,11 @@ void loop()
         if (cursor_down) {
           osd_rtc_state++;
           if (osd_rtc_state > state_rtc_dow) osd_rtc_state = state_rtc_hour;
-          delay(100);
         }
 
         if (cursor_up) {
           osd_rtc_state--;
           if (osd_rtc_state > state_rtc_dow) osd_rtc_state = state_rtc_dow;
-          delay(100);
         }
 
         if (is_esc) {
@@ -2858,6 +2825,11 @@ void loop()
     update_led(PIN_LED1, LOW);
   }
 #endif
+
+cursor_up = false;
+cursor_down = false;
+cursor_left = false;
+cursor_right = false;
 
 delayMicroseconds(1);
 
