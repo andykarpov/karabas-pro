@@ -2826,10 +2826,13 @@ void loop()
   }
 #endif
 
+// reset pressed keys for OSD
 cursor_up = false;
 cursor_down = false;
 cursor_left = false;
 cursor_right = false;
+is_enter = false;
+is_esc = false;
 
 delayMicroseconds(1);
 
