@@ -1107,6 +1107,9 @@ void rtc_save() {
   rtc.setHours(rtc_hours);
   rtc.setMinutes(rtc_minutes);
   rtc.setSeconds(rtc_seconds);
+  if (!rtc.isRunning()) {
+    rtc.startClock();
+  }
 }
 
 void rtc_send(uint8_t reg, uint8_t data) {
