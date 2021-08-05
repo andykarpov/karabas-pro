@@ -171,12 +171,24 @@ bool cursor_right = false;
 bool is_enter = false;
 bool is_esc = false;
 
+typedef struct {
+  uint8_t key;
+  uint8_t zxkey;
+  unsigned long timestamp;
+  bool up;
+} delayed_matrix_type;
+
+delayed_matrix_type delayed_matrix[8];
+uint8_t delayed_matrix_size = 0;
+
 SPISettings settingsA(1000000, MSBFIRST, SPI_MODE0); // SPI transmission settings
 
 void push_capsed_key(int key);
 void pop_capsed_key(int key);
 void process_capsed_key(int key, bool up);
 void fill_kbd_matrix(uint16_t sc, unsigned long n);
+void delayed_keypress(uint8_t key, uint8_t zxkey1, uint8_t zxkey2, bool up);
+void process_delayed_keypress();
 void send_macros(uint8_t pos);
 uint8_t get_matrix_byte(uint8_t pos);
 uint8_t get_joy_byte();
@@ -474,33 +486,25 @@ void fill_kbd_matrix(uint16_t sc, unsigned long n)
     case PS2_KEY_UP_ARROW:
       if (!is_shift) {
         cursor_up = !is_up;
-        matrix[ZX_K_CS] = !is_up;
-        matrix[ZX_K_7] = !is_up;
-        process_capsed_key(code, is_up);
+        delayed_keypress(code, ZX_K_CS, ZX_K_7, is_up);
       }
       break;
     case PS2_KEY_DN_ARROW:
       if (!is_shift) {
         cursor_down = !is_up;
-        matrix[ZX_K_CS] = !is_up;
-        matrix[ZX_K_6] = !is_up;
-        process_capsed_key(code, is_up);
+        delayed_keypress(code, ZX_K_CS, ZX_K_6, is_up);
       }
       break;
     case PS2_KEY_L_ARROW:
       if (!is_shift) {
         cursor_left = !is_up;
-        matrix[ZX_K_CS] = !is_up;
-        matrix[ZX_K_5] = !is_up;
-        process_capsed_key(code, is_up);
+        delayed_keypress(code, ZX_K_CS, ZX_K_5, is_up);
       }
       break;
     case PS2_KEY_R_ARROW:
       if (!is_shift) {
         cursor_right = !is_up;
-        matrix[ZX_K_CS] = !is_up;
-        matrix[ZX_K_8] = !is_up;
-        process_capsed_key(code, is_up);
+        delayed_keypress(code, ZX_K_CS, ZX_K_8, is_up);
       }
       break;
 
@@ -1014,6 +1018,60 @@ void fill_kbd_matrix(uint16_t sc, unsigned long n)
     is_ss_used = false;
     capsed_keys_size = 0;
     do_full_reset();
+  }
+}
+
+void delayed_keypress(uint8_t code, uint8_t zxkey1, uint8_t zxkey2, bool up) {
+  unsigned long tnow = millis();
+  if (delayed_matrix_size > 8) return;
+
+  delayed_matrix[delayed_matrix_size].timestamp = tnow + (up ? 10 : 0);
+  delayed_matrix[delayed_matrix_size].up = up;
+  delayed_matrix[delayed_matrix_size].zxkey = zxkey1;
+  delayed_matrix[delayed_matrix_size].key = code;
+  delayed_matrix_size++;
+
+  delayed_matrix[delayed_matrix_size].timestamp = tnow + (up ? 0 : 10); 
+  delayed_matrix[delayed_matrix_size].up = up;
+  delayed_matrix[delayed_matrix_size].zxkey = zxkey2;
+  delayed_matrix[delayed_matrix_size].key = code;
+  delayed_matrix_size++;
+}
+
+void process_delayed_keypress()
+{
+  if (delayed_matrix_size == 0) return;
+
+  unsigned long tnow = millis();
+
+  // send pressed/released keys
+  for (uint8_t i=0; i<delayed_matrix_size; i++) {
+    if (delayed_matrix[i].timestamp <= tnow) {
+        matrix[delayed_matrix[i].zxkey] = !delayed_matrix[i].up;
+        if (delayed_matrix[i].zxkey == ZX_K_CS) {
+          process_capsed_key(delayed_matrix[i].key, delayed_matrix[i].up);
+        }
+    }
+  }
+
+  // remove processed keys
+  delayed_matrix_type tmp_matrix[8];
+  uint8_t tmp_size = 0;
+  for (uint8_t i=0; i<delayed_matrix_size; i++) {
+    if (delayed_matrix[i].timestamp > tnow) {
+      tmp_matrix[tmp_size] = delayed_matrix[i];
+      tmp_size++;
+    }
+  }
+
+  // copy tmp matrix into delayed matrix
+  for (uint8_t i=0; i<tmp_size; i++) {
+    delayed_matrix[i] = tmp_matrix[i];
+  }
+  delayed_matrix_size = tmp_size;
+
+  if (delayed_matrix_size > 0 || capsed_keys_size > 0) {
+    matrix[ZX_K_CS] = true;
   }
 }
 
@@ -2545,6 +2603,8 @@ void loop()
     }
   }
 
+  // process delayed sequences
+  process_delayed_keypress();
 
   // empty keyboard matrix in overlay mode before transmitting it onto FPGA side
   if (osd_overlay) {
