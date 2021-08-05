@@ -127,7 +127,8 @@ uint8_t build_num[8] = {0,0,0,0,0,0,0,0};
 // osd global states
 enum osd_state_e {
   state_main = 0,
-  state_rtc
+  state_rtc,
+  state_test
 };
 
 // osd main states
@@ -217,6 +218,7 @@ void loop();
 void update_led(uint8_t led, bool state);
 void osd_init_overlay();
 void osd_init_rtc_overlay();
+void osd_init_test_overlay();
 void osd_update_rombank();
 void osd_update_turbofdc();
 void osd_update_covox();
@@ -1713,6 +1715,51 @@ void osd_init_rtc_overlay()
   osd.print(F(" to return"));
 }
 
+// init test osd
+void osd_init_test_overlay()
+{
+  osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
+  osd.clear();
+
+  osd_print_header();
+
+  osd.setPos(0,5);
+  osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
+  osd.print(F("Color test:"));
+
+  uint8_t color = 0;
+  for (uint8_t x = 0; x<28; x++) {
+    for (uint8_t y = 7; y<22; y++) {
+      color = x/2;
+      switch (color) {
+        case 0: osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK); break;
+        case 1: osd.setColor(OSD::COLOR_GREY, OSD::COLOR_BLACK); break;
+        case 2: osd.setColor(OSD::COLOR_YELLOW, OSD::COLOR_BLACK); break;
+        case 3: osd.setColor(OSD::COLOR_YELLOW_I, OSD::COLOR_BLACK); break;
+        case 4: osd.setColor(OSD::COLOR_GREEN, OSD::COLOR_BLACK); break;
+        case 5: osd.setColor(OSD::COLOR_GREEN_I, OSD::COLOR_BLACK); break;
+        case 6: osd.setColor(OSD::COLOR_CYAN, OSD::COLOR_BLACK); break;
+        case 7: osd.setColor(OSD::COLOR_CYAN_I, OSD::COLOR_BLACK); break;
+        case 8: osd.setColor(OSD::COLOR_MAGENTA, OSD::COLOR_BLACK); break;
+        case 9: osd.setColor(OSD::COLOR_MAGENTA_I, OSD::COLOR_BLACK); break;
+        case 10: osd.setColor(OSD::COLOR_BLUE, OSD::COLOR_BLACK); break;
+        case 11: osd.setColor(OSD::COLOR_BLUE_I, OSD::COLOR_BLACK); break;
+        case 12: osd.setColor(OSD::COLOR_RED, OSD::COLOR_BLACK); break;
+        case 13: osd.setColor(OSD::COLOR_RED_I, OSD::COLOR_BLACK); break;
+      }
+      osd.setPos(x+2, y); osd.write(219);
+    }
+  }
+
+  // footer
+  osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
+  osd.setPos(0,23); osd.print(F("Press "));
+  osd.setColor(OSD::COLOR_CYAN_I, OSD::COLOR_BLACK);
+  osd.print(F("ESC"));
+  osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
+  osd.print(F(" to return"));
+}
+
 void osd_handle_rombank() {
   uint8_t romset = 0;
   bitWrite(romset, 0, is_sw3);
@@ -2502,6 +2549,12 @@ void loop()
         }
 
       break;
+
+      case state_test:
+        if (osd_prev_state != osd_state) {
+          osd_prev_state = osd_state;
+          osd_init_test_overlay();
+        }
     }
   }
 
@@ -2524,6 +2577,10 @@ void loop()
           osd_state = state_rtc;
         }
 
+        if (matrix[ZX_K_T]) {
+          osd_state = state_test;
+        }
+
         switch (osd_main_state) {
           case state_main_rom_bank: osd_handle_rombank(); break;
           case state_main_turbofdc: osd_handle_turbofdc(); break;
@@ -2540,7 +2597,6 @@ void loop()
         }
       break;
       case state_rtc:
-        // TODO
 
         if (cursor_down) {
           osd_rtc_state++;
@@ -2564,6 +2620,14 @@ void loop()
           case state_rtc_month: osd_handle_rtc_month(); break;
           case state_rtc_year: osd_handle_rtc_year(); break;
           case state_rtc_dow: osd_handle_rtc_dow(); break;
+        }
+
+      break;
+
+      case state_test:
+
+        if (is_esc) {
+          osd_state = state_main;
         }
 
       break;
