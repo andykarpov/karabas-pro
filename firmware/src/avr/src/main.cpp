@@ -127,7 +127,8 @@ uint8_t build_num[8] = {0,0,0,0,0,0,0,0};
 // osd global states
 enum osd_state_e {
   state_main = 0,
-  state_rtc
+  state_rtc,
+  state_test
 };
 
 // osd main states
@@ -171,12 +172,34 @@ bool cursor_right = false;
 bool is_enter = false;
 bool is_esc = false;
 
+typedef struct {
+  uint8_t key;
+  uint8_t zxkey;
+  unsigned long timestamp;
+  bool up;
+} delayed_matrix_type;
+
+delayed_matrix_type delayed_matrix[8];
+uint8_t delayed_matrix_size = 0;
+
 SPISettings settingsA(1000000, MSBFIRST, SPI_MODE0); // SPI transmission settings
 
 void push_capsed_key(int key);
 void pop_capsed_key(int key);
 void process_capsed_key(int key, bool up);
+void set_rombank(uint8_t bank);
+void set_turbofdc();
+void set_covox();
+void set_stereo(uint8_t stereo);
+void set_ssg();
+void set_video();
+void set_vsync();
+void set_turbo();
+void set_swap_ab();
+void set_keyboard_type();
 void fill_kbd_matrix(uint16_t sc, unsigned long n);
+void delayed_keypress(uint8_t key, uint8_t zxkey1, uint8_t zxkey2, bool up);
+void process_delayed_keypress();
 void send_macros(uint8_t pos);
 uint8_t get_matrix_byte(uint8_t pos);
 uint8_t get_joy_byte();
@@ -185,6 +208,7 @@ void transmit_keyboard_matrix();
 void transmit_joy_data();
 void transmit_mouse_data();
 void rtc_save();
+void rtc_fix_invalid_time();
 void rtc_send(uint8_t reg, uint8_t data);
 void rtc_send_time();
 void rtc_send_all();
@@ -200,11 +224,31 @@ bool eeprom_restore_value(int addr, bool default_value);
 void eeprom_store_value(int addr, bool value);
 void eeprom_restore_values();
 void eeprom_store_values();
-void setup();
-void loop();
 void update_led(uint8_t led, bool state);
+void osd_print_header();
 void osd_init_overlay();
 void osd_init_rtc_overlay();
+void osd_init_test_overlay();
+void osd_popup_footer();
+void osd_handle_rombank();
+void osd_handle_turbofdc();
+void osd_handle_covox();
+void osd_handle_stereo();
+void osd_handle_ssg();
+void osd_handle_video();
+void osd_handle_vsync();
+void osd_handle_turbo();
+void osd_handle_swap_ab();
+void osd_handle_joy_type();
+void osd_handle_keyboard_type();
+void osd_handle_pause();
+void osd_handle_rtc_hour();
+void osd_handle_rtc_minute();
+void osd_handle_rtc_second();
+void osd_handle_rtc_day();
+void osd_handle_rtc_month();
+void osd_handle_rtc_year();
+void osd_handle_rtc_dow();
 void osd_update_rombank();
 void osd_update_turbofdc();
 void osd_update_covox();
@@ -217,10 +261,6 @@ void osd_update_swap_ab();
 void osd_update_joystick();
 void osd_update_keyboard_type();
 void osd_update_pause();
-void osd_update_time();
-void osd_update_scancode(uint16_t c);
-void osd_update_mouse();
-void osd_update_joy_state();
 void osd_update_rtc_hour();
 void osd_update_rtc_minute();
 void osd_update_rtc_second();
@@ -228,6 +268,14 @@ void osd_update_rtc_day();
 void osd_update_rtc_month();
 void osd_update_rtc_year();
 void osd_update_rtc_dow();
+void osd_update_time();
+void osd_update_scancode(uint16_t c);
+void osd_update_mouse();
+void osd_update_joy_state();
+void setup();
+void loop();
+
+/* ------------------------------------------------------------ */
 
 void push_capsed_key(int key)
 {
@@ -474,33 +522,25 @@ void fill_kbd_matrix(uint16_t sc, unsigned long n)
     case PS2_KEY_UP_ARROW:
       if (!is_shift) {
         cursor_up = !is_up;
-        matrix[ZX_K_CS] = !is_up;
-        matrix[ZX_K_7] = !is_up;
-        process_capsed_key(code, is_up);
+        delayed_keypress(code, ZX_K_CS, ZX_K_7, is_up);
       }
       break;
     case PS2_KEY_DN_ARROW:
       if (!is_shift) {
         cursor_down = !is_up;
-        matrix[ZX_K_CS] = !is_up;
-        matrix[ZX_K_6] = !is_up;
-        process_capsed_key(code, is_up);
+        delayed_keypress(code, ZX_K_CS, ZX_K_6, is_up);
       }
       break;
     case PS2_KEY_L_ARROW:
       if (!is_shift) {
         cursor_left = !is_up;
-        matrix[ZX_K_CS] = !is_up;
-        matrix[ZX_K_5] = !is_up;
-        process_capsed_key(code, is_up);
+        delayed_keypress(code, ZX_K_CS, ZX_K_5, is_up);
       }
       break;
     case PS2_KEY_R_ARROW:
       if (!is_shift) {
         cursor_right = !is_up;
-        matrix[ZX_K_CS] = !is_up;
-        matrix[ZX_K_8] = !is_up;
-        process_capsed_key(code, is_up);
+        delayed_keypress(code, ZX_K_CS, ZX_K_8, is_up);
       }
       break;
 
@@ -1014,6 +1054,60 @@ void fill_kbd_matrix(uint16_t sc, unsigned long n)
     is_ss_used = false;
     capsed_keys_size = 0;
     do_full_reset();
+  }
+}
+
+void delayed_keypress(uint8_t code, uint8_t zxkey1, uint8_t zxkey2, bool up) {
+  unsigned long tnow = millis();
+  if (delayed_matrix_size > 8) return;
+
+  delayed_matrix[delayed_matrix_size].timestamp = tnow + (up ? 10 : 0);
+  delayed_matrix[delayed_matrix_size].up = up;
+  delayed_matrix[delayed_matrix_size].zxkey = zxkey1;
+  delayed_matrix[delayed_matrix_size].key = code;
+  delayed_matrix_size++;
+
+  delayed_matrix[delayed_matrix_size].timestamp = tnow + (up ? 0 : 10); 
+  delayed_matrix[delayed_matrix_size].up = up;
+  delayed_matrix[delayed_matrix_size].zxkey = zxkey2;
+  delayed_matrix[delayed_matrix_size].key = code;
+  delayed_matrix_size++;
+}
+
+void process_delayed_keypress()
+{
+  if (delayed_matrix_size == 0) return;
+
+  unsigned long tnow = millis();
+
+  // send pressed/released keys
+  for (uint8_t i=0; i<delayed_matrix_size; i++) {
+    if (delayed_matrix[i].timestamp <= tnow) {
+        matrix[delayed_matrix[i].zxkey] = !delayed_matrix[i].up;
+        if (delayed_matrix[i].zxkey == ZX_K_CS) {
+          process_capsed_key(delayed_matrix[i].key, delayed_matrix[i].up);
+        }
+    }
+  }
+
+  // remove processed keys
+  delayed_matrix_type tmp_matrix[8];
+  uint8_t tmp_size = 0;
+  for (uint8_t i=0; i<delayed_matrix_size; i++) {
+    if (delayed_matrix[i].timestamp > tnow) {
+      tmp_matrix[tmp_size] = delayed_matrix[i];
+      tmp_size++;
+    }
+  }
+
+  // copy tmp matrix into delayed matrix
+  for (uint8_t i=0; i<tmp_size; i++) {
+    delayed_matrix[i] = tmp_matrix[i];
+  }
+  delayed_matrix_size = tmp_size;
+
+  if (delayed_matrix_size > 0 || capsed_keys_size > 0) {
+    matrix[ZX_K_CS] = true;
   }
 }
 
@@ -1646,6 +1740,52 @@ void osd_init_rtc_overlay()
   osd.setPos(0, 19);
   osd.print(F("to navigate by menu items"));
 
+  osd_popup_footer();
+}
+
+// init test osd
+void osd_init_test_overlay()
+{
+  osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
+  osd.clear();
+
+  osd_print_header();
+
+  osd.setPos(0,5);
+  osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
+  osd.print(F("Color test:"));
+
+  uint8_t color = 0;
+  for (uint8_t x = 0; x<32; x++) {
+    for (uint8_t y = 7; y<22; y++) {
+      color = x/2;
+      switch (color) {
+        case 0: osd.setColor(OSD::COLOR_BLACK, OSD::COLOR_BLACK); break;
+        case 1: osd.setColor(OSD::COLOR_RED, OSD::COLOR_BLACK); break;
+        case 2: osd.setColor(OSD::COLOR_RED_I, OSD::COLOR_BLACK); break;
+        case 3: osd.setColor(OSD::COLOR_YELLOW, OSD::COLOR_BLACK); break;
+        case 4: osd.setColor(OSD::COLOR_YELLOW_I, OSD::COLOR_BLACK); break;
+        case 5: osd.setColor(OSD::COLOR_GREEN, OSD::COLOR_BLACK); break;
+        case 6: osd.setColor(OSD::COLOR_GREEN_I, OSD::COLOR_BLACK); break;
+        case 7: osd.setColor(OSD::COLOR_CYAN, OSD::COLOR_BLACK); break;
+        case 8: osd.setColor(OSD::COLOR_CYAN_I, OSD::COLOR_BLACK); break;
+        case 9: osd.setColor(OSD::COLOR_BLUE, OSD::COLOR_BLACK); break;
+        case 10: osd.setColor(OSD::COLOR_BLUE_I, OSD::COLOR_BLACK); break;
+        case 11: osd.setColor(OSD::COLOR_MAGENTA, OSD::COLOR_BLACK); break;
+        case 12: osd.setColor(OSD::COLOR_MAGENTA_I, OSD::COLOR_BLACK); break;
+        case 13: osd.setColor(OSD::COLOR_GREY, OSD::COLOR_BLACK); break;
+        case 14: osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK); break;
+        case 15: osd.setColor(OSD::COLOR_BLACK, OSD::COLOR_BLACK); break;
+      }
+      osd.setPos(x, y); osd.write(219);
+    }
+  }
+
+  osd_popup_footer();
+
+}
+
+void osd_popup_footer() {
   // footer
   osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
   osd.setPos(0,23); osd.print(F("Press "));
@@ -1664,14 +1804,12 @@ void osd_handle_rombank() {
     romset = romset-1;
     if (romset > 3) romset = 3;
     set_rombank(romset);
-    delay(100);
     osd_update_rombank();
   }
   if (cursor_right || is_enter) {
     romset = romset+1;
     if (romset >3) romset = 0;
     set_rombank(romset);
-    delay(100);
     osd_update_rombank();
   }
 }
@@ -1679,7 +1817,6 @@ void osd_handle_rombank() {
 void osd_handle_turbofdc() {
   if (cursor_left || cursor_right || is_enter) {
     set_turbofdc();
-    delay(100);
     osd_update_turbofdc();
   }
 }
@@ -1687,7 +1824,6 @@ void osd_handle_turbofdc() {
 void osd_handle_covox() {
   if (cursor_left || cursor_right || is_enter) {
     set_covox();
-    delay(100);
     osd_update_covox();
   }
 }
@@ -1702,14 +1838,12 @@ void osd_handle_stereo() {
     stereo = stereo-1;
     if (stereo > 2) stereo = 2;
     set_stereo(stereo);
-    delay(100);
     osd_update_stereo();
   }
   if (cursor_right || is_enter) {
     stereo = stereo+1;
     if (stereo >2) stereo = 0;
     set_stereo(stereo);
-    delay(100);
     osd_update_stereo();
   }
 }
@@ -1717,7 +1851,6 @@ void osd_handle_stereo() {
 void osd_handle_ssg() {
   if (cursor_left || cursor_right || is_enter) {
     set_ssg();
-    delay(100);
     osd_update_ssg();
   }
 }
@@ -1725,7 +1858,6 @@ void osd_handle_ssg() {
 void osd_handle_video() {
   if (cursor_left || cursor_right || is_enter) {
     set_video();
-    delay(100);
     osd_update_video();
   }
 }
@@ -1733,7 +1865,6 @@ void osd_handle_video() {
 void osd_handle_vsync() {
   if (cursor_left || cursor_right || is_enter) {
     set_vsync();
-    delay(100);
     osd_update_vsync();
   }
 }
@@ -1741,7 +1872,6 @@ void osd_handle_vsync() {
 void osd_handle_turbo() {
   if (cursor_left || cursor_right || is_enter) {
     set_turbo();
-    delay(100);
     osd_update_turbo();
   }
 }
@@ -1749,7 +1879,6 @@ void osd_handle_turbo() {
 void osd_handle_swap_ab() {
   if (cursor_left || cursor_right || is_enter) {
     set_swap_ab();
-    delay(100);
     osd_update_swap_ab();
   }
 }
@@ -1757,7 +1886,6 @@ void osd_handle_swap_ab() {
 void osd_handle_joy_type() {
   if (cursor_left || cursor_right || is_enter) {
     set_joy_type();
-    delay(100);
     osd_update_joystick();
   }
 }
@@ -1765,7 +1893,6 @@ void osd_handle_joy_type() {
 void osd_handle_keyboard_type() {
   if (cursor_left || cursor_right || is_enter) {
     set_keyboard_type();
-    delay(100);
     osd_update_keyboard_type();
   }
 }
@@ -1773,7 +1900,6 @@ void osd_handle_keyboard_type() {
 void osd_handle_pause() {
   if (cursor_left || cursor_right || is_enter) {
     do_pause();
-    delay(100);
     osd_update_pause();
   }
 }
@@ -1783,14 +1909,12 @@ void osd_handle_rtc_hour() {
     rtc_hours = rtc_hours-1;
     if (rtc_hours > 23) rtc_hours = 0;
     rtc_save();
-    delay(100);
     osd_update_rtc_hour();
   }
   if (cursor_right || is_enter) {
     rtc_hours = rtc_hours+1;
     if (rtc_hours >23) rtc_hours = 0;
     rtc_save();
-    delay(100);
     osd_update_rtc_hour();
   }
 }
@@ -1800,14 +1924,12 @@ void osd_handle_rtc_minute() {
     rtc_minutes = rtc_minutes-1;
     if (rtc_minutes > 59) rtc_minutes = 59;
     rtc_save();
-    delay(100);
     osd_update_rtc_minute();
   }
   if (cursor_right || is_enter) {
     rtc_minutes = rtc_minutes+1;
     if (rtc_minutes >59) rtc_minutes = 0;
     rtc_save();
-    delay(100);
     osd_update_rtc_minute();
   }
 }
@@ -1817,14 +1939,12 @@ void osd_handle_rtc_second() {
     rtc_seconds = rtc_seconds-1;
     if (rtc_seconds > 59) rtc_seconds = 59;
     rtc_save();
-    delay(100);
     osd_update_rtc_second();
   }
   if (cursor_right || is_enter) {
     rtc_seconds = rtc_seconds+1;
     if (rtc_seconds >59) rtc_seconds = 0;
     rtc_save();
-    delay(100);
     osd_update_rtc_second();
   }
 }
@@ -1834,14 +1954,12 @@ void osd_handle_rtc_day() {
     rtc_day = rtc_day-1;
     if (rtc_day < 1 || rtc_day > 31) rtc_day = 31;
     rtc_save();
-    delay(100);
     osd_update_rtc_day();
   }
   if (cursor_right || is_enter) {
     rtc_day = rtc_day+1;
     if (rtc_day > 31) rtc_day = 1;
     rtc_save();
-    delay(100);
     osd_update_rtc_day();
   }
 }
@@ -1851,14 +1969,12 @@ void osd_handle_rtc_month() {
     rtc_month = rtc_month-1;
     if (rtc_month < 1 || rtc_month > 12) rtc_month = 12;
     rtc_save();
-    delay(100);
     osd_update_rtc_month();
   }
   if (cursor_right || is_enter) {
     rtc_month = rtc_month+1;
     if (rtc_month > 12) rtc_month = 1;
     rtc_save();
-    delay(100);
     osd_update_rtc_month();
   }
 }
@@ -1868,14 +1984,12 @@ void osd_handle_rtc_year() {
     rtc_year = rtc_year-1;
     if (rtc_year < 2000 || rtc_year > 4095) rtc_year = 2000;
     rtc_save();
-    delay(100);
     osd_update_rtc_year();
   }
   if (cursor_right || is_enter) {
     rtc_year = rtc_year+1;
     if (rtc_year < 2000 || rtc_year > 4096) rtc_year = 2000;
     rtc_save();
-    delay(100);
     osd_update_rtc_year();
   }
 }
@@ -1885,14 +1999,12 @@ void osd_handle_rtc_dow() {
     rtc_week = rtc_week-1;
     if (rtc_week < 1 || rtc_week > 7) rtc_week = 7;
     rtc_save();
-    delay(100);
     osd_update_rtc_dow();
   }
   if (cursor_right || is_enter) {
     rtc_week = rtc_week+1;
     if (rtc_week < 1 || rtc_week > 7) rtc_week = 1;
     rtc_save();
-    delay(100);
     osd_update_rtc_dow();
   }
 }
@@ -2223,9 +2335,11 @@ void osd_update_scancode(uint16_t c) {
 
   osd.setColor(OSD::COLOR_RED_I, OSD::COLOR_BLACK);
   osd.setPos(10,18);
-  if ((c >> 8) < 0x10) osd.print(F("0")); osd.print(c >> 8, HEX);
+  if ((c >> 8) < 0x10) osd.print(F("0")); 
+  osd.print(c >> 8, HEX);
   osd.print(F(" "));
-  if ((c & 0xFF) < 0x10) osd.print(F("0")); osd.print(c & 0xFF, HEX);
+  if ((c & 0xFF) < 0x10) osd.print(F("0")); 
+  osd.print(c & 0xFF, HEX);
 }
 
 void osd_update_mouse() {
@@ -2234,11 +2348,14 @@ void osd_update_mouse() {
 
   osd.setColor(OSD::COLOR_RED_I, OSD::COLOR_BLACK);
   osd.setPos(10,19);
-  if (mouse_x < 0x10) osd.print(F("0")); osd.print(mouse_x, HEX);
+  if (mouse_x < 0x10) osd.print(F("0")); 
+  osd.print(mouse_x, HEX);
   osd.print(F(" "));
-  if (mouse_y < 0x10) osd.print(F("0")); osd.print(mouse_y, HEX);
+  if (mouse_y < 0x10) osd.print(F("0")); 
+  osd.print(mouse_y, HEX);
   osd.print(F(" "));
-  if (mouse_z < 0x10) osd.print(F("0")); osd.print(mouse_z, HEX);
+  if (mouse_z < 0x10) osd.print(F("0")); 
+  osd.print(mouse_z, HEX);
 }
 
 void osd_update_joy_state() {
@@ -2310,7 +2427,7 @@ void setup()
   // restore saved modes from EEPROM
   eeprom_restore_values();
 
-  Serial.println(F("ZX Keyboard / mouse / rtc controller v1.0"));
+  Serial.println(F("Karabas Pro"));
 
   Serial.println(F("Waiting for FPGA init request"));
   // waiting for init
@@ -2334,7 +2451,7 @@ void setup()
   // setup sega controller
   sega.begin(PIN_LED2, PIN_JOY_UP, PIN_JOY_DOWN, PIN_JOY_LEFT, PIN_JOY_RIGHT, PIN_JOY_FIRE1, PIN_JOY_FIRE2);
 
-  Serial.print(F("Keyboard init..."));
+  Serial.print(F("Kbd init..."));
   kbd.begin(PIN_KBD_DAT, PIN_KBD_CLK);
   kbd.echo(); // ping keyboard to see if there
   delay(6);
@@ -2349,7 +2466,7 @@ void setup()
     if( ( c & 0xFF ) == 0 ) {
       Serial.println(F("not found"));
     } else {
-      Serial.print( F("invalid code received of "));
+      Serial.print( F("invalid code "));
       Serial.println( c, HEX );
     }
   }
@@ -2365,7 +2482,7 @@ void setup()
   rtc.begin();
 
   if (!rtc.isRunning()) {
-     Serial.println(F("RTC is not running. Staring it..."));
+     Serial.println(F("Staring RTC..."));
      rtc.startClock();
   }
 
@@ -2387,7 +2504,7 @@ void setup()
   Serial.println(F("done"));  
 
   if (!rtc_init_done) {
-    Serial.print(F("RTC send all registers..."));
+    Serial.print(F("RTC send all..."));
     rtc_send_all();
     Serial.println(F("done"));  
   }
@@ -2409,9 +2526,7 @@ void loop()
       update_led(PIN_LED1, HIGH);
     }
     fill_kbd_matrix(c, n);
-    Serial.print(F("Value: "));
-    Serial.print(c, HEX);
-    Serial.print(F(" Status bits: "));
+    Serial.print(F(" Status: "));
     Serial.print(c >> 8, HEX);
     Serial.print(F(" Code: "));
     Serial.println(c & 0xFF, HEX);
@@ -2472,6 +2587,12 @@ void loop()
         }
 
       break;
+
+      case state_test:
+        if (osd_prev_state != osd_state) {
+          osd_prev_state = osd_state;
+          osd_init_test_overlay();
+        }
     }
   }
 
@@ -2483,18 +2604,19 @@ void loop()
         if (cursor_down) {
           osd_main_state++;
           if (osd_main_state > state_main_pause) osd_main_state = state_main_rom_bank;
-          delay(100);
         }
 
         if (cursor_up) {
           osd_main_state--;
           if (osd_main_state > state_main_pause) osd_main_state = state_main_pause;
-          delay(100);
         }
 
         if (matrix[ZX_K_E]) {
           osd_state = state_rtc;
-          delay(100);
+        }
+
+        if (matrix[ZX_K_T]) {
+          osd_state = state_test;
         }
 
         switch (osd_main_state) {
@@ -2513,18 +2635,15 @@ void loop()
         }
       break;
       case state_rtc:
-        // TODO
 
         if (cursor_down) {
           osd_rtc_state++;
           if (osd_rtc_state > state_rtc_dow) osd_rtc_state = state_rtc_hour;
-          delay(100);
         }
 
         if (cursor_up) {
           osd_rtc_state--;
           if (osd_rtc_state > state_rtc_dow) osd_rtc_state = state_rtc_dow;
-          delay(100);
         }
 
         if (is_esc) {
@@ -2542,9 +2661,19 @@ void loop()
         }
 
       break;
+
+      case state_test:
+
+        if (is_esc) {
+          osd_state = state_main;
+        }
+
+      break;
     }
   }
 
+  // process delayed sequences
+  process_delayed_keypress();
 
   // empty keyboard matrix in overlay mode before transmitting it onto FPGA side
   if (osd_overlay) {
@@ -2606,11 +2735,11 @@ void loop()
     last_joy[6] = joy[6];
     last_joy[7] = joy[7];
     if (joy_type) {
-      Serial.print(F("SEGA Joystick: "));
+      Serial.print(F("SEGA: "));
       Serial.print(sega.getIsOn() ? F("(ON) ") : F("(OFF) "));
       Serial.print(sega.getSixButtonMode() ? F("(6 btn) ") : F("(3 btn) "));
     } else {
-      Serial.print(F("Kempston Joystick: "));
+      Serial.print(F("Kempston: "));
     }
     Serial.print(F(" U:")); Serial.print(joy[ZX_JOY_UP]);
     Serial.print(F(" D:")); Serial.print(joy[ZX_JOY_DOWN]);
@@ -2679,9 +2808,9 @@ void loop()
   // try to re-init mouse every 100us if not present, up to N tries
   if (mouse_tries > 0 && !mouse_present && n - tm > 100) {
     mouse_tries--;
-    Serial.print(F("Mouse not present. Trying to init mouse: ")); Serial.println(mouse_tries);
+    Serial.print(F("Retry mouse init: ")); Serial.println(mouse_tries);
     init_mouse();
-    Serial.print(F("Mouse present: ")); Serial.println(mouse_present);
+    Serial.print(F("Mouse: ")); Serial.println(mouse_present);
     tm = n;
   }
 
@@ -2798,6 +2927,14 @@ void loop()
     update_led(PIN_LED1, LOW);
   }
 #endif
+
+// reset pressed keys for OSD
+cursor_up = false;
+cursor_down = false;
+cursor_left = false;
+cursor_right = false;
+is_enter = false;
+is_esc = false;
 
 delayMicroseconds(1);
 
