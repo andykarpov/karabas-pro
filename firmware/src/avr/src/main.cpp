@@ -782,7 +782,7 @@ void fill_kbd_matrix(uint16_t sc, unsigned long n)
       if (is_shift and !is_up) {
         send_macros(code, is_shift ? ZX_K_A : ZX_K_X);
       }
-      if (!is_shift) {
+      if (!is_shift and delayed_matrix_size == 0) {
         matrix[ZX_K_SS] = !is_up;
         matrix[ZX_K_X] = !is_up;
       }
