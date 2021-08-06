@@ -37,7 +37,11 @@ void ZXKeyboard::begin(PS2KeyAdvanced *ps2kbd, spi_cb act, event_cb evt)
 
   // restore saved modes from EEPROM
   eepromRestoreValues();
+  is_started = true;
+}
 
+bool ZXKeyboard::started() {
+  return is_started;
 }
 
 /****************************************************************************/

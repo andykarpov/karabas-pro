@@ -199,7 +199,7 @@ uint8_t DS1307::getHours()
 	{
 		return (bcd2bin(hour));
 	}
-	else if (h_mode == CLOCK_H12)
+	else
 	{
 		bitClear(hour, 5);
 		bitClear(hour, 6);
@@ -209,7 +209,7 @@ uint8_t DS1307::getHours()
 
 void  DS1307::setHours(uint8_t hour)
 {
-	bool h_mode, meridiem;
+	bool h_mode;
 	h_mode = getHourMode();
 	Wire.beginTransmission(DS1307_ADDR);
 	Wire.write(0x02);  // Hour Register
@@ -336,7 +336,7 @@ setTime
 
 void DS1307::setTime(uint8_t hour, uint8_t minute, uint8_t second)
 {
-	bool h_mode, meridiem;
+	bool h_mode;
 	h_mode = getHourMode();
 	Wire.beginTransmission(DS1307_ADDR);
 	Wire.write(0x00);
@@ -422,7 +422,6 @@ void DS1307::setEpoch(time_t epoch)
 {
 	time_t rawtime;
 	struct tm epoch_tm, * ptr_epoch_tm;
-	uint16_t year;
 	rawtime = epoch;
 	ptr_epoch_tm = gmtime(&rawtime);
 	epoch_tm = *ptr_epoch_tm;

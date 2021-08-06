@@ -45,6 +45,7 @@ private:
   static DS1307 rtc;
   spi_cb action;
   osd_cb event;
+  bool is_started = false;
 
   int rtc_year = 0;
   uint8_t rtc_month = 0;
@@ -74,7 +75,7 @@ public:
   ZXRTC();
 
   void begin(spi_cb act, osd_cb evt);
-
+  bool started();
   void handle();
 
   void save();

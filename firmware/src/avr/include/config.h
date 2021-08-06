@@ -57,9 +57,6 @@
 #define PIN_JOY_FIRE1 A0
 #define PIN_JOY_FIRE2 A3
 
-#define EEPROM_VALUE_TRUE 10
-#define EEPROM_VALUE_FALSE 20
-
 // Joystick signals
 #define ZX_JOY_FIRE 0
 #define ZX_JOY_FIRE2 1

@@ -35,6 +35,7 @@ private:
 	OSD *osd;
   ZXKeyboard *zxkbd;
   ZXRTC *zxrtc;
+  bool is_started = false;
 
   uint8_t fpga_cfg;
   uint8_t fpga_build_num[8];
@@ -87,7 +88,7 @@ public:
   ZXOSD();
 
   void begin(OSD *osd_, ZXKeyboard *zxkbd_, ZXRTC *zxrtc_); // TODO: zxmouse, zxjoy
-
+  bool started();
   void handle();
 
   void printHeader();

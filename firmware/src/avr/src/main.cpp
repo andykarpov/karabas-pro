@@ -187,6 +187,7 @@ void update_led(uint8_t led, bool state)
 // update OSD by keyboard events
 void on_keyboard (uint8_t event_type, uint16_t scancode)
 {
+  if (!zxosd.started()) return;
   switch (event_type) {
     case ZXKeyboard::EVENT_OSD_OVERLAY:  zxosd.initOverlay(); break;
     case ZXKeyboard::EVENT_OSD_SCANCODE: zxosd.updateScancode(scancode); break;
@@ -209,6 +210,7 @@ void on_keyboard (uint8_t event_type, uint16_t scancode)
 // update OSD by time events
 void on_time()
 {
+  if ((!zxkbd.started()) || (!zxosd.started())) return;
   if (zxkbd.getIsOsdOverlay()) {
     zxosd.updateTime();
   }
@@ -261,14 +263,20 @@ void setup()
   pinMode(PIN_JOY_FIRE2, INPUT_PULLUP);
 
   kbd.begin(PIN_KBD_DAT, PIN_KBD_CLK);
-  kbd.echo(); // ping keyboard to see if there
-  delay(6);
-  uint16_t c = kbd.read();
-  if( (c & 0xFF) == PS2_KEY_ECHO || (c & 0xFF) == PS2_KEY_BAT ) {
-    kbd.setLock(PS2_LOCK_SCROLL);
-  }
-
   zxkbd.begin(&kbd, spi_send, on_keyboard);
+
+  zxrtc.begin(spi_send, on_time);
+
+  // setup osd library with callback to send spi command
+  osd.begin(spi_send);
+  zxosd.begin(&osd, &zxkbd, &zxrtc);
+
+  // setup sega controller
+  sega.begin(PIN_LED2, PIN_JOY_UP, PIN_JOY_DOWN, PIN_JOY_LEFT, PIN_JOY_RIGHT, PIN_JOY_FIRE1, PIN_JOY_FIRE2);
+
+  mouse_tries = MOUSE_INIT_TRIES;
+  mice.begin(PIN_MOUSE_CLK, PIN_MOUSE_DAT);
+  init_mouse();
 
   // waiting for init
   while (!init_done) {
@@ -284,20 +292,6 @@ void setup()
   spi_send(CMD_BUILD_REQ5, 0x00);
   spi_send(CMD_BUILD_REQ6, 0x00);
   spi_send(CMD_BUILD_REQ7, 0x00);
-
-  zxrtc.begin(spi_send, on_time);
-
-  // setup osd library with callback to send spi command
-  osd.begin(spi_send);
-  zxosd.begin(&osd, &zxkbd, &zxrtc);
-
-  // setup sega controller
-  sega.begin(PIN_LED2, PIN_JOY_UP, PIN_JOY_DOWN, PIN_JOY_LEFT, PIN_JOY_RIGHT, PIN_JOY_FIRE1, PIN_JOY_FIRE2);
-
-  mouse_tries = MOUSE_INIT_TRIES;
-
-  mice.begin(PIN_MOUSE_CLK, PIN_MOUSE_DAT);
-  init_mouse();
 
   digitalWrite(PIN_LED1, LOW);
 }

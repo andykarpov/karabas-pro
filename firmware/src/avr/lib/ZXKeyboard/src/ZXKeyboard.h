@@ -22,7 +22,6 @@
 // Project headers
 #include <avr/pgmspace.h>
 #include <PS2KeyAdvanced.h>
-#include <EEPROM.h>
 
 #define ZX_MATRIX_FULL_SIZE 72 // 40 keys + service signals
 #define ZX_MATRIX_SIZE 41 // only mechanical keys state + bit6
@@ -153,6 +152,7 @@ private:
   PS2KeyAdvanced *kbd;
   spi_cb action;
   event_cb event;
+  bool is_started = false;
   bool matrix[ZX_MATRIX_FULL_SIZE]; // matrix of pressed keys + mouse reports to be transmitted on CPLD side by simple serial protocol
   bool profi_mode = true; // false = zx spectrum mode (switched by PrtSrc button in run-time)
   bool is_turbo = false; // turbo toggle (switched by ScrollLock button)
@@ -231,6 +231,7 @@ public:
   ZXKeyboard();
 
   void begin(PS2KeyAdvanced *ps2kbd, spi_cb act, event_cb evt);
+  bool started();
   void handle();
 
   void setKey(uint8_t key, bool pressed);

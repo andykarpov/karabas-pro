@@ -33,6 +33,11 @@ void ZXOSD::begin(OSD *osd_, ZXKeyboard *zxkbd_, ZXRTC *zxrtc_) // todo: zxmouse
   osd = osd_;
   zxkbd = zxkbd_;
   zxrtc = zxrtc_;
+  is_started = true;
+}
+
+bool ZXOSD::started() {
+  return is_started;
 }
 
 void ZXOSD::handle()
@@ -690,7 +695,7 @@ void ZXOSD::handleRtcYear() {
     updateRtcYear();
   }
   if (zxkbd->getIsCursorRight() || zxkbd->getIsEnter()) {
-    uint8_t rtc_year = zxrtc->getYear()+1;
+    int rtc_year = zxrtc->getYear()+1;
     if (rtc_year < 2000 || rtc_year > 4096) rtc_year = 2000;
     zxrtc->setYear(rtc_year);
     zxrtc->save();

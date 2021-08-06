@@ -42,6 +42,12 @@ void ZXRTC::begin(spi_cb act, osd_cb evt)
   if (!getInitDone()) {
     sendAll();
   }
+  is_started = true;
+}
+
+bool ZXRTC::started()
+{
+  return is_started;
 }
 
 void ZXRTC::handle()
@@ -63,6 +69,7 @@ void ZXRTC::handle()
     sendTime();
 
     // cb rtc
+    event();
 
     tr = n;
   }
