@@ -22,6 +22,8 @@
 // Project headers
 #include <avr/pgmspace.h>
 #include <OSD.h>
+#include <ZXKeyboard.h>
+#include <ZXRTC.h>
 
 /****************************************************************************/
 
@@ -30,7 +32,53 @@ class ZXOSD
 {
 
 private:
-	OSD osd;
+	OSD *osd;
+  ZXKeyboard *zxkbd;
+  ZXRTC *zxrtc;
+
+  uint8_t fpga_cfg;
+  uint8_t fpga_build_num[8];
+
+  // osd global states
+  enum osd_state_e {
+    state_main = 0,
+    state_rtc,
+    state_test
+  };
+
+  // osd main states
+  enum osd_main_state_e {
+    state_main_rom_bank = 0,
+    state_main_turbofdc,
+    state_main_covox,
+    state_main_stereo,
+    state_main_ssg,
+    state_main_video,
+    state_main_sync,
+    state_main_turbo,
+    state_main_swap_ab,
+    state_main_joy_type,
+    state_main_keyboard_type,
+    state_main_pause
+  };
+
+  // osd rtc states
+  enum osd_rtc_state_e {
+    state_rtc_hour = 0,
+    state_rtc_minute,
+    state_rtc_second,
+    state_rtc_day,
+    state_rtc_month,
+    state_rtc_year,
+    state_rtc_dow
+  };
+
+  uint8_t osd_state = state_main;
+  uint8_t osd_prev_state = state_main;
+  uint8_t osd_main_state = state_main_rom_bank;
+  uint8_t osd_prev_main_state = state_main_rom_bank;
+  uint8_t osd_rtc_state = state_rtc_dow;
+  uint8_t osd_prev_rtc_state = state_rtc_dow;
 
 protected:
 
@@ -38,7 +86,60 @@ public:
 
   ZXOSD();
 
-  void begin(OSD &osd_);
+  void begin(OSD *osd_, ZXKeyboard *zxkbd_, ZXRTC *zxrtc_); // TODO: zxmouse, zxjoy
+
+  void handle();
+
+  void printHeader();
+  void initOverlay();
+  void initRtcOverlay();
+  void initTestOverlay();
+  void popupFooter();
+  void handleRombank();
+  void handleTurbofdc();
+  void handleCovox();
+  void handleStereo();
+  void handleSsg();
+  void handleVideo();
+  void handleVsync();
+  void handleTurbo();
+  void handleSwapAB();
+  void handleJoyType();
+  void handleKeyboardType();
+  void handlePause();
+  void handleRtcHour();
+  void handleRtcMinute();
+  void handleRtcSecond();
+  void handleRtcDay();
+  void handleRtcMonth();
+  void handleRtcYear();
+  void handleRtcDow();
+  void updateRombank();
+  void updateTurbofdc();
+  void updateCovox();
+  void updateStereo();
+  void updateSsg();
+  void updateVideo();
+  void updateVsync();
+  void updateTurbo();
+  void updateSwapAB();
+  void updateJoystick();
+  void updateKeyboardType();
+  void updatePause();
+  void updateRtcHour();
+  void updateRtcMinute();
+  void updateRtcSecond();
+  void updateRtcDay();
+  void updateRtcMonth();
+  void updateRtcYear();
+  void updateRtcDow();
+  void updateTime();
+  void updateScancode(uint16_t c);
+  void updateMouse(uint8_t mouse_x, uint8_t mouse_y, uint8_t mouse_z);
+  void updateJoyState(uint8_t joy);
+
+  void setFpgaCfg(uint8_t cfg);
+  void setFpgaBuildNum(uint8_t pos, uint8_t data);
 
 };
 

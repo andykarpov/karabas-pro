@@ -57,10 +57,6 @@
 #define PIN_JOY_FIRE1 A0
 #define PIN_JOY_FIRE2 A3
 
-#define RTC_ADDRESS 0xA0
-
-#define EEPROM_RTC_OFFSET 0x10
-
 #define EEPROM_VALUE_TRUE 10
 #define EEPROM_VALUE_FALSE 20
 
@@ -92,15 +88,7 @@
 #define CMD_OSD_PUT_C 0x12
 #define CMD_OSD_ATTR  0x13
 
-// RTC RD command
-#define CMD_RTC_READ 0x40 // + regnum 0e-3f (64 ... 127)
 
-// Incoming commands:
-
-// RTC WR command 
-#define CMD_RTC_WRITE 0x80 // + regnum 0e-3f (128 ... 191)
-// RTC INIT command
-#define CMD_RTC_INIT_REQ 0xFC // rtc init request
 // INIT command
 #define CMD_INIT_REQ 0xFD // init req
 
