@@ -20,6 +20,10 @@
 #define ALLOW_LED_OVERRIDE 1
 #endif
 
+#ifndef BUILD_VER
+#define BUILD_VER "DEVBUILD"
+#endif
+
 // ---- Pins for Atmega328
 #define PIN_KBD_CLK 2 // pin 28 (CLKK)
 #define PIN_KBD_DAT 4 // pin 27 (DATK)

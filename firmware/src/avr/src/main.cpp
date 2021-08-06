@@ -1504,37 +1504,41 @@ void osd_print_header()
   osd.setPos(0,0);
   osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
   osd.print(F("Karabas Pro"));
-  osd.setPos(0,1);
-  for (uint8_t i=0; i<32; i++) {
-    osd.print(F("_"));
-  }
-  osd.setPos(0,2);
 
+  osd.setPos(12,0);
   // board revision
   switch (cfg) {
     case 0:
     case 1:
-      osd.print(F("Rev.A  "));
+      osd.print(F("Rev.A"));
       break;
     case 4:
     case 5:
-      osd.print(F("Rev.DS "));
+      osd.print(F("Rev.DS"));
       break;
   }
 
   // dac type
-  switch (cfg) {
+/*  switch (cfg) {
     case 0:
     case 4:
-      osd.print(F("TDA1543 "));
+      osd.print(F("TDA1543"));
       break;
     case 1:
     case 5:
       osd.print(F("TDA1543A"));
       break;
   }
-  osd.setPos(0,3);
-  osd.print(F("Build  "));
+*/
+
+  osd.setPos(0,1);
+  for (uint8_t i=0; i<32; i++) {
+    osd.print(F("_"));
+  }
+
+  osd.setPos(0,2);
+  osd.print(F("FPGA build"));
+  osd.setPos(12,2);
   osd.write(build_num[0]);
   osd.write(build_num[1]);
   osd.write(build_num[2]);
@@ -1543,6 +1547,11 @@ void osd_print_header()
   osd.write(build_num[5]);
   osd.write(build_num[6]);
   osd.write(build_num[7]);
+
+  osd.setPos(0,3);
+  osd.print(F("AVR build"));
+  osd.setPos(12,3);
+  osd.print(BUILD_VER);
 }
 
 // init osd
