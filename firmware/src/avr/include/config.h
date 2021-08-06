@@ -59,24 +59,62 @@
 
 #define RTC_ADDRESS 0xA0
 
-#define EEPROM_TURBO_ADDRESS 0x00
-#define EEPROM_MODE_ADDRESS 0x01
-#define EEPROM_SW1_ADDRESS 0x02
-#define EEPROM_SW2_ADDRESS 0x03
-#define EEPROM_SW3_ADDRESS 0x04
-#define EEPROM_SW4_ADDRESS 0x05
-#define EEPROM_SW5_ADDRESS 0x06
-#define EEPROM_SW6_ADDRESS 0x07
-#define EEPROM_SW7_ADDRESS 0x08
-#define EEPROM_SW8_ADDRESS 0x09
-#define EEPROM_SW9_ADDRESS 0x0A
-#define EEPROM_SW10_ADDRESS 0x0B
-#define EEPROM_MOUSE_SWAP_ADDRESS 0x0C
-#define EEPROM_JOY_TYPE_ADDRESS 0x0D
-
 #define EEPROM_RTC_OFFSET 0x10
 
 #define EEPROM_VALUE_TRUE 10
 #define EEPROM_VALUE_FALSE 20
+
+// Joystick signals
+#define ZX_JOY_FIRE 0
+#define ZX_JOY_FIRE2 1
+#define ZX_JOY_UP 2
+#define ZX_JOY_DOWN 3
+#define ZX_JOY_LEFT 4
+#define ZX_JOY_RIGHT 5
+#define ZX_JOY_A 6
+#define ZX_JOY_B 7
+
+// mouse commands
+#define CMD_MOUSE_X 0x0A
+#define CMD_MOUSE_Y 0x0B
+#define CMD_MOUSE_Z 0x0C
+
+// joystick commands
+#define CMD_JOY 0x0D
+
+// LED command
+#define CMD_LED_WRITE 0x0E
+
+// OSD commands
+#define CMD_OSD_CLS 0x0F
+#define CMD_OSD_SET_X 0x10
+#define CMD_OSD_SET_Y 0x11
+#define CMD_OSD_PUT_C 0x12
+#define CMD_OSD_ATTR  0x13
+
+// RTC RD command
+#define CMD_RTC_READ 0x40 // + regnum 0e-3f (64 ... 127)
+
+// Incoming commands:
+
+// RTC WR command 
+#define CMD_RTC_WRITE 0x80 // + regnum 0e-3f (128 ... 191)
+// RTC INIT command
+#define CMD_RTC_INIT_REQ 0xFC // rtc init request
+// INIT command
+#define CMD_INIT_REQ 0xFD // init req
+
+// BUILD version commands
+#define CMD_BUILD_REQ0 0xF0
+#define CMD_BUILD_REQ1 0xF1
+#define CMD_BUILD_REQ2 0xF2
+#define CMD_BUILD_REQ3 0xF3
+#define CMD_BUILD_REQ4 0xF4
+#define CMD_BUILD_REQ5 0xF5
+#define CMD_BUILD_REQ6 0xF6
+#define CMD_BUILD_REQ7 0xF7
+
+// NOP command
+#define CMD_NONE 0xFF
 
 #endif
