@@ -50,7 +50,6 @@ uint8_t cfg = 0; // cfg byte from fpga side
 
 bool mouse_present = false; // mouse present flag (detected by signal change on CLKM pin)
 bool blink_state = false;
-bool flags_changed = false; // changed flags is_turbo / profi_mode
 
 bool led1_state = false;
 bool led2_state = false;
@@ -66,10 +65,8 @@ unsigned long tl1, tl2 = 0; // led1/2 time
 unsigned long tm = 0; // mouse poll time
 unsigned long tl = 0; // blink poll time
 unsigned long tr = 0; // rtc poll time
-unsigned long te = 0; // eeprom store time
 unsigned long tb, tb1, tb2 = 0; // hw buttons poll time
 unsigned long ts = 0; // mouse swap time
-unsigned long tk = 0; // last keypress
 
 int mouse_tries; // number of triers to init mouse
 
@@ -1286,6 +1283,7 @@ void osd_update_joy_state() {
   osd.print(joy[ZX_JOY_RIGHT], DEC);
 }
 
+// update OSD by keyboard events
 void on_keyboard (uint8_t event_type, uint16_t scancode)
 {
   switch (event_type) {
@@ -1294,7 +1292,16 @@ void on_keyboard (uint8_t event_type, uint16_t scancode)
     case ZXKeyboard::EVENT_OSD_JOYSTICK: osd_update_joystick(); break;
     case ZXKeyboard::EVENT_OSD_SWAP_AB:  osd_update_swap_ab(); break;
     case ZXKeyboard::EVENT_OSD_ROMBANK:  osd_update_rombank(); break;
-    // TODO
+    case ZXKeyboard::EVENT_OSD_TURBOFDC:  osd_update_turbofdc(); break;
+    case ZXKeyboard::EVENT_OSD_COVOX:  osd_update_covox(); break;
+    case ZXKeyboard::EVENT_OSD_STEREO:  osd_update_stereo(); break;
+    case ZXKeyboard::EVENT_OSD_SSG:  osd_update_ssg(); break;
+    case ZXKeyboard::EVENT_OSD_VIDEO:  osd_update_video(); break;
+    case ZXKeyboard::EVENT_OSD_VSYNC:  osd_update_vsync(); break;
+    case ZXKeyboard::EVENT_OSD_JOY_TYPE:  osd_update_joystick(); break;
+    case ZXKeyboard::EVENT_OSD_KEYBOARD_TYPE:  osd_update_keyboard_type(); break;
+    case ZXKeyboard::EVENT_OSD_PAUSE:  osd_update_pause(); break;
+    case ZXKeyboard::EVENT_OSD_TURBO:  osd_update_turbo(); break;
   }
 }
 
@@ -1349,11 +1356,9 @@ void setup()
   delay(6);
   uint16_t c = kbd.read();
   if( (c & 0xFF) == PS2_KEY_ECHO || (c & 0xFF) == PS2_KEY_BAT ) {
-    //kbd.setNoBreak(0);
-    //kbd.setNoRepeat(0);
-    //kbd.typematic(0xb, 1);
     kbd.setLock(PS2_LOCK_SCROLL);
   }
+
   zxkbd.begin(&kbd, spi_send, on_keyboard);
 
   // waiting for init
@@ -1556,6 +1561,11 @@ void loop()
     }
   }
 
+  // empty keyboard matrix in overlay mode before transmitting it onto FPGA side
+  if (zxkbd.getIsOsdOverlay()) {
+    zxkbd.clear(ZX_MATRIX_SIZE);
+  }
+
   // transmit kbd always
   zxkbd.transmit();
 
@@ -1683,8 +1693,8 @@ void loop()
     ms_btn1 = bitRead(m.status, 0);
     ms_btn2 = bitRead(m.status, 1);
     ms_btn3 = bitRead(m.status, 2);
-    bitWrite(mouse_z, 4, is_mouse_swap ? ms_btn2 : ms_btn1); // left
-    bitWrite(mouse_z, 5, is_mouse_swap ? ms_btn1 : ms_btn2); // right
+    bitWrite(mouse_z, 4, zxkbd.getMouseSwap() ? ms_btn2 : ms_btn1); // left
+    bitWrite(mouse_z, 5, zxkbd.getMouseSwap() ? ms_btn1 : ms_btn2); // right
     bitWrite(mouse_z, 6, ms_btn3); // middle
     bitWrite(mouse_z, 7, mouse_new_packet);
 
@@ -1726,10 +1736,9 @@ void loop()
   #endif
 
   // swap mouse buttons
-  /*if (mouse_present && n - ts > MOUSE_SWAP_INTERVAL) {
-    if ((is_menu || is_win || (is_ctrl && is_alt)) && ms_btn1) {
-      is_mouse_swap = !is_mouse_swap;
-      eeprom_store_value(EEPROM_MOUSE_SWAP_ADDRESS, is_mouse_swap);
+  if (mouse_present && n - ts > MOUSE_SWAP_INTERVAL) {
+    if (zxkbd.getIsMenu() && ms_btn1) {
+      zxkbd.setMouseSwap(!zxkbd.getMouseSwap());
       update_led(PIN_LED1, HIGH);
       delay(100);
       update_led(PIN_LED1, LOW);
@@ -1739,7 +1748,7 @@ void loop()
       update_led(PIN_LED1, LOW);
     }
     ts = n;
-  }*/
+  }
 
   // control led1
 #if ALLOW_LED_OVERRIDE

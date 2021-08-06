@@ -57,11 +57,6 @@ void ZXKeyboard::handle(void)
 
   // process delayed sequences
   processDelayedKeypress();
-
-  // empty keyboard matrix in overlay mode before transmitting it onto FPGA side
-  if (osd_overlay) {
-    clear(ZX_MATRIX_SIZE);
-  }
 }
 
 void ZXKeyboard::setKey(uint8_t key, bool pressed)
@@ -1138,11 +1133,14 @@ void ZXKeyboard::eepromStoreValues()
   }
 
   uint8_t ZXKeyboard::getStereo() {
-    return 0;
+    uint8_t stereo = 0;
+    bitWrite(stereo, 0, is_sw7);
+    bitWrite(stereo, 1, is_sw9);
+    return stereo;
   }
 
   bool ZXKeyboard::getSsg() {
-    return 0;
+    return is_sw8;
   }
 
   bool ZXKeyboard::getVideo() {
@@ -1154,11 +1152,11 @@ void ZXKeyboard::eepromStoreValues()
   }
 
   bool ZXKeyboard::getTurbo() {
-    return is_sw10;
+    return is_turbo;
   }
 
   bool ZXKeyboard::getSwapAB() {
-    return 0;
+    return is_sw10;
   }
 
   bool ZXKeyboard::getJoyType() {
@@ -1208,10 +1206,15 @@ void ZXKeyboard::eepromStoreValues()
 
   void ZXKeyboard::setMouseSwap(bool value) {
     is_mouse_swap = value;
+      eepromStoreValue(EEPROM_MOUSE_SWAP_ADDRESS, is_mouse_swap);
   }
 
   bool ZXKeyboard::getMouseSwap() {
     return is_mouse_swap;
+  }
+
+  bool ZXKeyboard::getIsMenu() {
+    return is_menu || is_win || (is_ctrl && is_alt);
   }
 
 

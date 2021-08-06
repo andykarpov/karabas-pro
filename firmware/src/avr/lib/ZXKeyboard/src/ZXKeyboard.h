@@ -279,6 +279,7 @@ public:
   bool getIsCursorRight();
   bool getIsEnter();
   bool getIsEscape();
+  bool getIsMenu();
   void resetOsdControls();
 
 };
