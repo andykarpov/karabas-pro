@@ -200,7 +200,7 @@ void set_keyboard_type();
 void fill_kbd_matrix(uint16_t sc, unsigned long n);
 void delayed_keypress(uint8_t key, uint8_t zxkey1, uint8_t zxkey2, bool up);
 void process_delayed_keypress();
-void send_macros(uint8_t pos);
+void send_macros(uint8_t code, uint8_t zxkey);
 uint8_t get_matrix_byte(uint8_t pos);
 uint8_t get_joy_byte();
 void spi_send(uint8_t addr, uint8_t data);
@@ -699,7 +699,7 @@ void fill_kbd_matrix(uint16_t sc, unsigned long n)
     case PS2_KEY_OPEN_SQ:
       if (!profi_mode) {
         if (!is_up) {
-          send_macros(is_shift ? ZX_K_F : ZX_K_Y);
+          send_macros(code, is_shift ? ZX_K_F : ZX_K_Y);
         }
       } else {
         matrix[ZX_K_SS] = !is_up;
@@ -715,7 +715,7 @@ void fill_kbd_matrix(uint16_t sc, unsigned long n)
     case PS2_KEY_CLOSE_SQ:
       if (!profi_mode) {
         if (!is_up) {
-          send_macros(is_shift ? ZX_K_G : ZX_K_U);
+          send_macros(code, is_shift ? ZX_K_G : ZX_K_U);
         }
       } else {
         matrix[ZX_K_SS] = !is_up;
@@ -743,7 +743,7 @@ void fill_kbd_matrix(uint16_t sc, unsigned long n)
     case PS2_KEY_BACK:
       if (!profi_mode) {
         if (!is_up) {
-          send_macros(is_shift ? ZX_K_S : ZX_K_D);
+          send_macros(code, is_shift ? ZX_K_S : ZX_K_D);
         }
       } else {
         matrix[ZX_K_SS] = !is_up;
@@ -780,7 +780,7 @@ void fill_kbd_matrix(uint16_t sc, unsigned long n)
     // `,~ -> SS+X / SS+A
     case PS2_KEY_SINGLE:
       if (is_shift and !is_up) {
-        send_macros(is_shift ? ZX_K_A : ZX_K_X);
+        send_macros(code, is_shift ? ZX_K_A : ZX_K_X);
       }
       if (!is_shift) {
         matrix[ZX_K_SS] = !is_up;
@@ -1112,27 +1112,54 @@ void process_delayed_keypress()
 }
 
 // transmit keyboard macros (sequence of keyboard clicks) to emulate typing some special symbols [, ], {, }, ~, |, `
-void send_macros(uint8_t pos)
+void send_macros(uint8_t code, uint8_t zxkey)
 {
-  clear_matrix(ZX_MATRIX_SIZE);
-  transmit_keyboard_matrix();
-  delay(20);
-  matrix[ZX_K_CS] = true;
-  transmit_keyboard_matrix();
-  delay(20);
-  matrix[ZX_K_SS] = true;
-  transmit_keyboard_matrix();
-  delay(20);
-  matrix[ZX_K_SS] = false;
-  transmit_keyboard_matrix();
-  delay(20);
-  matrix[pos] = true;
-  transmit_keyboard_matrix();
-  delay(20);
-  matrix[ZX_K_CS] = false;
-  matrix[pos] = false;
-  transmit_keyboard_matrix();
-  delay(20);
+  if (delayed_matrix_size > 0) return;
+
+  unsigned long tnow = millis();
+  uint8_t kdelay = 50; // 50 ms
+
+  // CS on
+  delayed_matrix[delayed_matrix_size].timestamp = tnow;
+  delayed_matrix[delayed_matrix_size].up = false;
+  delayed_matrix[delayed_matrix_size].zxkey = ZX_K_CS;
+  delayed_matrix[delayed_matrix_size].key = code;
+  delayed_matrix_size++;
+
+  // SS on
+  delayed_matrix[delayed_matrix_size].timestamp = tnow + kdelay; 
+  delayed_matrix[delayed_matrix_size].up = false;
+  delayed_matrix[delayed_matrix_size].zxkey = ZX_K_SS;
+  delayed_matrix[delayed_matrix_size].key = code;
+  delayed_matrix_size++;
+
+  // SS off
+  delayed_matrix[delayed_matrix_size].timestamp = tnow + kdelay + kdelay; 
+  delayed_matrix[delayed_matrix_size].up = true;
+  delayed_matrix[delayed_matrix_size].zxkey = ZX_K_SS;
+  delayed_matrix[delayed_matrix_size].key = code;
+  delayed_matrix_size++;
+
+  // key on
+  delayed_matrix[delayed_matrix_size].timestamp = tnow + kdelay + kdelay + kdelay; 
+  delayed_matrix[delayed_matrix_size].up = false;
+  delayed_matrix[delayed_matrix_size].zxkey = zxkey;
+  delayed_matrix[delayed_matrix_size].key = code;
+  delayed_matrix_size++;
+
+  // key off
+  delayed_matrix[delayed_matrix_size].timestamp = tnow + kdelay + kdelay + kdelay + kdelay; 
+  delayed_matrix[delayed_matrix_size].up = true;
+  delayed_matrix[delayed_matrix_size].zxkey = zxkey;
+  delayed_matrix[delayed_matrix_size].key = code;
+  delayed_matrix_size++;
+
+  // CS off
+  delayed_matrix[delayed_matrix_size].timestamp = tnow + kdelay + kdelay + kdelay + kdelay + kdelay; 
+  delayed_matrix[delayed_matrix_size].up = true;
+  delayed_matrix[delayed_matrix_size].zxkey = ZX_K_CS;
+  delayed_matrix[delayed_matrix_size].key = code;
+  delayed_matrix_size++;
 }
 
 uint8_t get_matrix_byte(uint8_t pos)
