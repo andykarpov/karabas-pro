@@ -112,7 +112,7 @@ begin
 	 process (CLK, CLK2, vram_do)
 	 begin
 		if (rising_edge(CLK)) then 
-			if (CLK2 = '1') then 
+			if (CLK2 = '0') then 
 				case (char_x) is
 					when "110" =>
 						-- задаем адрес для чтения char и attr из видео памяти
