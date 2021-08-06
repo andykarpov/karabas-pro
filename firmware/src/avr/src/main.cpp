@@ -1117,7 +1117,7 @@ void send_macros(uint8_t code, uint8_t zxkey)
   if (delayed_matrix_size > 0) return;
 
   unsigned long tnow = millis();
-  uint8_t kdelay = 50; // 50 ms
+  uint8_t kdelay = 250; // 50 ms
 
   // CS on
   delayed_matrix[delayed_matrix_size].timestamp = tnow;
