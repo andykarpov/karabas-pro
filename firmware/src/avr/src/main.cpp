@@ -32,74 +32,36 @@ Ukraine, 2021
 #include "ZXKeyboard.h"
 #include "ZXRTC.h"
 #include "ZXOSD.h"
+#include "ZXMouse.h"
+#include "ZXJoystick.h"
 
 PS2KeyAdvanced kbd;
 PS2Mouse mice;
-SegaController sega;
 OSD osd;
 ZXKeyboard zxkbd;
+ZXMouse zxmouse;
+ZXJoystick zxjoy;
 ZXOSD zxosd;
 ZXRTC zxrtc;
 
-bool joy[8]; // joystic states
-bool last_joy[8];
-word sega_joy_state;
-
 bool init_done = false; // init done
-
-bool mouse_present = false; // mouse present flag (detected by signal change on CLKM pin)
 bool blink_state = false;
-
 bool led1_state = false;
 bool led2_state = false;
 bool led1_overwrite = false;
 bool led2_overwrite = false;
 
-bool ms_btn1 = false;
-bool ms_btn2 = false;
-bool ms_btn3 = false;
-
-unsigned long t = 0;  // current time
 unsigned long tl1, tl2 = 0; // led1/2 time
-unsigned long tm = 0; // mouse poll time
 unsigned long tl = 0; // blink poll time
 unsigned long tb, tb1, tb2 = 0; // hw buttons poll time
-unsigned long ts = 0; // mouse swap time
-
-int mouse_tries; // number of triers to init mouse
-
-uint8_t mouse_x = 0; // current mouse X
-uint8_t mouse_y = 0; // current mouse Y
-uint8_t mouse_z = 0; // current mousr Z
-uint8_t mouse_btns = 0; // mouse buttons state
-bool mouse_new_packet = false; // new packet to send (toggle flag)
 
 SPISettings settingsA(1000000, MSBFIRST, SPI_MODE0); // SPI transmission settings
 
-uint8_t get_joy_byte();
 void spi_send(uint8_t addr, uint8_t data);
-
-void transmit_joy_data();
-
-void transmit_mouse_data();
-
 void process_in_cmd(uint8_t cmd, uint8_t data);
-
-void init_mouse();
-
 void update_led(uint8_t led, bool state);
-
 void setup();
 void loop();
-
-uint8_t get_joy_byte()
-{
-  uint8_t result = 0;
-  for (uint8_t i = 0; i < 8; i++) {
-    bitWrite(result, i, joy[i]);
-  }
-  return result;
-}
 
 void spi_send(uint8_t addr, uint8_t data)
 {
@@ -113,21 +75,6 @@ void spi_send(uint8_t addr, uint8_t data)
     process_in_cmd(cmd, res);
   }
 }
-
-void transmit_joy_data()
-{
-  uint8_t data = get_joy_byte();
-  spi_send(CMD_JOY, data);
-}
-
-void transmit_mouse_data()
-{
-  spi_send(CMD_MOUSE_X, mouse_x);
-  spi_send(CMD_MOUSE_Y, mouse_y);
-  spi_send(CMD_MOUSE_Z, mouse_z);
-}
-
-
 
 void process_in_cmd(uint8_t cmd, uint8_t data)
 {
@@ -163,15 +110,6 @@ void process_in_cmd(uint8_t cmd, uint8_t data)
   }
 }
 
-void init_mouse()
-{
-#if (MOUSE_POLL_TYPE == 1)
-  mouse_present = mice.initialize();
-#else 
-  mouse_present = mice.streamInitialize();
-#endif
-}
-
 // update led state
 void update_led(uint8_t led, bool state)
 {
@@ -181,8 +119,6 @@ void update_led(uint8_t led, bool state)
   }
   digitalWrite(led, state);
 }
-
-
 
 // update OSD by keyboard events
 void on_keyboard (uint8_t event_type, uint16_t scancode)
@@ -216,11 +152,36 @@ void on_time()
   }
 }
 
+void on_mouse(uint8_t event_type)
+{
+   switch (event_type) {
+    case ZXMouse::EVENT_OSD_MOUSE_SWAPPED:  
+      update_led(PIN_LED1, HIGH);
+      delay(100);
+      update_led(PIN_LED1, LOW);
+      delay(100);
+      update_led(PIN_LED1, HIGH);
+      delay(100);
+      update_led(PIN_LED1, LOW);
+    break;
+    case ZXMouse::EVENT_OSD_MOUSE_DATA: 
+      if (zxkbd.getIsOsdOverlay()) { 
+        zxosd.updateMouse(zxmouse.getX(), zxmouse.getY(), zxmouse.getZ()); 
+      }
+    break;
+   }
+}
+
+void on_joystick(uint8_t evt, uint8_t data)
+{
+  if (zxkbd.getIsOsdOverlay()) {
+    zxosd.updateJoyState(data);
+  }
+}
+
 // initial setup
 void setup()
 {
-  Serial.begin(115200);
-  Serial.flush();
   pinMode(PIN_JOY_RIGHT, OUTPUT);
   digitalWrite(PIN_JOY_RIGHT, LOW);
   SPI.begin();
@@ -254,29 +215,15 @@ void setup()
   pinMode(PIN_MOUSE_CLK, INPUT_PULLUP);
   pinMode(PIN_MOUSE_DAT, INPUT_PULLUP);
 
-  // joy
-  pinMode(PIN_JOY_UP, INPUT_PULLUP);
-  pinMode(PIN_JOY_DOWN, INPUT_PULLUP);
-  pinMode(PIN_JOY_LEFT, INPUT_PULLUP);
-//  pinMode(PIN_JOY_RIGHT, INPUT_PULLUP);
-  pinMode(PIN_JOY_FIRE1, INPUT_PULLUP);
-  pinMode(PIN_JOY_FIRE2, INPUT_PULLUP);
-
   kbd.begin(PIN_KBD_DAT, PIN_KBD_CLK);
   zxkbd.begin(&kbd, spi_send, on_keyboard);
-
   zxrtc.begin(spi_send, on_time);
-
-  // setup osd library with callback to send spi command
   osd.begin(spi_send);
   zxosd.begin(&osd, &zxkbd, &zxrtc);
-
-  // setup sega controller
-  sega.begin(PIN_LED2, PIN_JOY_UP, PIN_JOY_DOWN, PIN_JOY_LEFT, PIN_JOY_RIGHT, PIN_JOY_FIRE1, PIN_JOY_FIRE2);
-
-  mouse_tries = MOUSE_INIT_TRIES;
+  zxosd.setAvrBuildNum(BUILD_VER);
   mice.begin(PIN_MOUSE_CLK, PIN_MOUSE_DAT);
-  init_mouse();
+  zxmouse.begin(&mice, &zxkbd, spi_send, on_mouse);
+  zxjoy.begin(&zxkbd, spi_send, on_joystick);
 
   // waiting for init
   while (!init_done) {
@@ -303,87 +250,11 @@ void loop()
   unsigned long n = millis();
 
   zxkbd.handle();
-
   zxosd.handle();
-
-  // empty keyboard matrix in overlay mode before transmitting it onto FPGA side
-  if (zxkbd.getIsOsdOverlay()) {
-    zxkbd.clear(ZX_MATRIX_SIZE);
-  }
-
-  // transmit kbd always
   zxkbd.transmit();
-
-  // read joystick
-  // Due to conflict with the hardware SPI, we should stop the HW SPI and switch the joy_right as input before reading
-  // WARNING: a 100-500 Ohm resistor is required on the PIN_JOY_RIGHT line
-  //SPI.end();
-  //interrupts(); // SPI.end() calls noInterrupts()
-  SPCR &= ~_BV(SPE);
-
-  // set JOY_RIGHT pin as input to read joystick signal
-  pinMode(PIN_JOY_RIGHT, INPUT_PULLUP);
-
-  if (zxkbd.getJoyType() == false) {
-    // kempston joy read
-    joy[ZX_JOY_UP] = digitalRead(PIN_JOY_UP) == LOW;
-    joy[ZX_JOY_DOWN] = digitalRead(PIN_JOY_DOWN) == LOW;
-    joy[ZX_JOY_LEFT] = digitalRead(PIN_JOY_LEFT) == LOW;
-    joy[ZX_JOY_RIGHT] = digitalRead(PIN_JOY_RIGHT) == LOW;
-    joy[ZX_JOY_FIRE] = digitalRead(PIN_JOY_FIRE1) == LOW;
-    joy[ZX_JOY_FIRE2] = digitalRead(PIN_JOY_FIRE2) == LOW;
-    joy[ZX_JOY_A] = false;
-    joy[ZX_JOY_B] = false;
-  } else {
-    // sega joy read
-    sega_joy_state = sega.getState();
-    joy[ZX_JOY_UP] = sega_joy_state & SC_BTN_UP;
-    joy[ZX_JOY_DOWN] = sega_joy_state & SC_BTN_DOWN;
-    joy[ZX_JOY_LEFT] = sega_joy_state & SC_BTN_LEFT;
-    joy[ZX_JOY_RIGHT] = sega_joy_state & SC_BTN_RIGHT;
-    joy[ZX_JOY_FIRE] = sega_joy_state & SC_BTN_B;
-    joy[ZX_JOY_FIRE2] = sega_joy_state & SC_BTN_C;
-    joy[ZX_JOY_A] = sega_joy_state & SC_BTN_A;
-    joy[ZX_JOY_B] = sega_joy_state & SC_BTN_START;
-  }
-
-  // set JOY_RIGHT as output to avoid intersection with hardware SPI SS pin
-  pinMode(PIN_JOY_RIGHT, OUTPUT);
-  digitalWrite(PIN_JOY_RIGHT, LOW);
-
-  //SPI.begin();
-  //interrupts(); // SPI.begin() calls noInterrupts()
-  SPCR |= _BV(MSTR);
-  SPCR |= _BV(SPE);
-
-  if (joy[0] != last_joy[0] || joy[1] != last_joy[1] || joy[2] != last_joy[2] || joy[3] != last_joy[3] || joy[4] != last_joy[4] || joy[5] != last_joy[5] || joy[6] != last_joy[6] || joy[7] != last_joy[7]) {
-    last_joy[0] = joy[0];
-    last_joy[1] = joy[1];
-    last_joy[2] = joy[2];
-    last_joy[3] = joy[3];
-    last_joy[4] = joy[4];
-    last_joy[5] = joy[5];
-    last_joy[6] = joy[6];
-    last_joy[7] = joy[7];
-
-    if (zxkbd.getIsOsdOverlay()) {
-      uint8_t joy_byte = 0;
-      bitWrite(joy_byte, 7, joy[ZX_JOY_B]);
-      bitWrite(joy_byte, 6, joy[ZX_JOY_A]);
-      bitWrite(joy_byte, 5, joy[ZX_JOY_FIRE2]);
-      bitWrite(joy_byte, 4, joy[ZX_JOY_FIRE]);
-      bitWrite(joy_byte, 3, joy[ZX_JOY_UP]);
-      bitWrite(joy_byte, 2, joy[ZX_JOY_DOWN]);
-      bitWrite(joy_byte, 1, joy[ZX_JOY_LEFT]);
-      bitWrite(joy_byte, 0, joy[ZX_JOY_RIGHT]);
-
-      zxosd.updateJoyState(joy_byte);
-    }
-
-  }
-
-  // transmit joy matrix
-  transmit_joy_data();
+  zxrtc.handle();
+  zxmouse.handle();
+  zxjoy.handle();
 
   // react on hardware buttons every 100ms
 #if USE_HW_BUTTONS
@@ -404,86 +275,6 @@ void loop()
     tb = n;
   }
 #endif
-
-  zxrtc.handle();
-
-  // try to re-init mouse every 100us if not present, up to N tries
-  if (mouse_tries > 0 && !mouse_present && n - tm > 100) {
-    mouse_tries--;
-    init_mouse();
-    tm = n;
-  }
-
-  // polling for mouse data
-  #if MOUSE_POLL_TYPE == 1
-  if (mouse_present && n - t > MOUSE_POLL_INTERVAL) {
-
-    MouseData m = mice.readData();
-
-    mouse_new_packet = !mouse_new_packet;
-    mouse_x = m.position.x;
-    mouse_y = m.position.y;
-    mouse_z = m.wheel;
-
-    ms_btn1 = bitRead(m.status, 0);
-    ms_btn2 = bitRead(m.status, 1);
-    ms_btn3 = bitRead(m.status, 2);
-    bitWrite(mouse_z, 4, zxkbd.getMouseSwap() ? ms_btn2 : ms_btn1); // left
-    bitWrite(mouse_z, 5, zxkbd.getMouseSwap() ? ms_btn1 : ms_btn2); // right
-    bitWrite(mouse_z, 6, ms_btn3); // middle
-    bitWrite(mouse_z, 7, mouse_new_packet);
-
-    transmit_mouse_data();
-
-    if (zxkbd.getIsOsdOverlay()) {
-      zxosd.updateMouse(mouse_x, mouse_y, mouse_z);
-    }
-
-    t = n;
-  }
-  #else
-  // mouse stream report read
-  if (mice.reportAvailable() > 0 ) {
-    MouseData m = mice.readReport();
-
-    //if ((bitRead(m.status, 3) == 1) and (bitRead(m.status, 6) == 0) and (bitRead(m.status,7)== 0)) {
-      mouse_new_packet = !mouse_new_packet;
-      mouse_x = m.position.x;
-      mouse_y = m.position.y;
-      mouse_z = m.wheel;
-  
-      ms_btn1 = bitRead(m.status, 0);
-      ms_btn2 = bitRead(m.status, 1);
-      ms_btn3 = bitRead(m.status, 2);
-      bitWrite(mouse_z, 4, zxkbd.getMouseSwap() ? ms_btn2 : ms_btn1); // left
-      bitWrite(mouse_z, 5, zxkbd.getMouseSwap() ? ms_btn1 : ms_btn2); // right
-      bitWrite(mouse_z, 6, ms_btn3); // middle
-      bitWrite(mouse_z, 7, mouse_new_packet);
-  
-      transmit_mouse_data();    
-
-      if (zxkbd.getIsOsdOverlay()) {
-        zxosd.updateMouse(mouse_x, mouse_y, mouse_z);
-      }
-    //}
-  }
-
-  #endif
-
-  // swap mouse buttons
-  if (mouse_present && n - ts > MOUSE_SWAP_INTERVAL) {
-    if (zxkbd.getIsMenu() && ms_btn1) {
-      zxkbd.setMouseSwap(!zxkbd.getMouseSwap());
-      update_led(PIN_LED1, HIGH);
-      delay(100);
-      update_led(PIN_LED1, LOW);
-      delay(100);
-      update_led(PIN_LED1, HIGH);
-      delay(100);
-      update_led(PIN_LED1, LOW);
-    }
-    ts = n;
-  }
 
   // control led1
 #if ALLOW_LED_OVERRIDE

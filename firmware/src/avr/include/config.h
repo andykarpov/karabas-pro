@@ -8,14 +8,6 @@
 #define USE_HW_BUTTONS 1
 #endif
 
-#define MOUSE_POLL_INTERVAL 10 // ms
-#define MOUSE_SWAP_INTERVAL 1000 // ms
-#define MOUSE_INIT_TRIES 2
-
-#ifndef MOUSE_POLL_TYPE
-#define MOUSE_POLL_TYPE 0 // 1 = poll, 0 = stream
-#endif
-
 #ifndef ALLOW_LED_OVERRIDE
 #define ALLOW_LED_OVERRIDE 1
 #endif
@@ -49,42 +41,8 @@
 #define PIN_SDA A4 // pin 23 
 #define PIN_SCL A5 // ping 24
 
-// joystick
-#define PIN_JOY_UP 6
-#define PIN_JOY_DOWN 8
-#define PIN_JOY_LEFT 9
-#define PIN_JOY_RIGHT 10
-#define PIN_JOY_FIRE1 A0
-#define PIN_JOY_FIRE2 A3
-
-// Joystick signals
-#define ZX_JOY_FIRE 0
-#define ZX_JOY_FIRE2 1
-#define ZX_JOY_UP 2
-#define ZX_JOY_DOWN 3
-#define ZX_JOY_LEFT 4
-#define ZX_JOY_RIGHT 5
-#define ZX_JOY_A 6
-#define ZX_JOY_B 7
-
-// mouse commands
-#define CMD_MOUSE_X 0x0A
-#define CMD_MOUSE_Y 0x0B
-#define CMD_MOUSE_Z 0x0C
-
-// joystick commands
-#define CMD_JOY 0x0D
-
 // LED command
 #define CMD_LED_WRITE 0x0E
-
-// OSD commands
-#define CMD_OSD_CLS 0x0F
-#define CMD_OSD_SET_X 0x10
-#define CMD_OSD_SET_Y 0x11
-#define CMD_OSD_PUT_C 0x12
-#define CMD_OSD_ATTR  0x13
-
 
 // INIT command
 #define CMD_INIT_REQ 0xFD // init req

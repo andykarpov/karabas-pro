@@ -178,6 +178,11 @@ void ZXOSD::handle()
       break;
     }
   }
+
+  // empty keyboard matrix in overlay mode before transmitting it onto FPGA side
+  if (zxkbd->getIsOsdOverlay()) {
+    zxkbd->clear(ZX_MATRIX_SIZE);
+  }
 }
 
 void ZXOSD::setFpgaCfg(uint8_t cfg) {
@@ -187,6 +192,11 @@ void ZXOSD::setFpgaCfg(uint8_t cfg) {
 void ZXOSD::setFpgaBuildNum(uint8_t pos, uint8_t data) {
   fpga_build_num[pos] = data;
 }
+
+void ZXOSD::setAvrBuildNum(char *data) {
+  avr_build_num = data;
+}
+
 
 void ZXOSD::printHeader()
 {
@@ -227,8 +237,7 @@ void ZXOSD::printHeader()
   }
 
   osd->setPos(0,2);
-  osd->print(F("FPGA build"));
-  osd->setPos(12,2);
+  osd->print(F("Build "));
   osd->write(fpga_build_num[0]);
   osd->write(fpga_build_num[1]);
   osd->write(fpga_build_num[2]);
@@ -238,10 +247,11 @@ void ZXOSD::printHeader()
   osd->write(fpga_build_num[6]);
   osd->write(fpga_build_num[7]);
 
-/*  osd->setPos(0,3);
-  osd->print(F("AVR build"));
-  osd->setPos(12,3);
-  osd->print(BUILD_VER);*/
+  osd->setPos(0,3);
+  osd->print(F("AVR"));
+  osd->setPos(6,3);
+  osd->print(avr_build_num);
+//  osd->print(BUILD_VER);
 }
 
 // init osd

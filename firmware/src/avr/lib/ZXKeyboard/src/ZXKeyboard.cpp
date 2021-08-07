@@ -92,7 +92,7 @@ void ZXKeyboard::pushCapsedKey(int key)
       }
     }
   }
-  if (!found && capsed_keys_size < 20) {
+  if (!found && capsed_keys_size < 10) {
     capsed_keys[capsed_keys_size] = key;
     capsed_keys_size++;
   }
@@ -102,7 +102,7 @@ void ZXKeyboard::popCapsedKey(int key)
 {
   int i = 0;
   int j = 0;
-  int tmp_array[20] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+  int tmp_array[10] = {0,0,0,0,0,0,0,0,0,0};
   if (capsed_keys_size > 0) {
     for (i=0; i<capsed_keys_size; i++) {
       if (capsed_keys[i] != key) {

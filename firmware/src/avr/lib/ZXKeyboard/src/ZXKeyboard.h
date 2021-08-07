@@ -182,7 +182,7 @@ private:
   bool cursor_right = false;
   bool is_enter = false;
   bool is_esc = false;
-  int capsed_keys[20] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+  int capsed_keys[10] = {0,0,0,0,0,0,0,0,0,0};
   int capsed_keys_size = 0;
   typedef struct {
     uint8_t key;
