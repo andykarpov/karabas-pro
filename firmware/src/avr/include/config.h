@@ -10,7 +10,7 @@
 #endif
 
 #ifndef BUILD_VER
-#define BUILD_VER "DEVBUILD"
+#define BUILD_VER DEVBUILD
 #endif
 
 // ---- Pins for Atmega328
