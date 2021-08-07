@@ -31,8 +31,11 @@
 class ZXOSD
 {
 
+  using spi_cb = void (*)(uint8_t addr, uint8_t data); // alias function pointer
+
 private:
-	OSD *osd;
+  spi_cb action;
+	OSD osd;
   ZXKeyboard *zxkbd;
   ZXRTC *zxrtc;
   bool is_started = false;
@@ -88,7 +91,7 @@ public:
 
   ZXOSD();
 
-  void begin(OSD *osd_, ZXKeyboard *zxkbd_, ZXRTC *zxrtc_); // TODO: zxmouse, zxjoy
+  void begin(spi_cb act, ZXKeyboard *zxkbd_, ZXRTC *zxrtc_); // TODO: zxmouse, zxjoy
   bool started();
   void handle();
 

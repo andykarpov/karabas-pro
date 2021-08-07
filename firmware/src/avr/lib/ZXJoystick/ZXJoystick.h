@@ -23,7 +23,6 @@
 #include <avr/pgmspace.h>
 #include <ZXJoystick.h>
 #include <SegaController.h>
-#include <ZXKeyboard.h>
 
 // joystick
 #define PIN_JOY_UP 6
@@ -57,7 +56,6 @@ class ZXJoystick
 private:
 
   SegaController sega;
-  ZXKeyboard *zxkbd;
   spi_cb action;
   osd_cb event;
   bool is_started = false;
@@ -77,9 +75,9 @@ public:
 
   ZXJoystick();
 
-  void begin(ZXKeyboard *kbd, spi_cb act, osd_cb evt);
+  void begin(spi_cb act, osd_cb evt);
   bool started();
-  void handle();
+  void handle(bool joy_type);
 };
 
 #endif // __ZXJOY_H__

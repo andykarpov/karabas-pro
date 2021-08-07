@@ -22,7 +22,9 @@
 // Project headers
 #include <avr/pgmspace.h>
 #include <PS2Mouse.h>
-#include <ZXKeyboard.h>
+
+#define PIN_MOUSE_CLK 3 // pin 26 (CLKM)
+#define PIN_MOUSE_DAT 5 // pin 25 (DATM)
 
 #define MOUSE_POLL_INTERVAL 10 // ms
 #define MOUSE_SWAP_INTERVAL 1000 // ms
@@ -48,11 +50,11 @@ private:
 
   spi_cb action;
   osd_cb event;
-  PS2Mouse *mice;
-  ZXKeyboard *zxkbd;
+  PS2Mouse mice;
   bool is_started = false;
 
   bool mouse_present = false; // mouse present flag (detected by signal change on CLKM pin)
+  bool mouse_swap = false;
   bool ms_btn1 = false;
   bool ms_btn2 = false;
   bool ms_btn3 = false;
@@ -79,13 +81,16 @@ public:
 
   ZXMouse();
 
-  void begin(PS2Mouse *mice_, ZXKeyboard *kbd, spi_cb act, osd_cb evt);
+  void begin(spi_cb act, osd_cb evt);
   bool started();
-  void handle();
+  void handle(bool menu);
 
   uint8_t getX();
   uint8_t getY();
   uint8_t getZ();
+
+  bool getMouseSwap();
+  void setMouseSwap(bool val);
 
 };
 

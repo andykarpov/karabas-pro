@@ -1,9 +1,6 @@
 #ifndef config_h
 #define config_h
 
-#define DEBUG_MODE 1
-#define DEBUG_TIME 0
-
 #ifndef USE_HW_BUTTONS
 #define USE_HW_BUTTONS 1
 #endif
@@ -17,11 +14,6 @@
 #endif
 
 // ---- Pins for Atmega328
-#define PIN_KBD_CLK 2 // pin 28 (CLKK)
-#define PIN_KBD_DAT 4 // pin 27 (DATK)
-
-#define PIN_MOUSE_CLK 3 // pin 26 (CLKM)
-#define PIN_MOUSE_DAT 5 // pin 25 (DATM)
 
 // 13,12,11 - SPI
 #define PIN_SCK 13

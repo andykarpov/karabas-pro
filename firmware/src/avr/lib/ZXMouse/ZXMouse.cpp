@@ -11,13 +11,10 @@
 #include <avr/pgmspace.h>
 // Framework headers
 // Library headers
-#include <SPI.h>
+#include <Arduino.h>
 // Project headers
 // This component's header
 #include <ZXMouse.h>
-#include <Arduino.h>
-#include <utils.h>
-#include <EEPROM.h>
 
 /****************************************************************************/
 
@@ -27,12 +24,15 @@ ZXMouse::ZXMouse(void)
 
 /****************************************************************************/
 
-void ZXMouse::begin(PS2Mouse *mice_, ZXKeyboard *kbd, spi_cb act, osd_cb evt)
+void ZXMouse::begin(spi_cb act, osd_cb evt)
 {
   action = act;
   event = evt;
-  mice = mice_;
-  zxkbd = kbd;
+
+  pinMode(PIN_MOUSE_CLK, INPUT_PULLUP);
+  pinMode(PIN_MOUSE_DAT, INPUT_PULLUP);
+
+  mice.begin(PIN_MOUSE_CLK, PIN_MOUSE_DAT);
 
   mouse_tries = MOUSE_INIT_TRIES;
   init();
@@ -57,7 +57,7 @@ uint8_t ZXMouse::getZ() {
   return mouse_z;
 }
 
-void ZXMouse::handle()
+void ZXMouse::handle(bool menu)
 {
   unsigned long n = millis();
 
@@ -72,7 +72,7 @@ void ZXMouse::handle()
   #if MOUSE_POLL_TYPE == 1
   if (mouse_present && n - t > MOUSE_POLL_INTERVAL) {
 
-    MouseData m = mice->readData();
+    MouseData m = mice.readData();
 
     mouse_new_packet = !mouse_new_packet;
     mouse_x = m.position.x;
@@ -82,8 +82,8 @@ void ZXMouse::handle()
     ms_btn1 = bitRead(m.status, 0);
     ms_btn2 = bitRead(m.status, 1);
     ms_btn3 = bitRead(m.status, 2);
-    bitWrite(mouse_z, 4, zxkbd->getMouseSwap() ? ms_btn2 : ms_btn1); // left
-    bitWrite(mouse_z, 5, zxkbd->getMouseSwap() ? ms_btn1 : ms_btn2); // right
+    bitWrite(mouse_z, 4, mouse_swap ? ms_btn2 : ms_btn1); // left
+    bitWrite(mouse_z, 5, mouse_swap ? ms_btn1 : ms_btn2); // right
     bitWrite(mouse_z, 6, ms_btn3); // middle
     bitWrite(mouse_z, 7, mouse_new_packet);
 
@@ -93,8 +93,8 @@ void ZXMouse::handle()
   }
   #else
   // mouse stream report read
-  if (mice->reportAvailable() > 0 ) {
-    MouseData m = mice->readReport();
+  if (mice.reportAvailable() > 0 ) {
+    MouseData m = mice.readReport();
 
       mouse_new_packet = !mouse_new_packet;
       mouse_x = m.position.x;
@@ -104,8 +104,8 @@ void ZXMouse::handle()
       ms_btn1 = bitRead(m.status, 0);
       ms_btn2 = bitRead(m.status, 1);
       ms_btn3 = bitRead(m.status, 2);
-      bitWrite(mouse_z, 4, zxkbd->getMouseSwap() ? ms_btn2 : ms_btn1); // left
-      bitWrite(mouse_z, 5, zxkbd->getMouseSwap() ? ms_btn1 : ms_btn2); // right
+      bitWrite(mouse_z, 4, mouse_swap ? ms_btn2 : ms_btn1); // left
+      bitWrite(mouse_z, 5, mouse_swap ? ms_btn1 : ms_btn2); // right
       bitWrite(mouse_z, 6, ms_btn3); // middle
       bitWrite(mouse_z, 7, mouse_new_packet);
   
@@ -117,8 +117,8 @@ void ZXMouse::handle()
 
   // swap mouse buttons
   if (mouse_present && n - ts > MOUSE_SWAP_INTERVAL) {
-    if (zxkbd->getIsMenu() && ms_btn1) {
-      zxkbd->setMouseSwap(!zxkbd->getMouseSwap());
+    if (menu && ms_btn1) {
+      mouse_swap = !mouse_swap;
       event(EVENT_OSD_MOUSE_SWAPPED);
     }
     ts = n;
@@ -136,10 +136,20 @@ void ZXMouse::transmit()
 void ZXMouse::init()
 {
 #if (MOUSE_POLL_TYPE == 1)
-  mouse_present = mice->initialize();
+  mouse_present = mice.initialize();
 #else 
-  mouse_present = mice->streamInitialize();
+  mouse_present = mice.streamInitialize();
 #endif
+}
+
+bool ZXMouse::getMouseSwap()
+{
+  return mouse_swap;
+}
+
+void ZXMouse::setMouseSwap(bool val)
+{
+  mouse_swap = val;
 }
 
 /****************************************************************************/

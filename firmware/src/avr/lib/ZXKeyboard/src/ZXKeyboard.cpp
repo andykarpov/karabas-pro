@@ -26,11 +26,15 @@ ZXKeyboard::ZXKeyboard(void)
 
 /****************************************************************************/
 
-void ZXKeyboard::begin(PS2KeyAdvanced *ps2kbd, spi_cb act, event_cb evt)
+void ZXKeyboard::begin(spi_cb act, event_cb evt)
 {
-  kbd = ps2kbd;
   action = act;
   event = evt;
+
+  pinMode(PIN_KBD_CLK, INPUT_PULLUP);
+  pinMode(PIN_KBD_DAT, INPUT_PULLUP);
+
+  kbd.begin(PIN_KBD_DAT, PIN_KBD_CLK);
 
     // clear full matrix
   clear(ZX_MATRIX_FULL_SIZE);
@@ -51,8 +55,8 @@ void ZXKeyboard::handle(void)
   unsigned long n = millis();
   uint16_t c = 0;
 
-	if (kbd->available()) {
-    c = kbd->read();
+	if (kbd.available()) {
+    c = kbd.read();
     fill(c, n);
     if (osd_overlay) {
       event(EVENT_OSD_SCANCODE, c);

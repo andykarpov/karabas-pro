@@ -23,6 +23,9 @@
 #include <avr/pgmspace.h>
 #include <PS2KeyAdvanced.h>
 
+#define PIN_KBD_CLK 2 // pin 28 (CLKK)
+#define PIN_KBD_DAT 4 // pin 27 (DATK)
+
 #define ZX_MATRIX_FULL_SIZE 72 // 40 keys + service signals
 #define ZX_MATRIX_SIZE 41 // only mechanical keys state + bit6
 
@@ -149,7 +152,7 @@ class ZXKeyboard
   using event_cb = void (*)(uint8_t event_type, uint16_t scancode);
 
 private:
-  PS2KeyAdvanced *kbd;
+  PS2KeyAdvanced kbd;
   spi_cb action;
   event_cb event;
   bool is_started = false;
@@ -230,7 +233,7 @@ public:
 
   ZXKeyboard();
 
-  void begin(PS2KeyAdvanced *ps2kbd, spi_cb act, event_cb evt);
+  void begin(spi_cb act, event_cb evt);
   bool started();
   void handle();
 

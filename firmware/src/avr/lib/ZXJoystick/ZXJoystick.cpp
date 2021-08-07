@@ -11,12 +11,10 @@
 #include <avr/pgmspace.h>
 // Framework headers
 // Library headers
-#include <SPI.h>
+#include <Arduino.h>
 // Project headers
 // This component's header
 #include <ZXJoystick.h>
-#include <ZXKeyboard.h>
-#include <Arduino.h>
 
 /****************************************************************************/
 
@@ -26,11 +24,10 @@ ZXJoystick::ZXJoystick(void)
 
 /****************************************************************************/
 
-void ZXJoystick::begin(ZXKeyboard *kbd, spi_cb act, osd_cb evt)
+void ZXJoystick::begin(spi_cb act, osd_cb evt)
 {
   action = act;
   event = evt;
-  zxkbd = kbd;
 
   pinMode(PIN_JOY_RIGHT, OUTPUT);
   digitalWrite(PIN_JOY_RIGHT, LOW);
@@ -53,7 +50,7 @@ bool ZXJoystick::started()
   return is_started;
 }
 
-void ZXJoystick::handle()
+void ZXJoystick::handle(bool joy_type)
 {
   unsigned long n = millis();
 
@@ -67,7 +64,7 @@ void ZXJoystick::handle()
   // set JOY_RIGHT pin as input to read joystick signal
   pinMode(PIN_JOY_RIGHT, INPUT_PULLUP);
 
-  if (zxkbd->getJoyType() == false) {
+  if (joy_type == false) {
     // kempston joy read
     joy[ZX_JOY_UP] = digitalRead(PIN_JOY_UP) == LOW;
     joy[ZX_JOY_DOWN] = digitalRead(PIN_JOY_DOWN) == LOW;
@@ -109,18 +106,16 @@ void ZXJoystick::handle()
     last_joy[6] = joy[6];
     last_joy[7] = joy[7];
 
-    if (zxkbd->getIsOsdOverlay()) {
-      uint8_t joy_byte = 0;
-      bitWrite(joy_byte, 7, joy[ZX_JOY_B]);
-      bitWrite(joy_byte, 6, joy[ZX_JOY_A]);
-      bitWrite(joy_byte, 5, joy[ZX_JOY_FIRE2]);
-      bitWrite(joy_byte, 4, joy[ZX_JOY_FIRE]);
-      bitWrite(joy_byte, 3, joy[ZX_JOY_UP]);
-      bitWrite(joy_byte, 2, joy[ZX_JOY_DOWN]);
-      bitWrite(joy_byte, 1, joy[ZX_JOY_LEFT]);
-      bitWrite(joy_byte, 0, joy[ZX_JOY_RIGHT]);
-      event(EVENT_OSD_JOY_DATA, joy_byte);
-    }
+    uint8_t joy_byte = 0;
+    bitWrite(joy_byte, 7, joy[ZX_JOY_B]);
+    bitWrite(joy_byte, 6, joy[ZX_JOY_A]);
+    bitWrite(joy_byte, 5, joy[ZX_JOY_FIRE2]);
+    bitWrite(joy_byte, 4, joy[ZX_JOY_FIRE]);
+    bitWrite(joy_byte, 3, joy[ZX_JOY_UP]);
+    bitWrite(joy_byte, 2, joy[ZX_JOY_DOWN]);
+    bitWrite(joy_byte, 1, joy[ZX_JOY_LEFT]);
+    bitWrite(joy_byte, 0, joy[ZX_JOY_RIGHT]);
+    event(EVENT_OSD_JOY_DATA, joy_byte);
   }
 
   // transmit joy matrix

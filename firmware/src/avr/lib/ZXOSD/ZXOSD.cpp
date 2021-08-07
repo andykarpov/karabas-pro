@@ -28,11 +28,14 @@ ZXOSD::ZXOSD(void)
 
 /****************************************************************************/
 
-void ZXOSD::begin(OSD *osd_, ZXKeyboard *zxkbd_, ZXRTC *zxrtc_) // todo: zxmouse, zxjoy
+void ZXOSD::begin(spi_cb act, ZXKeyboard *zxkbd_, ZXRTC *zxrtc_) // todo: zxmouse, zxjoy
 {
-  osd = osd_;
   zxkbd = zxkbd_;
   zxrtc = zxrtc_;
+  action = act;
+
+  osd.begin(action);
+
   is_started = true;
 }
 
@@ -201,20 +204,20 @@ void ZXOSD::setAvrBuildNum(char *data) {
 void ZXOSD::printHeader()
 {
   // OSD Header
-  osd->setPos(0,0);
-  osd->setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
-  osd->print(F("Karabas Pro"));
+  osd.setPos(0,0);
+  osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
+  osd.print(F("Karabas Pro"));
 
-  osd->setPos(12,0);
+  osd.setPos(12,0);
   // board revision
   switch (fpga_cfg) {
     case 0:
     case 1:
-      osd->print(F("Rev.A"));
+      osd.print(F("Rev.A"));
       break;
     case 4:
     case 5:
-      osd->print(F("Rev.DS"));
+      osd.print(F("Rev.DS"));
       break;
   }
 
@@ -222,36 +225,36 @@ void ZXOSD::printHeader()
 /*  switch (fpga_cfg) {
     case 0:
     case 4:
-      osd->print(F("TDA1543"));
+      osd.print(F("TDA1543"));
       break;
     case 1:
     case 5:
-      osd->print(F("TDA1543A"));
+      osd.print(F("TDA1543A"));
       break;
   }
 */
 
-  osd->setPos(0,1);
+  osd.setPos(0,1);
   for (uint8_t i=0; i<32; i++) {
-    osd->print(F("_"));
+    osd.print(F("_"));
   }
 
-  osd->setPos(0,2);
-  osd->print(F("Build "));
-  osd->write(fpga_build_num[0]);
-  osd->write(fpga_build_num[1]);
-  osd->write(fpga_build_num[2]);
-  osd->write(fpga_build_num[3]);
-  osd->write(fpga_build_num[4]);
-  osd->write(fpga_build_num[5]);
-  osd->write(fpga_build_num[6]);
-  osd->write(fpga_build_num[7]);
+  osd.setPos(0,2);
+  osd.print(F("Build "));
+  osd.write(fpga_build_num[0]);
+  osd.write(fpga_build_num[1]);
+  osd.write(fpga_build_num[2]);
+  osd.write(fpga_build_num[3]);
+  osd.write(fpga_build_num[4]);
+  osd.write(fpga_build_num[5]);
+  osd.write(fpga_build_num[6]);
+  osd.write(fpga_build_num[7]);
 
-  osd->setPos(0,3);
-  osd->print(F("AVR"));
-  osd->setPos(6,3);
-  osd->print(avr_build_num);
-//  osd->print(BUILD_VER);
+  osd.setPos(0,3);
+  osd.print(F("AVR"));
+  osd.setPos(6,3);
+  osd.print(avr_build_num);
+//  osd.print(BUILD_VER);
 }
 
 // init osd
@@ -259,132 +262,132 @@ void ZXOSD::initOverlay()
 {
   osd_state = state_main;
 
-  osd->setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
-  osd->clear();
+  osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
+  osd.clear();
 
   printHeader();
 
   // ROM Bank
-  osd->setColor(OSD::COLOR_GREEN_I, OSD::COLOR_BLACK);
-  osd->setPos(0,5); osd->print(F("ROM Bank:"));
+  osd.setColor(OSD::COLOR_GREEN_I, OSD::COLOR_BLACK);
+  osd.setPos(0,5); osd.print(F("ROM Bank:"));
   updateRombank();
-  osd->setColor(OSD::COLOR_CYAN_I, OSD::COLOR_BLACK);
-  osd->setPos(20,5); osd->print(F("Menu+F1-F4"));
+  osd.setColor(OSD::COLOR_CYAN_I, OSD::COLOR_BLACK);
+  osd.setPos(20,5); osd.print(F("Menu+F1-F4"));
 
   // Turbo FDC
-  osd->setColor(OSD::COLOR_GREEN_I, OSD::COLOR_BLACK);
-  osd->setPos(0,6); osd->print(F("TurboFDC:"));
+  osd.setColor(OSD::COLOR_GREEN_I, OSD::COLOR_BLACK);
+  osd.setPos(0,6); osd.print(F("TurboFDC:"));
   updateTurbofdc();
-  osd->setColor(OSD::COLOR_CYAN_I, OSD::COLOR_BLACK);
-  osd->setPos(20,6); osd->print(F("Menu+F5"));
+  osd.setColor(OSD::COLOR_CYAN_I, OSD::COLOR_BLACK);
+  osd.setPos(20,6); osd.print(F("Menu+F5"));
 
   // Covox
-  osd->setColor(OSD::COLOR_GREEN_I, OSD::COLOR_BLACK);
-  osd->setPos(0,7); osd->print(F("Covox:"));
+  osd.setColor(OSD::COLOR_GREEN_I, OSD::COLOR_BLACK);
+  osd.setPos(0,7); osd.print(F("Covox:"));
   updateCovox();
-  osd->setColor(OSD::COLOR_CYAN_I, OSD::COLOR_BLACK);
-  osd->setPos(20,7); osd->print(F("Menu+F6"));
+  osd.setColor(OSD::COLOR_CYAN_I, OSD::COLOR_BLACK);
+  osd.setPos(20,7); osd.print(F("Menu+F6"));
 
   // Stereo
-  osd->setColor(OSD::COLOR_GREEN_I, OSD::COLOR_BLACK);
-  osd->setPos(0,8); osd->print(F("PSG mix:"));
+  osd.setColor(OSD::COLOR_GREEN_I, OSD::COLOR_BLACK);
+  osd.setPos(0,8); osd.print(F("PSG mix:"));
   updateStereo();
-  osd->setColor(OSD::COLOR_CYAN_I, OSD::COLOR_BLACK);
-  osd->setPos(20,8); osd->print(F("Menu+F7"));
+  osd.setColor(OSD::COLOR_CYAN_I, OSD::COLOR_BLACK);
+  osd.setPos(20,8); osd.print(F("Menu+F7"));
 
   // SSG type
-  osd->setColor(OSD::COLOR_GREEN_I, OSD::COLOR_BLACK);
-  osd->setPos(0,9); osd->print(F("PSG type:"));
+  osd.setColor(OSD::COLOR_GREEN_I, OSD::COLOR_BLACK);
+  osd.setPos(0,9); osd.print(F("PSG type:"));
   updateSsg();
-  osd->setColor(OSD::COLOR_CYAN_I, OSD::COLOR_BLACK);
-  osd->setPos(20,9); osd->print(F("Menu+F8"));
+  osd.setColor(OSD::COLOR_CYAN_I, OSD::COLOR_BLACK);
+  osd.setPos(20,9); osd.print(F("Menu+F8"));
 
   // RGB/VGA
-  osd->setColor(OSD::COLOR_GREEN_I, OSD::COLOR_BLACK);
-  osd->setPos(0,10); osd->print(F("Video:"));
+  osd.setColor(OSD::COLOR_GREEN_I, OSD::COLOR_BLACK);
+  osd.setPos(0,10); osd.print(F("Video:"));
   updateVideo();
-  osd->setColor(OSD::COLOR_CYAN_I, OSD::COLOR_BLACK);
-  osd->setPos(20,10); osd->print(F("Menu+F9"));
+  osd.setColor(OSD::COLOR_CYAN_I, OSD::COLOR_BLACK);
+  osd.setPos(20,10); osd.print(F("Menu+F9"));
 
   // VSync
-  osd->setColor(OSD::COLOR_GREEN_I, OSD::COLOR_BLACK);
-  osd->setPos(0,11); osd->print(F("VSync:"));
+  osd.setColor(OSD::COLOR_GREEN_I, OSD::COLOR_BLACK);
+  osd.setPos(0,11); osd.print(F("VSync:"));
   updateVsync();
-  osd->setColor(OSD::COLOR_CYAN_I, OSD::COLOR_BLACK);
-  osd->setPos(20,11); osd->print(F("Menu+F10"));
+  osd.setColor(OSD::COLOR_CYAN_I, OSD::COLOR_BLACK);
+  osd.setPos(20,11); osd.print(F("Menu+F10"));
 
   // Turbo
-  osd->setColor(OSD::COLOR_GREEN_I, OSD::COLOR_BLACK);
-  osd->setPos(0,12); osd->print(F("Turbo 2x:"));
+  osd.setColor(OSD::COLOR_GREEN_I, OSD::COLOR_BLACK);
+  osd.setPos(0,12); osd.print(F("Turbo 2x:"));
   updateTurbo();
-  osd->setColor(OSD::COLOR_CYAN_I, OSD::COLOR_BLACK);
-  osd->setPos(20,12); osd->print(F("Menu+F11"));
+  osd.setColor(OSD::COLOR_CYAN_I, OSD::COLOR_BLACK);
+  osd.setPos(20,12); osd.print(F("Menu+F11"));
 
   // FDC Swap
-  osd->setColor(OSD::COLOR_GREEN_I, OSD::COLOR_BLACK);
-  osd->setPos(0,13); osd->print(F("Swap FDD:"));
+  osd.setColor(OSD::COLOR_GREEN_I, OSD::COLOR_BLACK);
+  osd.setPos(0,13); osd.print(F("Swap FDD:"));
   updateSwapAB();
-  osd->setColor(OSD::COLOR_CYAN_I, OSD::COLOR_BLACK);
-  osd->setPos(20,13); osd->print(F("Menu+Tab"));
+  osd.setColor(OSD::COLOR_CYAN_I, OSD::COLOR_BLACK);
+  osd.setPos(20,13); osd.print(F("Menu+Tab"));
 
   // Joy type
-  osd->setColor(OSD::COLOR_GREEN_I, OSD::COLOR_BLACK);
-  osd->setPos(0,14); osd->print(F("Joy type:"));
+  osd.setColor(OSD::COLOR_GREEN_I, OSD::COLOR_BLACK);
+  osd.setPos(0,14); osd.print(F("Joy type:"));
   updateJoystick();
-  osd->setColor(OSD::COLOR_CYAN_I, OSD::COLOR_BLACK);
-  osd->setPos(20,14); osd->print(F("Menu+J"));
+  osd.setColor(OSD::COLOR_CYAN_I, OSD::COLOR_BLACK);
+  osd.setPos(20,14); osd.print(F("Menu+J"));
 
   // Keyboard
-  osd->setColor(OSD::COLOR_GREEN_I, OSD::COLOR_BLACK);
-  osd->setPos(0,15); osd->print(F("Keyboard:"));
+  osd.setColor(OSD::COLOR_GREEN_I, OSD::COLOR_BLACK);
+  osd.setPos(0,15); osd.print(F("Keyboard:"));
   updateKeyboardType();
-  osd->setColor(OSD::COLOR_CYAN_I, OSD::COLOR_BLACK);
-  osd->setPos(20,15); osd->print(F("PrtScr"));
+  osd.setColor(OSD::COLOR_CYAN_I, OSD::COLOR_BLACK);
+  osd.setPos(20,15); osd.print(F("PrtScr"));
 
   // Pause
-  osd->setColor(OSD::COLOR_GREEN_I, OSD::COLOR_BLACK);
-  osd->setPos(0,16); osd->print(F("Pause:"));
+  osd.setColor(OSD::COLOR_GREEN_I, OSD::COLOR_BLACK);
+  osd.setPos(0,16); osd.print(F("Pause:"));
   updatePause();
-  osd->setColor(OSD::COLOR_CYAN_I, OSD::COLOR_BLACK);
-  osd->setPos(20,16); osd->print(F("Pause"));
+  osd.setColor(OSD::COLOR_CYAN_I, OSD::COLOR_BLACK);
+  osd.setPos(20,16); osd.print(F("Pause"));
 
   // Scancode
-  osd->setColor(OSD::COLOR_GREEN_I, OSD::COLOR_BLACK);
-  osd->setPos(0,18); osd->print(F("Scancode:"));
+  osd.setColor(OSD::COLOR_GREEN_I, OSD::COLOR_BLACK);
+  osd.setPos(0,18); osd.print(F("Scancode:"));
   updateScancode(0);
 
   // Mouse
-  osd->setColor(OSD::COLOR_GREEN_I, OSD::COLOR_BLACK);
-  osd->setPos(0,19); osd->print(F("Mouse:"));
+  osd.setColor(OSD::COLOR_GREEN_I, OSD::COLOR_BLACK);
+  osd.setPos(0,19); osd.print(F("Mouse:"));
   updateMouse(0,0,0);
 
   // Joy
-  osd->setColor(OSD::COLOR_GREEN_I, OSD::COLOR_BLACK);
-  osd->setPos(0,20); osd->print(F("Port #1F:"));
+  osd.setColor(OSD::COLOR_GREEN_I, OSD::COLOR_BLACK);
+  osd.setPos(0,20); osd.print(F("Port #1F:"));
   updateJoyState(0);
 
-  osd->setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
-  osd->setPos(20,19); osd->print(F("Press "));
-  osd->setColor(OSD::COLOR_CYAN_I, OSD::COLOR_FLASH);
-  osd->print(F("E"));
-  osd->setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
-  osd->print(F(" to "));
-  osd->setPos(20,20); osd->print(F("set up RTC"));
+  osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
+  osd.setPos(20,19); osd.print(F("Press "));
+  osd.setColor(OSD::COLOR_CYAN_I, OSD::COLOR_FLASH);
+  osd.print(F("E"));
+  osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
+  osd.print(F(" to "));
+  osd.setPos(20,20); osd.print(F("set up RTC"));
 
   // footer
-  osd->setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
-  osd->setPos(0,22); osd->print(F("Press "));
-  osd->setColor(OSD::COLOR_CYAN_I, OSD::COLOR_BLACK);
-  osd->print(F("Ctrl+Alt+Del"));
-  osd->setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
-  osd->print(F(" to reboot"));
+  osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
+  osd.setPos(0,22); osd.print(F("Press "));
+  osd.setColor(OSD::COLOR_CYAN_I, OSD::COLOR_BLACK);
+  osd.print(F("Ctrl+Alt+Del"));
+  osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
+  osd.print(F(" to reboot"));
 
-  osd->setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
-  osd->setPos(0,23); osd->print(F("Press "));
-  osd->setColor(OSD::COLOR_CYAN_I, OSD::COLOR_BLACK);
-  osd->print(F("Menu+ESC"));
-  osd->setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
-  osd->print(F(" to toggle OSD"));
+  osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
+  osd.setPos(0,23); osd.print(F("Press "));
+  osd.setColor(OSD::COLOR_CYAN_I, OSD::COLOR_BLACK);
+  osd.print(F("Menu+ESC"));
+  osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
+  osd.print(F(" to toggle OSD"));
 }
 
 // init rtc osd
@@ -392,64 +395,64 @@ void ZXOSD::initRtcOverlay()
 {
   zxrtc->fixInvalidTime(); // try to fix invalid time
 
-  osd->setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
-  osd->clear();
+  osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
+  osd.clear();
 
   printHeader();
 
-  osd->setPos(0,5);
-  osd->setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
-  osd->print(F("RTC setup:"));
+  osd.setPos(0,5);
+  osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
+  osd.print(F("RTC setup:"));
 
-  osd->setColor(OSD::COLOR_GREEN_I, OSD::COLOR_BLACK);
-  osd->setPos(0,7); osd->print(F("Hours:"));
+  osd.setColor(OSD::COLOR_GREEN_I, OSD::COLOR_BLACK);
+  osd.setPos(0,7); osd.print(F("Hours:"));
   updateRtcHour();
 
-  osd->setColor(OSD::COLOR_GREEN_I, OSD::COLOR_BLACK);
-  osd->setPos(0,8); osd->print(F("Minutes:"));
+  osd.setColor(OSD::COLOR_GREEN_I, OSD::COLOR_BLACK);
+  osd.setPos(0,8); osd.print(F("Minutes:"));
   updateRtcMinute();
 
-  osd->setColor(OSD::COLOR_GREEN_I, OSD::COLOR_BLACK);
-  osd->setPos(0,9); osd->print(F("Seconds:"));
+  osd.setColor(OSD::COLOR_GREEN_I, OSD::COLOR_BLACK);
+  osd.setPos(0,9); osd.print(F("Seconds:"));
   updateRtcSecond();
 
-  osd->setColor(OSD::COLOR_GREEN_I, OSD::COLOR_BLACK);
-  osd->setPos(0,11); osd->print(F("Day:"));
+  osd.setColor(OSD::COLOR_GREEN_I, OSD::COLOR_BLACK);
+  osd.setPos(0,11); osd.print(F("Day:"));
   updateRtcDay();
 
-  osd->setColor(OSD::COLOR_GREEN_I, OSD::COLOR_BLACK);
-  osd->setPos(0,12); osd->print(F("Month:"));
+  osd.setColor(OSD::COLOR_GREEN_I, OSD::COLOR_BLACK);
+  osd.setPos(0,12); osd.print(F("Month:"));
   updateRtcMonth();
 
-  osd->setColor(OSD::COLOR_GREEN_I, OSD::COLOR_BLACK);
-  osd->setPos(0,13); osd->print(F("Year:"));
+  osd.setColor(OSD::COLOR_GREEN_I, OSD::COLOR_BLACK);
+  osd.setPos(0,13); osd.print(F("Year:"));
   updateRtcYear();
 
-  osd->setColor(OSD::COLOR_GREEN_I, OSD::COLOR_BLACK);
-  osd->setPos(0,15); osd->print(F("DOW:"));
+  osd.setColor(OSD::COLOR_GREEN_I, OSD::COLOR_BLACK);
+  osd.setPos(0,15); osd.print(F("DOW:"));
   updateRtcDow();
 
-  osd->setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
-  osd->setPos(0, 17);
-  osd->print(F("Please use arrows "));
-  osd->setColor(OSD::COLOR_CYAN_I, OSD::COLOR_BLACK);
-  osd->write(17);
-  osd->setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
-  osd->print(F(" and "));
-  osd->setColor(OSD::COLOR_CYAN_I, OSD::COLOR_BLACK);
-  osd->write(16);
-  osd->setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
-  osd->setPos(0, 18);
-  osd->print(F("to change values, "));
-  osd->setColor(OSD::COLOR_CYAN_I, OSD::COLOR_BLACK);
-  osd->write(30);
-  osd->setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
-  osd->print(F(" and "));
-  osd->setColor(OSD::COLOR_CYAN_I, OSD::COLOR_BLACK);
-  osd->write(31);
-  osd->setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
-  osd->setPos(0, 19);
-  osd->print(F("to navigate by menu items"));
+  osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
+  osd.setPos(0, 17);
+  osd.print(F("Please use arrows "));
+  osd.setColor(OSD::COLOR_CYAN_I, OSD::COLOR_BLACK);
+  osd.write(17);
+  osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
+  osd.print(F(" and "));
+  osd.setColor(OSD::COLOR_CYAN_I, OSD::COLOR_BLACK);
+  osd.write(16);
+  osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
+  osd.setPos(0, 18);
+  osd.print(F("to change values, "));
+  osd.setColor(OSD::COLOR_CYAN_I, OSD::COLOR_BLACK);
+  osd.write(30);
+  osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
+  osd.print(F(" and "));
+  osd.setColor(OSD::COLOR_CYAN_I, OSD::COLOR_BLACK);
+  osd.write(31);
+  osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
+  osd.setPos(0, 19);
+  osd.print(F("to navigate by menu items"));
 
   popupFooter();
 }
@@ -457,38 +460,38 @@ void ZXOSD::initRtcOverlay()
 // init test osd
 void ZXOSD::initTestOverlay()
 {
-  osd->setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
-  osd->clear();
+  osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
+  osd.clear();
 
   printHeader();
 
-  osd->setPos(0,5);
-  osd->setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
-  osd->print(F("Color test:"));
+  osd.setPos(0,5);
+  osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
+  osd.print(F("Color test:"));
 
   uint8_t color = 0;
   for (uint8_t x = 0; x<32; x++) {
     for (uint8_t y = 7; y<22; y++) {
       color = x/2;
       switch (color) {
-        case 0: osd->setColor(OSD::COLOR_BLACK, OSD::COLOR_BLACK); break;
-        case 1: osd->setColor(OSD::COLOR_RED, OSD::COLOR_BLACK); break;
-        case 2: osd->setColor(OSD::COLOR_RED_I, OSD::COLOR_BLACK); break;
-        case 3: osd->setColor(OSD::COLOR_YELLOW, OSD::COLOR_BLACK); break;
-        case 4: osd->setColor(OSD::COLOR_YELLOW_I, OSD::COLOR_BLACK); break;
-        case 5: osd->setColor(OSD::COLOR_GREEN, OSD::COLOR_BLACK); break;
-        case 6: osd->setColor(OSD::COLOR_GREEN_I, OSD::COLOR_BLACK); break;
-        case 7: osd->setColor(OSD::COLOR_CYAN, OSD::COLOR_BLACK); break;
-        case 8: osd->setColor(OSD::COLOR_CYAN_I, OSD::COLOR_BLACK); break;
-        case 9: osd->setColor(OSD::COLOR_BLUE, OSD::COLOR_BLACK); break;
-        case 10: osd->setColor(OSD::COLOR_BLUE_I, OSD::COLOR_BLACK); break;
-        case 11: osd->setColor(OSD::COLOR_MAGENTA, OSD::COLOR_BLACK); break;
-        case 12: osd->setColor(OSD::COLOR_MAGENTA_I, OSD::COLOR_BLACK); break;
-        case 13: osd->setColor(OSD::COLOR_GREY, OSD::COLOR_BLACK); break;
-        case 14: osd->setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK); break;
-        case 15: osd->setColor(OSD::COLOR_BLACK, OSD::COLOR_BLACK); break;
+        case 0: osd.setColor(OSD::COLOR_BLACK, OSD::COLOR_BLACK); break;
+        case 1: osd.setColor(OSD::COLOR_RED, OSD::COLOR_BLACK); break;
+        case 2: osd.setColor(OSD::COLOR_RED_I, OSD::COLOR_BLACK); break;
+        case 3: osd.setColor(OSD::COLOR_YELLOW, OSD::COLOR_BLACK); break;
+        case 4: osd.setColor(OSD::COLOR_YELLOW_I, OSD::COLOR_BLACK); break;
+        case 5: osd.setColor(OSD::COLOR_GREEN, OSD::COLOR_BLACK); break;
+        case 6: osd.setColor(OSD::COLOR_GREEN_I, OSD::COLOR_BLACK); break;
+        case 7: osd.setColor(OSD::COLOR_CYAN, OSD::COLOR_BLACK); break;
+        case 8: osd.setColor(OSD::COLOR_CYAN_I, OSD::COLOR_BLACK); break;
+        case 9: osd.setColor(OSD::COLOR_BLUE, OSD::COLOR_BLACK); break;
+        case 10: osd.setColor(OSD::COLOR_BLUE_I, OSD::COLOR_BLACK); break;
+        case 11: osd.setColor(OSD::COLOR_MAGENTA, OSD::COLOR_BLACK); break;
+        case 12: osd.setColor(OSD::COLOR_MAGENTA_I, OSD::COLOR_BLACK); break;
+        case 13: osd.setColor(OSD::COLOR_GREY, OSD::COLOR_BLACK); break;
+        case 14: osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK); break;
+        case 15: osd.setColor(OSD::COLOR_BLACK, OSD::COLOR_BLACK); break;
       }
-      osd->setPos(x, y); osd->write(219);
+      osd.setPos(x, y); osd.write(219);
     }
   }
 
@@ -498,12 +501,12 @@ void ZXOSD::initTestOverlay()
 
 void ZXOSD::popupFooter() {
   // footer
-  osd->setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
-  osd->setPos(0,23); osd->print(F("Press "));
-  osd->setColor(OSD::COLOR_CYAN_I, OSD::COLOR_BLACK);
-  osd->print(F("ESC"));
-  osd->setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
-  osd->print(F(" to return"));
+  osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
+  osd.setPos(0,23); osd.print(F("Press "));
+  osd.setColor(OSD::COLOR_CYAN_I, OSD::COLOR_BLACK);
+  osd.print(F("ESC"));
+  osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
+  osd.print(F(" to return"));
 }
 
 void ZXOSD::handleRombank() {
@@ -737,16 +740,16 @@ void ZXOSD::updateRombank()
   uint8_t romset = zxkbd->getRombank();
 
   if (osd_main_state == state_main_rom_bank) 
-    osd->setColor(OSD::COLOR_BLACK, OSD::COLOR_MAGENTA_I);  
+    osd.setColor(OSD::COLOR_BLACK, OSD::COLOR_MAGENTA_I);  
   else 
-    osd->setColor(OSD::COLOR_MAGENTA_I, OSD::COLOR_BLACK);
+    osd.setColor(OSD::COLOR_MAGENTA_I, OSD::COLOR_BLACK);
 
-  osd->setPos(10,5);
+  osd.setPos(10,5);
   switch (romset) {
-    case 0: osd->print(F("Default")); break;
-    case 1: osd->print(F("PQ-DOS")); osd->setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK); osd->print(F(" ")); break;
-    case 2: osd->print(F("Flasher")); break;
-    case 3: osd->print(F("FDImage")); break;
+    case 0: osd.print(F("Default")); break;
+    case 1: osd.print(F("PQ-DOS")); osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK); osd.print(F(" ")); break;
+    case 2: osd.print(F("Flasher")); break;
+    case 3: osd.print(F("FDImage")); break;
   }
 }
 
@@ -755,16 +758,16 @@ void ZXOSD::updateTurbofdc() {
   if (osd_state != state_main) return;
 
   if (osd_main_state == state_main_turbofdc) 
-    osd->setColor(OSD::COLOR_BLACK, OSD::COLOR_MAGENTA_I);  
+    osd.setColor(OSD::COLOR_BLACK, OSD::COLOR_MAGENTA_I);  
   else 
-    osd->setColor(OSD::COLOR_MAGENTA_I, OSD::COLOR_BLACK);
+    osd.setColor(OSD::COLOR_MAGENTA_I, OSD::COLOR_BLACK);
 
-  osd->setPos(10,6);
+  osd.setPos(10,6);
   if (zxkbd->getTurbofdc()) { 
-    osd->print(F("On")); 
-    osd->setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK); osd->print(F(" "));
+    osd.print(F("On")); 
+    osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK); osd.print(F(" "));
   } else { 
-    osd->print(F("Off")); 
+    osd.print(F("Off")); 
   }
 }
 
@@ -773,16 +776,16 @@ void ZXOSD::updateCovox() {
   if (osd_state != state_main) return;
 
   if (osd_main_state == state_main_covox) 
-    osd->setColor(OSD::COLOR_BLACK, OSD::COLOR_MAGENTA_I);  
+    osd.setColor(OSD::COLOR_BLACK, OSD::COLOR_MAGENTA_I);  
   else 
-    osd->setColor(OSD::COLOR_MAGENTA_I, OSD::COLOR_BLACK);
+    osd.setColor(OSD::COLOR_MAGENTA_I, OSD::COLOR_BLACK);
 
-  osd->setPos(10,7);
+  osd.setPos(10,7);
   if (zxkbd->getCovox()) { 
-    osd->print(F("On"));
-    osd->setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK); osd->print(F(" ")); 
+    osd.print(F("On"));
+    osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK); osd.print(F(" ")); 
   } else { 
-    osd->print(F("Off")); 
+    osd.print(F("Off")); 
   }
 }
 
@@ -791,16 +794,16 @@ void ZXOSD::updateStereo() {
   if (osd_state != state_main) return;
 
   if (osd_main_state == state_main_stereo) 
-    osd->setColor(OSD::COLOR_BLACK, OSD::COLOR_MAGENTA_I);  
+    osd.setColor(OSD::COLOR_BLACK, OSD::COLOR_MAGENTA_I);  
   else 
-    osd->setColor(OSD::COLOR_MAGENTA_I, OSD::COLOR_BLACK);
+    osd.setColor(OSD::COLOR_MAGENTA_I, OSD::COLOR_BLACK);
 
-  osd->setPos(10,8);
+  osd.setPos(10,8);
   uint8_t stereo = zxkbd->getStereo();
   switch (stereo) {
-    case 1: osd->print(F("ABC")); osd->setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK); osd->print(F(" ")); break;
-    case 0: osd->print(F("ACB")); osd->setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK); osd->print(F(" ")); break;
-    default: osd->print(F("Mono")); 
+    case 1: osd.print(F("ABC")); osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK); osd.print(F(" ")); break;
+    case 0: osd.print(F("ACB")); osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK); osd.print(F(" ")); break;
+    default: osd.print(F("Mono")); 
   }
 }
 
@@ -809,12 +812,12 @@ void ZXOSD::updateSsg() {
   if (osd_state != state_main) return;
 
   if (osd_main_state == state_main_ssg) 
-    osd->setColor(OSD::COLOR_BLACK, OSD::COLOR_MAGENTA_I);  
+    osd.setColor(OSD::COLOR_BLACK, OSD::COLOR_MAGENTA_I);  
   else 
-    osd->setColor(OSD::COLOR_MAGENTA_I, OSD::COLOR_BLACK);
+    osd.setColor(OSD::COLOR_MAGENTA_I, OSD::COLOR_BLACK);
 
-  osd->setPos(10,9);
-  if (zxkbd->getSsg()) { osd->print(F("AY3-8912")); } else { osd->print(F("YM2149F")); osd->setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK); osd->print(F(" ")); }
+  osd.setPos(10,9);
+  if (zxkbd->getSsg()) { osd.print(F("AY3-8912")); } else { osd.print(F("YM2149F")); osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK); osd.print(F(" ")); }
 }
 
 void ZXOSD::updateVideo() {
@@ -822,12 +825,12 @@ void ZXOSD::updateVideo() {
   if (osd_state != state_main) return;
 
   if (osd_main_state == state_main_video) 
-    osd->setColor(OSD::COLOR_BLACK, OSD::COLOR_MAGENTA_I);  
+    osd.setColor(OSD::COLOR_BLACK, OSD::COLOR_MAGENTA_I);  
   else 
-    osd->setColor(OSD::COLOR_MAGENTA_I, OSD::COLOR_BLACK);
+    osd.setColor(OSD::COLOR_MAGENTA_I, OSD::COLOR_BLACK);
 
-  osd->setPos(10,10);
-  if (zxkbd->getVideo()) { osd->print(F("RGB 15kHz")); } else { osd->print(F("VGA 30kHz")); }
+  osd.setPos(10,10);
+  if (zxkbd->getVideo()) { osd.print(F("RGB 15kHz")); } else { osd.print(F("VGA 30kHz")); }
 }
 
 void ZXOSD::updateVsync() {
@@ -835,12 +838,12 @@ void ZXOSD::updateVsync() {
   if (osd_state != state_main) return;
 
   if (osd_main_state == state_main_sync) 
-    osd->setColor(OSD::COLOR_BLACK, OSD::COLOR_MAGENTA_I);  
+    osd.setColor(OSD::COLOR_BLACK, OSD::COLOR_MAGENTA_I);  
   else 
-    osd->setColor(OSD::COLOR_MAGENTA_I, OSD::COLOR_BLACK);
+    osd.setColor(OSD::COLOR_MAGENTA_I, OSD::COLOR_BLACK);
 
-  osd->setPos(10,11);
-  if (zxkbd->getVsync()) { osd->print(F("60 Hz")); } else { osd->print(F("50 Hz")); }
+  osd.setPos(10,11);
+  if (zxkbd->getVsync()) { osd.print(F("60 Hz")); } else { osd.print(F("50 Hz")); }
 }
 
 void ZXOSD::updateTurbo() {
@@ -848,16 +851,16 @@ void ZXOSD::updateTurbo() {
   if (osd_state != state_main) return;
 
   if (osd_main_state == state_main_turbo) 
-    osd->setColor(OSD::COLOR_BLACK, OSD::COLOR_MAGENTA_I);  
+    osd.setColor(OSD::COLOR_BLACK, OSD::COLOR_MAGENTA_I);  
   else 
-    osd->setColor(OSD::COLOR_MAGENTA_I, OSD::COLOR_BLACK);
+    osd.setColor(OSD::COLOR_MAGENTA_I, OSD::COLOR_BLACK);
 
-  osd->setPos(10,12);
+  osd.setPos(10,12);
   if (zxkbd->getTurbo()) { 
-    osd->print(F("On")); 
-    osd->setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK); osd->print(F(" ")); 
+    osd.print(F("On")); 
+    osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK); osd.print(F(" ")); 
   } else { 
-    osd->print(F("Off")); 
+    osd.print(F("Off")); 
   }
 }
 
@@ -866,15 +869,15 @@ void ZXOSD::updateSwapAB() {
   if (osd_state != state_main) return;
 
   if (osd_main_state == state_main_swap_ab) 
-    osd->setColor(OSD::COLOR_BLACK, OSD::COLOR_MAGENTA_I);  
+    osd.setColor(OSD::COLOR_BLACK, OSD::COLOR_MAGENTA_I);  
   else 
-    osd->setColor(OSD::COLOR_MAGENTA_I, OSD::COLOR_BLACK);
-  osd->setPos(10,13);
+    osd.setColor(OSD::COLOR_MAGENTA_I, OSD::COLOR_BLACK);
+  osd.setPos(10,13);
   if (zxkbd->getSwapAB()) { 
-    osd->print(F("On")); 
-    osd->setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK); osd->print(F(" ")); 
+    osd.print(F("On")); 
+    osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK); osd.print(F(" ")); 
   } else { 
-    osd->print(F("Off")); 
+    osd.print(F("Off")); 
   }
 }
 
@@ -883,15 +886,15 @@ void ZXOSD::updateJoystick() {
   if (osd_state != state_main) return;
 
   if (osd_main_state == state_main_joy_type) 
-    osd->setColor(OSD::COLOR_BLACK, OSD::COLOR_MAGENTA_I);  
+    osd.setColor(OSD::COLOR_BLACK, OSD::COLOR_MAGENTA_I);  
   else 
-    osd->setColor(OSD::COLOR_MAGENTA_I, OSD::COLOR_BLACK);
-  osd->setPos(10,14);
+    osd.setColor(OSD::COLOR_MAGENTA_I, OSD::COLOR_BLACK);
+  osd.setPos(10,14);
   if (zxkbd->getJoyType()) { 
-    osd->print(F("SEGA")); 
-    osd->setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK); osd->print(F(" ")); 
+    osd.print(F("SEGA")); 
+    osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK); osd.print(F(" ")); 
   } else { 
-    osd->print(F("Atari")); 
+    osd.print(F("Atari")); 
   }
 }
 
@@ -900,11 +903,11 @@ void ZXOSD::updateKeyboardType() {
   if (osd_state != state_main) return;
 
   if (osd_main_state == state_main_keyboard_type) 
-    osd->setColor(OSD::COLOR_BLACK, OSD::COLOR_MAGENTA_I);  
+    osd.setColor(OSD::COLOR_BLACK, OSD::COLOR_MAGENTA_I);  
   else 
-    osd->setColor(OSD::COLOR_MAGENTA_I, OSD::COLOR_BLACK);
-  osd->setPos(10,15);
-  if (zxkbd->getKeyboardType()) { osd->print(F("Profi XT")); } else { osd->print(F("Spectrum")); }
+    osd.setColor(OSD::COLOR_MAGENTA_I, OSD::COLOR_BLACK);
+  osd.setPos(10,15);
+  if (zxkbd->getKeyboardType()) { osd.print(F("Profi XT")); } else { osd.print(F("Spectrum")); }
 }
 
 void ZXOSD::updatePause() {
@@ -912,129 +915,129 @@ void ZXOSD::updatePause() {
   if (osd_state != state_main) return;
 
   if (osd_main_state == state_main_pause) 
-    osd->setColor(OSD::COLOR_BLACK, OSD::COLOR_MAGENTA_I);  
+    osd.setColor(OSD::COLOR_BLACK, OSD::COLOR_MAGENTA_I);  
   else 
-    osd->setColor(OSD::COLOR_MAGENTA_I, OSD::COLOR_BLACK);
+    osd.setColor(OSD::COLOR_MAGENTA_I, OSD::COLOR_BLACK);
 
-  osd->setPos(10,16);
-  if (zxkbd->getPause()) { osd->print(F("On")); osd->setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK); osd->print(F(" ")); } else { osd->print(F("Off")); }
+  osd.setPos(10,16);
+  if (zxkbd->getPause()) { osd.print(F("On")); osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK); osd.print(F(" ")); } else { osd.print(F("Off")); }
 }
 
 void ZXOSD::updateRtcHour() {
   if (osd_state != state_rtc) return;
   if (osd_rtc_state == state_rtc_hour) 
-    osd->setColor(OSD::COLOR_BLACK, OSD::COLOR_MAGENTA_I);  
+    osd.setColor(OSD::COLOR_BLACK, OSD::COLOR_MAGENTA_I);  
   else 
-    osd->setColor(OSD::COLOR_MAGENTA_I, OSD::COLOR_BLACK);
-  osd->setPos(10,7);
-  if (zxrtc->getHour() < 10) osd->print(F("0"));
-  osd->print(zxrtc->getHour(), DEC);
+    osd.setColor(OSD::COLOR_MAGENTA_I, OSD::COLOR_BLACK);
+  osd.setPos(10,7);
+  if (zxrtc->getHour() < 10) osd.print(F("0"));
+  osd.print(zxrtc->getHour(), DEC);
 }
 
 void ZXOSD::updateRtcMinute() {
   if (osd_state != state_rtc) return;
   if (osd_rtc_state == state_rtc_minute) 
-    osd->setColor(OSD::COLOR_BLACK, OSD::COLOR_MAGENTA_I);  
+    osd.setColor(OSD::COLOR_BLACK, OSD::COLOR_MAGENTA_I);  
   else 
-    osd->setColor(OSD::COLOR_MAGENTA_I, OSD::COLOR_BLACK);
-  osd->setPos(10,8);
-  if (zxrtc->getMinute() < 10) osd->print(F("0"));
-  osd->print(zxrtc->getMinute(), DEC);
+    osd.setColor(OSD::COLOR_MAGENTA_I, OSD::COLOR_BLACK);
+  osd.setPos(10,8);
+  if (zxrtc->getMinute() < 10) osd.print(F("0"));
+  osd.print(zxrtc->getMinute(), DEC);
 }
 
 void ZXOSD::updateRtcSecond() {
   if (osd_state != state_rtc) return;
   if (osd_rtc_state == state_rtc_second) 
-    osd->setColor(OSD::COLOR_BLACK, OSD::COLOR_MAGENTA_I);  
+    osd.setColor(OSD::COLOR_BLACK, OSD::COLOR_MAGENTA_I);  
   else 
-    osd->setColor(OSD::COLOR_MAGENTA_I, OSD::COLOR_BLACK);
-  osd->setPos(10,9);
-  if (zxrtc->getSecond() < 10) osd->print(F("0"));
-  osd->print(zxrtc->getSecond(), DEC);
+    osd.setColor(OSD::COLOR_MAGENTA_I, OSD::COLOR_BLACK);
+  osd.setPos(10,9);
+  if (zxrtc->getSecond() < 10) osd.print(F("0"));
+  osd.print(zxrtc->getSecond(), DEC);
 }
 
 void ZXOSD::updateRtcDay() {
   if (osd_state != state_rtc) return;
   if (osd_rtc_state == state_rtc_day) 
-    osd->setColor(OSD::COLOR_BLACK, OSD::COLOR_MAGENTA_I);  
+    osd.setColor(OSD::COLOR_BLACK, OSD::COLOR_MAGENTA_I);  
   else 
-    osd->setColor(OSD::COLOR_MAGENTA_I, OSD::COLOR_BLACK);
-  osd->setPos(10,11);
-  if (zxrtc->getDay() < 10) osd->print(F("0"));
-  osd->print(zxrtc->getDay(), DEC);
+    osd.setColor(OSD::COLOR_MAGENTA_I, OSD::COLOR_BLACK);
+  osd.setPos(10,11);
+  if (zxrtc->getDay() < 10) osd.print(F("0"));
+  osd.print(zxrtc->getDay(), DEC);
 }
 
 void ZXOSD::updateRtcMonth() {
   if (osd_state != state_rtc) return;
   if (osd_rtc_state == state_rtc_month) 
-    osd->setColor(OSD::COLOR_BLACK, OSD::COLOR_MAGENTA_I);  
+    osd.setColor(OSD::COLOR_BLACK, OSD::COLOR_MAGENTA_I);  
   else 
-    osd->setColor(OSD::COLOR_MAGENTA_I, OSD::COLOR_BLACK);
-  osd->setPos(10,12);
+    osd.setColor(OSD::COLOR_MAGENTA_I, OSD::COLOR_BLACK);
+  osd.setPos(10,12);
   switch (zxrtc->getMonth()) {
-    case 1:  osd->print(F("Jan")); break;
-    case 2:  osd->print(F("Feb")); break;
-    case 3:  osd->print(F("Mar")); break;
-    case 4:  osd->print(F("Apr")); break;
-    case 5:  osd->print(F("May")); break;
-    case 6:  osd->print(F("Jun")); break;
-    case 7:  osd->print(F("Jul")); break;
-    case 8:  osd->print(F("Aug")); break;
-    case 9:  osd->print(F("Sep")); break;
-    case 10: osd->print(F("Oct")); break;
-    case 11: osd->print(F("Nov")); break;
-    case 12: osd->print(F("Dec")); break;
-    default: osd->print(F("___")); 
+    case 1:  osd.print(F("Jan")); break;
+    case 2:  osd.print(F("Feb")); break;
+    case 3:  osd.print(F("Mar")); break;
+    case 4:  osd.print(F("Apr")); break;
+    case 5:  osd.print(F("May")); break;
+    case 6:  osd.print(F("Jun")); break;
+    case 7:  osd.print(F("Jul")); break;
+    case 8:  osd.print(F("Aug")); break;
+    case 9:  osd.print(F("Sep")); break;
+    case 10: osd.print(F("Oct")); break;
+    case 11: osd.print(F("Nov")); break;
+    case 12: osd.print(F("Dec")); break;
+    default: osd.print(F("___")); 
   }
 }
 
 void ZXOSD::updateRtcYear() {
   if (osd_state != state_rtc) return;
   if (osd_rtc_state == state_rtc_year) 
-    osd->setColor(OSD::COLOR_BLACK, OSD::COLOR_MAGENTA_I);  
+    osd.setColor(OSD::COLOR_BLACK, OSD::COLOR_MAGENTA_I);  
   else 
-    osd->setColor(OSD::COLOR_MAGENTA_I, OSD::COLOR_BLACK);
-  osd->setPos(10,13);
-  if (zxrtc->getYear() < 1000) osd->print(F("0"));
-  if (zxrtc->getYear() < 100) osd->print(F("0"));
-  if (zxrtc->getYear() < 10) osd->print(F("0"));
-  osd->print(zxrtc->getYear(), DEC);
+    osd.setColor(OSD::COLOR_MAGENTA_I, OSD::COLOR_BLACK);
+  osd.setPos(10,13);
+  if (zxrtc->getYear() < 1000) osd.print(F("0"));
+  if (zxrtc->getYear() < 100) osd.print(F("0"));
+  if (zxrtc->getYear() < 10) osd.print(F("0"));
+  osd.print(zxrtc->getYear(), DEC);
 }
 
 void ZXOSD::updateRtcDow() {
 if (osd_state != state_rtc) return;
   if (osd_rtc_state == state_rtc_dow) 
-    osd->setColor(OSD::COLOR_BLACK, OSD::COLOR_MAGENTA_I);  
+    osd.setColor(OSD::COLOR_BLACK, OSD::COLOR_MAGENTA_I);  
   else 
-    osd->setColor(OSD::COLOR_MAGENTA_I, OSD::COLOR_BLACK);
-  osd->setPos(10,15);
+    osd.setColor(OSD::COLOR_MAGENTA_I, OSD::COLOR_BLACK);
+  osd.setPos(10,15);
   switch (zxrtc->getWeek()) {
-    case 2: osd->print(F("Mon")); break;
-    case 3: osd->print(F("Tue")); break;
-    case 4: osd->print(F("Wed")); break;
-    case 5: osd->print(F("Thu")); break;
-    case 6: osd->print(F("Fri")); break;
-    case 7: osd->print(F("Sat")); break;
-    case 1: osd->print(F("Sun")); break;
-    default: osd->print(F("___")); 
+    case 2: osd.print(F("Mon")); break;
+    case 3: osd.print(F("Tue")); break;
+    case 4: osd.print(F("Wed")); break;
+    case 5: osd.print(F("Thu")); break;
+    case 6: osd.print(F("Fri")); break;
+    case 7: osd.print(F("Sat")); break;
+    case 1: osd.print(F("Sun")); break;
+    default: osd.print(F("___")); 
   }
 }
 
 void ZXOSD::updateTime() {
-  osd->setColor(OSD::COLOR_YELLOW_I, OSD::COLOR_BLACK);
-  osd->setPos(24,0);
-  if (zxrtc->getHour() < 10) osd->print("0"); 
-  osd->print(zxrtc->getHour(), DEC); osd->print(F(":"));
-  if (zxrtc->getMinute() < 10) osd->print("0"); 
-  osd->print(zxrtc->getMinute(), DEC); osd->print(F(":"));
-  if (zxrtc->getSecond() < 10) osd->print("0"); 
-  osd->print(zxrtc->getSecond(), DEC);
-  osd->setPos(22,2);
-  if (zxrtc->getDay() < 10) osd->print("0"); 
-  osd->print(zxrtc->getDay(), DEC); osd->print(F("."));
-  if (zxrtc->getMonth() < 10) osd->print("0"); 
-  osd->print(zxrtc->getMonth(), DEC); osd->print(F("."));
-  osd->print(zxrtc->getYear(), DEC);
+  osd.setColor(OSD::COLOR_YELLOW_I, OSD::COLOR_BLACK);
+  osd.setPos(24,0);
+  if (zxrtc->getHour() < 10) osd.print("0"); 
+  osd.print(zxrtc->getHour(), DEC); osd.print(F(":"));
+  if (zxrtc->getMinute() < 10) osd.print("0"); 
+  osd.print(zxrtc->getMinute(), DEC); osd.print(F(":"));
+  if (zxrtc->getSecond() < 10) osd.print("0"); 
+  osd.print(zxrtc->getSecond(), DEC);
+  osd.setPos(22,2);
+  if (zxrtc->getDay() < 10) osd.print("0"); 
+  osd.print(zxrtc->getDay(), DEC); osd.print(F("."));
+  if (zxrtc->getMonth() < 10) osd.print("0"); 
+  osd.print(zxrtc->getMonth(), DEC); osd.print(F("."));
+  osd.print(zxrtc->getYear(), DEC);
   if (osd_state == state_rtc) {
     updateRtcHour();
     updateRtcMinute();
@@ -1050,39 +1053,39 @@ void ZXOSD::updateScancode(uint16_t c) {
 
   if (osd_state != state_main) return;
 
-  osd->setColor(OSD::COLOR_RED_I, OSD::COLOR_BLACK);
-  osd->setPos(10,18);
-  if ((c >> 8) < 0x10) osd->print(F("0")); 
-  osd->print(c >> 8, HEX);
-  osd->print(F(" "));
-  if ((c & 0xFF) < 0x10) osd->print(F("0")); 
-  osd->print(c & 0xFF, HEX);
+  osd.setColor(OSD::COLOR_RED_I, OSD::COLOR_BLACK);
+  osd.setPos(10,18);
+  if ((c >> 8) < 0x10) osd.print(F("0")); 
+  osd.print(c >> 8, HEX);
+  osd.print(F(" "));
+  if ((c & 0xFF) < 0x10) osd.print(F("0")); 
+  osd.print(c & 0xFF, HEX);
 }
 
 void ZXOSD::updateMouse(uint8_t mouse_x, uint8_t mouse_y, uint8_t mouse_z) {
 
   if (osd_state != state_main) return;
 
-  osd->setColor(OSD::COLOR_RED_I, OSD::COLOR_BLACK);
-  osd->setPos(10,19);
-  if (mouse_x < 0x10) osd->print(F("0")); 
-  osd->print(mouse_x, HEX);
-  osd->print(F(" "));
-  if (mouse_y < 0x10) osd->print(F("0")); 
-  osd->print(mouse_y, HEX);
-  osd->print(F(" "));
-  if (mouse_z < 0x10) osd->print(F("0")); 
-  osd->print(mouse_z, HEX);  
+  osd.setColor(OSD::COLOR_RED_I, OSD::COLOR_BLACK);
+  osd.setPos(10,19);
+  if (mouse_x < 0x10) osd.print(F("0")); 
+  osd.print(mouse_x, HEX);
+  osd.print(F(" "));
+  if (mouse_y < 0x10) osd.print(F("0")); 
+  osd.print(mouse_y, HEX);
+  osd.print(F(" "));
+  if (mouse_z < 0x10) osd.print(F("0")); 
+  osd.print(mouse_z, HEX);  
 }
 
 void ZXOSD::updateJoyState(uint8_t joy) {
 
   if (osd_state != state_main) return;
 
-  osd->setColor(OSD::COLOR_RED_I, OSD::COLOR_BLACK);
-  osd->setPos(10,20);
-  if (joy < 0x10) osd->print(F("0")); 
-  osd->print(joy, HEX);  
+  osd.setColor(OSD::COLOR_RED_I, OSD::COLOR_BLACK);
+  osd.setPos(10,20);
+  if (joy < 0x10) osd.print(F("0")); 
+  osd.print(joy, HEX);  
 }
 
 /****************************************************************************/

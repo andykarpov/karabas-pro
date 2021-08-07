@@ -22,27 +22,19 @@ Ukraine, 2021
 */
 
 #include "Arduino.h"
-#include "PS2KeyAdvanced.h"
-#include "PS2Mouse.h"
-#include "SegaController.h"
-#include "SBWire.h"
-#include "OSD.h"
 #include <SPI.h>
 #include "config.h"
 #include "ZXKeyboard.h"
-#include "ZXRTC.h"
-#include "ZXOSD.h"
 #include "ZXMouse.h"
 #include "ZXJoystick.h"
+#include "ZXRTC.h"
+#include "ZXOSD.h"
 
-PS2KeyAdvanced kbd;
-PS2Mouse mice;
-OSD osd;
 ZXKeyboard zxkbd;
 ZXMouse zxmouse;
 ZXJoystick zxjoy;
-ZXOSD zxosd;
 ZXRTC zxrtc;
+ZXOSD zxosd;
 
 bool init_done = false; // init done
 bool blink_state = false;
@@ -152,10 +144,13 @@ void on_time()
   }
 }
 
+// update OSD by mouse events
 void on_mouse(uint8_t event_type)
 {
+  if ((!zxkbd.started()) || (!zxosd.started())) return;
    switch (event_type) {
     case ZXMouse::EVENT_OSD_MOUSE_SWAPPED:  
+      zxkbd.setMouseSwap(zxmouse.getMouseSwap());
       update_led(PIN_LED1, HIGH);
       delay(100);
       update_led(PIN_LED1, LOW);
@@ -172,8 +167,10 @@ void on_mouse(uint8_t event_type)
    }
 }
 
+// update OSD by joy events
 void on_joystick(uint8_t evt, uint8_t data)
 {
+  if ((!zxkbd.started()) || (!zxosd.started())) return;
   if (zxkbd.getIsOsdOverlay()) {
     zxosd.updateJoyState(data);
   }
@@ -207,23 +204,13 @@ void setup()
   pinMode(PIN_BTN1, INPUT_PULLUP);
   pinMode(PIN_BTN2, INPUT_PULLUP);
 
-  // ps/2
-
-  pinMode(PIN_KBD_CLK, INPUT_PULLUP);
-  pinMode(PIN_KBD_DAT, INPUT_PULLUP);
-
-  pinMode(PIN_MOUSE_CLK, INPUT_PULLUP);
-  pinMode(PIN_MOUSE_DAT, INPUT_PULLUP);
-
-  kbd.begin(PIN_KBD_DAT, PIN_KBD_CLK);
-  zxkbd.begin(&kbd, spi_send, on_keyboard);
+  zxkbd.begin(spi_send, on_keyboard);
   zxrtc.begin(spi_send, on_time);
-  osd.begin(spi_send);
-  zxosd.begin(&osd, &zxkbd, &zxrtc);
+  zxmouse.begin(spi_send, on_mouse);
+  zxmouse.setMouseSwap(zxkbd.getMouseSwap());
+  zxjoy.begin(spi_send, on_joystick);
+  zxosd.begin(spi_send, &zxkbd, &zxrtc);
   zxosd.setAvrBuildNum(BUILD_VER);
-  mice.begin(PIN_MOUSE_CLK, PIN_MOUSE_DAT);
-  zxmouse.begin(&mice, &zxkbd, spi_send, on_mouse);
-  zxjoy.begin(&zxkbd, spi_send, on_joystick);
 
   // waiting for init
   while (!init_done) {
@@ -253,8 +240,8 @@ void loop()
   zxosd.handle();
   zxkbd.transmit();
   zxrtc.handle();
-  zxmouse.handle();
-  zxjoy.handle();
+  zxmouse.handle(zxkbd.getIsMenu());
+  zxjoy.handle(zxkbd.getJoyType());
 
   // react on hardware buttons every 100ms
 #if USE_HW_BUTTONS
