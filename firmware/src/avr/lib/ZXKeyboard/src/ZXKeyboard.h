@@ -249,6 +249,7 @@ public:
   void doCaps();
   void doPause();
 
+  void toggleOsdOverlay();
   void setRombank(uint8_t bank);
   void toggleTurbofdc();
   void toggleCovox();

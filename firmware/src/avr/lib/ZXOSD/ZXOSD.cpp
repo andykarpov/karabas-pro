@@ -141,6 +141,10 @@ void ZXOSD::handle()
           osd_state = state_about;
         }
 
+        /*if (zxkbd->getIsEscape()) {
+          zxkbd->toggleOsdOverlay();
+        }*/
+
         switch (osd_main_state) {
           case state_main_rom_bank: handleRombank(); break;
           case state_main_turbofdc: handleTurbofdc(); break;
@@ -315,6 +319,8 @@ void ZXOSD::printHeader()
 
   osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
   printLine(4);
+
+  updateTime();
 }
 
 // init osd
@@ -604,21 +610,21 @@ void ZXOSD::initAboutOverlay()
   osd.setPos(0,10);
   osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
   osd.write(250);
-  osd.print(F(" solegstar"));
+  osd.print(F(" solegstar "));
   osd.setColor(OSD::COLOR_CYAN_I, OSD::COLOR_BLACK);
   osd.print(F(" FPGA, PCB"));
 
   osd.setPos(0,11);
   osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
   osd.write(250);
-  osd.print(F(" dr_max"));
+  osd.print(F(" dr_max    "));
   osd.setColor(OSD::COLOR_CYAN_I, OSD::COLOR_BLACK);
   osd.print(F(" FlashTool & FDImage"));
 
   osd.setPos(0,12);
   osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
   osd.write(250);
-  osd.print(F(" nihirash"));
+  osd.print(F(" nihirash  "));
   osd.setColor(OSD::COLOR_CYAN_I, OSD::COLOR_BLACK);
   osd.print(F(" Internet software"));
 

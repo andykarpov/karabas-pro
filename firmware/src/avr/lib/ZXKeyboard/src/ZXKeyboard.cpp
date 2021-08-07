@@ -132,6 +132,15 @@ void ZXKeyboard::processCapsedKey(int key, bool up)
   }
 }
 
+void ZXKeyboard::toggleOsdOverlay() {
+  osd_overlay = !osd_overlay;
+  matrix[ZX_K_OSD_OVERLAY] = osd_overlay;
+  // re-init osd
+  if (osd_overlay) {
+    event(EVENT_OSD_OVERLAY, 0);
+  }
+}
+
 void ZXKeyboard::setRombank(uint8_t bank) {
   switch (bank) {
     case 0: is_sw3 = false; is_sw4 = false; break;
@@ -359,13 +368,8 @@ void ZXKeyboard::fill(uint16_t sc, unsigned long n)
         if (!is_up) {
           // menu + ESC = OSD_OVERLAY
           if (n - tosd > 200) {
-            osd_overlay = !osd_overlay;
-            matrix[ZX_K_OSD_OVERLAY] = osd_overlay;
+            toggleOsdOverlay();
             tosd = n;
-            // re-init osd
-            if (osd_overlay) {
-              event(EVENT_OSD_OVERLAY, 0);
-            }
           }
         }
       } else {
