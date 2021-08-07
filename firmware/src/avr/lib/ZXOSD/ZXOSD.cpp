@@ -121,7 +121,7 @@ void ZXOSD::handle()
           if (osd_main_state > state_main_pause) osd_main_state = state_main_pause;
         }
 
-        if (zxkbd->getKey(ZX_K_E)) {
+        if (zxkbd->getKey(ZX_K_S) || zxkbd->getKey(ZX_K_E) || zxkbd->getKey(ZX_K_R)) {
           osd_state = state_rtc;
         }
 
@@ -240,6 +240,17 @@ void ZXOSD::printHeader()
   }
 
   osd.setPos(0,2);
+  osd.setColor(OSD::COLOR_RED_I, OSD::COLOR_BLACK);
+  osd.write(22);
+  osd.setColor(OSD::COLOR_YELLOW_I, OSD::COLOR_BLACK);
+  osd.write(22);
+  osd.setColor(OSD::COLOR_GREEN_I, OSD::COLOR_BLACK);
+  osd.write(22);
+  osd.setColor(OSD::COLOR_BLUE_I, OSD::COLOR_BLACK);
+  osd.write(22);
+
+  osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
+  osd.setPos(5,2);
   osd.print(F("Build "));
   osd.write(fpga_build_num[0]);
   osd.write(fpga_build_num[1]);
@@ -250,9 +261,9 @@ void ZXOSD::printHeader()
   osd.write(fpga_build_num[6]);
   osd.write(fpga_build_num[7]);
 
-  osd.setPos(0,3);
+  osd.setPos(5,3);
   osd.print(F("AVR"));
-  osd.setPos(6,3);
+  osd.setPos(11,3);
   osd.print(avr_build_num);
 //  osd.print(BUILD_VER);
 }
@@ -367,12 +378,19 @@ void ZXOSD::initOverlay()
   updateJoyState(0);
 
   osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
-  osd.setPos(20,19); osd.print(F("Press "));
+  osd.setPos(20,18); 
   osd.setColor(OSD::COLOR_CYAN_I, OSD::COLOR_FLASH);
-  osd.print(F("E"));
+  osd.print(F("S"));
   osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
-  osd.print(F(" to "));
-  osd.setPos(20,20); osd.print(F("set up RTC"));
+  osd.print(F("et up RTC"));
+
+  osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
+  osd.setPos(20,19); 
+  osd.print(F("Color "));
+  osd.setColor(OSD::COLOR_CYAN_I, OSD::COLOR_FLASH);
+  osd.print(F("T"));
+  osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
+  osd.print(F("est"));
 
   // footer
   osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
