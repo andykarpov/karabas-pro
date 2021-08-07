@@ -244,7 +244,7 @@ void ZXOSD::printLogo(uint8_t x, uint8_t y)
   osd.write(22);
 
   osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
-  osd.setPos(x+1,y+3);
+  osd.setPos(x,y+3);
   // board revision
   switch (fpga_cfg) {
     case 0:
@@ -280,9 +280,9 @@ void ZXOSD::printHeader()
     osd.print(F("_"));
   }*/
 
-  /*osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
-  osd.setPos(5,2);
-  osd.print(F("Build "));
+  osd.setColor(OSD::COLOR_BLUE_I, OSD::COLOR_BLACK);
+  osd.setPos(19,2);
+  osd.print(F("FPGA "));
   osd.write(fpga_build_num[0]);
   osd.write(fpga_build_num[1]);
   osd.write(fpga_build_num[2]);
@@ -291,13 +291,11 @@ void ZXOSD::printHeader()
   osd.write(fpga_build_num[5]);
   osd.write(fpga_build_num[6]);
   osd.write(fpga_build_num[7]);
-*/
-/*
-  osd.setPos(5,3);
-  osd.print(F("AVR"));
-  osd.setPos(11,3);
-  osd.print(avr_build_num);*/
 
+  osd.setColor(OSD::COLOR_BLUE_I, OSD::COLOR_BLACK);
+  osd.setPos(20,3);
+  osd.print(F("AVR "));
+  osd.print(avr_build_num);
 //  osd.print(BUILD_VER);
 }
 
@@ -1083,7 +1081,7 @@ void ZXOSD::updateTime() {
   osd.print(zxrtc->getMinute(), DEC); osd.print(F(":"));
   if (zxrtc->getSecond() < 10) osd.print("0"); 
   osd.print(zxrtc->getSecond(), DEC);
-  osd.setPos(22,2);
+  osd.setPos(22,1);
   if (zxrtc->getDay() < 10) osd.print("0"); 
   osd.print(zxrtc->getDay(), DEC); osd.print(F("."));
   if (zxrtc->getMonth() < 10) osd.print("0"); 
