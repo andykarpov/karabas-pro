@@ -200,15 +200,51 @@ void ZXOSD::setAvrBuildNum(char *data) {
   avr_build_num = data;
 }
 
-
-void ZXOSD::printHeader()
+void ZXOSD::printLogo(uint8_t x, uint8_t y)
 {
-  // OSD Header
-  osd.setPos(0,0);
+  osd.setPos(x,y);
   osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
-  osd.print(F("Karabas Pro"));
 
-  osd.setPos(12,0);
+  // karabas logo
+  osd.write(128); osd.write(129); 
+  osd.write(130); osd.write(131); 
+  osd.write(132); osd.write(133); 
+  osd.write(130); osd.write(131); 
+  osd.write(134); osd.write(135);
+  osd.write(130); osd.write(131); 
+  osd.write(136); osd.write(137); 
+
+  osd.setPos(x,y+1);
+  osd.write(144); osd.write(145); 
+  osd.write(146); osd.write(147); 
+  osd.write(148); osd.write(149); 
+  osd.write(146); osd.write(147); 
+  osd.write(150); osd.write(151);
+  osd.write(146); osd.write(147); 
+  osd.write(152); osd.write(153); 
+
+  osd.setPos(x+8, y+2);
+  osd.write(138); osd.write(139);
+  osd.write(132); osd.write(133); 
+  osd.write(140); osd.write(141); 
+
+  osd.setPos(x+8, y+3);
+  osd.write(154); osd.write(155);
+  osd.write(148); osd.write(149); 
+  osd.write(156); osd.write(157); 
+
+  osd.setPos(x+1, y+2);
+  osd.setColor(OSD::COLOR_RED_I, OSD::COLOR_BLACK);
+  osd.write(22);
+  osd.setColor(OSD::COLOR_YELLOW_I, OSD::COLOR_BLACK);
+  osd.write(22);
+  osd.setColor(OSD::COLOR_GREEN_I, OSD::COLOR_BLACK);
+  osd.write(22);
+  osd.setColor(OSD::COLOR_BLUE_I, OSD::COLOR_BLACK);
+  osd.write(22);
+
+  osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
+  osd.setPos(x+1,y+3);
   // board revision
   switch (fpga_cfg) {
     case 0:
@@ -220,6 +256,11 @@ void ZXOSD::printHeader()
       osd.print(F("Rev.DS"));
       break;
   }
+}
+
+void ZXOSD::printHeader()
+{
+  printLogo(0,0);
 
   // dac type
 /*  switch (fpga_cfg) {
@@ -234,22 +275,12 @@ void ZXOSD::printHeader()
   }
 */
 
-  osd.setPos(0,1);
+  /*osd.setPos(0,1);
   for (uint8_t i=0; i<32; i++) {
     osd.print(F("_"));
-  }
+  }*/
 
-  osd.setPos(0,2);
-  osd.setColor(OSD::COLOR_RED_I, OSD::COLOR_BLACK);
-  osd.write(22);
-  osd.setColor(OSD::COLOR_YELLOW_I, OSD::COLOR_BLACK);
-  osd.write(22);
-  osd.setColor(OSD::COLOR_GREEN_I, OSD::COLOR_BLACK);
-  osd.write(22);
-  osd.setColor(OSD::COLOR_BLUE_I, OSD::COLOR_BLACK);
-  osd.write(22);
-
-  osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
+  /*osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
   osd.setPos(5,2);
   osd.print(F("Build "));
   osd.write(fpga_build_num[0]);
@@ -260,11 +291,13 @@ void ZXOSD::printHeader()
   osd.write(fpga_build_num[5]);
   osd.write(fpga_build_num[6]);
   osd.write(fpga_build_num[7]);
-
+*/
+/*
   osd.setPos(5,3);
   osd.print(F("AVR"));
   osd.setPos(11,3);
-  osd.print(avr_build_num);
+  osd.print(avr_build_num);*/
+
 //  osd.print(BUILD_VER);
 }
 
