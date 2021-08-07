@@ -11,6 +11,7 @@ echo "Build version: $BUILD_VER"
 
 # without hw buttons
 pio run -t clean
+
 export PLATFORMIO_BUILD_FLAGS="-DUSE_HW_BUTTONS=0 -DMOUSE_POLL_TYPE=0 -DALLOW_LED_OVERRIDE=1 -DBUILD_VER=$BUILD_VER -Wall"
 pio run
 cp .pio/build/ATmega328/firmware.hex ../../releases/profi/avr/karabas_pro_revA.hex
