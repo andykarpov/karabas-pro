@@ -103,6 +103,14 @@ void ZXOSD::handle()
           osd_prev_state = osd_state;
           initTestOverlay();
         }
+      break;
+
+      case state_about:
+        if (osd_prev_state != osd_state) {
+          osd_prev_state = osd_state;
+          initAboutOverlay();
+        }
+      break;
     }
   }
 
@@ -127,6 +135,10 @@ void ZXOSD::handle()
 
         if (zxkbd->getKey(ZX_K_T)) {
           osd_state = state_test;
+        }
+
+        if (zxkbd->getKey(ZX_K_A)) {
+          osd_state = state_about;
         }
 
         switch (osd_main_state) {
@@ -173,6 +185,7 @@ void ZXOSD::handle()
       break;
 
       case state_test:
+      case state_about:
 
         if (zxkbd->getIsEscape()) {
           osd_state = state_main;
@@ -423,6 +436,13 @@ void ZXOSD::initOverlay()
   osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
   osd.print(F("est"));
 
+  osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
+  osd.setPos(20,20); 
+  osd.setColor(OSD::COLOR_CYAN_I, OSD::COLOR_FLASH);
+  osd.print(F("A"));
+  osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
+  osd.print(F("bout"));
+
   // footer
   osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
   osd.setPos(0,22); osd.print(F("Press "));
@@ -543,6 +563,79 @@ void ZXOSD::initTestOverlay()
       osd.setPos(x, y); osd.write(219);
     }
   }
+
+  popupFooter();
+
+}
+
+// init test osd
+void ZXOSD::initAboutOverlay()
+{
+  osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
+  osd.clear();
+
+  printHeader();
+
+  osd.setPos(0,5);
+  osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
+  osd.print(F("About:"));
+
+  osd.setPos(0,7);
+  osd.setColor(OSD::COLOR_MAGENTA_I, OSD::COLOR_BLACK);
+  osd.print(F("Karabas Pro developers are:"));
+
+  osd.setPos(0,9);
+  osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
+  osd.write(250);
+  osd.print(F(" andykarpov"));
+  osd.setColor(OSD::COLOR_CYAN_I, OSD::COLOR_BLACK);
+  osd.print(F(" FPGA, AVR, PCB"));
+
+  osd.setPos(0,10);
+  osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
+  osd.write(250);
+  osd.print(F(" solegstar"));
+  osd.setColor(OSD::COLOR_CYAN_I, OSD::COLOR_BLACK);
+  osd.print(F(" FPGA, PCB"));
+
+  osd.setPos(0,11);
+  osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
+  osd.write(250);
+  osd.print(F(" dr_max"));
+  osd.setColor(OSD::COLOR_CYAN_I, OSD::COLOR_BLACK);
+  osd.print(F(" FlashTool & FDImage"));
+
+  osd.setPos(0,12);
+  osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
+  osd.write(250);
+  osd.print(F(" nihirash"));
+  osd.setColor(OSD::COLOR_CYAN_I, OSD::COLOR_BLACK);
+  osd.print(F(" Internet software"));
+
+  osd.setPos(0,14);
+  osd.setColor(OSD::COLOR_MAGENTA_I, OSD::COLOR_BLACK);
+  osd.print(F("Special thanks to:"));
+
+  osd.setPos(0,16);
+  osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
+  osd.write(250);
+  osd.print(F(" kalantaj"));
+
+  osd.setPos(0,17);
+  osd.write(250);
+  osd.print(F(" tank-uk"));
+
+  osd.setPos(0,18);
+  osd.write(250);
+  osd.print(F(" xdemox"));
+
+  osd.setPos(0,19);
+  osd.write(250);
+  osd.print(F(" dumpkin"));
+
+  osd.setPos(0,21);
+  osd.setColor(OSD::COLOR_GREY, OSD::COLOR_BLACK);
+  osd.print(F("www.karabas.uk"));
 
   popupFooter();
 

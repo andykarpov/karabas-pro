@@ -48,7 +48,8 @@ private:
   enum osd_state_e {
     state_main = 0,
     state_rtc,
-    state_test
+    state_test,
+    state_about
   };
 
   // osd main states
@@ -100,6 +101,7 @@ public:
   void initOverlay();
   void initRtcOverlay();
   void initTestOverlay();
+  void initAboutOverlay();
   void popupFooter();
   void handleRombank();
   void handleTurbofdc();
