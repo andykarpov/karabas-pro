@@ -52,8 +52,6 @@ bool ZXJoystick::started()
 
 void ZXJoystick::handle(bool joy_type)
 {
-  unsigned long n = millis();
-
   // read joystick
   // Due to conflict with the hardware SPI, we should stop the HW SPI and switch the joy_right as input before reading
   // WARNING: a 100-500 Ohm resistor is required on the PIN_JOY_RIGHT line

@@ -42,7 +42,7 @@ private:
 
   uint8_t fpga_cfg;
   uint8_t fpga_build_num[8];
-  char *avr_build_num;
+  const char *avr_build_num;
 
   // osd global states
   enum osd_state_e {
@@ -146,7 +146,7 @@ public:
 
   void setFpgaCfg(uint8_t cfg);
   void setFpgaBuildNum(uint8_t pos, uint8_t data);
-  void setAvrBuildNum(char *data);
+  void setAvrBuildNum(const char *data);
 
 };
 

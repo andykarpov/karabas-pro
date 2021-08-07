@@ -196,7 +196,7 @@ void ZXOSD::setFpgaBuildNum(uint8_t pos, uint8_t data) {
   fpga_build_num[pos] = data;
 }
 
-void ZXOSD::setAvrBuildNum(char *data) {
+void ZXOSD::setAvrBuildNum(const char *data) {
   avr_build_num = data;
 }
 

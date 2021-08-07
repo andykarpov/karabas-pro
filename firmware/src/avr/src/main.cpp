@@ -30,6 +30,9 @@ Ukraine, 2021
 #include "ZXRTC.h"
 #include "ZXOSD.h"
 
+#define STRINGIFY(s) STRINGIFY1(s)
+#define STRINGIFY1(s) #s
+
 ZXKeyboard zxkbd;
 ZXMouse zxmouse;
 ZXJoystick zxjoy;
@@ -210,7 +213,8 @@ void setup()
   zxmouse.setMouseSwap(zxkbd.getMouseSwap());
   zxjoy.begin(spi_send, on_joystick);
   zxosd.begin(spi_send, &zxkbd, &zxrtc);
-  zxosd.setAvrBuildNum(BUILD_VER);
+  const char* ver = STRINGIFY(BUILD_VER);
+  zxosd.setAvrBuildNum(ver);
 
   // waiting for init
   while (!init_done) {
