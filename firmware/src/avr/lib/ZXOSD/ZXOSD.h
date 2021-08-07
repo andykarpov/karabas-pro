@@ -98,6 +98,7 @@ public:
 
   void printHeader();
   void printLogo(uint8_t x, uint8_t y);
+  void printLine(uint8_t y);
   void initOverlay();
   void initRtcOverlay();
   void initTestOverlay();

@@ -256,7 +256,7 @@ void ZXOSD::printLogo(uint8_t x, uint8_t y)
   osd.setColor(OSD::COLOR_BLUE_I, OSD::COLOR_BLACK);
   osd.write(22);
 
-  osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
+  osd.setColor(OSD::COLOR_GREY, OSD::COLOR_BLACK);
   osd.setPos(x,y+3);
   // board revision
   switch (fpga_cfg) {
@@ -268,6 +268,14 @@ void ZXOSD::printLogo(uint8_t x, uint8_t y)
     case 5:
       osd.print(F("Rev.DS"));
       break;
+  }
+}
+
+void ZXOSD::printLine(uint8_t y)
+{
+  osd.setPos(0,y);
+  for (uint8_t i=0; i<32; i++) {
+    osd.write(196);
   }
 }
 
@@ -288,12 +296,7 @@ void ZXOSD::printHeader()
   }
 */
 
-  /*osd.setPos(0,1);
-  for (uint8_t i=0; i<32; i++) {
-    osd.print(F("_"));
-  }*/
-
-  osd.setColor(OSD::COLOR_BLUE_I, OSD::COLOR_BLACK);
+  osd.setColor(OSD::COLOR_GREY, OSD::COLOR_BLACK);
   osd.setPos(19,2);
   osd.print(F("FPGA "));
   osd.write(fpga_build_num[0]);
@@ -305,11 +308,13 @@ void ZXOSD::printHeader()
   osd.write(fpga_build_num[6]);
   osd.write(fpga_build_num[7]);
 
-  osd.setColor(OSD::COLOR_BLUE_I, OSD::COLOR_BLACK);
+  osd.setColor(OSD::COLOR_GREY, OSD::COLOR_BLACK);
   osd.setPos(20,3);
   osd.print(F("AVR "));
   osd.print(avr_build_num);
-//  osd.print(BUILD_VER);
+
+  osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
+  printLine(4);
 }
 
 // init osd
@@ -406,6 +411,9 @@ void ZXOSD::initOverlay()
   osd.setColor(OSD::COLOR_CYAN_I, OSD::COLOR_BLACK);
   osd.setPos(20,16); osd.print(F("Pause"));
 
+  osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
+  printLine(17);
+
   // Scancode
   osd.setColor(OSD::COLOR_GREEN_I, OSD::COLOR_BLACK);
   osd.setPos(0,18); osd.print(F("Scancode:"));
@@ -442,6 +450,8 @@ void ZXOSD::initOverlay()
   osd.print(F("A"));
   osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
   osd.print(F("bout"));
+
+  printLine(21);
 
   // footer
   osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
@@ -540,7 +550,7 @@ void ZXOSD::initTestOverlay()
 
   uint8_t color = 0;
   for (uint8_t x = 0; x<32; x++) {
-    for (uint8_t y = 7; y<22; y++) {
+    for (uint8_t y = 7; y<21; y++) {
       color = x/2;
       switch (color) {
         case 0: osd.setColor(OSD::COLOR_BLACK, OSD::COLOR_BLACK); break;
@@ -633,7 +643,7 @@ void ZXOSD::initAboutOverlay()
   osd.write(250);
   osd.print(F(" dumpkin"));
 
-  osd.setPos(0,21);
+  osd.setPos(18,21);
   osd.setColor(OSD::COLOR_GREY, OSD::COLOR_BLACK);
   osd.print(F("www.karabas.uk"));
 
@@ -642,6 +652,10 @@ void ZXOSD::initAboutOverlay()
 }
 
 void ZXOSD::popupFooter() {
+
+  osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
+  printLine(22);
+
   // footer
   osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
   osd.setPos(0,23); osd.print(F("Press "));
@@ -1166,7 +1180,7 @@ if (osd_state != state_rtc) return;
 }
 
 void ZXOSD::updateTime() {
-  osd.setColor(OSD::COLOR_YELLOW_I, OSD::COLOR_BLACK);
+  osd.setColor(OSD::COLOR_CYAN_I, OSD::COLOR_BLACK);
   osd.setPos(24,0);
   if (zxrtc->getHour() < 10) osd.print("0"); 
   osd.print(zxrtc->getHour(), DEC); osd.print(F(":"));
@@ -1174,6 +1188,7 @@ void ZXOSD::updateTime() {
   osd.print(zxrtc->getMinute(), DEC); osd.print(F(":"));
   if (zxrtc->getSecond() < 10) osd.print("0"); 
   osd.print(zxrtc->getSecond(), DEC);
+  osd.setColor(OSD::COLOR_CYAN, OSD::COLOR_BLACK);
   osd.setPos(22,1);
   if (zxrtc->getDay() < 10) osd.print("0"); 
   osd.print(zxrtc->getDay(), DEC); osd.print(F("."));
