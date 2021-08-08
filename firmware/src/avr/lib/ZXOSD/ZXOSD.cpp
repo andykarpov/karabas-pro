@@ -465,6 +465,10 @@ void ZXOSD::initOverlay()
   osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
   osd.setPos(20,20); 
   osd.setColor(OSD::COLOR_CYAN_I, OSD::COLOR_FLASH);
+  osd.print(F("I"));
+  osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
+  osd.print(F("nfo "));
+  osd.setColor(OSD::COLOR_CYAN_I, OSD::COLOR_FLASH);
   osd.print(F("A"));
   osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
   osd.print(F("bout"));
