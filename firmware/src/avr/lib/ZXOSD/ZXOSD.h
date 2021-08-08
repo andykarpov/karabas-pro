@@ -43,13 +43,15 @@ private:
   uint8_t fpga_cfg;
   uint8_t fpga_build_num[8];
   const char *avr_build_num;
+  unsigned long tstart = 0;
 
   // osd global states
   enum osd_state_e {
     state_main = 0,
     state_rtc,
     state_test,
-    state_about
+    state_about,
+    state_info
   };
 
   // osd main states
@@ -103,6 +105,7 @@ public:
   void initRtcOverlay();
   void initTestOverlay();
   void initAboutOverlay();
+  void initInfoOverlay();
   void popupFooter();
   void handleRombank();
   void handleTurbofdc();

@@ -33,7 +33,7 @@ void ZXOSD::begin(spi_cb act, ZXKeyboard *zxkbd_, ZXRTC *zxrtc_) // todo: zxmous
   zxkbd = zxkbd_;
   zxrtc = zxrtc_;
   action = act;
-
+  tstart = millis();
   osd.begin(action);
 
   is_started = true;
@@ -111,6 +111,13 @@ void ZXOSD::handle()
           initAboutOverlay();
         }
       break;
+
+      case state_info:
+        if (osd_prev_state != osd_state) {
+          osd_prev_state = osd_state;
+          initInfoOverlay();
+        }
+      break;
     }
   }
 
@@ -139,6 +146,10 @@ void ZXOSD::handle()
 
         if (zxkbd->getKey(ZX_K_A)) {
           osd_state = state_about;
+        }
+
+        if (zxkbd->getKey(ZX_K_I)) {
+          osd_state = state_info;
         }
 
         /*if (zxkbd->getIsEscape()) {
@@ -190,6 +201,7 @@ void ZXOSD::handle()
 
       case state_test:
       case state_about:
+      case state_info:
 
         if (zxkbd->getIsEscape()) {
           osd_state = state_main;
@@ -653,6 +665,79 @@ void ZXOSD::initAboutOverlay()
   osd.setColor(OSD::COLOR_GREY, OSD::COLOR_BLACK);
   osd.print(F("www.karabas.uk"));
 
+  popupFooter();
+
+}
+
+// init test osd
+void ZXOSD::initInfoOverlay()
+{
+  osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
+  osd.clear();
+
+  printHeader();
+
+  osd.setPos(0,5);
+  osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
+  osd.print(F("System Info:"));
+
+  // todo
+
+  uint8_t y=14;
+
+  osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
+  osd.setPos(0,7);
+  osd.print(F("FPGA build:"));
+  osd.setPos(y,7);
+  osd.write(fpga_build_num[0]);
+  osd.write(fpga_build_num[1]);
+  osd.write(fpga_build_num[2]);
+  osd.write(fpga_build_num[3]);
+  osd.write(fpga_build_num[4]);
+  osd.write(fpga_build_num[5]);
+  osd.write(fpga_build_num[6]);
+  osd.write(fpga_build_num[7]);
+
+  osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
+  osd.setPos(0,8);
+  osd.print(F("AVR build:"));
+  osd.setPos(y,8);
+  osd.print(avr_build_num);
+
+  osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
+  osd.setPos(0,9);
+  osd.print(F("PCB revision:"));
+  osd.setPos(y,9);
+  switch (fpga_cfg) {
+    case 0:
+    case 1:
+      osd.print(F("A-D"));
+      break;
+    case 4:
+    case 5:
+      osd.print(F("DS"));
+      break;
+  }
+
+  // DAC Type
+  osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
+  osd.setPos(0,10); osd.print(F("DAC Type:"));
+  osd.setPos(y,10); osd.print(F("TDA1543"));
+  switch (fpga_cfg) {
+    case 1:
+    case 5:
+      osd.print(F("A"));
+      break;
+  }
+
+  // Uptime
+  osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
+  osd.setPos(0,11); osd.print(F("Uptime:"));
+  unsigned long diff = (millis() - tstart) / 1000; // seconds
+  osd.setPos(y,11); 
+  osd.print(diff, DEC); osd.print(F(" second"));
+  if (diff > 1) osd.print(F("s"));
+  
   popupFooter();
 
 }
