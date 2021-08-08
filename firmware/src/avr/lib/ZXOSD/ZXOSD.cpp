@@ -734,9 +734,34 @@ void ZXOSD::initInfoOverlay()
   osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
   osd.setPos(0,11); osd.print(F("Uptime:"));
   unsigned long diff = (millis() - tstart) / 1000; // seconds
+  unsigned long days=0;
+  unsigned long hours=0;
+  unsigned long mins=0;
+  mins=diff/60; //convert seconds to minutes
+  hours=mins/60; //convert minutes to hours
+  days=hours/24; //convert hours to days
+  diff=diff-(mins*60); //subtract the coverted seconds to minutes in order to display 59 secs max 
+  mins=mins-(hours*60); //subtract the coverted minutes to hours in order to display 59 minutes max
+  hours=hours-(days*24); //subtract the coverted hours to days in order to display 23 hours max
+
   osd.setPos(y,11); 
-  osd.print(diff, DEC); osd.print(F(" second"));
-  if (diff > 1) osd.print(F("s"));
+  if (days>0) // days will displayed only if value is greater than zero
+  {
+    osd.print(days);
+    osd.print(F(" day"));
+    if (days > 1) {
+      osd.print(F("s"));
+    }
+    osd.print(F(" & "));
+  }
+  if (hours < 10) osd.print(0);
+  osd.print(hours);
+  osd.print(":");
+  if (mins < 10) osd.print(0);
+  osd.print(mins);
+  osd.print(":");
+  if (diff < 10) osd.print(0);
+  osd.print(diff);
   
   popupFooter();
 
