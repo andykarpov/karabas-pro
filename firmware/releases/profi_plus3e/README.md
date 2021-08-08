@@ -15,9 +15,9 @@ Otherwise please flash karabas_pro_revA.hex with hardware buttons disabled.
 **Fusebits**
 
 - Low: 0xFF
-- High: 0xDE
-- Extended: 0xFD
+- High: 0xD7
+- Extended: 0xFF
 
 ### Example usage:
 
-`avrdude -c usbasp -p m328p -U flash:w:karabas_pro_revD.hex -U lfuse:w:0xFF:m -U hfuse:w:0xDE:m`
+`avrdude -c usbasp -p m328p -U flash:w:karabas_pro_revD.hex -U lfuse:w:0xFF:m -U hfuse:w:0xD7:m`
