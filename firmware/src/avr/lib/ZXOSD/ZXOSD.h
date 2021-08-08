@@ -146,6 +146,7 @@ public:
   void updateRtcYear();
   void updateRtcDow();
   void updateTime();
+  void updateUptime();
   void updateScancode(uint16_t c);
   void updateMouse(uint8_t mouse_x, uint8_t mouse_y, uint8_t mouse_z);
   void updateJoyState(uint8_t joy);
