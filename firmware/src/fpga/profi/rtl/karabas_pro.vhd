@@ -1109,7 +1109,8 @@ cpu_nmi_n <= '0' when kb_magic = '1' and cpu_m1_n = '0' and cpu_mreq_n = '0' and
 --cpu_wait_n <= '0' when kb_wait = '1' else '1'; -- WAIT
 cpu_wait_n <= '1';
 turbo_cpu <= (kb_turbo or turbo_on) and (not turbo_off);
-clk_cpu <= '0' when kb_wait = '1' else clk_bus and ena_div8 when turbo_cpu = '0' else clk_bus and ena_div4; -- 3.5 / 7 MHz
+--clk_cpu <= '0' when kb_wait = '1' else clk_bus and ena_div8 when turbo_cpu = '0' else clk_bus and ena_div4; -- 3.5 / 7 MHz
+clk_cpu <= '0' when kb_wait = '1' else clk_bus and ena_div8 when turbo_cpu = '0' else clk_bus and ena_div2; -- 3.5 / 14 MHz
 
 -- odnovibrator - po spadu nIORQ otschityvaet 400ns WAIT proca
 -- dlja rabotosposobnosti periferii v turbe ili v rezhime 

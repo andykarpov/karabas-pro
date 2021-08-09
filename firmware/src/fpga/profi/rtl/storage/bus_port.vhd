@@ -55,20 +55,23 @@ begin
 
 	process (CLK_CPU, BUS_HDD_CS_N, BUS_FDC_NCS, BUS_CSFF, BUS_CS3FX, BUS_RWE, BUS_RWW, BUS_WWE, BUS_WWC, BUS_FDC_STEP, BUS_RD_N, BUS_WR_N, bus_a, bus_di)
 	begin 
-		if CLK_CPU'event and CLK_CPU = '1' then 
-				bus_a_reg <= BUS_HDD_CS_N & BUS_FDC_NCS & BUS_CSFF & BUS_CS3FX & BUS_RWE & BUS_RWW & BUS_WWE & BUS_WWC & BUS_FDC_STEP & BUS_RD_N & BUS_WR_N & bus_a;
-				bus_d_reg <= bus_di;
+		if CLK'event and CLK = '1' then
+			if cnt = "10" then 
+					bus_a_reg <= BUS_HDD_CS_N & BUS_FDC_NCS & BUS_CSFF & BUS_CS3FX & BUS_RWE & BUS_RWW & BUS_WWE & BUS_WWC & BUS_FDC_STEP & BUS_RD_N & BUS_WR_N & bus_a;
+					bus_d_reg <= bus_di;
+			end if;
 		end if;
 	end process;
 
-	process (CLK, cnt, CLK_CPU, prev_clk_cpu)
+	process (RESET, CLK, cnt, CLK_CPU, prev_clk_cpu)
 	begin 
-		if CLK'event and CLK = '1' then
-			prev_clk_cpu <= CLK_CPU;
-			if prev_clk_cpu = '0' and CLK_CPU = '1' then 
-				cnt <= "11";
-			else
+		if RESET = '1' then 
+			cnt <= "11";
+		elsif CLK'event and CLK = '1' then
+			if (cnt < 2) then 
 				cnt <= cnt + 1;
+			else 
+				cnt <= "00";
 			end if;
 		end if;
 	end process;
