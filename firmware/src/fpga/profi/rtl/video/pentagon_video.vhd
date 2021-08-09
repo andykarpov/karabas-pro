@@ -28,9 +28,7 @@ entity pentagon_video is
 		HCNT 		: out std_logic_vector(9 downto 0);
 		VCNT 		: out std_logic_vector(8 downto 0);	
 		ISPAPER 	: out std_logic := '0';
-		BLINK 	: out std_logic;
-		VBUS_MODE : in std_logic := '0'; -- 1 = video bus, 2 = cpu bus
-		VID_RD : in std_logic -- 1 = read attribute, 0 = read pixel data
+		BLINK 	: out std_logic
 	);
 end entity;
 
@@ -43,9 +41,10 @@ architecture rtl of pentagon_video is
 
 	signal hor_cnt  : unsigned(5 downto 0) := "000000"; -- Horizontal char counter
 	signal ver_cnt  : unsigned(5 downto 0) := "000000"; -- Vertical char counter
-	
+
+	signal vid_reg  : std_logic_vector(7 downto 0);	
 	signal attr     : std_logic_vector(7 downto 0);
-	signal bitmap    : std_logic_vector(7 downto 0);
+	signal bitmap   : std_logic_vector(7 downto 0);
 	
 	signal paper_r  : std_logic;
 	signal blank_r  : std_logic;
@@ -216,27 +215,25 @@ begin
 	end process;
 	
 	-- video mem read cycle
-	process (CLK2X, CLK, chr_col_cnt, VBUS_MODE, VID_RD)
+	process (CLK2X, CLK, chr_col_cnt, vid_reg)
 	begin 
-		if (CLK2X'event and CLK2X = '1') then 
-			if (chr_col_cnt(0) = '1' and CLK = '0') then
-				if VBUS_MODE = '1' then
-					if VID_RD = '0' then 
-						bitmap <= DI;
-					else 
-						attr <= DI;
-					end if;
+		if CLK2X'event and CLK2X = '1' then 
+			if CLK = '1' then
+				if ENA = '0' then
+					case chr_col_cnt(2 downto 0) is 
+						when "100" => A <= std_logic_vector( '0' & ver_cnt(4 downto 3) & chr_row_cnt & ver_cnt(2 downto 0) & hor_cnt(4 downto 0));
+						when "101" => vid_reg <= DI;
+						when "110" => A <= std_logic_vector( '0' & "110" & ver_cnt(4 downto 0) & hor_cnt(4 downto 0));
+						when "111" => 
+							bitmap <= vid_reg;
+							attr <= DI;
+						when others => null;
+					end case;
 				end if;
 			end if;
 		end if;
 	end process;
 	
-	A <= 
-		-- data address
-		std_logic_vector( '0' & ver_cnt(4 downto 3) & chr_row_cnt & ver_cnt(2 downto 0) & hor_cnt(4 downto 0)) when VBUS_MODE = '1' and VID_RD = '0' else 
-		-- standard attribute address
-		std_logic_vector( '0' & "110" & ver_cnt(4 downto 0) & hor_cnt(4 downto 0));
-		
 	paper <= '0' when hor_cnt(5) = '0' and ver_cnt(5) = '0' and ( ver_cnt(4) = '0' or ver_cnt(3) = '0' ) else '1';
 	
 	RGB <= VIDEO_R & VIDEO_G & VIDEO_B;

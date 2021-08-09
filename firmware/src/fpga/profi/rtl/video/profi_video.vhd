@@ -30,8 +30,7 @@ entity profi_video is
 		VCNT 		: out std_logic_vector(8 downto 0);	
 		ISPAPER  : out std_logic := '0';
 		DS80 		: in std_logic;
-		VBUS_MODE : in std_logic := '0';
-		VID_RD : in std_logic
+		VID_RD   : buffer std_logic
 	);
 end entity;
 
@@ -154,33 +153,23 @@ begin
 	end if;
 end process;
 
--- pixel / attr registers
-process( CLK2X, CLK, h_cnt )
-	begin
-		if CLK2X'event and CLK2X = '1' then
-			if CLK = '1' then
-				if h_cnt(2 downto 0) = 7 then
-					pixel_reg <= vid_reg;
-					attr_reg <= at_reg;
-					paper1 <= paper;
-					blank1 <= blank_sig;
-				end if;
-			end if;
-		end if;
-	end process;
-
 -- memory read
-process(CLK2X, CLK, ENA, h_cnt, VBUS_MODE, VID_RD)
+process(CLK2X, CLK, ENA, h_cnt, VID_RD)
 begin
 	if CLK2X'event and CLK2X='1' then 
-		if (CLK = '0' and h_cnt(2 downto 0) < 7) then -- 12 mhz falling edge
-			if (VBUS_MODE = '1') then
-				if VID_RD = '0' then 
-					vid_reg <= DI;
-				else 
-					at_reg <= DI;
-				end if;
-			end if;				
+		if (CLK = '1') then
+				case (h_cnt(2 downto 0)) is
+					when "011" => VID_RD <= '0'; A <= std_logic_vector((not h_cnt(3)) & v_cnt(7 downto 6)) & std_logic_vector(v_cnt(2 downto 0)) & std_logic_vector(v_cnt(5 downto 3)) & std_logic_vector(h_cnt(8 downto 4));
+					when "100" => vid_reg <= DI;
+					when "101" => VID_RD <= '1'; A <= std_logic_vector((not h_cnt(3)) & v_cnt(7 downto 6)) & std_logic_vector(v_cnt(2 downto 0)) & std_logic_vector(v_cnt(5 downto 3)) & std_logic_vector(h_cnt(8 downto 4));
+					when "110" => at_reg <= DI;
+					when "111" => 
+						pixel_reg <= vid_reg;
+						attr_reg <= at_reg;
+						paper1 <= paper;
+						blank1 <= blank_sig;
+					when others => null;
+				end case;
 		end if;
 	end if;
 end process;
@@ -203,8 +192,6 @@ begin
 end process;
 
 i78 <= attr_reg(7) when ds80 = '1' else attr_reg(6);
-		
-A <= std_logic_vector((not h_cnt(3)) & v_cnt(7 downto 6)) & std_logic_vector(v_cnt(2 downto 0)) & std_logic_vector(v_cnt(5 downto 3)) & std_logic_vector(h_cnt(8 downto 4));		
 		
 blank_sig	<= '1' when (((h_cnt > pcpm_h_blk_on and h_cnt < pcpm_h_blk_off) or ((v_cnt > pcpm_v_blk_on and v_cnt < pcpm_v_blk_off and mode60 = '0') or (v_cnt > pcpm_v_blk_on_60 and v_cnt < pcpm_v_blk_off_60 and mode60 = '1')))) else '0';
 paper			<= '1' when ((h_cnt < pcpm_scr_h and v_cnt < pcpm_scr_v)) else '0';

@@ -43,8 +43,7 @@ entity video is
 		ISPAPER : out std_logic;
 		BLINK : out std_logic;
 		
-		VBUS_MODE : in std_logic := '0'; -- 1 = video bus, 2 = cpu bus
-		VID_RD : in std_logic -- 1 = read attribute, 0 = read pixel data
+		VID_RD 	: out std_logic
 	);
 end entity;
 
@@ -82,6 +81,7 @@ architecture rtl of video is
 	signal hcnt_profi : std_logic_vector(9 downto 0);
 	signal vcnt_profi : std_logic_vector(8 downto 0);
 	signal ispaper_profi : std_logic;
+	signal vidrd_profi : std_logic;
 
 	-- spectrum videocontroller signals
 	signal vid_a_spec : std_logic_vector(13 downto 0);
@@ -123,10 +123,7 @@ begin
 		HCNT => hcnt_spec,
 		VCNT => vcnt_spec,
 		ISPAPER => ispaper_spec,
-		BLINK => BLINK,
-		
-		VBUS_MODE => VBUS_MODE,
-		VID_RD => VID_RD
+		BLINK => BLINK		
 	);
 
 	U_PROFI: entity work.profi_video 
@@ -155,9 +152,7 @@ begin
 		HCNT => hcnt_profi,
 		VCNT => vcnt_profi,
 		ISPAPER => ispaper_profi,
-
-		VBUS_MODE => VBUS_MODE,
-		VID_RD => VID_RD
+		VID_RD => vidrd_profi
 	);
 
 	A <= vid_a_profi when ds80 = '1' else vid_a_spec;
@@ -174,8 +169,10 @@ begin
 	VCNT <= vcnt_profi when ds80 = '1' else vcnt_spec;
 	ISPAPER <= ispaper_profi when ds80 = '1' else ispaper_spec;
 	
-ATTR_O <= attr_o_profi when ds80 = '1' else attr_o_spec;
-pFF_CS <= pFF_CS_profi when ds80 = '1' else pFF_CS_spec;
+	VID_RD <= vidrd_profi when ds80 = '1' else '0';
+	
+	ATTR_O <= attr_o_profi when ds80 = '1' else attr_o_spec;
+	pFF_CS <= pFF_CS_profi when ds80 = '1' else pFF_CS_spec;
 	
 	-- Палитра profi:
 

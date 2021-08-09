@@ -193,6 +193,7 @@ signal ms_delta_y		: signed(7 downto 0);
 -- Video
 signal vid_a_bus		: std_logic_vector(13 downto 0);
 signal vid_di_bus		: std_logic_vector(7 downto 0);
+signal vid_do_bus 	: std_logic_vector(7 downto 0);
 signal vid_hsync		: std_logic;
 signal vid_vsync		: std_logic;
 signal vid_int			: std_logic;
@@ -612,19 +613,22 @@ port map (
 	-- ram pages
 	RAM_BANK 		=> port_7ffd_reg(2 downto 0),
 	RAM_EXT 			=> ram_ext, -- seg A3 - seg A5
+
+	-- TRDOS 
+	TRDOS 			=> dos_act,	
+
 	-- video
 	VA 				=> vid_a_bus,
 	VID_PAGE 		=> port_7ffd_reg(3), -- seg A0 - seg A2
+	VID_DO 			=> vid_do_bus,
+	VID_RD 			=> vid_rd,
+	
 	DS80 				=> ds80,
 	CPM 				=> cpm,
 	SCO 				=> sco,
 	SCR 				=> scr,
 	WOROM 			=> worom,
-	-- video bus control signals
-	VBUS_MODE_O 	=> vbus_mode, 	-- video bus mode: 0 - ram, 1 - vram
-	VID_RD_O 		=> vid_rd, 		-- read attribute or pixel	
-	-- TRDOS 
-	TRDOS 			=> dos_act,	
+
 	-- rom
 	ROM_BANK 		=> rom14,
 	EXT_ROM_BANK   => ext_rom_bank_pq
@@ -638,7 +642,7 @@ port map (
 	ENA 				=> clk_div4, 	-- 7 / 6
 	RESET 			=> reset,	
 	BORDER 			=> port_xxfe_reg(3 downto 0),
-	DI 				=> SRAM_D,
+	DI 				=> vid_do_bus,
 	TURBO 			=> turbo_cpu,	-- turbo signal for int length
 	INTA 				=> cpu_inta_n,
 	INT 				=> cpu_int_n,
@@ -657,7 +661,6 @@ port map (
 	VIDEO_B 			=> vid_rgb(2 downto 0),	
 	HSYNC 			=> vid_hsync,
 	VSYNC 			=> vid_vsync,
-	VBUS_MODE 		=> vbus_mode,
 	VID_RD 			=> vid_rd,	
 	HCNT 				=> vid_hcnt,
 	VCNT 				=> vid_vcnt,
