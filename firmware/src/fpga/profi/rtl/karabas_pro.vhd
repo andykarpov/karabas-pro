@@ -171,7 +171,7 @@ signal kb_do_bus		: std_logic_vector(5 downto 0);
 signal kb_reset 		: std_logic := '0';
 signal kb_magic 		: std_logic := '0';
 signal kb_special 	: std_logic := '0';
-signal kb_turbo 		: std_logic := '0';
+signal kb_turbo 		: std_logic_vector(1 downto 0) := "00";
 signal kb_wait 		: std_logic := '0';
 signal kb_mode 		: std_logic := '1';
 signal joy_type 		: std_logic := '0';
@@ -1108,9 +1108,16 @@ cpu_inta_n <= cpu_iorq_n or cpu_m1_n;	-- INTA
 cpu_nmi_n <= '0' when kb_magic = '1' and cpu_m1_n = '0' and cpu_mreq_n = '0' and (cpu_a_bus(15 downto 14) /= "00") else '1'; -- NMI
 --cpu_wait_n <= '0' when kb_wait = '1' else '1'; -- WAIT
 cpu_wait_n <= '1';
-turbo_cpu <= (kb_turbo or turbo_on) and (not turbo_off);
+turbo_cpu <= '1' when (kb_turbo /= "00" or turbo_on = '1') and turbo_off = '0' else '0';
 --clk_cpu <= '0' when kb_wait = '1' else clk_bus and ena_div8 when turbo_cpu = '0' else clk_bus and ena_div4; -- 3.5 / 7 MHz
-clk_cpu <= '0' when kb_wait = '1' else clk_bus and ena_div8 when turbo_cpu = '0' else clk_bus and ena_div2; -- 3.5 / 14 MHz
+--clk_cpu <= '0' when kb_wait = '1' else clk_bus and ena_div8 when turbo_cpu = '0' else clk_bus and ena_div2; -- 3.5 / 14 MHz
+--clk_cpu <= '0' when kb_wait = '1' else clk_bus and ena_div8 when turbo_cpu = '0' else clk_bus; -- 3.5 / 28 MHz
+
+clk_cpu <= '0' when kb_wait = '1' else 
+	clk_bus when kb_turbo = "11" else 
+	clk_bus and ena_div2 when kb_turbo = "10" else 
+	clk_bus and ena_div4 when kb_turbo = "01" else 
+	clk_bus and ena_div8;
 
 -- odnovibrator - po spadu nIORQ otschityvaet 400ns WAIT proca
 -- dlja rabotosposobnosti periferii v turbe ili v rezhime 

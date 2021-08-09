@@ -396,7 +396,7 @@ void ZXOSD::initOverlay()
 
   // Turbo
   osd.setColor(OSD::COLOR_GREEN_I, OSD::COLOR_BLACK);
-  osd.setPos(0,12); osd.print(F("Turbo 2x:"));
+  osd.setPos(0,12); osd.print(F("Turbo:"));
   updateTurbo();
   osd.setColor(OSD::COLOR_CYAN_I, OSD::COLOR_BLACK);
   osd.setPos(20,12); osd.print(F("Menu+F11"));
@@ -829,8 +829,18 @@ void ZXOSD::handleVsync() {
 }
 
 void ZXOSD::handleTurbo() {
-  if (zxkbd->getIsCursorLeft() || zxkbd->getIsCursorRight() || zxkbd->getIsEnter()) {
-    zxkbd->toggleTurbo();
+  uint8_t turbo = zxkbd->getTurbo();
+
+  if (zxkbd->getIsCursorLeft()) {
+    turbo--;
+    if (turbo > 3) turbo = 3;
+    zxkbd->setTurbo(turbo);
+    updateTurbo();
+  }
+  if (zxkbd->getIsCursorRight() || zxkbd->getIsEnter()) {
+    turbo++;
+    if (turbo > 3) turbo = 0;
+    zxkbd->setTurbo(turbo);
     updateTurbo();
   }
 }
@@ -1105,11 +1115,13 @@ void ZXOSD::updateTurbo() {
     osd.setColor(OSD::COLOR_MAGENTA_I, OSD::COLOR_BLACK);
 
   osd.setPos(10,12);
-  if (zxkbd->getTurbo()) { 
-    osd.print(F("On")); 
-    osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK); osd.print(F(" ")); 
-  } else { 
-    osd.print(F("Off")); 
+  uint8_t turbo = zxkbd->getTurbo();
+  switch (turbo) {
+    case 0: osd.print(F("Off")); osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK); osd.print(F("   ")); break;
+    case 1: osd.print(F("7 MHz")); osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK); osd.print(F(" ")); break;
+    case 2: osd.print(F("14 MHz")); break;
+    case 3: osd.print(F("28 MHz")); break;
+    default: osd.print(F("?? Mhz")); 
   }
 }
 

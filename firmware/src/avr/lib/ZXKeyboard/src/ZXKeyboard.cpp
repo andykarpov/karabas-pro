@@ -200,11 +200,12 @@ void ZXKeyboard::toggleVsync() {
   matrix[ZX_K_SW2] = is_sw2;
 }
 
-void ZXKeyboard::toggleTurbo() {
-  // menu + F11 = turbo
-  is_turbo = !is_turbo;
-  eepromStoreValue(EEPROM_TURBO_ADDRESS, is_turbo);
-  matrix[ZX_K_TURBO] = is_turbo;
+void ZXKeyboard::setTurbo(uint8_t val) {
+  // menu + F11 = turbo swith 0 1 2 3
+  turbo = val;
+  eepromStoreValue(EEPROM_TURBO_ADDRESS, turbo);
+  matrix[ZX_K_TURBO] = bitRead(turbo, 0);
+  matrix[ZX_K_TURBO2] = bitRead(turbo, 1);
 }
 
 void ZXKeyboard::toggleSwapAB() {
@@ -797,8 +798,10 @@ void ZXKeyboard::fill(uint16_t sc, unsigned long n)
     case PS2_KEY_F11:
       if (is_menu || is_win || (is_ctrl && is_alt)) {
         if (!is_up) {
-          toggleTurbo();
-          event(EVENT_OSD_TURBO, 0);
+          turbo++;
+          if (turbo > 3) turbo = 0;
+          setTurbo(turbo);
+          event(EVENT_OSD_TURBO, turbo);
         }
       } else {
         matrix[ZX_K_Q] = !is_up; matrix[ZX_K_SS] = !is_up;
@@ -1076,7 +1079,7 @@ void ZXKeyboard::eepromStoreValue(int addr, bool value)
 
 void ZXKeyboard::eepromRestoreValues()
 {
-  is_turbo = eepromRestoreValue(EEPROM_TURBO_ADDRESS, is_turbo);
+  turbo = eepromRestoreValue(EEPROM_TURBO_ADDRESS, turbo);
   profi_mode = eepromRestoreValue(EEPROM_MODE_ADDRESS, profi_mode);
   is_sw1 = eepromRestoreValue(EEPROM_SW1_ADDRESS, is_sw1);
   is_sw2 = eepromRestoreValue(EEPROM_SW2_ADDRESS, is_sw2);
@@ -1092,7 +1095,8 @@ void ZXKeyboard::eepromRestoreValues()
   joy_type = eepromRestoreValue(EEPROM_JOY_TYPE_ADDRESS, joy_type);
   
   // apply restored values
-  matrix[ZX_K_TURBO] = is_turbo;
+  matrix[ZX_K_TURBO] = bitRead(turbo, 0);
+  matrix[ZX_K_TURBO2] = bitRead(turbo, 1);
   matrix[ZX_K_SW1] = is_sw1;
   matrix[ZX_K_SW2] = is_sw2;
   matrix[ZX_K_SW3] = is_sw3;
@@ -1109,7 +1113,7 @@ void ZXKeyboard::eepromRestoreValues()
 
 void ZXKeyboard::eepromStoreValues()
 {
-  eepromStoreValue(EEPROM_TURBO_ADDRESS, is_turbo);
+  eepromStoreValue(EEPROM_TURBO_ADDRESS, turbo);
   eepromStoreValue(EEPROM_MODE_ADDRESS, profi_mode);
   eepromStoreValue(EEPROM_SW1_ADDRESS, is_sw1);
   eepromStoreValue(EEPROM_SW2_ADDRESS, is_sw2);
@@ -1163,8 +1167,8 @@ void ZXKeyboard::eepromStoreValues()
     return is_sw2;
   }
 
-  bool ZXKeyboard::getTurbo() {
-    return is_turbo;
+  uint8_t ZXKeyboard::getTurbo() {
+    return turbo;
   }
 
   bool ZXKeyboard::getSwapAB() {

@@ -52,7 +52,7 @@ entity avr is
 	 KB_SCANCODE: out std_logic_vector(9 downto 0);
 	 
 	 RESET		: out std_logic := '0';
-	 TURBO		: out std_logic := '0';
+	 TURBO		: out std_logic_vector(1 downto 0) := "00";
 	 MAGICK		: out std_logic := '0';
 	 WAIT_CPU 	: out std_logic := '0';
 	 JOY_TYPE 	: out std_logic := '0';
@@ -179,7 +179,7 @@ begin
 					when X"06" => kb_data(40 downto 0) <= spi_do (0) & kb_data_tmp(39 downto 0); -- kbd 5th bit + the rest 
 									  -- misc signals
 									  RESET <= spi_do(1); -- reset signal
-									  TURBO <= spi_do(2); -- turbo signal
+									  TURBO(0) <= spi_do(2); -- turbo signal
 									  MAGICK <= spi_do(3); -- magick signal 
 									  is_up <= spi_do(4); -- keyboard key is up
 									  WAIT_CPU <= spi_do(5); -- cpu wait signal 
@@ -203,7 +203,8 @@ begin
 									  JOY_TYPE <= spi_do(2);
 									  OSD_OVERLAY <= spi_do(3);
 									  LOADED <= '1'; -- loaded
-									  -- 4 free signals
+									  TURBO(1) <= spi_do(4);
+									  -- 3 free signals
 					-- mouse data
 					when X"0A" => mouse_x(7 downto 0) <= signed(spi_do(7 downto 0));
 					when X"0B" => mouse_y(7 downto 0) <= signed(spi_do(7 downto 0));
