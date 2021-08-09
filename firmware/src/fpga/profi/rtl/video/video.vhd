@@ -40,6 +40,7 @@ entity video is
 		
 		HCNT : out std_logic_vector(9 downto 0);
 		VCNT : out std_logic_vector(8 downto 0);
+		ISPAPER : out std_logic;
 		BLINK : out std_logic;
 		
 		VBUS_MODE : in std_logic := '0'; -- 1 = video bus, 2 = cpu bus
@@ -80,6 +81,7 @@ architecture rtl of video is
 	
 	signal hcnt_profi : std_logic_vector(9 downto 0);
 	signal vcnt_profi : std_logic_vector(8 downto 0);
+	signal ispaper_profi : std_logic;
 
 	-- spectrum videocontroller signals
 	signal vid_a_spec : std_logic_vector(13 downto 0);
@@ -93,6 +95,7 @@ architecture rtl of video is
 
 	signal hcnt_spec : std_logic_vector(9 downto 0);
 	signal vcnt_spec : std_logic_vector(8 downto 0);
+	signal ispaper_spec : std_logic;
 
 begin
 
@@ -119,6 +122,7 @@ begin
 
 		HCNT => hcnt_spec,
 		VCNT => vcnt_spec,
+		ISPAPER => ispaper_spec,
 		BLINK => BLINK,
 		
 		VBUS_MODE => VBUS_MODE,
@@ -150,6 +154,7 @@ begin
 
 		HCNT => hcnt_profi,
 		VCNT => vcnt_profi,
+		ISPAPER => ispaper_profi,
 
 		VBUS_MODE => VBUS_MODE,
 		VID_RD => VID_RD
@@ -167,6 +172,7 @@ begin
 	
 	HCNT <= hcnt_profi when ds80 = '1' else hcnt_spec;
 	VCNT <= vcnt_profi when ds80 = '1' else vcnt_spec;
+	ISPAPER <= ispaper_profi when ds80 = '1' else ispaper_spec;
 	
 ATTR_O <= attr_o_profi when ds80 = '1' else attr_o_spec;
 pFF_CS <= pFF_CS_profi when ds80 = '1' else pFF_CS_spec;
