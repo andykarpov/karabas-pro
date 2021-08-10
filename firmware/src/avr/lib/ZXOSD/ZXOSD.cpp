@@ -830,16 +830,17 @@ void ZXOSD::handleVsync() {
 
 void ZXOSD::handleTurbo() {
   uint8_t turbo = zxkbd->getTurbo();
+  uint8_t max_turbo = zxkbd->getMaxTurbo();
 
   if (zxkbd->getIsCursorLeft()) {
     turbo--;
-    if (turbo > 3) turbo = 3;
+    if (turbo > max_turbo) turbo = max_turbo;
     zxkbd->setTurbo(turbo);
     updateTurbo();
   }
   if (zxkbd->getIsCursorRight() || zxkbd->getIsEnter()) {
     turbo++;
-    if (turbo > 3) turbo = 0;
+    if (turbo > max_turbo) turbo = 0;
     zxkbd->setTurbo(turbo);
     updateTurbo();
   }
@@ -1117,11 +1118,11 @@ void ZXOSD::updateTurbo() {
   osd.setPos(10,12);
   uint8_t turbo = zxkbd->getTurbo();
   switch (turbo) {
-    case 0: osd.print(F("Off")); osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK); osd.print(F("   ")); break;
-    case 1: osd.print(F("7 MHz")); osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK); osd.print(F(" ")); break;
-    case 2: osd.print(F("14 MHz")); break;
-    case 3: osd.print(F("28 MHz")); break;
-    default: osd.print(F("?? Mhz")); 
+    case 0: osd.print(F("Off")); osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK); osd.print(F(" ")); break;
+    case 1: osd.print(F("2x"));  osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK); osd.print(F(" ")); break;
+    case 2: osd.print(F("4x"));  osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK); osd.print(F(" ")); break;
+    case 3: osd.print(F("8x"));  osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK); osd.print(F(" ")); break;
+    default: osd.print(F("???")); 
   }
 }
 

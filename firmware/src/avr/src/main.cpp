@@ -75,10 +75,13 @@ void process_in_cmd(uint8_t cmd, uint8_t data)
 {
   if (cmd == CMD_INIT_REQ && !init_done) {
       init_done = true;
+      uint8_t max_turbo = data >> 6;
+      uint8_t cfg = data & 0b00111111;
+      zxkbd.setMaxTurbo(max_turbo);
       zxkbd.transmit();
       zxrtc.sendAll();
       zxkbd.doReset();
-      zxosd.setFpgaCfg(data);
+      zxosd.setFpgaCfg(cfg);
   }
 
   if (cmd == CMD_RTC_INIT_REQ && !zxrtc.getInitDone()) {

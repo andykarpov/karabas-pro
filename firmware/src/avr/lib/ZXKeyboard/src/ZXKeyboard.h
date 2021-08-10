@@ -161,6 +161,7 @@ private:
   bool matrix[ZX_MATRIX_FULL_SIZE]; // matrix of pressed keys + mouse reports to be transmitted on CPLD side by simple serial protocol
   bool profi_mode = true; // false = zx spectrum mode (switched by PrtSrc button in run-time)
   uint8_t turbo = 0; // turbo mode
+  uint8_t max_turbo = 3; // max turbo
   bool is_mouse_swap = false; // mouse buttons swap
   bool is_menu = false; // menu button pressed
   bool is_win = false; // win button pressed
@@ -260,6 +261,7 @@ public:
   void toggleVideo();
   void toggleVsync();
   void setTurbo(uint8_t val);
+  void setMaxTurbo(uint8_t val);
   void toggleSwapAB();
   void toggleJoyType();
   void toggleKeyboardType();
@@ -275,6 +277,7 @@ public:
   bool getVideo();
   bool getVsync();
   uint8_t getTurbo();
+  uint8_t getMaxTurbo();
   bool getSwapAB();
   bool getJoyType();
   bool getKeyboardType();

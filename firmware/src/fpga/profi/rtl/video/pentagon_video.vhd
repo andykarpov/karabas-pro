@@ -8,6 +8,9 @@ use IEEE.numeric_std.ALL;
 use IEEE.std_logic_unsigned.all;
 
 entity pentagon_video is
+	generic (
+			enable_2port_vram  : boolean := true
+	);
 	port (
 		CLK2X 	: in std_logic; -- 28 MHz
 		CLK		: in std_logic; -- 14 MHz
@@ -28,7 +31,11 @@ entity pentagon_video is
 		HCNT 		: out std_logic_vector(9 downto 0);
 		VCNT 		: out std_logic_vector(8 downto 0);	
 		ISPAPER 	: out std_logic := '0';
-		BLINK 	: out std_logic
+		BLINK 	: out std_logic;
+		
+		-- sram vram
+		VBUS_MODE : in std_logic := '0'; -- 1 = video bus, 2 = cpu bus
+		VID_RD : in std_logic -- 1 = read attribute, 0 = read pixel data
 	);
 end entity;
 
@@ -214,25 +221,57 @@ begin
 		end if;
 	end process;
 	
-	-- video mem read cycle
-	process (CLK2X, CLK, chr_col_cnt, vid_reg)
-	begin 
-		if CLK2X'event and CLK2X = '1' then 
-			if CLK = '1' then
-				if ENA = '0' then
-					case chr_col_cnt(2 downto 0) is 
-						when "100" => A <= std_logic_vector( '0' & ver_cnt(4 downto 3) & chr_row_cnt & ver_cnt(2 downto 0) & hor_cnt(4 downto 0));
-						when "101" => vid_reg <= DI;
-						when "110" => A <= std_logic_vector( '0' & "110" & ver_cnt(4 downto 0) & hor_cnt(4 downto 0));
-						when "111" => 
-							bitmap <= vid_reg;
-							attr <= DI;
-						when others => null;
-					end case;
+	-- 2 port vram
+	G_2PORT_VRAM: if enable_2port_vram generate
+	
+		-- video mem read cycle
+		process (CLK2X, CLK, chr_col_cnt, vid_reg)
+		begin 
+			if CLK2X'event and CLK2X = '1' then 
+				if CLK = '1' then
+					if ENA = '0' then
+						case chr_col_cnt(2 downto 0) is 
+							when "100" => A <= std_logic_vector( '0' & ver_cnt(4 downto 3) & chr_row_cnt & ver_cnt(2 downto 0) & hor_cnt(4 downto 0));
+							when "101" => vid_reg <= DI;
+							when "110" => A <= std_logic_vector( '0' & "110" & ver_cnt(4 downto 0) & hor_cnt(4 downto 0));
+							when "111" => 
+								bitmap <= vid_reg;
+								attr <= DI;
+							when others => null;
+						end case;
+					end if;
 				end if;
 			end if;
-		end if;
-	end process;
+		end process;
+	
+	end generate G_2PORT_VRAM;
+	
+	-- sram vram
+	G_SRAM_VRAM: if not enable_2port_vram generate
+	
+		-- video mem read cycle
+		process (CLK2X, CLK, chr_col_cnt, VBUS_MODE, VID_RD)
+		begin 
+			if (CLK2X'event and CLK2X = '1') then 
+				if (chr_col_cnt(0) = '1' and CLK = '0') then
+					if VBUS_MODE = '1' then
+						if VID_RD = '0' then 
+							bitmap <= DI;
+						else 
+							attr <= DI;
+						end if;
+					end if;
+				end if;
+			end if;
+		end process;
+		
+		A <= 
+			-- data address
+			std_logic_vector( '0' & ver_cnt(4 downto 3) & chr_row_cnt & ver_cnt(2 downto 0) & hor_cnt(4 downto 0)) when VBUS_MODE = '1' and VID_RD = '0' else 
+			-- standard attribute address
+			std_logic_vector( '0' & "110" & ver_cnt(4 downto 0) & hor_cnt(4 downto 0));
+	
+	end generate G_SRAM_VRAM;
 	
 	paper <= '0' when hor_cnt(5) = '0' and ver_cnt(5) = '0' and ( ver_cnt(4) = '0' or ver_cnt(3) = '0' ) else '1';
 	

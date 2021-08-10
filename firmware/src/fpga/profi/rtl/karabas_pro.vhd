@@ -33,7 +33,8 @@ entity karabas_pro is
 		enable_zxuno_uart  : boolean := true;
 		enable_zxuno_uart2 : boolean := false;
 		enable_saa1099 	 : boolean := false;
-		enable_osd_overlay : boolean := true
+		enable_osd_overlay : boolean := true;
+		enable_2port_vram  : boolean := false
 	);
 port (
 	-- Clock (50MHz)
@@ -345,9 +346,11 @@ signal ram_do_bus 	: std_logic_vector(7 downto 0);
 signal ram_oe_n 		: std_logic := '1';
 signal vbus_mode 		: std_logic := '0';
 signal vid_rd 			: std_logic := '0';
+signal vid_rd2 		: std_logic := '0';
 signal ext_rom_bank  : std_logic_vector(1 downto 0) := "00";
 signal ext_rom_bank_pq	: std_logic_vector(1 downto 0) := "00";
 signal turbo_cpu 		: std_logic := '0';
+signal max_turbo 		: std_logic_vector(1 downto 0) := "11";
 
 -- Loader
 signal loader_ram_di	: std_logic_vector(7 downto 0);
@@ -585,6 +588,9 @@ port map (
 	
 -- memory manager
 U6: entity work.memory 
+generic map (
+	enable_2port_vram => enable_2port_vram
+)
 port map ( 
 	CLK2X 			=> clk_bus,
 	CLKX 				=> clk_div2,
@@ -621,7 +627,13 @@ port map (
 	VA 				=> vid_a_bus,
 	VID_PAGE 		=> port_7ffd_reg(3), -- seg A0 - seg A2
 	VID_DO 			=> vid_do_bus,
-	VID_RD 			=> vid_rd,
+	
+	-- sram vram
+	VBUS_MODE_O 	=> vbus_mode, 	-- video bus mode: 0 - ram, 1 - vram
+	VID_RD_O 		=> vid_rd, 		-- read attribute or pixel	
+
+	-- 2port vram
+	VID_RD2 			=> vid_rd2,
 	
 	DS80 				=> ds80,
 	CPM 				=> cpm,
@@ -636,6 +648,9 @@ port map (
 
 -- Video Spectrum/Pentagon
 U7: entity work.video
+generic map (
+	enable_2port_vram => enable_2port_vram
+)
 port map (
 	CLK 				=> clk_div2, 	-- 14 / 12
 	CLK2x 			=> clk_bus, 	-- 28 / 24
@@ -661,7 +676,9 @@ port map (
 	VIDEO_B 			=> vid_rgb(2 downto 0),	
 	HSYNC 			=> vid_hsync,
 	VSYNC 			=> vid_vsync,
-	VID_RD 			=> vid_rd,	
+	VBUS_MODE 		=> vbus_mode,
+	VID_RD 			=> vid_rd,
+	VID_RD2 			=> vid_rd2,	
 	HCNT 				=> vid_hcnt,
 	VCNT 				=> vid_vcnt,
 	ISPAPER 			=> vid_ispaper,
@@ -877,6 +894,7 @@ port map (
 	 JOY_TYPE 		=> joy_type,
 	 OSD_OVERLAY 	=> osd_overlay,
 	 OSD_COMMAND	=> osd_command,
+	 MAX_TURBO 		=> max_turbo,
 	 
 	 LOADED 			=> kb_loaded,
 	 
@@ -1109,14 +1127,21 @@ cpu_nmi_n <= '0' when kb_magic = '1' and cpu_m1_n = '0' and cpu_mreq_n = '0' and
 --cpu_wait_n <= '0' when kb_wait = '1' else '1'; -- WAIT
 cpu_wait_n <= '1';
 turbo_cpu <= '1' when (kb_turbo /= "00" or turbo_on = '1') and turbo_off = '0' else '0';
---clk_cpu <= '0' when kb_wait = '1' else clk_bus and ena_div8 when turbo_cpu = '0' else clk_bus and ena_div4; -- 3.5 / 7 MHz
---clk_cpu <= '0' when kb_wait = '1' else clk_bus and ena_div8 when turbo_cpu = '0' else clk_bus and ena_div2; -- 3.5 / 14 MHz
---clk_cpu <= '0' when kb_wait = '1' else clk_bus and ena_div8 when turbo_cpu = '0' else clk_bus; -- 3.5 / 28 MHz
+
+-- max turbo = 28 MHz for 2 port vram
+G_MAX_TURBO_2PORT: if enable_2port_vram generate 
+	max_turbo <= "11";
+end generate G_MAX_TURBO_2PORT;
+
+-- max turbo = 7 MHz for sram vram
+G_MAX_TURBO_SRAM: if not enable_2port_vram generate 
+	max_turbo <= "01";
+end generate G_MAX_TURBO_SRAM;
 
 clk_cpu <= '0' when kb_wait = '1' else 
-	clk_bus when kb_turbo = "11" else 
-	clk_bus and ena_div2 when kb_turbo = "10" else 
-	clk_bus and ena_div4 when kb_turbo = "01" else 
+	clk_bus when kb_turbo = "11" and kb_turbo <= max_turbo else 
+	clk_bus and ena_div2 when kb_turbo = "10" and kb_turbo <= max_turbo else 
+	clk_bus and ena_div4 when kb_turbo = "01" and kb_turbo <= max_turbo else 
 	clk_bus and ena_div8;
 
 -- odnovibrator - po spadu nIORQ otschityvaet 400ns WAIT proca

@@ -208,6 +208,13 @@ void ZXKeyboard::setTurbo(uint8_t val) {
   matrix[ZX_K_TURBO2] = bitRead(turbo, 1);
 }
 
+void ZXKeyboard::setMaxTurbo(uint8_t val) {
+  max_turbo = val;
+  if (turbo > max_turbo) {
+    setTurbo(0);
+  }
+}
+
 void ZXKeyboard::toggleSwapAB() {
     // menu + TAB = SW10
   is_sw10 = !is_sw10;
@@ -799,7 +806,7 @@ void ZXKeyboard::fill(uint16_t sc, unsigned long n)
       if (is_menu || is_win || (is_ctrl && is_alt)) {
         if (!is_up) {
           turbo++;
-          if (turbo > 3) turbo = 0;
+          if (turbo > max_turbo) turbo = 0;
           setTurbo(turbo);
           event(EVENT_OSD_TURBO, turbo);
         }
@@ -1080,6 +1087,7 @@ void ZXKeyboard::eepromStoreValue(int addr, bool value)
 void ZXKeyboard::eepromRestoreValues()
 {
   turbo = eepromRestoreValue(EEPROM_TURBO_ADDRESS, turbo);
+  if (turbo > max_turbo) turbo = 0;
   profi_mode = eepromRestoreValue(EEPROM_MODE_ADDRESS, profi_mode);
   is_sw1 = eepromRestoreValue(EEPROM_SW1_ADDRESS, is_sw1);
   is_sw2 = eepromRestoreValue(EEPROM_SW2_ADDRESS, is_sw2);
@@ -1113,6 +1121,7 @@ void ZXKeyboard::eepromRestoreValues()
 
 void ZXKeyboard::eepromStoreValues()
 {
+  if (turbo > max_turbo) turbo = 0;
   eepromStoreValue(EEPROM_TURBO_ADDRESS, turbo);
   eepromStoreValue(EEPROM_MODE_ADDRESS, profi_mode);
   eepromStoreValue(EEPROM_SW1_ADDRESS, is_sw1);
@@ -1168,7 +1177,14 @@ void ZXKeyboard::eepromStoreValues()
   }
 
   uint8_t ZXKeyboard::getTurbo() {
+    if (turbo > max_turbo) {
+      setTurbo(0);
+    }
     return turbo;
+  }
+
+  uint8_t ZXKeyboard::getMaxTurbo() {
+    return max_turbo;
   }
 
   bool ZXKeyboard::getSwapAB() {

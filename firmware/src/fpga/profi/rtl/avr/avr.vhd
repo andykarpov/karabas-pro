@@ -58,6 +58,7 @@ entity avr is
 	 JOY_TYPE 	: out std_logic := '0';
 	 OSD_OVERLAY: out std_logic := '0';
 	 OSD_COMMAND: out std_logic_vector(15 downto 0);
+	 MAX_TURBO  : in std_logic_vector(1 downto 0) := "11";
 	 
 	 LOADED 		: buffer std_logic := '0';
 	 	 
@@ -426,8 +427,8 @@ begin
 		if CLK'event and CLK = '1' then
 			
 			if INIT = '1' then -- and last_queue_di /= x"FC00" then 
-				queue_di <= x"FD" & CFG;
-				last_queue_di <= x"FD" & CFG;
+				queue_di <= x"FD" & max_turbo & CFG(5 downto 0);
+				last_queue_di <= x"FD" & max_turbo & CFG(5 downto 0);
 				queue_wr_req <= '1';
 			elsif tx_build = '1' then -- TX build number
 				queue_di <= "1111" & '0' & tx_build_pos & tx_build_data; -- F0 - F7
