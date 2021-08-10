@@ -46,9 +46,7 @@ bool led2_state = false;
 bool led1_overwrite = false;
 bool led2_overwrite = false;
 
-unsigned long tl1, tl2 = 0; // led1/2 time
-unsigned long tl = 0; // blink poll time
-unsigned long tb, tb1, tb2 = 0; // hw buttons poll time
+unsigned long tl, tl1, tl2, tb, tb1, tb2 = 0; // last time
 
 SPISettings settingsA(1000000, MSBFIRST, SPI_MODE0); // SPI transmission settings
 
