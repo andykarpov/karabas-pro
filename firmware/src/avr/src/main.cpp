@@ -121,7 +121,12 @@ void update_led(uint8_t led, bool state)
 // update OSD by keyboard events
 void on_keyboard (uint8_t event_type, uint16_t scancode)
 {
-  if (!zxosd.started()) return;
+  tl = millis();
+  if (!led1_overwrite) {
+    update_led(PIN_LED1, HIGH);
+  }
+
+  if (!zxosd.started() || !zxkbd.getIsOsdOverlay()) return;
   switch (event_type) {
     case ZXKeyboard::EVENT_OSD_OVERLAY:  zxosd.initOverlay(); break;
     case ZXKeyboard::EVENT_OSD_SCANCODE: zxosd.updateScancode(scancode); break;

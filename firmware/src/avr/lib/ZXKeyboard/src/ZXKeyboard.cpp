@@ -58,9 +58,7 @@ void ZXKeyboard::handle(void)
 	if (kbd.available()) {
     c = kbd.read();
     fill(c, n);
-    if (osd_overlay) {
-      event(EVENT_OSD_SCANCODE, c);
-    }
+    event(EVENT_OSD_SCANCODE, c);
   }
 
   // process delayed sequences
