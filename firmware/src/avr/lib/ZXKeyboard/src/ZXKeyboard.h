@@ -209,10 +209,9 @@ private:
   void sendMacros(uint8_t code, uint8_t zxkey);
   uint8_t getMatrixByte(uint8_t pos);
 
-  bool eepromRestoreValue(int addr, bool default_value);
-  void eepromStoreValue(int addr, bool value);
+  bool eepromRestoreBool(int addr, bool default_value);
+  void eepromStoreBool(int addr, bool value);
   void eepromRestoreValues();
-  void eepromStoreValues();
 
 protected:
 

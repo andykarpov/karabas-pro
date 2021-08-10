@@ -148,8 +148,8 @@ void ZXKeyboard::setRombank(uint8_t bank) {
     case 2: is_sw3 = false; is_sw4 = true; break;
     case 3: is_sw3 = true; is_sw4 = true; break;
   }
-  eepromStoreValue(EEPROM_SW3_ADDRESS, is_sw3);
-  eepromStoreValue(EEPROM_SW4_ADDRESS, is_sw4);
+  eepromStoreBool(EEPROM_SW3_ADDRESS, is_sw3);
+  eepromStoreBool(EEPROM_SW4_ADDRESS, is_sw4);
   matrix[ZX_K_SW3] = is_sw3;
   matrix[ZX_K_SW4] = is_sw4;
 }
@@ -157,14 +157,14 @@ void ZXKeyboard::setRombank(uint8_t bank) {
 void ZXKeyboard::toggleTurbofdc() {
   // menu + F5 = SW5
   is_sw5 = !is_sw5;
-  eepromStoreValue(EEPROM_SW5_ADDRESS, is_sw5);
+  eepromStoreBool(EEPROM_SW5_ADDRESS, is_sw5);
   matrix[ZX_K_SW5] = is_sw5;
 }
 
 void ZXKeyboard::toggleCovox() {
   // menu + F6 = SW6
   is_sw6 = !is_sw6;
-  eepromStoreValue(EEPROM_SW6_ADDRESS, is_sw6);
+  eepromStoreBool(EEPROM_SW6_ADDRESS, is_sw6);
   matrix[ZX_K_SW6] = is_sw6;
 }
 
@@ -173,8 +173,8 @@ void ZXKeyboard::toggleStereo(uint8_t stereo) {
   is_sw7 = bitRead(stereo, 0);
   is_sw9 = bitRead(stereo, 1);
 
-  eepromStoreValue(EEPROM_SW7_ADDRESS, is_sw7);
-  eepromStoreValue(EEPROM_SW9_ADDRESS, is_sw9);
+  eepromStoreBool(EEPROM_SW7_ADDRESS, is_sw7);
+  eepromStoreBool(EEPROM_SW9_ADDRESS, is_sw9);
   matrix[ZX_K_SW7] = is_sw7;
   matrix[ZX_K_SW9] = is_sw9;
 }
@@ -182,28 +182,28 @@ void ZXKeyboard::toggleStereo(uint8_t stereo) {
 void ZXKeyboard::toggleSsg() {
   // menu + F8 = SW8
   is_sw8 = !is_sw8;
-  eepromStoreValue(EEPROM_SW8_ADDRESS, is_sw8);
+  eepromStoreBool(EEPROM_SW8_ADDRESS, is_sw8);
   matrix[ZX_K_SW8] = is_sw8;
 }
 
 void ZXKeyboard::toggleVideo() {
     // menu + F9 = SW1
   is_sw1 = !is_sw1;
-  eepromStoreValue(EEPROM_SW1_ADDRESS, is_sw1);
+  eepromStoreBool(EEPROM_SW1_ADDRESS, is_sw1);
   matrix[ZX_K_SW1] = is_sw1;
 }
 
 void ZXKeyboard::toggleVsync() {
   // menu + F10 = SW2
   is_sw2 = !is_sw2;
-  eepromStoreValue(EEPROM_SW2_ADDRESS, is_sw2);
+  eepromStoreBool(EEPROM_SW2_ADDRESS, is_sw2);
   matrix[ZX_K_SW2] = is_sw2;
 }
 
 void ZXKeyboard::setTurbo(uint8_t val) {
   // menu + F11 = turbo swith 0 1 2 3
   turbo = val;
-  eepromStoreValue(EEPROM_TURBO_ADDRESS, turbo);
+  EEPROM.update(EEPROM_TURBO_ADDRESS, turbo);
   matrix[ZX_K_TURBO] = bitRead(turbo, 0);
   matrix[ZX_K_TURBO2] = bitRead(turbo, 1);
 }
@@ -211,27 +211,27 @@ void ZXKeyboard::setTurbo(uint8_t val) {
 void ZXKeyboard::setMaxTurbo(uint8_t val) {
   max_turbo = val;
   if (turbo > max_turbo) {
-    setTurbo(0);
+    setTurbo(max_turbo);
   }
 }
 
 void ZXKeyboard::toggleSwapAB() {
     // menu + TAB = SW10
   is_sw10 = !is_sw10;
-  eepromStoreValue(EEPROM_SW10_ADDRESS, is_sw10);
+  eepromStoreBool(EEPROM_SW10_ADDRESS, is_sw10);
   matrix[ZX_K_SW10] = is_sw10;
 }
 
 void ZXKeyboard::toggleJoyType() {
   // menu + J = JOY_TYPE
   joy_type = !joy_type;
-  eepromStoreValue(EEPROM_JOY_TYPE_ADDRESS, joy_type);
+  eepromStoreBool(EEPROM_JOY_TYPE_ADDRESS, joy_type);
   matrix[ZX_K_JOY_TYPE] = joy_type;
 }
 
 void ZXKeyboard::toggleKeyboardType() {
   profi_mode = !profi_mode;
-  eepromStoreValue(EEPROM_MODE_ADDRESS, profi_mode);
+  eepromStoreBool(EEPROM_MODE_ADDRESS, profi_mode);
   matrix[ZX_K_KBD_MODE] = profi_mode;
 }
 
@@ -1066,7 +1066,7 @@ void ZXKeyboard::clear(int clear_size)
   }
 }
 
-bool ZXKeyboard::eepromRestoreValue(int addr, bool default_value)
+bool ZXKeyboard::eepromRestoreBool(int addr, bool default_value)
 {
   byte val;
   val = EEPROM.read(addr);
@@ -1078,7 +1078,7 @@ bool ZXKeyboard::eepromRestoreValue(int addr, bool default_value)
   }
 }
 
-void ZXKeyboard::eepromStoreValue(int addr, bool value)
+void ZXKeyboard::eepromStoreBool(int addr, bool value)
 {
   byte val = (value ? EEPROM_VALUE_TRUE : EEPROM_VALUE_FALSE);
   EEPROM.update(addr, val);
@@ -1086,21 +1086,24 @@ void ZXKeyboard::eepromStoreValue(int addr, bool value)
 
 void ZXKeyboard::eepromRestoreValues()
 {
-  turbo = eepromRestoreValue(EEPROM_TURBO_ADDRESS, turbo);
-  if (turbo > max_turbo) turbo = 0;
-  profi_mode = eepromRestoreValue(EEPROM_MODE_ADDRESS, profi_mode);
-  is_sw1 = eepromRestoreValue(EEPROM_SW1_ADDRESS, is_sw1);
-  is_sw2 = eepromRestoreValue(EEPROM_SW2_ADDRESS, is_sw2);
-  is_sw3 = eepromRestoreValue(EEPROM_SW3_ADDRESS, is_sw3);
-  is_sw4 = eepromRestoreValue(EEPROM_SW4_ADDRESS, is_sw4);
-  is_sw5 = eepromRestoreValue(EEPROM_SW5_ADDRESS, is_sw5);
-  is_sw6 = eepromRestoreValue(EEPROM_SW6_ADDRESS, is_sw6);
-  is_sw7 = eepromRestoreValue(EEPROM_SW7_ADDRESS, is_sw7);
-  is_sw8 = eepromRestoreValue(EEPROM_SW8_ADDRESS, is_sw8);
-  is_sw9 = eepromRestoreValue(EEPROM_SW9_ADDRESS, is_sw9);
-  is_sw10 = eepromRestoreValue(EEPROM_SW10_ADDRESS, is_sw10);
-  is_mouse_swap = eepromRestoreValue(EEPROM_MOUSE_SWAP_ADDRESS, is_mouse_swap);
-  joy_type = eepromRestoreValue(EEPROM_JOY_TYPE_ADDRESS, joy_type);
+  turbo = EEPROM.read(EEPROM_TURBO_ADDRESS);
+  if (turbo > max_turbo) {
+    turbo = max_turbo;
+    EEPROM.update(EEPROM_TURBO_ADDRESS, turbo);
+  }
+  profi_mode = eepromRestoreBool(EEPROM_MODE_ADDRESS, profi_mode);
+  is_sw1 = eepromRestoreBool(EEPROM_SW1_ADDRESS, is_sw1);
+  is_sw2 = eepromRestoreBool(EEPROM_SW2_ADDRESS, is_sw2);
+  is_sw3 = eepromRestoreBool(EEPROM_SW3_ADDRESS, is_sw3);
+  is_sw4 = eepromRestoreBool(EEPROM_SW4_ADDRESS, is_sw4);
+  is_sw5 = eepromRestoreBool(EEPROM_SW5_ADDRESS, is_sw5);
+  is_sw6 = eepromRestoreBool(EEPROM_SW6_ADDRESS, is_sw6);
+  is_sw7 = eepromRestoreBool(EEPROM_SW7_ADDRESS, is_sw7);
+  is_sw8 = eepromRestoreBool(EEPROM_SW8_ADDRESS, is_sw8);
+  is_sw9 = eepromRestoreBool(EEPROM_SW9_ADDRESS, is_sw9);
+  is_sw10 = eepromRestoreBool(EEPROM_SW10_ADDRESS, is_sw10);
+  is_mouse_swap = eepromRestoreBool(EEPROM_MOUSE_SWAP_ADDRESS, is_mouse_swap);
+  joy_type = eepromRestoreBool(EEPROM_JOY_TYPE_ADDRESS, joy_type);
   
   // apply restored values
   matrix[ZX_K_TURBO] = bitRead(turbo, 0);
@@ -1117,25 +1120,6 @@ void ZXKeyboard::eepromRestoreValues()
   matrix[ZX_K_SW10] = is_sw10;
   matrix[ZX_K_KBD_MODE] = profi_mode;
   matrix[ZX_K_JOY_TYPE] = joy_type;
-}
-
-void ZXKeyboard::eepromStoreValues()
-{
-  if (turbo > max_turbo) turbo = 0;
-  eepromStoreValue(EEPROM_TURBO_ADDRESS, turbo);
-  eepromStoreValue(EEPROM_MODE_ADDRESS, profi_mode);
-  eepromStoreValue(EEPROM_SW1_ADDRESS, is_sw1);
-  eepromStoreValue(EEPROM_SW2_ADDRESS, is_sw2);
-  eepromStoreValue(EEPROM_SW3_ADDRESS, is_sw3);
-  eepromStoreValue(EEPROM_SW4_ADDRESS, is_sw4);
-  eepromStoreValue(EEPROM_SW5_ADDRESS, is_sw5);
-  eepromStoreValue(EEPROM_SW6_ADDRESS, is_sw6);
-  eepromStoreValue(EEPROM_SW7_ADDRESS, is_sw7);
-  eepromStoreValue(EEPROM_SW8_ADDRESS, is_sw8);
-  eepromStoreValue(EEPROM_SW9_ADDRESS, is_sw9);
-  eepromStoreValue(EEPROM_SW10_ADDRESS, is_sw10);
-  eepromStoreValue(EEPROM_MOUSE_SWAP_ADDRESS, is_mouse_swap);
-  eepromStoreValue(EEPROM_JOY_TYPE_ADDRESS, joy_type);
 }
 
   bool ZXKeyboard::getIsOsdOverlay() {
@@ -1178,7 +1162,7 @@ void ZXKeyboard::eepromStoreValues()
 
   uint8_t ZXKeyboard::getTurbo() {
     if (turbo > max_turbo) {
-      setTurbo(0);
+      setTurbo(max_turbo);
     }
     return turbo;
   }
@@ -1238,7 +1222,7 @@ void ZXKeyboard::eepromStoreValues()
 
   void ZXKeyboard::setMouseSwap(bool value) {
     is_mouse_swap = value;
-      eepromStoreValue(EEPROM_MOUSE_SWAP_ADDRESS, is_mouse_swap);
+      eepromStoreBool(EEPROM_MOUSE_SWAP_ADDRESS, is_mouse_swap);
   }
 
   bool ZXKeyboard::getMouseSwap() {
