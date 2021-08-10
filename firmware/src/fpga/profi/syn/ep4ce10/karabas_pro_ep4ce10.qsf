@@ -205,6 +205,7 @@ set_global_assignment -name PRE_FLOW_SCRIPT_FILE "quartus_sh:generate_messages.t
 
 set_parameter -name enable_saa1099 true
 set_parameter -name enable_zxuno_uart2 true
+set_parameter -name enable_2port_vram true
 
 set_global_assignment -name OPTIMIZE_HOLD_TIMING "ALL PATHS"
 set_global_assignment -name OPTIMIZE_MULTI_CORNER_TIMING ON
