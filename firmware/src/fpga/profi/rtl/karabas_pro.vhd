@@ -704,7 +704,7 @@ port map (
 	LOADED 			=> kb_loaded,
 	
 	-- sensors
-	TURBO 			=> turbo_cpu,
+	TURBO 			=> kb_turbo,
 	SCANDOUBLER_EN => vid_scandoubler_enable,
 	MODE60 			=> soft_sw(2),
 	ROM_BANK 		=> ext_rom_bank_pq,

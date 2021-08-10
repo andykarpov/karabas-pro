@@ -401,7 +401,7 @@ begin
 	-- messages rom (to get a build num)
 	U_MESSAGES: entity work.message_rom 
 	port map (
-		address 		=> "11111" & tx_build_pos, -- build version starts from 248
+		address 		=> "111111" & tx_build_pos, -- build version starts from 504
 		clock   		=> CLK,
 		q       		=> tx_build_data
 	);
