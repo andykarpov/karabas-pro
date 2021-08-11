@@ -104,8 +104,8 @@ architecture rtl of osd is
 	signal message_addr : std_logic_vector(8 downto 0);
 
 	-- displayable lines (addresses)
-	signal line1 : std_logic_vector(8 downto 0) := std_logic_vector(to_unsigned(message_empty, 9));
-	signal line2 : std_logic_vector(8 downto 0) := std_logic_vector(to_unsigned(message_empty, 9));
+	signal line1 : std_logic_vector(8 downto 0) := '0' & std_logic_vector(to_unsigned(message_empty, 8));
+	signal line2 : std_logic_vector(8 downto 0) := '0' & std_logic_vector(to_unsigned(message_empty, 8));
 	
 	signal last_turbo : std_logic_vector(1 downto 0) := "00";
 	signal last_scandoubler_en : std_logic := '0';
@@ -188,7 +188,7 @@ begin
 	-- message address
 	message_addr <= line1 + hpos(2 downto 0) when vpos(0) = '1' and ((DS80 = '0' and hcnt < 64) or (DS80 = '1' and hcnt < 128)) else 
 						 line2 + hpos(2 downto 0) when vpos(1) = '1' and ((DS80 = '0' and hcnt < 64) or (DS80 = '1' and hcnt < 128)) else 
-						 std_logic_vector(to_unsigned(message_empty, 9));
+						 '0' & std_logic_vector(to_unsigned(message_empty, 8));
 
 	-- pixel 
 	bit_addr <= char_x(2 downto 0);
@@ -240,8 +240,8 @@ begin
 				last_fdc_swap <= FDC_SWAP;
 				last_joy_type <= JOY_TYPE;
 				cnt <= "0000";
-				line1 <= std_logic_vector(to_unsigned(message_karabas, 9));
-				line2 <= std_logic_vector(to_unsigned(message_ver, 9));
+				line1 <= '0' & std_logic_vector(to_unsigned(message_karabas, 8));
+				line2 <= '1' & std_logic_vector(to_unsigned(message_ver, 8));
 				
 			elsif (LOADED = '1') then
 			
@@ -249,11 +249,11 @@ begin
 				if (KB_WAIT /= last_kb_wait) then
 					last_kb_wait <= KB_WAIT;
 					cnt <= "0000";
-					line1 <= std_logic_vector(to_unsigned(message_pause, 9));
+					line1 <= '0' & std_logic_vector(to_unsigned(message_pause, 8));
 					if (kb_wait = '0') then 
-						line2 <= std_logic_vector(to_unsigned(message_off, 9));
+						line2 <= '0' & std_logic_vector(to_unsigned(message_off, 8));
 					else 
-						line2 <= std_logic_vector(to_unsigned(message_on, 9));
+						line2 <= '0' & std_logic_vector(to_unsigned(message_on, 8));
 					end if;
 				end if;
 				
@@ -261,11 +261,11 @@ begin
 				if (KB_MODE /= last_kb_mode) then
 					last_kb_mode <= KB_MODE;
 					cnt <= "0000";
-					line1 <= std_logic_vector(to_unsigned(message_keyboard, 9));
+					line1 <= '0' & std_logic_vector(to_unsigned(message_keyboard, 8));
 					if (kb_mode = '0') then 
-						line2 <= std_logic_vector(to_unsigned(message_spectrum, 9));
+						line2 <= '0' & std_logic_vector(to_unsigned(message_spectrum, 8));
 					else 
-						line2 <= std_logic_vector(to_unsigned(message_profi, 9));
+						line2 <= '0' & std_logic_vector(to_unsigned(message_profi, 8));
 					end if;
 				end if;
 				
@@ -273,12 +273,12 @@ begin
 				if (TURBO /= last_turbo) then
 					last_turbo <= TURBO;
 					cnt <= "0000";
-					line1 <= std_logic_vector(to_unsigned(message_turbo, 9));
+					line1 <= '0' & std_logic_vector(to_unsigned(message_turbo, 8));
 					case turbo is 
-						when "00" => line2 <= std_logic_vector(to_unsigned(message_off, 9));
-						when "01" => line2 <= std_logic_vector(to_unsigned(message_2x, 9));
-						when "10" => line2 <= std_logic_vector(to_unsigned(message_4x, 9));
-						when "11" => line2 <= std_logic_vector(to_unsigned(message_8x, 9));
+						when "00" => line2 <= '0' & std_logic_vector(to_unsigned(message_off, 8));
+						when "01" => line2 <= '0' & std_logic_vector(to_unsigned(message_2x, 8));
+						when "10" => line2 <= '1' & std_logic_vector(to_unsigned(message_4x, 8));
+						when "11" => line2 <= '1' & std_logic_vector(to_unsigned(message_8x, 8));
 						when others => null;
 					end case;
 				end if;
@@ -289,14 +289,14 @@ begin
 					last_scandoubler_en <= scandoubler_en;
 					cnt <= "0000";
 					if (scandoubler_en = '1') then 
-						line1 <= std_logic_vector(to_unsigned(message_vga, 9));
+						line1 <= '0'& std_logic_vector(to_unsigned(message_vga, 8));
 					else 
-						line1 <= std_logic_vector(to_unsigned(message_rgb, 9));
+						line1 <= '0'& std_logic_vector(to_unsigned(message_rgb, 8));
 					end if;
 					if (mode60 = '1') then 
-						line2 <= std_logic_vector(to_unsigned(message_60hz, 9));
+						line2 <= '0'& std_logic_vector(to_unsigned(message_60hz, 8));
 					else 
-						line2 <= std_logic_vector(to_unsigned(message_50hz, 9));
+						line2 <= '0'& std_logic_vector(to_unsigned(message_50hz, 8));
 					end if;
 				end if;
 				
@@ -304,15 +304,15 @@ begin
 				if (ROM_BANK /= last_rom_bank) then
 					last_rom_bank <= ROM_BANK;
 					cnt <= "0000";
-					line1 <= std_logic_vector(to_unsigned(message_rombank, 9));
+					line1 <= '0'& std_logic_vector(to_unsigned(message_rombank, 8));
 					if (ROM_BANK = "00") then 
-						line2 <= std_logic_vector(to_unsigned(message_rombank0, 9));
+						line2 <= '0'& std_logic_vector(to_unsigned(message_rombank0, 8));
 					elsif (ROM_BANK = "01") then 
-						line2 <= std_logic_vector(to_unsigned(message_rombank1, 9));
+						line2 <= '0'& std_logic_vector(to_unsigned(message_rombank1, 8));
 					elsif (ROM_BANK = "10") then 
-						line2 <= std_logic_vector(to_unsigned(message_rombank2, 9));
+						line2 <= '0'& std_logic_vector(to_unsigned(message_rombank2, 8));
 					else 
-						line2 <= std_logic_vector(to_unsigned(message_rombank3, 9));
+						line2 <= '0'& std_logic_vector(to_unsigned(message_rombank3, 8));
 					end if;
 				end if;
 				
@@ -322,19 +322,19 @@ begin
 					last_ssg_stereo <= SSG_STEREO;
 					last_ssg_mono <= SSG_MONO;
 					cnt <= "0000";
-					line1 <= std_logic_vector(to_unsigned(message_ssgmode, 9));
+					line1 <= '0'& std_logic_vector(to_unsigned(message_ssgmode, 8));
 					if (SSG_MODE = '0' and SSG_STEREO = '0' and SSG_MONO = '0') then 
-						line2 <= std_logic_vector(to_unsigned(message_ym_acb, 9));
+						line2 <= '0'& std_logic_vector(to_unsigned(message_ym_acb, 8));
 					elsif (SSG_MODE = '0' and SSG_STEREO = '1' and SSG_MONO = '0') then 
-						line2 <= std_logic_vector(to_unsigned(message_ym_abc, 9));
+						line2 <= '0'& std_logic_vector(to_unsigned(message_ym_abc, 8));
 					elsif (SSG_MODE = '1' and SSG_STEREO = '0' and SSG_MONO = '0') then 
-						line2 <= std_logic_vector(to_unsigned(message_ay_acb, 9));
+						line2 <= '0'& std_logic_vector(to_unsigned(message_ay_acb, 8));
 					elsif (SSG_MODE = '1' and SSG_STEREO = '1' and SSG_MONO = '0') then 
-						line2 <= std_logic_vector(to_unsigned(message_ay_abc, 9));
+						line2 <= '0'& std_logic_vector(to_unsigned(message_ay_abc, 8));
 					elsif (SSG_MODE = '0' and SSG_MONO = '1') then 
-						line2 <= std_logic_vector(to_unsigned(message_ym_mono, 9));
+						line2 <= '0'& std_logic_vector(to_unsigned(message_ym_mono, 8));
 					else 
-						line2 <= std_logic_vector(to_unsigned(message_ay_mono, 9));
+						line2 <= '0'& std_logic_vector(to_unsigned(message_ay_mono, 8));
 					end if;
 				end if;
 				
@@ -342,11 +342,11 @@ begin
 				if (TURBO_FDC /= last_turbo_fdc) then
 					last_turbo_fdc <= TURBO_FDC;
 					cnt <= "0000";
-					line1 <= std_logic_vector(to_unsigned(message_turbo_fdc, 9));
+					line1 <= '0'& std_logic_vector(to_unsigned(message_turbo_fdc, 8));
 					if (turbo_fdc = '0') then 
-						line2 <= std_logic_vector(to_unsigned(message_off, 9));
+						line2 <= '0'& std_logic_vector(to_unsigned(message_off, 8));
 					else 
-						line2 <= std_logic_vector(to_unsigned(message_on, 9));
+						line2 <= '0'& std_logic_vector(to_unsigned(message_on, 8));
 					end if;
 				end if;
 				
@@ -354,11 +354,11 @@ begin
 				if (COVOX_EN /= last_covox) then
 					last_covox <= COVOX_EN;
 					cnt <= "0000";
-					line1 <= std_logic_vector(to_unsigned(message_covox, 9));
+					line1 <= '0'& std_logic_vector(to_unsigned(message_covox, 8));
 					if (covox_en = '0') then 
-						line2 <= std_logic_vector(to_unsigned(message_off, 9));
+						line2 <= '0'& std_logic_vector(to_unsigned(message_off, 8));
 					else 
-						line2 <= std_logic_vector(to_unsigned(message_on, 9));
+						line2 <= '0'& std_logic_vector(to_unsigned(message_on, 8));
 					end if;
 				end if;
 				
@@ -366,11 +366,11 @@ begin
 				if (FDC_SWAP /= last_fdc_swap) then
 					last_fdc_swap <= FDC_SWAP;
 					cnt <= "0000";
-					line1 <= std_logic_vector(to_unsigned(message_fdc_swap, 9));
+					line1 <= '0'& std_logic_vector(to_unsigned(message_fdc_swap, 8));
 					if (FDC_SWAP = '0') then 
-						line2 <= std_logic_vector(to_unsigned(message_off, 9));
+						line2 <= '0'& std_logic_vector(to_unsigned(message_off, 8));
 					else 
-						line2 <= std_logic_vector(to_unsigned(message_on, 9));
+						line2 <= '0'& std_logic_vector(to_unsigned(message_on, 8));
 					end if;
 				end if;
 				
@@ -378,11 +378,11 @@ begin
 				if (JOY_TYPE /= last_joy_type) then
 					last_joy_type <= JOY_TYPE;
 					cnt <= "0000";
-					line1 <= std_logic_vector(to_unsigned(message_joystick, 9));
+					line1 <= '0'& std_logic_vector(to_unsigned(message_joystick, 8));
 					if (JOY_TYPE = '0') then 
-						line2 <= std_logic_vector(to_unsigned(message_kempston, 9));
+						line2 <= '0'& std_logic_vector(to_unsigned(message_kempston, 8));
 					else 
-						line2 <= std_logic_vector(to_unsigned(message_sega, 9));
+						line2 <= '0'& std_logic_vector(to_unsigned(message_sega, 8));
 					end if;
 				end if;
 				
