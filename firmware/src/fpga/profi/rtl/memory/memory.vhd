@@ -261,7 +261,11 @@ begin
 			when "01" => if SCO='0' then 
 								ram_page <= "000000101";
 							 else 
-								ram_page <= "0" & RAM_EXT(4 downto 0) & RAM_BANK(2 downto 0); 
+								if RAM_6MB = '1' then 
+									ram_page <= "0"   & RAM_EXT(4 downto 0) & RAM_BANK(2 downto 0); 
+								else 
+									ram_page <= "000" & RAM_EXT(2 downto 0) & RAM_BANK(2 downto 0); 
+								end if;
 							 end if;	                               -- Seg1 RAM 4000-7FFF	
 			when "10" => if SCR='0' then 
 								ram_page <= "000000010"; 	
@@ -269,7 +273,11 @@ begin
 								ram_page <= "000000110"; 
 							 end if;                                -- Seg2 RAM 8000-BFFF
 			when "11" => if SCO='0' then 
-								ram_page <= "0" & RAM_EXT(4 downto 0) & RAM_BANK(2 downto 0);	
+								if RAM_6MB = '1' then 
+									ram_page <= "0"   & RAM_EXT(4 downto 0) & RAM_BANK(2 downto 0);	
+								else 
+									ram_page <= "000" & RAM_EXT(2 downto 0) & RAM_BANK(2 downto 0);	
+								end if;
 							 else 
 								ram_page <= "000000111";               -- Seg3 RAM C000-FFFF	
 							 end if;
