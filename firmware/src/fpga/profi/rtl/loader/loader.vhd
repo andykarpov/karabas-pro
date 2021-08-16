@@ -70,10 +70,12 @@ signal loader_act 	: std_logic := '1';
 signal reset_cnt  	: std_logic_vector(3 downto 0) := "0000";
 signal read_cnt 		: std_logic_vector(20 downto 0) := (others => '0');
 signal clear_cnt 		: std_logic_vector(20 downto 0) := (others => '0');
+signal cfg_read		: std_logic := '0';
 
 type machine IS( 
-					 ready, cmd_read, do_read, do_next, finish, 
+					 ready, 
 					 cmd_read_cfg, do_read_cfg, finish_cfg,
+					 cmd_read, do_read, do_next, finish, 					 
 					 finish2
 );     --state machine datatype
 signal state : machine; --current state
@@ -100,11 +102,36 @@ begin
 			when ready => -- ready to begin / finish
 				if (flash_busy = '1') then 
 					state <= ready;
+				elsif (cfg_read = '0') then 
+					state <= cmd_read_cfg;
 				elsif (read_cnt < SIZE_TO_READ) then 
 					state <= cmd_read;
 				else 
 					state <= finish;
 				end if;
+				
+			-- read cfg byte from spi flash
+			when cmd_read_cfg => 
+				FLASH_RD_N <= '0';
+				spi_page_bus <= CFG_ADDR(23 downto 8);
+				spi_a_bus <= CFG_ADDR(7 downto 0);
+				if (flash_busy = '1') then
+					state <= do_read_cfg;
+				end if;
+			when do_read_cfg => -- wait for spi transfer
+				FLASH_RD_N <= '1';
+				if (flash_ready = '1') then 
+					CFG <= FLASH_DO;
+					cfg_read <= '1';
+					state <= finish_cfg;
+				else 
+					state <= do_read_cfg;
+				end if;
+			when finish_cfg => --set up initial addresses to read a ROM image from flash to RAM
+				spi_page_bus <= FLASH_ADDR_START(23 downto 8);
+				spi_a_bus <= FLASH_ADDR_START(7 downto 0);
+				ram_a_bus <= RAM_ADDR_START;
+				state <= ready;
 			
 			when cmd_read => -- read command
 				FLASH_RD_N <= '0';
@@ -133,26 +160,8 @@ begin
 				state <= ready;
 
 			when finish => -- finish of reading rom images fro flash to ram
-				state <= cmd_read_cfg;
+				state <= finish2;
 			
-			-- read cfg byte from spi flash
-			when cmd_read_cfg => 
-				FLASH_RD_N <= '0';
-				spi_page_bus <= CFG_ADDR(23 downto 8);
-				spi_a_bus <= CFG_ADDR(7 downto 0);
-				if (flash_busy = '1') then
-					state <= do_read_cfg;
-				end if;
-			when do_read_cfg => -- wait for spi transfer
-				FLASH_RD_N <= '1';
-				if (flash_ready = '1') then 
-					CFG <= FLASH_DO;
-					state <= finish_cfg;
-				else 
-					state <= do_read_cfg;
-				end if;
-			when finish_cfg => 
-				state <= finish2;			
 			when finish2 => -- read all the required data from SPI flash
 				state <= finish2; -- infinite loop here
 				loader_act <= '0'; -- loader finished

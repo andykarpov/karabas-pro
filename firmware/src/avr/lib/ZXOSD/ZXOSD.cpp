@@ -284,6 +284,10 @@ void ZXOSD::printLogo(uint8_t x, uint8_t y)
     case 5:
       osd.print(F("Rev.DS"));
       break;
+    case 36:
+    case 37:
+      osd.print(F("Rev.E"));
+      break;
   }
 }
 
@@ -303,10 +307,12 @@ void ZXOSD::printHeader()
 /*  switch (fpga_cfg) {
     case 0:
     case 4:
+    case 36:
       osd.print(F("TDA1543"));
       break;
     case 1:
     case 5:
+    case 37:
       osd.print(F("TDA1543A"));
       break;
   }
@@ -715,11 +721,15 @@ void ZXOSD::initInfoOverlay()
   switch (fpga_cfg) {
     case 0:
     case 1:
-      osd.print(F("A-D"));
+      osd.print(F("A/B/C/D"));
       break;
     case 4:
     case 5:
       osd.print(F("DS"));
+      break;
+    case 36:
+    case 37:
+      osd.print(F("E"));
       break;
   }
 
@@ -730,6 +740,7 @@ void ZXOSD::initInfoOverlay()
   switch (fpga_cfg) {
     case 1:
     case 5:
+    case 37:
       osd.print(F("A"));
       break;
   }

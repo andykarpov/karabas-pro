@@ -30,11 +30,11 @@ use IEEE.numeric_std.all;
 
 entity karabas_pro is
 	generic (
-		enable_zxuno_uart  : boolean := true;
-		enable_zxuno_uart2 : boolean := false;
-		enable_saa1099 	 : boolean := false;
-		enable_osd_overlay : boolean := true;
-		enable_2port_vram  : boolean := false
+		enable_zxuno_uart  : boolean := true;  -- uart 1 (enabled by default)
+		enable_zxuno_uart2 : boolean := false; -- uart 2 (enabled for ep4ce10)
+		enable_saa1099 	 : boolean := false; -- saa1099 (enabled for ep4ce10)
+		enable_osd_overlay : boolean := true;  -- osd overlay (enabled by default)
+		enable_2port_vram  : boolean := false -- 2port vram (enabled for ep4ce10)
 	);
 port (
 	-- Clock (50MHz)
@@ -82,13 +82,15 @@ port (
 	SND_WS 		: out std_logic;
 	SND_DAT 		: out std_logic;
 	
-	-- Misc I/O
-	PIN_141		: inout std_logic;
-	PIN_138 		: inout std_logic;
-	PIN_121		: inout std_logic;
-	PIN_120		: inout std_logic;
-	PIN_7 		: inout std_logic;
-	PIN_25 		: in std_logic;	 -- dedicated clock input
+	-- UART2 (for ep4ce10 / ep4c10)
+	PIN_141		: out std_logic; -- uart2 tx
+	PIN_138 		: out std_logic; -- uart2 cts
+	PIN_25 		: in std_logic;	 -- uart2 rx
+	
+	-- RAM selector 
+	PIN_121		: out std_logic := '0'; -- /ramce1
+	PIN_120		: out std_logic := '1'; -- /ramce2
+	PIN_7 		: out std_logic := '1'; -- /ramce3
 	
    FDC_STEP    : inout std_logic; -- PIN_119 connected to FDC_STEP for TurboFDC
    SD_MOSI     : inout std_logic; -- PIN_115 connected to SD_S
@@ -341,7 +343,7 @@ signal clk_cpu			: std_logic;
 signal selector		: std_logic_vector(7 downto 0);
 signal mux				: std_logic_vector(3 downto 0);
 signal speaker 		: std_logic := '0';
-signal ram_ext 		: std_logic_vector(2 downto 0) := "000";
+signal ram_ext 		: std_logic_vector(4 downto 0) := "00000";
 signal ram_do_bus 	: std_logic_vector(7 downto 0);
 signal ram_oe_n 		: std_logic := '1';
 signal vbus_mode 		: std_logic := '0';
@@ -603,6 +605,10 @@ port map (
 	N_WR 				=> cpu_wr_n,
 	N_RD 				=> cpu_rd_n,
 	N_M1 				=> cpu_m1_n,
+	
+	-- config from loader
+	RAM_6MB 			=> board_revision(5), -- 5th bit of the CFG is a revE flag with 6MB SRAM
+	
 	-- loader signals
 	loader_act 		=> loader_act,
 	loader_ram_a 	=> loader_ram_a,
@@ -613,6 +619,9 @@ port map (
 	MD 				=> SRAM_D,
 	N_MRD 			=> SRAM_NRD,
 	N_MWR 			=> SRAM_NWR,
+	N_CE1 			=> PIN_121,
+	N_CE2 			=> PIN_120,
+	N_CE3				=> PIN_7,
 	-- ram out to cpu
 	DO 				=> ram_do_bus,
 	N_OE 				=> ram_oe_n,	
@@ -1035,8 +1044,12 @@ port map(
 );	
 PIN_141		<= uart2_tx;
 PIN_138 		<= uart2_cts;
-uart2_rx 		<= PIN_121;
+uart2_rx 		<= PIN_25;
 end generate G_UNO_UART2;
+
+-- debug
+--PIN_141 <= clk_bus;
+--PIN_138 <= clk_cpu;
 
 end generate G_UNO_UART;
 
@@ -1312,7 +1325,7 @@ sco 	<= port_dffd_reg(3); -- Выбор положения окна проеци
 									-- 0 - окно номер 1 (#C000-#FFFF)
 									-- 1 - окно номер 2 (#4000-#7FFF)
 
-ram_ext <= port_dffd_reg(2 downto 0);
+ram_ext <= port_7ffd_reg(7 downto 6) & port_dffd_reg(2 downto 0);
 
 cs_xxfe <= '1' when cpu_iorq_n = '0' and cpu_a_bus(0) = '0' else '0';
 cs_xx7e <= '1' when cs_xxfe = '1' and cpu_a_bus(7) = '0' else '0';

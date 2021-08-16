@@ -76,6 +76,8 @@ jic: $(PROJECT).sof
 	quartus_cpf -c $(PROJECT)_tda1543a.cof
 	quartus_cpf -c $(PROJECT)_revDS_tda1543.cof
 	quartus_cpf -c $(PROJECT)_revDS_tda1543a.cof
+	quartus_cpf -c $(PROJECT)_revE_tda1543.cof
+	quartus_cpf -c $(PROJECT)_revE_tda1543a.cof
 
 program: $(PROJECT).sof
 	quartus_pgm --no_banner --mode=jtag -o "P;$(PROJECT).sof"
