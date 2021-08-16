@@ -1141,9 +1141,9 @@ cpu_nmi_n <= '0' when kb_magic = '1' and cpu_m1_n = '0' and cpu_mreq_n = '0' and
 cpu_wait_n <= '1';
 turbo_cpu <= '1' when (kb_turbo /= "00" or turbo_on = '1') and turbo_off = '0' else '0';
 
--- max turbo = 28 MHz for 2 port vram
+-- max turbo = 14 MHz for 2 port vram
 G_MAX_TURBO_2PORT: if enable_2port_vram generate 
-	max_turbo <= "11";
+	max_turbo <= "10";
 end generate G_MAX_TURBO_2PORT;
 
 -- max turbo = 7 MHz for sram vram
