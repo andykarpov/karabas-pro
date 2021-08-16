@@ -90,6 +90,7 @@ VARIABLE spi_busy_cnt : INTEGER := 0;
 begin
 	if RESET = '1' then
 		loader_act <= '1';
+		cfg_read <= '0';
 		spi_page_bus <= FLASH_ADDR_START(23 downto 8);
 		spi_a_bus <= FLASH_ADDR_START(7 downto 0);
 		ram_a_bus <= RAM_ADDR_START;

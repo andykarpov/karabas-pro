@@ -225,6 +225,7 @@ void setup()
   // waiting for init
   while (!init_done) {
     spi_send(CMD_NONE, 0x00);
+    spi_send(CMD_INIT_REQ, 0x00);
   }
 
   // request build num from the fpga

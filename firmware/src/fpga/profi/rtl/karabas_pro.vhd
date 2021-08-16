@@ -881,7 +881,7 @@ port map (
 	 RTC_CS 			=> '1',
 	 RTC_WR_N 		=> not mc146818_wr,
 	 
-	 INIT 			=> loader_reset,
+	 LOADER_DONE   => not loader_act,
 	 
 	 LED1 			=> led1,
 	 LED2				=> led2,

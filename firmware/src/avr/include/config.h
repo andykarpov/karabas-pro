@@ -6,7 +6,7 @@
 #endif
 
 #ifndef ALLOW_LED_OVERRIDE
-#define ALLOW_LED_OVERRIDE 1
+#define ALLOW_LED_OVERRIDE 0
 #endif
 
 #ifndef BUILD_VER

@@ -36,7 +36,7 @@ entity avr is
 	 RTC_CS 		: in std_logic := '0';
 	 RTC_WR_N 	: in std_logic := '1';
 	 
-	 INIT 		: in std_logic := '0';
+	 LOADER_DONE : in std_logic := '0';
 	 
 	 LED1			: in std_logic := '0';
 	 LED2 		: in std_logic := '0';
@@ -115,19 +115,29 @@ architecture RTL of avr is
 	signal queue_do			: std_logic_vector(15 downto 0);
 	signal queue_rd_empty   : std_logic;
 	
-	signal last_queue_di 	: std_logic_vector(15 downto 0) := (others => '1');	
-	signal cnt_led 			: unsigned(10 downto 0) := (others=> '0');
+	signal queue_wr_size    : std_logic_vector(7 downto 0) := (others => '0');
+	signal queue_rd_size 	: std_logic_vector(7 downto 0) := (others => '0');
 	
 	signal scancode_tmp		: std_logic_vector(7 downto 0) := (others => '0');
 	signal is_up 				: std_logic := '0';
 	
-	type qmachine IS(q_idle, q_init, q_init_done, q_rtcw, q_rtcw_done, q_avrw, q_avrw_done, q_led, q_led_done, q_nop, q_nop_done); --state machine for queue writes
-	signal qstate : qmachine := q_idle;
+	--state machine for queue writes
+	type qmachine IS(
+		wait_loader_done, wait_init, init_ack, 
+		idle, 
+		build_req, build_data, build_ack, 
+		rtc_wr_req, rtc_wr_ack,
+		led_req, led_ack);
+	signal qstate : qmachine := wait_loader_done;
 	
 	signal tx_build 			: std_logic := '0';
 	signal tx_build_pos 		: std_logic_vector(2 downto 0) := "000";
 	signal tx_build_data		: std_logic_vector(7 downto 0) := "00000000";
-
+	signal build_read_addr 	: std_logic_vector(2 downto 0) := "000";
+	signal build_byte			: std_logic_vector(7 downto 0) := "00000000";
+	
+	signal fpga_init_req 	: std_logic := '0';
+	signal avr_ready 			: std_logic := '0';
 		 
 begin
 	
@@ -160,7 +170,7 @@ begin
 		  state_dbg_o    => open
 	);
 
-	spi_di <= queue_do;
+	spi_di <= queue_do when queue_rd_empty = '0' else x"FFFF";
 	queue_rd_req <= spi_di_req;	
 	AVR_MISO	<= spi_miso when AVR_SS = '0' else 'Z';
 		  
@@ -168,6 +178,7 @@ begin
 	begin
 		if (rising_edge(CLK)) then
 			if spi_do_valid = '1' then
+				fpga_init_req <= '0';
 				tx_build <= '0';
 				case spi_do(15 downto 8) is 
 					-- keyboard matrix
@@ -229,6 +240,13 @@ begin
 					when X"F0"|X"F1"|X"F2"|X"F3"|X"F4"|X"F5"|X"F6"|X"F7" =>
 						tx_build <= '1';
 						tx_build_pos <= spi_do(10 downto 8);
+						
+					when X"FD" => 
+						fpga_init_req <= '1';
+						avr_ready <= '1';
+						
+					when X"FF" =>
+						avr_ready <= '1';
 					
 					-- rtc registers
 					when others => 
@@ -391,78 +409,127 @@ begin
 		wrreq 	=> queue_wr_req,
 		wrclk 	=> CLK,
 		wrfull 	=> queue_wr_full,
+		wrusedw	=> queue_wr_size,
 		
 		rdreq 	=> queue_rd_req,
 		rdclk 	=> CLK,
 		q 			=> queue_do,
-		rdempty 	=> queue_rd_empty
+		rdempty 	=> queue_rd_empty,
+		rdusedw 	=> queue_rd_size
 	);
 	
 	-- messages rom (to get a build num)
 	U_MESSAGES: entity work.message_rom 
 	port map (
-		address 		=> "111111" & tx_build_pos, -- build version starts from 504
+		address 		=> "111111" & build_read_addr, -- build version starts from 504
 		clock   		=> CLK,
-		q       		=> tx_build_data
-	);
-	
-	-- ferch 8 bytes of build version into queue
---	process (CLK, loaded)
---	begin 
---		if (rising_edge(CLK)) then 
---			if (loaded = '1') then 
---				if (tx_build_pos /= "11111111") then 
---					tx_build <= '1';
---					tx_build_pos <= tx_build_pos + 1;
---				elsif (tx_build = '1') then 
---					tx_build <= '0';
---				end if;
---			end if;
---		end if;	
---	end process;
+		q       		=> build_byte
+	);	
 		
 	-- fifo handling / queue commands to avr side
-	process(CLK, CLKEN, N_RESET, INIT, CFG, RTC_WR_N, RTC_CS, last_queue_di, queue_wr_full, RTC_A, RTC_DI, cnt_led, LED1, LED2, LED1_OWR, LED2_OWR, queue_wr_req, queue_rd_empty)
+	process(CLK, CLKEN, N_RESET, LOADER_DONE, CFG, RTC_WR_N, RTC_CS, queue_wr_full, RTC_A, RTC_DI, LED1, LED2, LED1_OWR, LED2_OWR, queue_wr_req, queue_rd_empty)
 	begin
-		if CLK'event and CLK = '1' then
+		if N_RESET = '0' then 
+			queue_wr_req <= '0';
+			qstate <= wait_loader_done;
 			
-			if INIT = '1' then -- and last_queue_di /= x"FC00" then 
-				queue_di <= x"FD" & max_turbo & CFG(5 downto 0);
-				last_queue_di <= x"FD" & max_turbo & CFG(5 downto 0);
-				queue_wr_req <= '1';
-			elsif tx_build = '1' then -- TX build number
-				queue_di <= "1111" & '0' & tx_build_pos & tx_build_data; -- F0 - F7
-				last_queue_di <= "1111" & '0' & tx_build_pos & tx_build_data;
-				queue_wr_req <= '1';				
-			elsif CLKEN = '0' and RTC_WR_N = '0' AND RTC_CS = '1' then -- and last_queue_di /= ("10" & RTC_A & RTC_DI) then 
-				-- push address and data into the FIFO queue to send via SPI
-				queue_di <= "10" & RTC_A & RTC_DI;
-				last_queue_di <= "10" & RTC_A & RTC_DI;
-				queue_wr_req <= '1';
-			else
-				cnt_led <= cnt_led + 1;
-				if queue_wr_full = '0' and cnt_led = "00000000000" then -- and last_queue_di /= x"0E" & "0000" & LED2_OWR & LED1_OWR & LED2 & LED1 then
-					queue_di <= x"0E" & "0000" & LED2_OWR & LED1_OWR & LED2 & LED1;
-					last_queue_di <= x"0E" & "0000" & LED2_OWR & LED1_OWR & LED2 & LED1;
-					queue_wr_req <= '1';
-				elsif queue_rd_empty = '1' then 
-					queue_di <= x"FFFF"; -- nop
-					last_queue_di <= x"FFFF";
-					queue_wr_req <= '1';
-				else 
+		elsif CLK'event and CLK = '1' then
+		
+			queue_wr_req <= '0';
+		
+			case qstate is
+
+				-- waiting for loader done
+				when wait_loader_done =>
 					queue_wr_req <= '0';
-					queue_di <= x"FFFF"; -- nop
-				end if;
-			end if;
+					if LOADER_DONE = '1' then 
+						qstate <= idle;
+					end if;
+				
+				-- waiting for init request
+				when wait_init => 
+					queue_wr_req <= '0';
+					if fpga_init_req = '1' then 
+						qstate <= init_ack;
+					end if;
+					
+				-- response to init request
+				when init_ack => 
+					queue_wr_req <= '1';
+					queue_di <= x"FD" & max_turbo & CFG(5 downto 0);
+					qstate <= idle;
+					
+				-- waiting for other events from avr
+				when idle => 
+					queue_wr_req <= '0';
+					-- req for send FPGA build num
+					if (fpga_init_req = '1') then 
+						qstate <= init_ack;
+					elsif (tx_build = '1') then 
+						qstate <= build_req;
+					-- req to write RTC
+					elsif (CLKEN = '0' and RTC_WR_N = '0' AND RTC_CS = '1') then 
+						qstate <= rtc_wr_req;
+					-- req to send LED state
+					elsif (queue_wr_full = '0' and queue_wr_size(7) = '0') then 
+						qstate <= led_req;
+					-- idle
+					else 
+						qstate <= idle;
+					end if;
+	
+				-- requesting build byte from rom
+				when build_req =>
+					queue_wr_req <= '0';	
+					build_read_addr <= tx_build_pos;
+					qstate <= build_data;
+					
+				-- read byte from ROM, send it via queue 
+				when build_data => 
+					queue_wr_req <= '1';	
+					queue_di <= "1111" & '0' & build_read_addr & build_byte; -- F0 - F7
+					qstate <= build_ack;
+				
+				-- queue wr complete, going to idle state
+				when build_ack => 
+					queue_wr_req <= '0';	
+					qstate <= idle;
+					
+				-- RTC write request
+				when rtc_wr_req => 
+					queue_wr_req <= '1';
+					queue_di <= "10" & RTC_A & RTC_DI;
+					qstate <= rtc_wr_ack;
+					
+				-- RTC write request end
+				when rtc_wr_ack => 
+					queue_wr_req <= '0';
+					qstate <= idle;
+					
+				-- LED write request
+				when led_req => 
+					queue_wr_req <= '1';
+					queue_di <= x"0E" & "0000" & LED2_OWR & LED1_OWR & LED2 & LED1;
+					qstate <= led_ack;
+					
+				-- LED write request end
+				when led_ack =>
+					queue_wr_req <= '0';
+					qstate <= idle;
+	
+			end case;
+						
 		end if;
 	end process;
 	
 	-- write RTC registers into ram from host / atmega
 	process (N_RESET, CLK, RTC_WR_N, RTC_CS, RTC_A, RTC_DI, rtc_cmd, rtc_data) 
 	begin 
-		if rising_edge(CLK) then
+		if N_RESET = '0' then 
 			rtcw_wr <= '0';
-			if INIT = '0' and RTC_WR_N = '0' AND RTC_CS = '1' then
+		elsif rising_edge(CLK) then
+			rtcw_wr <= '0';
+			if avr_ready = '1' and RTC_WR_N = '0' AND RTC_CS = '1' then
 				-- rtc mem write by host
 				rtcw_wr <= '1';
 				rtcw_a <= RTC_A;
