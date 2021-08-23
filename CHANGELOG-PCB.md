@@ -1,5 +1,10 @@
 # Karabas-Pro PCB changelog:
 
+## Rev.E:
+- Added 2 more SRAM chips, up to 6 MB SRAM total, 4 MB available as host RAM, 1-2 MB as host ROM
+- Changed uBus with 5-pin header for secondary UART
+- Minimum Cyclone chip is EP4CE10 since this revision
+
 ## Rev.DS':
 - Fixed Q2 footprint 
 - Updated R nominals for buzzer and tape in for better compatibility

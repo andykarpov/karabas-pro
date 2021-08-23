@@ -26,11 +26,13 @@ The idea was to make a smaller Profi (Профи) ZX Spectrum clone, with real F
 10) SEGA joystick support
 11) RTC (profi), emulated read/write support
 12) SD card access via Z-Controller emulation
-13) Turbo 7 MHz
-14) ZX UNO simple UART @115200 for ESP8266 module (with ability to enable a secondary ZX UNO UART on uBus connector)
+13) Turbo 7 MHz (and Turbo 14 Mhz on EP4CE10)
+14) ZX UNO simple UART @115200 for ESP8266 module (a secondary ZX UNO UART available on uBus connector for EP4CE10)
 15) An additional ROM bank with **PQ-DOS BIOS**
 16) An additional ROM bank with **Flash Tool** by **Doctor Max** to upgrade the FGPA firmware and ROM banks without programmer
 17) An additional ROM bank with **FDImage Tool** by **Doctor Max** to extract TRD, SCL, PRO, TD0 and FDI images on real floppies
+18) OSD menu
+19) OSD full-screen overlay with easy-to-change options, RTC setup, etc.
 
 ## More info
 
@@ -41,6 +43,8 @@ The idea was to make a smaller Profi (Профи) ZX Spectrum clone, with real F
 **ERRATA for PCB rev.С:** [See ERRATA Rev.С](https://github.com/andykarpov/karabas-pro/blob/master/ERRATA-REVC.md).
 
 **Latest revision:** rev.DS.
+
+**Latest development revision:** rev.E.
 
 **PCB changelog:** [PCB changelog](https://github.com/andykarpov/karabas-pro/blob/master/CHANGELOG-PCB.md).
 
