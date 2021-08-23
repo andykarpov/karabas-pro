@@ -15,7 +15,7 @@ entity profi_video is
 		CLK2X		: in std_logic; -- 24
 		CLK		: in std_logic; -- 12					
 		ENA		: in std_logic; -- 6
-		TURBO 	: in std_logic := '0';
+		TURBO 	: in std_logic_vector := "00";
 		INTA		: in std_logic;
 		INT		: out std_logic;
 		BORDER	: in std_logic_vector(3 downto 0);	
@@ -145,7 +145,7 @@ begin
 				end if;
 
 				
-				if (h_cnt > pcpm_h_int_on and v_cnt = pcpm_v_int_on and turbo = '0') or (h_cnt > pcpm_h_int_on_turbo and v_cnt = pcpm_v_int_on and turbo = '1') then -- or (h_cnt < pcpm_h_int_off and v_cnt = pcpm_v_int_off) then
+				if (h_cnt > pcpm_h_int_on and v_cnt = pcpm_v_int_on and turbo = "00") or (h_cnt > pcpm_h_int_on_turbo and v_cnt = pcpm_v_int_on and turbo /= "00") then -- or (h_cnt < pcpm_h_int_off and v_cnt = pcpm_v_int_off) then
 					int_sig <= '0';
 				else
 					int_sig <= '1';

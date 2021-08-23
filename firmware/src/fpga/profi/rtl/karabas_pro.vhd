@@ -351,7 +351,7 @@ signal vid_rd 			: std_logic := '0';
 signal vid_rd2 		: std_logic := '0';
 signal ext_rom_bank  : std_logic_vector(1 downto 0) := "00";
 signal ext_rom_bank_pq	: std_logic_vector(1 downto 0) := "00";
-signal turbo_cpu 		: std_logic := '0';
+signal turbo_cpu 		: std_logic_vector(1 downto 0) := "00";
 signal max_turbo 		: std_logic_vector(1 downto 0) := "11";
 
 -- Loader
@@ -1139,7 +1139,7 @@ cpu_inta_n <= cpu_iorq_n or cpu_m1_n;	-- INTA
 cpu_nmi_n <= '0' when kb_magic = '1' and cpu_m1_n = '0' and cpu_mreq_n = '0' and (cpu_a_bus(15 downto 14) /= "00") else '1'; -- NMI
 --cpu_wait_n <= '0' when kb_wait = '1' else '1'; -- WAIT
 cpu_wait_n <= '1';
-turbo_cpu <= '1' when (kb_turbo /= "00" or turbo_on = '1') and turbo_off = '0' else '0';
+turbo_cpu <= kb_turbo when (kb_turbo /= "00" or turbo_on = '1') and turbo_off = '0' else "00";
 
 -- max turbo = 14 MHz for 2 port vram
 G_MAX_TURBO_2PORT: if enable_2port_vram generate 
