@@ -211,6 +211,7 @@ set_location_assignment PIN_25 -to PIN_25
 set_location_assignment PIN_86 -to BUZZER
 
 
+set_global_assignment -name VHDL_FILE ../../rtl/memory/altram1.vhd
 set_global_assignment -name VHDL_FILE ../../rtl/video/overlay.vhd
 set_global_assignment -name VERILOG_FILE ../../rtl/video/screen2.v
 set_global_assignment -name VERILOG_FILE ../../rtl/video/rom_font2.v

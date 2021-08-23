@@ -8,13 +8,16 @@ use IEEE.numeric_std.ALL;
 use IEEE.std_logic_unsigned.all;
 
 entity pentagon_video is
+	generic (
+			enable_2port_vram  : boolean := true
+	);
 	port (
 		CLK2X 	: in std_logic; -- 28 MHz
 		CLK		: in std_logic; -- 14 MHz
 		ENA		: in std_logic; -- 7 MHz 
 		BORDER	: in std_logic_vector(2 downto 0);	-- bordr color (port #xxFE)
 		DI			: in std_logic_vector(7 downto 0);	-- video data from memory
-		TURBO 	: in std_logic := '0'; -- 1 = turbo mode, 0 = normal mode
+		TURBO 	: in std_logic_vector := "00"; -- 01 = turbo 2x mode, 10 - turbo 4x mode, 11 - turbo 8x mode, 00 = normal mode
 		INTA		: in std_logic := '0'; -- int request for turbo mode
 		INT		: out std_logic; -- int output
 		MODE60	: in std_logic := '0'; -- '0'
@@ -29,6 +32,8 @@ entity pentagon_video is
 		VCNT 		: out std_logic_vector(8 downto 0);	
 		ISPAPER 	: out std_logic := '0';
 		BLINK 	: out std_logic;
+		
+		-- sram vram
 		VBUS_MODE : in std_logic := '0'; -- 1 = video bus, 2 = cpu bus
 		VID_RD : in std_logic -- 1 = read attribute, 0 = read pixel data
 	);
@@ -43,9 +48,10 @@ architecture rtl of pentagon_video is
 
 	signal hor_cnt  : unsigned(5 downto 0) := "000000"; -- Horizontal char counter
 	signal ver_cnt  : unsigned(5 downto 0) := "000000"; -- Vertical char counter
-	
+
+	signal vid_reg  : std_logic_vector(7 downto 0);	
 	signal attr     : std_logic_vector(7 downto 0);
-	signal bitmap    : std_logic_vector(7 downto 0);
+	signal bitmap   : std_logic_vector(7 downto 0);
 	
 	signal paper_r  : std_logic;
 	signal blank_r  : std_logic;
@@ -114,10 +120,28 @@ begin
 				end if;
 			
 				-- int
-				if TURBO = '1' then
-					-- TURBO int
+				if TURBO = "01" then
+					-- TURBO 2x int
 					if chr_col_cnt = 6 and hor_cnt(1 downto 0) = "11" then
 						if ver_cnt = 29 and chr_row_cnt = 7 and hor_cnt(5 downto 2) = "1001" then
+							int_sig <= '0';
+						else
+							int_sig <= '1';
+						end if;
+					end if;
+				elsif TURBO = "10" then 
+					-- TURBO 4x int
+					if chr_col_cnt = 6 and hor_cnt(0) = '1' then
+						if ver_cnt = 29 and chr_row_cnt = 7 and hor_cnt(5 downto 1) = "10011" then
+							int_sig <= '0';
+						else
+							int_sig <= '1';
+						end if;
+					end if;
+				elsif TURBO = "11" then 
+					-- TURBO 8x int
+					if chr_col_cnt = 6 then
+						if ver_cnt = 29 and chr_row_cnt = 7 and hor_cnt(5 downto 0) = "100111" then
 							int_sig <= '0';
 						else
 							int_sig <= '1';
@@ -215,28 +239,58 @@ begin
 		end if;
 	end process;
 	
-	-- video mem read cycle
-	process (CLK2X, CLK, chr_col_cnt, VBUS_MODE, VID_RD)
-	begin 
-		if (CLK2X'event and CLK2X = '1') then 
-			if (chr_col_cnt(0) = '1' and CLK = '0') then
-				if VBUS_MODE = '1' then
-					if VID_RD = '0' then 
-						bitmap <= DI;
-					else 
-						attr <= DI;
+	-- 2 port vram
+	G_2PORT_VRAM: if enable_2port_vram generate
+	
+		-- video mem read cycle
+		process (CLK2X, CLK, chr_col_cnt, vid_reg)
+		begin 
+			if CLK2X'event and CLK2X = '1' then 
+				if CLK = '1' then
+					if ENA = '0' then
+						case chr_col_cnt(2 downto 0) is 
+							when "100" => A <= std_logic_vector( '0' & ver_cnt(4 downto 3) & chr_row_cnt & ver_cnt(2 downto 0) & hor_cnt(4 downto 0));
+							when "101" => vid_reg <= DI;
+							when "110" => A <= std_logic_vector( '0' & "110" & ver_cnt(4 downto 0) & hor_cnt(4 downto 0));
+							when "111" => 
+								bitmap <= vid_reg;
+								attr <= DI;
+							when others => null;
+						end case;
 					end if;
 				end if;
 			end if;
-		end if;
-	end process;
+		end process;
 	
-	A <= 
-		-- data address
-		std_logic_vector( '0' & ver_cnt(4 downto 3) & chr_row_cnt & ver_cnt(2 downto 0) & hor_cnt(4 downto 0)) when VBUS_MODE = '1' and VID_RD = '0' else 
-		-- standard attribute address
-		std_logic_vector( '0' & "110" & ver_cnt(4 downto 0) & hor_cnt(4 downto 0));
+	end generate G_2PORT_VRAM;
+	
+	-- sram vram
+	G_SRAM_VRAM: if not enable_2port_vram generate
+	
+		-- video mem read cycle
+		process (CLK2X, CLK, chr_col_cnt, VBUS_MODE, VID_RD)
+		begin 
+			if (CLK2X'event and CLK2X = '1') then 
+				if (chr_col_cnt(0) = '1' and CLK = '0') then
+					if VBUS_MODE = '1' then
+						if VID_RD = '0' then 
+							bitmap <= DI;
+						else 
+							attr <= DI;
+						end if;
+					end if;
+				end if;
+			end if;
+		end process;
 		
+		A <= 
+			-- data address
+			std_logic_vector( '0' & ver_cnt(4 downto 3) & chr_row_cnt & ver_cnt(2 downto 0) & hor_cnt(4 downto 0)) when VBUS_MODE = '1' and VID_RD = '0' else 
+			-- standard attribute address
+			std_logic_vector( '0' & "110" & ver_cnt(4 downto 0) & hor_cnt(4 downto 0));
+	
+	end generate G_SRAM_VRAM;
+	
 	paper <= '0' when hor_cnt(5) = '0' and ver_cnt(5) = '0' and ( ver_cnt(4) = '0' or ver_cnt(3) = '0' ) else '1';
 	
 	RGB <= VIDEO_R & VIDEO_G & VIDEO_B;

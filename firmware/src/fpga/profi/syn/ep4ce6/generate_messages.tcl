@@ -7,11 +7,11 @@ set year [split [lindex $fields 0] ""]
 set month [split [lindex $fields 1] ""]
 set day [split [lindex $fields 2] ""]
 set hour [split [lindex $fields 3] ""]
-set romsize 248
+set romsize 504
 
 puts $fp "-- VERSION = $year $month $day $hour"
 puts $fp "-- messsages.mif file"
-puts $fp "DEPTH = 256;                  -- The size of memory in words"
+puts $fp "DEPTH = 512;                  -- The size of memory in words"
 puts $fp "WIDTH = 8;                    -- The size of data in bits"
 puts $fp "ADDRESS_RADIX = DEC;          -- The radix for address values"
 puts $fp "DATA_RADIX = HEX;             -- The radix for data values"
@@ -30,14 +30,14 @@ for {set i 0} { $i < $romsize} {incr i} {
 }
 
 # dump timestamp into mif as hex values (ascii digits started from index 48)
-puts $fp "248 : [format %02x [expr [lindex $year 0] + 48]];"
-puts $fp "249 : [format %02x [expr [lindex $year 1] + 48]];"
-puts $fp "250 : [format %02x [expr [lindex $month 0] + 48]];"
-puts $fp "251 : [format %02x [expr [lindex $month 1] + 48]];"
-puts $fp "252 : [format %02x [expr [lindex $day 0] + 48]];"
-puts $fp "253 : [format %02x [expr [lindex $day 1] + 48]];"
-puts $fp "254 : [format %02x [expr [lindex $hour 0] + 48]];"
-puts $fp "255 : [format %02x [expr [lindex $hour 1] + 48]];"
+puts $fp "504 : [format %02x [expr [lindex $year 0] + 48]];"
+puts $fp "505 : [format %02x [expr [lindex $year 1] + 48]];"
+puts $fp "506 : [format %02x [expr [lindex $month 0] + 48]];"
+puts $fp "507 : [format %02x [expr [lindex $month 1] + 48]];"
+puts $fp "508 : [format %02x [expr [lindex $day 0] + 48]];"
+puts $fp "509 : [format %02x [expr [lindex $day 1] + 48]];"
+puts $fp "510 : [format %02x [expr [lindex $hour 0] + 48]];"
+puts $fp "511 : [format %02x [expr [lindex $hour 1] + 48]];"
 
 puts $fp ""
 puts $fp "END;"

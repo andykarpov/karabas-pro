@@ -8,6 +8,9 @@ use IEEE.numeric_std.ALL;
 use IEEE.std_logic_unsigned.all;
 
 entity video is
+	generic (
+			enable_2port_vram  : boolean := true
+	);
 	port (
 		CLK2X 	: in std_logic; -- 28 MHz
 		CLK		: in std_logic; -- 14 MHz
@@ -16,7 +19,7 @@ entity video is
 
 		BORDER	: in std_logic_vector(3 downto 0);	-- bordr color (port #xxFE)
 		DI			: in std_logic_vector(7 downto 0);	-- video data from memory
-		TURBO 	: in std_logic := '0'; -- 1 = turbo mode, 0 = normal mode
+		TURBO 	: in std_logic_vector := "00"; -- 01 = turbo 2x mode, 10 - turbo 4x mode, 11 - turbo 8x mode, 00 = normal mode
 		INTA		: in std_logic := '0'; -- int request for turbo mode
 		MODE60	: in std_logic := '0'; -- 
 		INT		: out std_logic; -- int output
@@ -43,8 +46,12 @@ entity video is
 		ISPAPER : out std_logic;
 		BLINK : out std_logic;
 		
+		-- sram vram
 		VBUS_MODE : in std_logic := '0'; -- 1 = video bus, 2 = cpu bus
-		VID_RD : in std_logic -- 1 = read attribute, 0 = read pixel data
+		VID_RD : in std_logic; -- 1 = read attribute, 0 = read pixel data
+
+		-- 2port vram
+		VID_RD2 	: out std_logic -- 1 = read attribute, 0 = read pixel
 	);
 end entity;
 
@@ -82,6 +89,7 @@ architecture rtl of video is
 	signal hcnt_profi : std_logic_vector(9 downto 0);
 	signal vcnt_profi : std_logic_vector(8 downto 0);
 	signal ispaper_profi : std_logic;
+	signal vidrd_profi : std_logic;
 
 	-- spectrum videocontroller signals
 	signal vid_a_spec : std_logic_vector(13 downto 0);
@@ -100,6 +108,9 @@ architecture rtl of video is
 begin
 
 	U_PENT: entity work.pentagon_video 
+	generic map (
+		enable_2port_vram => enable_2port_vram
+	)	
 	port map (
 		CLK => CLK, -- 14
 		CLK2x => CLK2x, -- 28
@@ -126,10 +137,13 @@ begin
 		BLINK => BLINK,
 		
 		VBUS_MODE => VBUS_MODE,
-		VID_RD => VID_RD
+		VID_RD => VID_RD		
 	);
 
 	U_PROFI: entity work.profi_video 
+	generic map (
+		enable_2port_vram => enable_2port_vram
+	)	
 	port map (
 		CLK => CLK, -- 14
 		CLK2x => CLK2x, -- 28
@@ -155,9 +169,11 @@ begin
 		HCNT => hcnt_profi,
 		VCNT => vcnt_profi,
 		ISPAPER => ispaper_profi,
-
+		
 		VBUS_MODE => VBUS_MODE,
-		VID_RD => VID_RD
+		VID_RD => VID_RD,		
+		
+		VID_RD2 => vidrd_profi
 	);
 
 	A <= vid_a_profi when ds80 = '1' else vid_a_spec;
@@ -174,8 +190,10 @@ begin
 	VCNT <= vcnt_profi when ds80 = '1' else vcnt_spec;
 	ISPAPER <= ispaper_profi when ds80 = '1' else ispaper_spec;
 	
-ATTR_O <= attr_o_profi when ds80 = '1' else attr_o_spec;
-pFF_CS <= pFF_CS_profi when ds80 = '1' else pFF_CS_spec;
+	VID_RD2 <= vidrd_profi when ds80 = '1' else '0';
+	
+	ATTR_O <= attr_o_profi when ds80 = '1' else attr_o_spec;
+	pFF_CS <= pFF_CS_profi when ds80 = '1' else pFF_CS_spec;
 	
 	-- Палитра profi:
 

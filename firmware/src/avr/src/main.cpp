@@ -46,9 +46,7 @@ bool led2_state = false;
 bool led1_overwrite = false;
 bool led2_overwrite = false;
 
-unsigned long tl1, tl2 = 0; // led1/2 time
-unsigned long tl = 0; // blink poll time
-unsigned long tb, tb1, tb2 = 0; // hw buttons poll time
+unsigned long tl, tl1, tl2, tb, tb1, tb2 = 0; // last time
 
 SPISettings settingsA(1000000, MSBFIRST, SPI_MODE0); // SPI transmission settings
 
@@ -75,10 +73,13 @@ void process_in_cmd(uint8_t cmd, uint8_t data)
 {
   if (cmd == CMD_INIT_REQ && !init_done) {
       init_done = true;
+      uint8_t max_turbo = data >> 6;
+      uint8_t cfg = data & 0b00111111;
+      zxkbd.setMaxTurbo(max_turbo);
       zxkbd.transmit();
       zxrtc.sendAll();
       zxkbd.doReset();
-      zxosd.setFpgaCfg(data);
+      zxosd.setFpgaCfg(cfg);
   }
 
   if (cmd == CMD_RTC_INIT_REQ && !zxrtc.getInitDone()) {
@@ -118,7 +119,12 @@ void update_led(uint8_t led, bool state)
 // update OSD by keyboard events
 void on_keyboard (uint8_t event_type, uint16_t scancode)
 {
-  if (!zxosd.started()) return;
+  tl = millis();
+  if (!led1_overwrite) {
+    update_led(PIN_LED1, HIGH);
+  }
+
+  if (!zxosd.started() || !zxkbd.getIsOsdOverlay()) return;
   switch (event_type) {
     case ZXKeyboard::EVENT_OSD_OVERLAY:  zxosd.initOverlay(); break;
     case ZXKeyboard::EVENT_OSD_SCANCODE: zxosd.updateScancode(scancode); break;
@@ -219,6 +225,7 @@ void setup()
   // waiting for init
   while (!init_done) {
     spi_send(CMD_NONE, 0x00);
+    spi_send(CMD_INIT_REQ, 0x00);
   }
 
   // request build num from the fpga

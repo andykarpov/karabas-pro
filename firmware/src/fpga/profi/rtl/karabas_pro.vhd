@@ -30,10 +30,11 @@ use IEEE.numeric_std.all;
 
 entity karabas_pro is
 	generic (
-		enable_zxuno_uart  : boolean := true;
-		enable_zxuno_uart2 : boolean := false;
-		enable_saa1099 	 : boolean := false;
-		enable_osd_overlay : boolean := true
+		enable_zxuno_uart  : boolean := true;  -- uart 1 (enabled by default)
+		enable_zxuno_uart2 : boolean := false; -- uart 2 (enabled for ep4ce10)
+		enable_saa1099 	 : boolean := false; -- saa1099 (enabled for ep4ce10)
+		enable_osd_overlay : boolean := true;  -- osd overlay (enabled by default)
+		enable_2port_vram  : boolean := false -- 2port vram (enabled for ep4ce10)
 	);
 port (
 	-- Clock (50MHz)
@@ -81,13 +82,15 @@ port (
 	SND_WS 		: out std_logic;
 	SND_DAT 		: out std_logic;
 	
-	-- Misc I/O
-	PIN_141		: inout std_logic;
-	PIN_138 		: inout std_logic;
-	PIN_121		: inout std_logic;
-	PIN_120		: inout std_logic;
-	PIN_7 		: inout std_logic;
-	PIN_25 		: in std_logic;	 -- dedicated clock input
+	-- UART2 (for ep4ce10 / ep4c10)
+	PIN_141		: out std_logic; -- uart2 tx
+	PIN_138 		: out std_logic; -- uart2 cts
+	PIN_25 		: in std_logic;	 -- uart2 rx
+	
+	-- RAM selector 
+	PIN_121		: out std_logic := '0'; -- /ramce1
+	PIN_120		: out std_logic := '1'; -- /ramce2
+	PIN_7 		: out std_logic := '1'; -- /ramce3
 	
    FDC_STEP    : inout std_logic; -- PIN_119 connected to FDC_STEP for TurboFDC
    SD_MOSI     : inout std_logic; -- PIN_115 connected to SD_S
@@ -171,7 +174,7 @@ signal kb_do_bus		: std_logic_vector(5 downto 0);
 signal kb_reset 		: std_logic := '0';
 signal kb_magic 		: std_logic := '0';
 signal kb_special 	: std_logic := '0';
-signal kb_turbo 		: std_logic := '0';
+signal kb_turbo 		: std_logic_vector(1 downto 0) := "00";
 signal kb_wait 		: std_logic := '0';
 signal kb_mode 		: std_logic := '1';
 signal joy_type 		: std_logic := '0';
@@ -193,6 +196,7 @@ signal ms_delta_y		: signed(7 downto 0);
 -- Video
 signal vid_a_bus		: std_logic_vector(13 downto 0);
 signal vid_di_bus		: std_logic_vector(7 downto 0);
+signal vid_do_bus 	: std_logic_vector(7 downto 0);
 signal vid_hsync		: std_logic;
 signal vid_vsync		: std_logic;
 signal vid_int			: std_logic;
@@ -339,14 +343,16 @@ signal clk_cpu			: std_logic;
 signal selector		: std_logic_vector(7 downto 0);
 signal mux				: std_logic_vector(3 downto 0);
 signal speaker 		: std_logic := '0';
-signal ram_ext 		: std_logic_vector(2 downto 0) := "000";
+signal ram_ext 		: std_logic_vector(4 downto 0) := "00000";
 signal ram_do_bus 	: std_logic_vector(7 downto 0);
 signal ram_oe_n 		: std_logic := '1';
 signal vbus_mode 		: std_logic := '0';
 signal vid_rd 			: std_logic := '0';
+signal vid_rd2 		: std_logic := '0';
 signal ext_rom_bank  : std_logic_vector(1 downto 0) := "00";
 signal ext_rom_bank_pq	: std_logic_vector(1 downto 0) := "00";
-signal turbo_cpu 		: std_logic := '0';
+signal turbo_cpu 		: std_logic_vector(1 downto 0) := "00";
+signal max_turbo 		: std_logic_vector(1 downto 0) := "11";
 
 -- Loader
 signal loader_ram_di	: std_logic_vector(7 downto 0);
@@ -584,6 +590,9 @@ port map (
 	
 -- memory manager
 U6: entity work.memory 
+generic map (
+	enable_2port_vram => enable_2port_vram
+)
 port map ( 
 	CLK2X 			=> clk_bus,
 	CLKX 				=> clk_div2,
@@ -596,6 +605,10 @@ port map (
 	N_WR 				=> cpu_wr_n,
 	N_RD 				=> cpu_rd_n,
 	N_M1 				=> cpu_m1_n,
+	
+	-- config from loader
+	RAM_6MB 			=> board_revision(5), -- 5th bit of the CFG is a revE flag with 6MB SRAM
+	
 	-- loader signals
 	loader_act 		=> loader_act,
 	loader_ram_a 	=> loader_ram_a,
@@ -606,25 +619,37 @@ port map (
 	MD 				=> SRAM_D,
 	N_MRD 			=> SRAM_NRD,
 	N_MWR 			=> SRAM_NWR,
+	N_CE1 			=> PIN_121,
+	N_CE2 			=> PIN_120,
+	N_CE3				=> PIN_7,
 	-- ram out to cpu
 	DO 				=> ram_do_bus,
 	N_OE 				=> ram_oe_n,	
 	-- ram pages
 	RAM_BANK 		=> port_7ffd_reg(2 downto 0),
 	RAM_EXT 			=> ram_ext, -- seg A3 - seg A5
+
+	-- TRDOS 
+	TRDOS 			=> dos_act,	
+
 	-- video
 	VA 				=> vid_a_bus,
 	VID_PAGE 		=> port_7ffd_reg(3), -- seg A0 - seg A2
+	VID_DO 			=> vid_do_bus,
+	
+	-- sram vram
+	VBUS_MODE_O 	=> vbus_mode, 	-- video bus mode: 0 - ram, 1 - vram
+	VID_RD_O 		=> vid_rd, 		-- read attribute or pixel	
+
+	-- 2port vram
+	VID_RD2 			=> vid_rd2,
+	
 	DS80 				=> ds80,
 	CPM 				=> cpm,
 	SCO 				=> sco,
 	SCR 				=> scr,
 	WOROM 			=> worom,
-	-- video bus control signals
-	VBUS_MODE_O 	=> vbus_mode, 	-- video bus mode: 0 - ram, 1 - vram
-	VID_RD_O 		=> vid_rd, 		-- read attribute or pixel	
-	-- TRDOS 
-	TRDOS 			=> dos_act,	
+
 	-- rom
 	ROM_BANK 		=> rom14,
 	EXT_ROM_BANK   => ext_rom_bank_pq
@@ -632,13 +657,16 @@ port map (
 
 -- Video Spectrum/Pentagon
 U7: entity work.video
+generic map (
+	enable_2port_vram => enable_2port_vram
+)
 port map (
 	CLK 				=> clk_div2, 	-- 14 / 12
 	CLK2x 			=> clk_bus, 	-- 28 / 24
 	ENA 				=> clk_div4, 	-- 7 / 6
 	RESET 			=> reset,	
 	BORDER 			=> port_xxfe_reg(3 downto 0),
-	DI 				=> SRAM_D,
+	DI 				=> vid_do_bus,
 	TURBO 			=> turbo_cpu,	-- turbo signal for int length
 	INTA 				=> cpu_inta_n,
 	INT 				=> cpu_int_n,
@@ -658,7 +686,8 @@ port map (
 	HSYNC 			=> vid_hsync,
 	VSYNC 			=> vid_vsync,
 	VBUS_MODE 		=> vbus_mode,
-	VID_RD 			=> vid_rd,	
+	VID_RD 			=> vid_rd,
+	VID_RD2 			=> vid_rd2,	
 	HCNT 				=> vid_hcnt,
 	VCNT 				=> vid_vcnt,
 	ISPAPER 			=> vid_ispaper,
@@ -684,7 +713,7 @@ port map (
 	LOADED 			=> kb_loaded,
 	
 	-- sensors
-	TURBO 			=> turbo_cpu,
+	TURBO 			=> kb_turbo,
 	SCANDOUBLER_EN => vid_scandoubler_enable,
 	MODE60 			=> soft_sw(2),
 	ROM_BANK 		=> ext_rom_bank_pq,
@@ -852,7 +881,7 @@ port map (
 	 RTC_CS 			=> '1',
 	 RTC_WR_N 		=> not mc146818_wr,
 	 
-	 INIT 			=> loader_reset,
+	 LOADER_DONE   => not loader_act,
 	 
 	 LED1 			=> led1,
 	 LED2				=> led2,
@@ -874,6 +903,7 @@ port map (
 	 JOY_TYPE 		=> joy_type,
 	 OSD_OVERLAY 	=> osd_overlay,
 	 OSD_COMMAND	=> osd_command,
+	 MAX_TURBO 		=> max_turbo,
 	 
 	 LOADED 			=> kb_loaded,
 	 
@@ -1014,8 +1044,12 @@ port map(
 );	
 PIN_141		<= uart2_tx;
 PIN_138 		<= uart2_cts;
-uart2_rx 		<= PIN_121;
+uart2_rx 		<= PIN_25;
 end generate G_UNO_UART2;
+
+-- debug
+--PIN_141 <= clk_bus;
+--PIN_138 <= clk_cpu;
 
 end generate G_UNO_UART;
 
@@ -1105,8 +1139,23 @@ cpu_inta_n <= cpu_iorq_n or cpu_m1_n;	-- INTA
 cpu_nmi_n <= '0' when kb_magic = '1' and cpu_m1_n = '0' and cpu_mreq_n = '0' and (cpu_a_bus(15 downto 14) /= "00") else '1'; -- NMI
 --cpu_wait_n <= '0' when kb_wait = '1' else '1'; -- WAIT
 cpu_wait_n <= '1';
-turbo_cpu <= (kb_turbo or turbo_on) and (not turbo_off);
-clk_cpu <= '0' when kb_wait = '1' else clk_bus and ena_div8 when turbo_cpu = '0' else clk_bus and ena_div4; -- 3.5 / 7 MHz
+turbo_cpu <= kb_turbo when (kb_turbo /= "00" or turbo_on = '1') and turbo_off = '0' else "00";
+
+-- max turbo = 14 MHz for 2 port vram
+G_MAX_TURBO_2PORT: if enable_2port_vram generate 
+	max_turbo <= "10";
+end generate G_MAX_TURBO_2PORT;
+
+-- max turbo = 7 MHz for sram vram
+G_MAX_TURBO_SRAM: if not enable_2port_vram generate 
+	max_turbo <= "01";
+end generate G_MAX_TURBO_SRAM;
+
+clk_cpu <= '0' when kb_wait = '1' else 
+	clk_bus when kb_turbo = "11" and kb_turbo <= max_turbo else 
+	clk_bus and ena_div2 when kb_turbo = "10" and kb_turbo <= max_turbo else 
+	clk_bus and ena_div4 when kb_turbo = "01" and kb_turbo <= max_turbo else 
+	clk_bus and ena_div8;
 
 -- odnovibrator - po spadu nIORQ otschityvaet 400ns WAIT proca
 -- dlja rabotosposobnosti periferii v turbe ili v rezhime 
@@ -1276,7 +1325,7 @@ sco 	<= port_dffd_reg(3); -- Выбор положения окна проеци
 									-- 0 - окно номер 1 (#C000-#FFFF)
 									-- 1 - окно номер 2 (#4000-#7FFF)
 
-ram_ext <= port_dffd_reg(2 downto 0);
+ram_ext <= port_7ffd_reg(7 downto 6) & port_dffd_reg(2 downto 0);
 
 cs_xxfe <= '1' when cpu_iorq_n = '0' and cpu_a_bus(0) = '0' else '0';
 cs_xx7e <= '1' when cs_xxfe = '1' and cpu_a_bus(7) = '0' else '0';

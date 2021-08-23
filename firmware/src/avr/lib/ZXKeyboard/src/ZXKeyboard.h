@@ -112,7 +112,9 @@
 #define ZX_K_JOY_TYPE 66
 #define ZX_K_OSD_OVERLAY 67
 
-// free 68-71
+#define ZX_K_TURBO2 68
+
+// free 69-71
 
 // kbd commands
 #define CMD_KBD_BYTE1 0x01
@@ -158,7 +160,8 @@ private:
   bool is_started = false;
   bool matrix[ZX_MATRIX_FULL_SIZE]; // matrix of pressed keys + mouse reports to be transmitted on CPLD side by simple serial protocol
   bool profi_mode = true; // false = zx spectrum mode (switched by PrtSrc button in run-time)
-  bool is_turbo = false; // turbo toggle (switched by ScrollLock button)
+  uint8_t turbo = 0; // turbo mode
+  uint8_t max_turbo = 3; // max turbo
   bool is_mouse_swap = false; // mouse buttons swap
   bool is_menu = false; // menu button pressed
   bool is_win = false; // win button pressed
@@ -206,10 +209,9 @@ private:
   void sendMacros(uint8_t code, uint8_t zxkey);
   uint8_t getMatrixByte(uint8_t pos);
 
-  bool eepromRestoreValue(int addr, bool default_value);
-  void eepromStoreValue(int addr, bool value);
+  bool eepromRestoreBool(int addr, bool default_value);
+  void eepromStoreBool(int addr, bool value);
   void eepromRestoreValues();
-  void eepromStoreValues();
 
 protected:
 
@@ -257,7 +259,8 @@ public:
   void toggleSsg();
   void toggleVideo();
   void toggleVsync();
-  void toggleTurbo();
+  void setTurbo(uint8_t val);
+  void setMaxTurbo(uint8_t val);
   void toggleSwapAB();
   void toggleJoyType();
   void toggleKeyboardType();
@@ -272,7 +275,8 @@ public:
   bool getSsg();
   bool getVideo();
   bool getVsync();
-  bool getTurbo();
+  uint8_t getTurbo();
+  uint8_t getMaxTurbo();
   bool getSwapAB();
   bool getJoyType();
   bool getKeyboardType();

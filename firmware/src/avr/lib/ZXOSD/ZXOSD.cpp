@@ -284,6 +284,10 @@ void ZXOSD::printLogo(uint8_t x, uint8_t y)
     case 5:
       osd.print(F("Rev.DS"));
       break;
+    case 36:
+    case 37:
+      osd.print(F("Rev.E"));
+      break;
   }
 }
 
@@ -303,10 +307,12 @@ void ZXOSD::printHeader()
 /*  switch (fpga_cfg) {
     case 0:
     case 4:
+    case 36:
       osd.print(F("TDA1543"));
       break;
     case 1:
     case 5:
+    case 37:
       osd.print(F("TDA1543A"));
       break;
   }
@@ -396,7 +402,7 @@ void ZXOSD::initOverlay()
 
   // Turbo
   osd.setColor(OSD::COLOR_GREEN_I, OSD::COLOR_BLACK);
-  osd.setPos(0,12); osd.print(F("Turbo 2x:"));
+  osd.setPos(0,12); osd.print(F("Turbo:"));
   updateTurbo();
   osd.setColor(OSD::COLOR_CYAN_I, OSD::COLOR_BLACK);
   osd.setPos(20,12); osd.print(F("Menu+F11"));
@@ -715,11 +721,15 @@ void ZXOSD::initInfoOverlay()
   switch (fpga_cfg) {
     case 0:
     case 1:
-      osd.print(F("A-D"));
+      osd.print(F("A/B/C/D"));
       break;
     case 4:
     case 5:
       osd.print(F("DS"));
+      break;
+    case 36:
+    case 37:
+      osd.print(F("E"));
       break;
   }
 
@@ -730,6 +740,7 @@ void ZXOSD::initInfoOverlay()
   switch (fpga_cfg) {
     case 1:
     case 5:
+    case 37:
       osd.print(F("A"));
       break;
   }
@@ -829,8 +840,19 @@ void ZXOSD::handleVsync() {
 }
 
 void ZXOSD::handleTurbo() {
-  if (zxkbd->getIsCursorLeft() || zxkbd->getIsCursorRight() || zxkbd->getIsEnter()) {
-    zxkbd->toggleTurbo();
+  uint8_t turbo = zxkbd->getTurbo();
+  uint8_t max_turbo = zxkbd->getMaxTurbo();
+
+  if (zxkbd->getIsCursorLeft()) {
+    turbo--;
+    if (turbo > max_turbo) turbo = max_turbo;
+    zxkbd->setTurbo(turbo);
+    updateTurbo();
+  }
+  if (zxkbd->getIsCursorRight() || zxkbd->getIsEnter()) {
+    turbo++;
+    if (turbo > max_turbo) turbo = 0;
+    zxkbd->setTurbo(turbo);
     updateTurbo();
   }
 }
@@ -1105,11 +1127,13 @@ void ZXOSD::updateTurbo() {
     osd.setColor(OSD::COLOR_MAGENTA_I, OSD::COLOR_BLACK);
 
   osd.setPos(10,12);
-  if (zxkbd->getTurbo()) { 
-    osd.print(F("On")); 
-    osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK); osd.print(F(" ")); 
-  } else { 
-    osd.print(F("Off")); 
+  uint8_t turbo = zxkbd->getTurbo();
+  switch (turbo) {
+    case 0: osd.print(F("Off")); osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK); osd.print(F(" ")); break;
+    case 1: osd.print(F("2x"));  osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK); osd.print(F(" ")); break;
+    case 2: osd.print(F("4x"));  osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK); osd.print(F(" ")); break;
+    case 3: osd.print(F("8x"));  osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK); osd.print(F(" ")); break;
+    default: osd.print(F("???")); 
   }
 }
 
