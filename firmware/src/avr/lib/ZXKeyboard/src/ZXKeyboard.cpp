@@ -36,7 +36,18 @@ void ZXKeyboard::begin(spi_cb act, event_cb evt)
 
   kbd.begin(PIN_KBD_DAT, PIN_KBD_CLK);
 
-    // clear full matrix
+  kbd.echo(); // ping keyboard to see if there
+  delay(6);
+  uint16_t c = kbd.read();
+  if( (c & 0xFF) == PS2_KEY_ECHO || (c & 0xFF) == PS2_KEY_BAT ) {
+    // Response was Echo or power up
+    //kbd.setNoBreak(0);
+    //kbd.setNoRepeat(0);
+    //kbd.typematic(0xb, 1);
+    kbd.setLock(PS2_LOCK_SCROLL);
+  }
+
+  // clear full matrix
   clear(ZX_MATRIX_FULL_SIZE);
 
   // restore saved modes from EEPROM
