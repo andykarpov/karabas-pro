@@ -152,10 +152,15 @@ begin
 			loader_ram_do when loader_act = '1' else -- loader DO
 			D(7 downto 0) when (is_ram = '1' and N_WR = '0') else 
 			(others => 'Z');
+		
+		-- первый чип всегда активен, если 2 метра. выключен, когда 6 метров и идет обращение к лоадеру или ПЗУ, активен, когда страница = 00, иначе - неактивен
+		N_CE1 <= '0' when RAM_6MB = '0' else '1' when (loader_act = '1' or is_rom = '1') else '0' when is_ram = '1' and ram_page(8 downto 7) = "00" else '1';
 
-		N_CE1 <= '1' when RAM_6MB = '1' and (loader_act = '1' or is_rom = '1') else ram_page(7) when RAM_6MB = '1' else '0';
-		N_CE2 <= '1' when RAM_6MB = '1' and (loader_act = '1' or is_rom = '1') else ram_page(8) when RAM_6MB = '1' else '1';
-		N_CE3 <= '0' when RAM_6MB = '1' and (loader_act = '1' or is_rom = '1') else '1';
+		-- второй чип всегда неактивен, если 2 метра. выключен, когда 6 метров и идет обращение к лоадеру или ПЗУ, активен, когда страница = 01, иначе - неактивен
+		N_CE2 <= '1' when RAM_6MB = '0' else '1' when (loader_act = '1' or is_rom = '1') else '0' when is_ram = '1' and ram_page(8 downto 7) = "01" else '1';
+
+		-- третий чип всегда неактивен, если 2 метра. активен, когда 6 метров и идет обращение к лоадеру или ПЗУ, иначе - неактивен
+		N_CE3 <= '1' when RAM_6MB = '0' else '0' when (loader_act = '1' or is_rom = '1') else '1';
 			
 		MA(20 downto 0) <= 
 			loader_ram_a(20 downto 0) when loader_act = '1' else -- loader ram
