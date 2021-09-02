@@ -318,7 +318,7 @@ void ZXOSD::printHeader()
   }
 */
 
-  osd.setColor(OSD::COLOR_YELLOW_I, OSD::COLOR_BLACK);
+  osd.setColor(OSD::COLOR_GREY, OSD::COLOR_BLACK);
   osd.setPos(19,2);
   osd.print(F("FPGA "));
   osd.write(fpga_build_num[0]);
@@ -330,7 +330,7 @@ void ZXOSD::printHeader()
   osd.write(fpga_build_num[6]);
   osd.write(fpga_build_num[7]);
 
-  osd.setColor(OSD::COLOR_YELLOW_I, OSD::COLOR_BLACK);
+  osd.setColor(OSD::COLOR_GREY, OSD::COLOR_BLACK);
   osd.setPos(20,3);
   osd.print(F("AVR "));
   osd.print(avr_build_num);
@@ -1297,7 +1297,7 @@ if (osd_state != state_rtc) return;
 }
 
 void ZXOSD::updateTime() {
-  osd.setColor(OSD::COLOR_BLUE_I, OSD::COLOR_BLACK);
+  osd.setColor(OSD::COLOR_CYAN_I, OSD::COLOR_BLACK);
   osd.setPos(24,0);
   if (zxrtc->getHour() < 10) osd.print("0"); 
   osd.print(zxrtc->getHour(), DEC); osd.print(F(":"));
@@ -1305,7 +1305,7 @@ void ZXOSD::updateTime() {
   osd.print(zxrtc->getMinute(), DEC); osd.print(F(":"));
   if (zxrtc->getSecond() < 10) osd.print("0"); 
   osd.print(zxrtc->getSecond(), DEC);
-  osd.setColor(OSD::COLOR_BLUE_I, OSD::COLOR_BLACK);
+  osd.setColor(OSD::COLOR_CYAN_I, OSD::COLOR_BLACK);
   osd.setPos(22,1);
   if (zxrtc->getDay() < 10) osd.print("0"); 
   osd.print(zxrtc->getDay(), DEC); osd.print(F("."));
