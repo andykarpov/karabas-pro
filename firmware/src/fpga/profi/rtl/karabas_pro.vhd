@@ -1594,7 +1594,8 @@ begin
 		when x"01" => cpu_di_bus <= mc146818_do_bus;
 		when x"02" => cpu_di_bus <= GX0 & TAPE_IN & kb_do_bus;
 		when x"03" => cpu_di_bus <= zc_do_bus;
-		when x"04" => cpu_di_bus <= "11111100";		
+		--when x"04" => cpu_di_bus <= "11111100";	
+		when x"04" => cpu_di_bus <= "1111110" & SD_NDET;
 		when x"05" => cpu_di_bus <= joy_bus;
 		when x"06" => cpu_di_bus <= ssg_cn0_bus;
 		when x"07" => cpu_di_bus <= ssg_cn1_bus;
