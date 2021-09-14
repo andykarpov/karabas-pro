@@ -1211,7 +1211,7 @@ void ZXOSD::updateScreenMode() {
   switch (zxkbd->getScreenMode()) { 
     case 0: osd.print(F("Pentagon")); break;
     case 1: osd.print(F("Classic")); osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK); osd.print(F(" ")); break;
-    default: osd.print(F("Unknown")); osd.print(zxkbd->getScreenMode());
+    //default: osd.print(F("Unknown")); osd.print(zxkbd->getScreenMode());
   }
 }
 
