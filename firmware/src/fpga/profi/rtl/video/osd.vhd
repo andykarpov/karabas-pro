@@ -396,7 +396,7 @@ begin
 				if (SCREEN_MODE /= last_scr_mode) then
 					last_scr_mode <= SCREEN_MODE;
 					cnt <= "0000";
-					line1 <= '0' & std_logic_vector(to_unsigned(message_scr_mode, 8));
+					line1 <= '1' & std_logic_vector(to_unsigned(message_scr_mode, 8));
 					case SCREEN_MODE is 
 						when "00" => line2 <= '1' & std_logic_vector(to_unsigned(message_scr_pentagon, 8));
 						when "01" => line2 <= '1' & std_logic_vector(to_unsigned(message_scr_classic, 8));
