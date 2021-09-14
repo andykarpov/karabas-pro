@@ -33,6 +33,7 @@ entity pentagon_video is
 		ISPAPER 	: out std_logic := '0';
 		BLINK 	: out std_logic;
 		SCREEN_MODE : in std_logic_vector(1 downto 0) := "00"; -- screen mode: 00 = pentagon, 01 - 128 classic, 10, 11 - reserver
+		COUNT_BLOCK : out std_logic;
 		
 		-- sram vram
 		VBUS_MODE : in std_logic := '0'; -- 1 = video bus, 2 = cpu bus
@@ -325,5 +326,7 @@ begin
 	ISPAPER <= '1' when paper = '0' and blank_r = '1' else '0';
 
 	BLINK <= invert(4);
+	
+	COUNT_BLOCK <= '1' when paper = '0' and (chr_col_cnt(2) = '0' or hor_cnt(0) = '0') else '0';
 
 end architecture;

@@ -449,6 +449,8 @@ signal board_reset 	: std_logic := '0'; -- board reset on rombank switch
 signal tape_in_out_enable : std_logic := '0'; -- revDS uses SW3 switches as tape in / out
 signal tape_in_monitor : std_logic := '0';
 
+-- memory contention
+signal count_block 		: std_logic := '0';
 signal memory_contention : std_logic := '0';
 
 -- debug 
@@ -655,7 +657,11 @@ port map (
 
 	-- rom
 	ROM_BANK 		=> rom14,
-	EXT_ROM_BANK   => ext_rom_bank_pq
+	EXT_ROM_BANK   => ext_rom_bank_pq,
+	
+	-- contended memory signals
+	COUNT_BLOCK		=> count_block,
+	CONTENDED 		=> memory_contention
 );	
 
 -- Video Spectrum/Pentagon
@@ -695,7 +701,8 @@ port map (
 	VCNT 				=> vid_vcnt,
 	ISPAPER 			=> vid_ispaper,
 	BLINK 			=> blink,
-	SCREEN_MODE    => kb_screen_mode
+	SCREEN_MODE    => kb_screen_mode,
+	COUNT_BLOCK 	=> count_block
 );
 
 -- osd (debug)

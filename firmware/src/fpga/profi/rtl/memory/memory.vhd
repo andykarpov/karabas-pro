@@ -67,7 +67,10 @@ port (
 	WOROM 		: in std_logic := '0';
 	
 	ROM_BANK : in std_logic := '0';
-	EXT_ROM_BANK : in std_logic_vector(1 downto 0) := "00"
+	EXT_ROM_BANK : in std_logic_vector(1 downto 0) := "00";
+	
+	COUNT_BLOCK : in std_logic := '0'; -- paper = '0' and (not (chr_col_cnt(2) and hor_cnt(0)));
+	CONTENDED   : out std_logic := '0'
 );
 end memory;
 
@@ -96,6 +99,9 @@ architecture RTL of memory is
 	signal vid_ar_bus	: std_logic_vector(14 downto 0);
 	
 	signal mux : std_logic_vector(1 downto 0);
+	
+	signal block_reg : std_logic := '0';
+	signal page_cont : std_logic := '0';
 
 begin
 
@@ -288,6 +294,30 @@ begin
 							 end if;
 			when others => null;
 		end case;
+	end process;
+	
+	process( clk_cpu )
+	begin
+		if clk_cpu'event and clk_cpu = '1' then
+			if N_MREQ = '0' or (A(0) = '0' and N_IORQ = '0')then
+				block_reg <='0';
+			else
+				block_reg <= '1';
+			end if;
+		end if;
+	end process;
+	
+	page_cont <= '1' when (A(0) = '0' and N_IORQ = '0') or mux="01" else '0';
+	
+	process (clk2x)
+	begin 
+		if rising_edge(clk2x) then 
+			if (page_cont = '1' and block_reg = '1' and count_block = '1' and DS80 = '0') then 
+				contended <= '1';
+			else 
+				contended <= '0';
+			end if;
+		end if;
 	end process;
 			
 end RTL;
