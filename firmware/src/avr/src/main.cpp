@@ -141,6 +141,7 @@ void on_keyboard (uint8_t event_type, uint16_t scancode)
     case ZXKeyboard::EVENT_OSD_KEYBOARD_TYPE:  zxosd.updateKeyboardType(); break;
     case ZXKeyboard::EVENT_OSD_PAUSE:  zxosd.updatePause(); break;
     case ZXKeyboard::EVENT_OSD_TURBO:  zxosd.updateTurbo(); break;
+    case ZXKeyboard::EVENT_OSD_SCREEN_MODE: zxosd.updateScreenMode(); break;
   }
 }
 

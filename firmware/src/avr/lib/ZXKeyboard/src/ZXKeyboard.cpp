@@ -244,6 +244,14 @@ void ZXKeyboard::toggleKeyboardType() {
   matrix[ZX_K_KBD_MODE] = profi_mode;
 }
 
+void ZXKeyboard::setScreenMode(uint8_t val) {
+  val = constrain(val, 0, max_screen_mode);
+  screen_mode = val;
+  EEPROM.update(EEPROM_SCREEN_MODE_ADDRESS, val);
+  matrix[ZX_K_SCREEN_MODE0] = bitRead(val, 0);
+  matrix[ZX_K_SCREEN_MODE1] = bitRead(val, 1);
+}
+
 // transform PS/2 scancodes into internal matrix of pressed keys
 void ZXKeyboard::fill(uint16_t sc, unsigned long n)
 {
@@ -448,7 +456,20 @@ void ZXKeyboard::fill(uint16_t sc, unsigned long n)
     case PS2_KEY_S: matrix[ZX_K_S] = !is_up; break;
     case PS2_KEY_T: matrix[ZX_K_T] = !is_up; break;
     case PS2_KEY_U: matrix[ZX_K_U] = !is_up; break;
-    case PS2_KEY_V: matrix[ZX_K_V] = !is_up; break;
+    case PS2_KEY_V: 
+      if (is_menu || is_win || (is_ctrl && is_alt)) {
+        if (!is_up) {
+          screen_mode++;
+          if (screen_mode > max_screen_mode) {
+            screen_mode = 0;
+          }
+          setScreenMode(screen_mode);
+          event(EVENT_OSD_SCREEN_MODE, 0);
+        }
+      } else {
+        matrix[ZX_K_V] = !is_up; 
+      }      
+      break;
     case PS2_KEY_W: matrix[ZX_K_W] = !is_up; break;
     case PS2_KEY_X: matrix[ZX_K_X] = !is_up; break;
     case PS2_KEY_Y: matrix[ZX_K_Y] = !is_up; break;
@@ -1093,6 +1114,16 @@ void ZXKeyboard::eepromStoreBool(int addr, bool value)
   EEPROM.update(addr, val);
 }
 
+uint8_t ZXKeyboard::eepromRestoreInt(int addr, uint8_t default_value)
+{
+  return EEPROM.read(addr);
+}
+
+void ZXKeyboard::eepromStoreInt(int addr, uint8_t value)
+{
+  EEPROM.update(addr, value);
+}
+
 void ZXKeyboard::eepromRestoreValues()
 {
   turbo = EEPROM.read(EEPROM_TURBO_ADDRESS);
@@ -1113,6 +1144,12 @@ void ZXKeyboard::eepromRestoreValues()
   is_sw10 = eepromRestoreBool(EEPROM_SW10_ADDRESS, is_sw10);
   is_mouse_swap = eepromRestoreBool(EEPROM_MOUSE_SWAP_ADDRESS, is_mouse_swap);
   joy_type = eepromRestoreBool(EEPROM_JOY_TYPE_ADDRESS, joy_type);
+  screen_mode = EEPROM.read(EEPROM_SCREEN_MODE_ADDRESS);
+  if (screen_mode > max_screen_mode) {
+    screen_mode = 0;
+    EEPROM.update(EEPROM_SCREEN_MODE_ADDRESS, 0);
+  }
+  screen_mode = constrain(screen_mode, 0, max_screen_mode);
   
   // apply restored values
   matrix[ZX_K_TURBO] = bitRead(turbo, 0);
@@ -1129,6 +1166,8 @@ void ZXKeyboard::eepromRestoreValues()
   matrix[ZX_K_SW10] = is_sw10;
   matrix[ZX_K_KBD_MODE] = profi_mode;
   matrix[ZX_K_JOY_TYPE] = joy_type;
+  matrix[ZX_K_SCREEN_MODE0] = bitRead(screen_mode, 0);
+  matrix[ZX_K_SCREEN_MODE1] = bitRead(screen_mode, 1);
 }
 
   bool ZXKeyboard::getIsOsdOverlay() {
@@ -1190,6 +1229,14 @@ void ZXKeyboard::eepromRestoreValues()
 
   bool ZXKeyboard::getKeyboardType() {
     return profi_mode;
+  }
+
+  uint8_t ZXKeyboard::getScreenMode() {
+    return screen_mode;
+  }
+
+  uint8_t ZXKeyboard::getMaxScreenMode() {
+    return max_screen_mode;
   }
 
   bool ZXKeyboard::getPause() {

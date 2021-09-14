@@ -113,8 +113,10 @@
 #define ZX_K_OSD_OVERLAY 67
 
 #define ZX_K_TURBO2 68
+#define ZX_K_SCREEN_MODE0 69
+#define ZX_K_SCREEN_MODE1 70
 
-// free 69-71
+// free 71
 
 // kbd commands
 #define CMD_KBD_BYTE1 0x01
@@ -141,6 +143,7 @@
 #define EEPROM_SW10_ADDRESS 0x0B
 #define EEPROM_MOUSE_SWAP_ADDRESS 0x0C
 #define EEPROM_JOY_TYPE_ADDRESS 0x0D
+#define EEPROM_SCREEN_MODE_ADDRESS 0x0E
 
 #define EEPROM_VALUE_TRUE 10
 #define EEPROM_VALUE_FALSE 20
@@ -162,6 +165,8 @@ private:
   bool profi_mode = true; // false = zx spectrum mode (switched by PrtSrc button in run-time)
   uint8_t turbo = 0; // turbo mode
   uint8_t max_turbo = 3; // max turbo
+  uint8_t screen_mode = 0; // screen mode
+  uint8_t max_screen_mode = 1; // max screen mode
   bool is_mouse_swap = false; // mouse buttons swap
   bool is_menu = false; // menu button pressed
   bool is_win = false; // win button pressed
@@ -211,6 +216,8 @@ private:
 
   bool eepromRestoreBool(int addr, bool default_value);
   void eepromStoreBool(int addr, bool value);
+  uint8_t eepromRestoreInt(int addr, uint8_t default_value);
+  void eepromStoreInt(int addr, uint8_t value);
   void eepromRestoreValues();
 
 protected:
@@ -232,6 +239,7 @@ public:
   static const uint8_t EVENT_OSD_KEYBOARD_TYPE = 12;
   static const uint8_t EVENT_OSD_PAUSE = 13;
   static const uint8_t EVENT_OSD_TURBO = 14;
+  static const uint8_t EVENT_OSD_SCREEN_MODE = 15;
 
   ZXKeyboard();
 
@@ -266,6 +274,7 @@ public:
   void toggleKeyboardType();
   void setMouseSwap(bool value);
   bool getMouseSwap();
+  void setScreenMode(uint8_t val);
 
   bool getIsOsdOverlay();
   uint8_t getRombank();
@@ -281,6 +290,8 @@ public:
   bool getJoyType();
   bool getKeyboardType();
   bool getPause();
+  uint8_t getScreenMode();
+  uint8_t getMaxScreenMode();
 
   bool getIsCursorUp();
   bool getIsCursorDown();

@@ -68,8 +68,9 @@ void ZXOSD::handle()
             case state_main_sync: updateVideo(); updateVsync(); updateTurbo(); break;
             case state_main_turbo: updateVsync(); updateTurbo(); updateSwapAB(); break;
             case state_main_swap_ab: updateTurbo(); updateSwapAB(); updateJoystick(); break;
-            case state_main_joy_type: updateSwapAB(); updateJoystick(); updateKeyboardType(); break;
-            case state_main_keyboard_type: updateJoystick(); updateKeyboardType(); updatePause(); break;
+            case state_main_joy_type: updateSwapAB(); updateJoystick(); updateScreenMode(); break;
+            case state_main_screen_mode: updateJoystick(); updateScreenMode(); updateKeyboardType(); break;
+            case state_main_keyboard_type: updateScreenMode(); updateKeyboardType(); updatePause(); break;
             case state_main_pause: updateKeyboardType(); updatePause(); updateRombank(); break;
           }
         }
@@ -167,6 +168,7 @@ void ZXOSD::handle()
           case state_main_turbo: handleTurbo(); break;
           case state_main_swap_ab: handleSwapAB(); break;
           case state_main_joy_type: handleJoyType(); break;
+          case state_main_screen_mode: handleScreenMode(); break;
           case state_main_keyboard_type: handleKeyboardType(); break;
           case state_main_pause: handlePause(); break;
         }
@@ -421,22 +423,29 @@ void ZXOSD::initOverlay()
   osd.setColor(OSD::COLOR_CYAN_I, OSD::COLOR_BLACK);
   osd.setPos(20,14); osd.print(F("Menu+J"));
 
+  // Screen Mode
+  osd.setColor(OSD::COLOR_GREEN_I, OSD::COLOR_BLACK);
+  osd.setPos(0,15); osd.print(F("Screen:"));
+  updateScreenMode();
+  osd.setColor(OSD::COLOR_CYAN_I, OSD::COLOR_BLACK);
+  osd.setPos(20,15); osd.print(F("Menu+V"));
+
   // Keyboard
   osd.setColor(OSD::COLOR_GREEN_I, OSD::COLOR_BLACK);
-  osd.setPos(0,15); osd.print(F("Keyboard:"));
+  osd.setPos(0,16); osd.print(F("Keyboard:"));
   updateKeyboardType();
   osd.setColor(OSD::COLOR_CYAN_I, OSD::COLOR_BLACK);
-  osd.setPos(20,15); osd.print(F("PrtScr"));
+  osd.setPos(20,16); osd.print(F("PrtScr"));
 
   // Pause
   osd.setColor(OSD::COLOR_GREEN_I, OSD::COLOR_BLACK);
-  osd.setPos(0,16); osd.print(F("Pause:"));
+  osd.setPos(0,17); osd.print(F("Pause:"));
   updatePause();
   osd.setColor(OSD::COLOR_CYAN_I, OSD::COLOR_BLACK);
-  osd.setPos(20,16); osd.print(F("Pause"));
+  osd.setPos(20,17); osd.print(F("Pause"));
 
   osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
-  printLine(17);
+  //printLine(17);
 
   // Scancode
   osd.setColor(OSD::COLOR_GREEN_I, OSD::COLOR_BLACK);
@@ -539,7 +548,7 @@ void ZXOSD::initRtcOverlay()
   osd.setPos(0,15); osd.print(F("DOW:"));
   updateRtcDow();
 
-  osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
+/*  osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
   osd.setPos(0, 17);
   osd.print(F("Please use arrows "));
   osd.setColor(OSD::COLOR_CYAN_I, OSD::COLOR_BLACK);
@@ -559,7 +568,7 @@ void ZXOSD::initRtcOverlay()
   osd.write(31);
   osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
   osd.setPos(0, 19);
-  osd.print(F("to navigate by menu items"));
+  osd.print(F("to navigate by menu items"));*/
 
   popupFooter();
 }
@@ -598,7 +607,9 @@ void ZXOSD::initTestOverlay()
         case 14: osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK); break;
         case 15: osd.setColor(OSD::COLOR_BLACK, OSD::COLOR_BLACK); break;
       }
-      osd.setPos(x, y); osd.write(219);
+      if (color > 0 && color < 15) {
+        osd.setPos(x, y); osd.write(219);
+      }
     }
   }
 
@@ -868,6 +879,23 @@ void ZXOSD::handleJoyType() {
   if (zxkbd->getIsCursorLeft() || zxkbd->getIsCursorRight() || zxkbd->getIsEnter()) {
     zxkbd->toggleJoyType();
     updateJoystick();
+  }
+}
+
+void ZXOSD::handleScreenMode() {
+  uint8_t screen_mode = zxkbd->getScreenMode();
+
+  if (zxkbd->getIsCursorLeft()) {
+    screen_mode--;
+    if (screen_mode > zxkbd->getMaxScreenMode()) screen_mode = zxkbd->getMaxScreenMode();
+    zxkbd->setScreenMode(screen_mode);
+    updateScreenMode();
+  }
+  if (zxkbd->getIsCursorRight() || zxkbd->getIsEnter()) {
+    screen_mode++;
+    if (screen_mode > zxkbd->getMaxScreenMode()) screen_mode = 0;
+    zxkbd->setScreenMode(screen_mode);
+    updateScreenMode();
   }
 }
 
@@ -1171,6 +1199,22 @@ void ZXOSD::updateJoystick() {
   }
 }
 
+void ZXOSD::updateScreenMode() {
+
+  if (osd_state != state_main) return;
+
+  if (osd_main_state == state_main_screen_mode) 
+    osd.setColor(OSD::COLOR_BLACK, OSD::COLOR_MAGENTA_I);  
+  else 
+    osd.setColor(OSD::COLOR_MAGENTA_I, OSD::COLOR_BLACK);
+  osd.setPos(10,15);
+  switch (zxkbd->getScreenMode()) { 
+    case 0: osd.print(F("Pentagon")); break;
+    case 1: osd.print(F("Classic")); osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK); osd.print(F(" ")); break;
+    default: osd.print(F("Unknown")); osd.print(zxkbd->getScreenMode());
+  }
+}
+
 void ZXOSD::updateKeyboardType() {
 
   if (osd_state != state_main) return;
@@ -1179,7 +1223,7 @@ void ZXOSD::updateKeyboardType() {
     osd.setColor(OSD::COLOR_BLACK, OSD::COLOR_MAGENTA_I);  
   else 
     osd.setColor(OSD::COLOR_MAGENTA_I, OSD::COLOR_BLACK);
-  osd.setPos(10,15);
+  osd.setPos(10,16);
   if (zxkbd->getKeyboardType()) { osd.print(F("Profi XT")); } else { osd.print(F("Spectrum")); }
 }
 
@@ -1192,7 +1236,7 @@ void ZXOSD::updatePause() {
   else 
     osd.setColor(OSD::COLOR_MAGENTA_I, OSD::COLOR_BLACK);
 
-  osd.setPos(10,16);
+  osd.setPos(10,17);
   if (zxkbd->getPause()) { osd.print(F("On")); osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK); osd.print(F(" ")); } else { osd.print(F("Off")); }
 }
 

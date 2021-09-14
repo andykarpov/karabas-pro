@@ -66,6 +66,7 @@ private:
     state_main_turbo,
     state_main_swap_ab,
     state_main_joy_type,
+    state_main_screen_mode,
     state_main_keyboard_type,
     state_main_pause
   };
@@ -101,12 +102,15 @@ public:
   void printHeader();
   void printLogo(uint8_t x, uint8_t y);
   void printLine(uint8_t y);
+  
   void initOverlay();
   void initRtcOverlay();
   void initTestOverlay();
   void initAboutOverlay();
   void initInfoOverlay();
+
   void popupFooter();
+  
   void handleRombank();
   void handleTurbofdc();
   void handleCovox();
@@ -117,8 +121,10 @@ public:
   void handleTurbo();
   void handleSwapAB();
   void handleJoyType();
+  void handleScreenMode();
   void handleKeyboardType();
   void handlePause();
+
   void handleRtcHour();
   void handleRtcMinute();
   void handleRtcSecond();
@@ -126,6 +132,7 @@ public:
   void handleRtcMonth();
   void handleRtcYear();
   void handleRtcDow();
+
   void updateRombank();
   void updateTurbofdc();
   void updateCovox();
@@ -136,8 +143,10 @@ public:
   void updateTurbo();
   void updateSwapAB();
   void updateJoystick();
+  void updateScreenMode();
   void updateKeyboardType();
   void updatePause();
+
   void updateRtcHour();
   void updateRtcMinute();
   void updateRtcSecond();
@@ -145,6 +154,7 @@ public:
   void updateRtcMonth();
   void updateRtcYear();
   void updateRtcDow();
+  
   void updateTime();
   void updateUptime();
   void updateScancode(uint16_t c);
