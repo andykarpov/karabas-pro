@@ -89,7 +89,11 @@ begin
 					
 					if hor_cnt = 39 then
 						if chr_row_cnt = 7 then
-							if (ver_cnt = 39 and MODE60 = '0') or (ver_cnt = 32 and MODE60 = '1')then
+							if (ver_cnt = 39 and MODE60 = '0' and SCREEN_MODE = "00") or -- pentagon 50 Hz 
+								(ver_cnt = 32 and MODE60 = '1' and SCREEN_MODE = "00") or -- pentagon 60 Hz
+								(ver_cnt = 38 and MODE60 = '0' and SCREEN_MODE = "01") or -- classic 50 Hz
+								(ver_cnt = 31 and MODE60 = '1' and SCREEN_MODE = "01")    -- classic 60 Hz
+							then
 								ver_cnt <= (others => '0');
 								invert <= invert + 1;
 							else
@@ -150,11 +154,22 @@ begin
 					end if;
 				else 
 					-- PENTAGON int
-					if chr_col_cnt = 6 and hor_cnt(2 downto 0) = "111" then
-						if ver_cnt = 29 and chr_row_cnt = 7 and hor_cnt(5 downto 3) = "100" then
-							int_sig <= '0';
-						else
-							int_sig <= '1';
+					if (SCREEN_MODE = "00") then 
+						if chr_col_cnt = 6 and hor_cnt(2 downto 0) = "111" then
+							if ver_cnt = 29 and chr_row_cnt = 7 and hor_cnt(5 downto 3) = "100" then
+								int_sig <= '0';
+							else
+								int_sig <= '1';
+							end if;
+						end if;
+					-- CLASSIC int
+					elsif (SCREEN_MODE = "01") then 
+						if chr_col_cnt = 0 then
+							if ver_cnt = 31 and chr_row_cnt = 0 and hor_cnt(5 downto 3) = "000" then
+								int_sig <= '0';
+							else
+								int_sig <= '1';
+							end if;
 						end if;
 					end if;
 
@@ -208,7 +223,11 @@ begin
 			if CLK = '1' then		
 				if ENA = '1' then
 					if chr_col_cnt = 7 then
-						if ((hor_cnt(5 downto 0) > 38 and hor_cnt(5 downto 0) < 48) or ((ver_cnt(5 downto 1) = 15 and MODE60 = '0') or (ver_cnt(5 downto 1) = 14 and MODE60 = '1'))) then	-- 15 = for 320 lines, 13 = for 264 lines
+						-- PENTAGON blank
+						if SCREEN_MODE = "00" and ((hor_cnt(5 downto 0) > 38 and hor_cnt(5 downto 0) < 48) or ((ver_cnt(5 downto 1) = 15 and MODE60 = '0') or (ver_cnt(5 downto 1) = 14 and MODE60 = '1'))) then	-- 15 = for 320 lines, 13 = for 264 lines
+							blank_r <= '0';
+						-- CLASSIC blank
+						elsif SCREEN_MODE = "01" and (hor_cnt(5 downto 2) = 10 or hor_cnt(5 downto 2) = 11 or (ver_cnt = 31 and MODE60 = '0') or (ver_cnt = 30 and MODE60 = '1')) then
 							blank_r <= '0';
 						else 
 							blank_r <= '1';

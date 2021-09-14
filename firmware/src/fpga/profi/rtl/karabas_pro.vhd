@@ -449,6 +449,8 @@ signal board_reset 	: std_logic := '0'; -- board reset on rombank switch
 signal tape_in_out_enable : std_logic := '0'; -- revDS uses SW3 switches as tape in / out
 signal tape_in_monitor : std_logic := '0';
 
+signal memory_contention : std_logic := '0';
+
 -- debug 
 signal fdd_oe_n 		: std_logic := '1';
 signal hdd_oe_n 		: std_logic := '1';
@@ -1155,7 +1157,7 @@ G_MAX_TURBO_SRAM: if not enable_2port_vram generate
 	max_turbo <= "01";
 end generate G_MAX_TURBO_SRAM;
 
-clk_cpu <= '0' when kb_wait = '1' else 
+clk_cpu <= '0' when kb_wait = '1' or  (kb_screen_mode = "01" and memory_contention = '1' and DS80 = '0') else 
 	clk_bus when kb_turbo = "11" and kb_turbo <= max_turbo else 
 	clk_bus and ena_div2 when kb_turbo = "10" and kb_turbo <= max_turbo else 
 	clk_bus and ena_div4 when kb_turbo = "01" and kb_turbo <= max_turbo else 
