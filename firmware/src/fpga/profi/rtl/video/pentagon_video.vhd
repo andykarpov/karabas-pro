@@ -32,6 +32,7 @@ entity pentagon_video is
 		VCNT 		: out std_logic_vector(8 downto 0);	
 		ISPAPER 	: out std_logic := '0';
 		BLINK 	: out std_logic;
+		SCREEN_MODE : in std_logic_vector(1 downto 0) := "00"; -- screen mode: 00 = pentagon, 01 - 128 classic, 10, 11 - reserver
 		
 		-- sram vram
 		VBUS_MODE : in std_logic := '0'; -- 1 = video bus, 2 = cpu bus

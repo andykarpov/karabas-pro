@@ -179,6 +179,7 @@ signal kb_wait 		: std_logic := '0';
 signal kb_mode 		: std_logic := '1';
 signal joy_type 		: std_logic := '0';
 signal kb_loaded 		: std_logic := '0';
+signal kb_screen_mode: std_logic_vector(1 downto 0) := "00";
 
 -- Joy
 signal joy_bus 		: std_logic_vector(7 downto 0) := "00000000";
@@ -691,7 +692,8 @@ port map (
 	HCNT 				=> vid_hcnt,
 	VCNT 				=> vid_vcnt,
 	ISPAPER 			=> vid_ispaper,
-	BLINK 			=> blink
+	BLINK 			=> blink,
+	SCREEN_MODE    => kb_screen_mode
 );
 
 -- osd (debug)
@@ -726,6 +728,7 @@ port map (
 	SSG_MONO 		=> soft_sw(9),
 	FDC_SWAP			=> fdc_swap,
 	JOY_TYPE 		=> joy_type,
+	SCREEN_MODE 	=> kb_screen_mode,
 	
 	-- osd overlay
 	OSD_OVERLAY		=> osd_overlay,
@@ -904,6 +907,7 @@ port map (
 	 OSD_OVERLAY 	=> osd_overlay,
 	 OSD_COMMAND	=> osd_command,
 	 MAX_TURBO 		=> max_turbo,
+	 SCREEN_MODE   => kb_screen_mode,
 	 
 	 LOADED 			=> kb_loaded,
 	 

@@ -59,6 +59,7 @@ entity avr is
 	 OSD_OVERLAY: out std_logic := '0';
 	 OSD_COMMAND: out std_logic_vector(15 downto 0);
 	 MAX_TURBO  : in std_logic_vector(1 downto 0) := "11";
+	 SCREEN_MODE : out std_logic_vector(1 downto 0) := "00"; -- 00 - pentagon, 01 - 128 classic, 10, 11 - reserved yet
 	 
 	 LOADED 		: buffer std_logic := '0';
 	 	 
@@ -216,7 +217,8 @@ begin
 									  OSD_OVERLAY <= spi_do(3);
 									  LOADED <= '1'; -- loaded
 									  TURBO(1) <= spi_do(4);
-									  -- 3 free signals
+									  SCREEN_MODE(1 downto 0) <= spi_do(6 downto 5);
+									  -- free: spi_do(7)
 					-- mouse data
 					when X"0A" => mouse_x(7 downto 0) <= signed(spi_do(7 downto 0));
 					when X"0B" => mouse_y(7 downto 0) <= signed(spi_do(7 downto 0));

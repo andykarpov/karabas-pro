@@ -41,6 +41,8 @@ entity video is
 		BUS_WR_N : in std_logic;
 		GX0 		: out std_logic;
 		
+		SCREEN_MODE : in std_logic_vector(1 downto 0);
+		
 		HCNT : out std_logic_vector(9 downto 0);
 		VCNT : out std_logic_vector(8 downto 0);
 		ISPAPER : out std_logic;
@@ -135,6 +137,8 @@ begin
 		VCNT => vcnt_spec,
 		ISPAPER => ispaper_spec,
 		BLINK => BLINK,
+		
+		SCREEN_MODE => SCREEN_MODE,
 		
 		VBUS_MODE => VBUS_MODE,
 		VID_RD => VID_RD		

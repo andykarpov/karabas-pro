@@ -33,6 +33,7 @@ entity osd is
 		SSG_MONO 		: in std_logic := '0';
 		FDC_SWAP 		: in std_logic := '0';
 		JOY_TYPE 		: in std_logic := '0';
+		SCREEN_MODE 	: in std_logic_vector := "00";
 		
 		-- osd overlay 
 		OSD_OVERLAY 	: in std_logic := '0';
@@ -99,6 +100,9 @@ architecture rtl of osd is
 	constant message_2x:			integer  := 248;
 	constant message_4x: 		integer  := 256;
 	constant message_8x:			integer  := 264;
+	constant message_scr_mode: integer  := 272;
+   constant message_scr_pentagon: integer  := 280;
+   constant message_scr_classic:  integer  := 288;
 	constant message_ver:      integer  := 504;
 
 	signal message_addr : std_logic_vector(8 downto 0);
@@ -122,6 +126,7 @@ architecture rtl of osd is
 	signal last_loaded : std_logic := '0';
 	signal last_fdc_swap : std_logic := '0';
 	signal last_joy_type: std_logic := '0';
+	signal last_scr_mode : std_logic_vector(1 downto 0) := "00";
 	
 	signal cnt : std_logic_vector(3 downto 0) := "1000";
 	signal en : std_logic := '0';
@@ -217,7 +222,7 @@ begin
 	end process;
 				 
 	-- display messages for changed sensors
-	process (CLK, BLINK, cnt, KB_WAIT, KB_MODE, TURBO, SCANDOUBLER_EN, MODE60, ROM_BANK, SSG_MODE, SSG_STEREO, last_ssg_mode, last_ssg_stereo, last_kb_wait, last_kb_mode, LOADED, last_loaded, last_turbo, last_scandoubler_en, last_mode60, last_rom_bank, COVOX_EN, last_covox, TURBO_FDC, last_turbo_fdc, SSG_MONO, last_ssg_mono, FDC_SWAP, last_fdc_swap)
+	process (CLK, BLINK, cnt, KB_WAIT, KB_MODE, TURBO, SCANDOUBLER_EN, MODE60, ROM_BANK, SSG_MODE, SSG_STEREO, SCREEN_MODE, last_scr_mode, last_ssg_mode, last_ssg_stereo, last_kb_wait, last_kb_mode, LOADED, last_loaded, last_turbo, last_scandoubler_en, last_mode60, last_rom_bank, COVOX_EN, last_covox, TURBO_FDC, last_turbo_fdc, SSG_MONO, last_ssg_mono, FDC_SWAP, last_fdc_swap)
 	begin 
 		if rising_edge(CLK) then 
 		
@@ -239,6 +244,7 @@ begin
 				last_ssg_mono <= SSG_MONO;
 				last_fdc_swap <= FDC_SWAP;
 				last_joy_type <= JOY_TYPE;
+				last_scr_mode <= SCREEN_MODE;
 				cnt <= "0000";
 				line1 <= '0' & std_logic_vector(to_unsigned(message_karabas, 8));
 				line2 <= '1' & std_logic_vector(to_unsigned(message_ver, 8));
@@ -384,6 +390,20 @@ begin
 					else 
 						line2 <= '0'& std_logic_vector(to_unsigned(message_sega, 8));
 					end if;
+				end if;
+				
+				-- screen mode switch
+				if (SCREEN_MODE /= last_scr_mode) then
+					last_scr_mode <= SCREEN_MODE;
+					cnt <= "0000";
+					line1 <= '0' & std_logic_vector(to_unsigned(message_scr_mode, 8));
+					case SCREEN_MODE is 
+						when "00" => line2 <= '1' & std_logic_vector(to_unsigned(message_scr_pentagon, 8));
+						when "01" => line2 <= '1' & std_logic_vector(to_unsigned(message_scr_classic, 8));
+						--when "10" => line2 <= '1' & std_logic_vector(to_unsigned(message_scr_pentagon, 8));
+						--when "11" => line2 <= '1' & std_logic_vector(to_unsigned(message_scr_pentagon, 8));
+						when others => null;
+					end case;
 				end if;
 				
 			end if;
