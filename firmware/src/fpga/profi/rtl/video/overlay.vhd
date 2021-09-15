@@ -174,8 +174,8 @@ begin
     rgb_bg <= (attr(3) and attr(0)) & attr(3) & attr(3) & (attr(2) and attr(0)) & attr(2) & attr(2) & (attr(1) and attr(0)) & attr(1) & attr(1);
     RGB_O <= 
 				rgb_fg when paper = '1' and (selector="1111" or selector="1001" or selector="1100" or selector="1110") else 
-            rgb_bg(8 downto 7) & RGB_I(8) & rgb_bg(5 downto 4) & RGB_I(5) & rgb_bg(2 downto 1) & RGB_I(2) when OSD_POPUP = '0' and paper = '1' and (selector="1011" or selector="1101" or selector="1000" or selector="1010") else 
-				"00" & RGB_I(8) & "00" & RGB_I(5) & "00" & RGB_I(2) when OSD_POPUP = '0' and video_on = '1' else 
+            rgb_bg(8 downto 7) & RGB_I(8) & rgb_bg(5 downto 4) & RGB_I(5) & rgb_bg(2 downto 1) & RGB_I(2) when paper = '1' and (selector="1011" or selector="1101" or selector="1000" or selector="1010") else 
+				"00" & RGB_I(8) & "00" & RGB_I(5) & "00" & RGB_I(2) when video_on = '1' else 
 				RGB_I;
 
 		-- заполнение видеопамяти AVR'кой по SPI
