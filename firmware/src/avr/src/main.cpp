@@ -343,8 +343,8 @@ void loop()
   }
 #endif
 
-  // hide osd popup after 3 seconds
-  if (zxkbd.getIsOsdPopup() && (millis() - tpopup > 3000)) {
+  // hide osd popup after 1 second
+  if (zxkbd.getIsOsdPopup() && (millis() - tpopup > 1000)) {
     zxkbd.setOsdPopup(false);
   }
 
