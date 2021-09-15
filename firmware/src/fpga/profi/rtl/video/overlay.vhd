@@ -15,8 +15,8 @@ entity overlay is
 		PAPER_I  : in std_logic;
 		BLINK 	: in std_logic;
 		
-		OSD_OVERLAY 	: in std_logic := '0';
-		OSD_POPUP 		: in std_logic := '0';
+		OSD_OVERLAY 	: in std_logic := '0'; -- full overlay osd
+		OSD_POPUP 		: in std_logic := '0'; -- popup osd
 		OSD_COMMAND 	: in std_logic_vector(15 downto 0)
 	);
 end entity;

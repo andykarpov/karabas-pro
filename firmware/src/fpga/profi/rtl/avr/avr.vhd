@@ -424,7 +424,7 @@ begin
 	-- messages rom (to get a build num)
 	U_MESSAGES: entity work.message_rom 
 	port map (
-		address 		=> "111111" & build_read_addr, -- build version starts from 504
+		address 		=> build_read_addr, -- build version starts from 504
 		clock   		=> CLK,
 		q       		=> build_byte
 	);	
