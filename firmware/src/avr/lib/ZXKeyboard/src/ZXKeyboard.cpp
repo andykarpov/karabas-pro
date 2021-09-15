@@ -150,6 +150,15 @@ void ZXKeyboard::toggleOsdOverlay() {
   }
 }
 
+void ZXKeyboard::setOsdPopup(bool value) {
+  osd_popup = value;
+  matrix[ZX_K_OSD_POPUP] = osd_popup;
+  // re-init osd
+  if (osd_popup) {
+    event(EVENT_OSD_POPUP, 0);
+  }
+}
+
 void ZXKeyboard::setRombank(uint8_t bank) {
   switch (bank) {
     case 0: is_sw3 = false; is_sw4 = false; break;
@@ -791,10 +800,12 @@ void ZXKeyboard::fill(uint16_t sc, unsigned long n)
           uint8_t stereo = 0;
           bitWrite(stereo, 0, is_sw7);
           bitWrite(stereo, 1, is_sw9);
-          if (stereo < 2) 
+          if (stereo < 2) {
             stereo++; 
-          else 
+          }
+          else {
             stereo = 0;
+          }
           toggleStereo(stereo);
           event(EVENT_OSD_STEREO, 0);
         }
@@ -1172,6 +1183,10 @@ void ZXKeyboard::eepromRestoreValues()
 
   bool ZXKeyboard::getIsOsdOverlay() {
     return osd_overlay;
+  }
+
+  bool ZXKeyboard::getIsOsdPopup() {
+    return osd_popup;
   }
 
   uint8_t ZXKeyboard::getRombank() {

@@ -46,7 +46,7 @@ bool led2_state = false;
 bool led1_overwrite = false;
 bool led2_overwrite = false;
 
-unsigned long tl, tl1, tl2, tb, tb1, tb2 = 0; // last time
+unsigned long tl, tl1, tl2, tb, tb1, tb2, tpopup = 0; // last time
 
 SPISettings settingsA(1000000, MSBFIRST, SPI_MODE0); // SPI transmission settings
 
@@ -124,24 +124,50 @@ void on_keyboard (uint8_t event_type, uint16_t scancode)
     update_led(PIN_LED1, HIGH);
   }
 
-  if (!zxosd.started() || !zxkbd.getIsOsdOverlay()) return;
-  switch (event_type) {
-    case ZXKeyboard::EVENT_OSD_OVERLAY:  zxosd.initOverlay(); break;
-    case ZXKeyboard::EVENT_OSD_SCANCODE: zxosd.updateScancode(scancode); break;
-    case ZXKeyboard::EVENT_OSD_JOYSTICK: zxosd.updateJoystick(); break;
-    case ZXKeyboard::EVENT_OSD_SWAP_AB:  zxosd.updateSwapAB(); break;
-    case ZXKeyboard::EVENT_OSD_ROMBANK:  zxosd.updateRombank(); break;
-    case ZXKeyboard::EVENT_OSD_TURBOFDC: zxosd.updateTurbofdc(); break;
-    case ZXKeyboard::EVENT_OSD_COVOX:    zxosd.updateCovox(); break;
-    case ZXKeyboard::EVENT_OSD_STEREO:   zxosd.updateStereo(); break;
-    case ZXKeyboard::EVENT_OSD_SSG:      zxosd.updateSsg(); break;
-    case ZXKeyboard::EVENT_OSD_VIDEO:    zxosd.updateVideo(); break;
-    case ZXKeyboard::EVENT_OSD_VSYNC:    zxosd.updateVsync(); break;
-    case ZXKeyboard::EVENT_OSD_JOY_TYPE: zxosd.updateJoystick(); break;
-    case ZXKeyboard::EVENT_OSD_KEYBOARD_TYPE:  zxosd.updateKeyboardType(); break;
-    case ZXKeyboard::EVENT_OSD_PAUSE:  zxosd.updatePause(); break;
-    case ZXKeyboard::EVENT_OSD_TURBO:  zxosd.updateTurbo(); break;
-    case ZXKeyboard::EVENT_OSD_SCREEN_MODE: zxosd.updateScreenMode(); break;
+  if (!zxosd.started()) return;
+
+  // overlay has more priority than popup
+  if (zxkbd.getIsOsdOverlay()) {
+    switch (event_type) {
+      case ZXKeyboard::EVENT_OSD_OVERLAY:  zxosd.initOverlay(); break;
+      case ZXKeyboard::EVENT_OSD_SCANCODE: zxosd.updateScancode(scancode); break;
+      case ZXKeyboard::EVENT_OSD_JOYSTICK: zxosd.updateJoystick(); break;
+      case ZXKeyboard::EVENT_OSD_SWAP_AB:  zxosd.updateSwapAB(); break;
+      case ZXKeyboard::EVENT_OSD_ROMBANK:  zxosd.updateRombank(); break;
+      case ZXKeyboard::EVENT_OSD_TURBOFDC: zxosd.updateTurbofdc(); break;
+      case ZXKeyboard::EVENT_OSD_COVOX:    zxosd.updateCovox(); break;
+      case ZXKeyboard::EVENT_OSD_STEREO:   zxosd.updateStereo(); break;
+      case ZXKeyboard::EVENT_OSD_SSG:      zxosd.updateSsg(); break;
+      case ZXKeyboard::EVENT_OSD_VIDEO:    zxosd.updateVideo(); break;
+      case ZXKeyboard::EVENT_OSD_VSYNC:    zxosd.updateVsync(); break;
+      case ZXKeyboard::EVENT_OSD_KEYBOARD_TYPE:  zxosd.updateKeyboardType(); break;
+      case ZXKeyboard::EVENT_OSD_PAUSE:  zxosd.updatePause(); break;
+      case ZXKeyboard::EVENT_OSD_TURBO:  zxosd.updateTurbo(); break;
+      case ZXKeyboard::EVENT_OSD_SCREEN_MODE: zxosd.updateScreenMode(); break;
+    }
+  } else {
+    switch (event_type) {
+      case ZXKeyboard::EVENT_OSD_SWAP_AB:
+      case ZXKeyboard::EVENT_OSD_ROMBANK:
+      case ZXKeyboard::EVENT_OSD_TURBOFDC:
+      case ZXKeyboard::EVENT_OSD_COVOX:
+      case ZXKeyboard::EVENT_OSD_STEREO:
+      case ZXKeyboard::EVENT_OSD_SSG:
+      case ZXKeyboard::EVENT_OSD_VIDEO:
+      case ZXKeyboard::EVENT_OSD_VSYNC:
+      case ZXKeyboard::EVENT_OSD_JOYSTICK:
+      case ZXKeyboard::EVENT_OSD_KEYBOARD_TYPE:
+      case ZXKeyboard::EVENT_OSD_PAUSE:
+      case ZXKeyboard::EVENT_OSD_TURBO:
+      case ZXKeyboard::EVENT_OSD_SCREEN_MODE: 
+        tpopup = millis();
+        if (!zxkbd.getIsOsdPopup()) {
+          zxosd.clear();
+        }
+        zxkbd.setOsdPopup(true);
+        zxosd.initPopup(event_type);
+      break;
+    }
   }
 }
 
@@ -317,9 +343,14 @@ void loop()
   }
 #endif
 
-// reset pressed keys for OSD
-zxkbd.resetOsdControls();
+  // hide osd popup after 3 seconds
+  if (zxkbd.getIsOsdPopup() && (millis() - tpopup > 3000)) {
+    zxkbd.setOsdPopup(false);
+  }
 
-delayMicroseconds(1);
+  // reset pressed keys for OSD
+  zxkbd.resetOsdControls();
+
+  delayMicroseconds(1);
 
 }

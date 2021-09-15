@@ -116,7 +116,7 @@
 #define ZX_K_SCREEN_MODE0 69
 #define ZX_K_SCREEN_MODE1 70
 
-// free 71
+#define ZX_K_OSD_POPUP 71
 
 // kbd commands
 #define CMD_KBD_BYTE1 0x01
@@ -185,6 +185,7 @@ private:
   bool joy_type = false; // joy type - 0 = kempston, 1 = sega
   bool is_wait = false; // wait mode
   bool osd_overlay = false; // osd overlay enable
+  bool osd_popup = false; // osd popup (small 2-row overlay)
   unsigned long tosd = 0; // osd last press toggle time
   bool prev_osd_overlay = true; // prev state of osd overlay
   bool cursor_up = false;
@@ -235,11 +236,11 @@ public:
   static const uint8_t EVENT_OSD_SSG = 8;
   static const uint8_t EVENT_OSD_VIDEO = 9;
   static const uint8_t EVENT_OSD_VSYNC = 10;
-  static const uint8_t EVENT_OSD_JOY_TYPE = 11;
   static const uint8_t EVENT_OSD_KEYBOARD_TYPE = 12;
   static const uint8_t EVENT_OSD_PAUSE = 13;
   static const uint8_t EVENT_OSD_TURBO = 14;
   static const uint8_t EVENT_OSD_SCREEN_MODE = 15;
+  static const uint8_t EVENT_OSD_POPUP = 16;
 
   ZXKeyboard();
 
@@ -260,6 +261,7 @@ public:
   void doPause();
 
   void toggleOsdOverlay();
+  void setOsdPopup(bool value);
   void setRombank(uint8_t bank);
   void toggleTurbofdc();
   void toggleCovox();
@@ -277,6 +279,7 @@ public:
   void setScreenMode(uint8_t val);
 
   bool getIsOsdOverlay();
+  bool getIsOsdPopup();
   uint8_t getRombank();
   bool getTurbofdc();
   bool getCovox();

@@ -102,8 +102,11 @@ public:
   void printHeader();
   void printLogo(uint8_t x, uint8_t y);
   void printLine(uint8_t y);
-  
+  void printSpace();
+  void clear();
+
   void initOverlay();
+  void initPopup(uint8_t event_type);
   void initRtcOverlay();
   void initTestOverlay();
   void initAboutOverlay();

@@ -57,6 +57,7 @@ entity avr is
 	 WAIT_CPU 	: out std_logic := '0';
 	 JOY_TYPE 	: out std_logic := '0';
 	 OSD_OVERLAY: out std_logic := '0';
+	 OSD_POPUP 	: out std_logic := '0';
 	 OSD_COMMAND: out std_logic_vector(15 downto 0);
 	 MAX_TURBO  : in std_logic_vector(1 downto 0) := "11";
 	 SCREEN_MODE : out std_logic_vector(1 downto 0) := "00"; -- 00 - pentagon, 01 - 128 classic, 10, 11 - reserved yet
@@ -218,7 +219,7 @@ begin
 									  LOADED <= '1'; -- loaded
 									  TURBO(1) <= spi_do(4);
 									  SCREEN_MODE(1 downto 0) <= spi_do(6 downto 5);
-									  -- free: spi_do(7)
+									  OSD_POPUP <= spi_do(7);
 					-- mouse data
 					when X"0A" => mouse_x(7 downto 0) <= signed(spi_do(7 downto 0));
 					when X"0B" => mouse_y(7 downto 0) <= signed(spi_do(7 downto 0));
