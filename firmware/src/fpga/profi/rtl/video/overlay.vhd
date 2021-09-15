@@ -102,8 +102,8 @@ begin
 	hcnt <= '0' & hcnt_i(9 downto 1) when DS80='1' else hcnt_i;
 	vcnt <= vcnt_i;
 	 
-    char_x <= hcnt(2 downto 0);
-    char_y <= VCNT(2 downto 0);
+    char_x <= hcnt(3 downto 1) when OSD_POPUP = '1' else hcnt(2 downto 0);
+    char_y <= vcnt(3 downto 1) when OSD_POPUP = '1' else VCNT(2 downto 0);
 	 paper2 <= '1' when hcnt >= 0 and hcnt < 256 and vcnt >= 0 and vcnt < 192 else '0'; 
 	 paper <= '1' when hcnt >= 8 and hcnt < 264 and vcnt >= 0 and vcnt < 192 else '0'; -- активная зона со сдвигом на одно знакоместо
     video_on <= '1' when (OSD_OVERLAY = '1' or OSD_POPUP = '1') else '0';
@@ -114,21 +114,40 @@ begin
 	 begin
 		if (rising_edge(CLK)) then 
 			if (CLK2 = '0') then 
-				case (char_x) is
-					when "110" =>
-						-- задаем адрес для чтения char и attr из видео памяти
-						if (paper2 = '1') then
-							addr_read <= VCNT(7 downto 3) & HCNT(7 downto 3);
-						end if;
-					when "111" => 
-						-- задаем адрес знакоместа из шрифта для чтения
-						rom_addr <= vram_do(15 downto 8) & char_y;
-						attr2 <= vram_do(7 downto 0);
-					when "000" => 
-						-- назначаем attr для нового знакоместа 
-						attr <= attr2;
-						when others => null;						
-				end case;
+			
+				if (OSD_POPUP = '1') then 
+					case (hcnt(3 downto 0)) is
+						when "1110" =>
+							-- задаем адрес для чтения char и attr из видео памяти
+							if (paper2 = '1') then
+									addr_read <= VCNT(8 downto 4) & HCNT(8 downto 4);
+							end if;
+						when "1111" => 
+							-- задаем адрес знакоместа из шрифта для чтения
+							rom_addr <= vram_do(15 downto 8) & char_y;
+							attr2 <= vram_do(7 downto 0);
+						when "0000" => 
+							-- назначаем attr для нового знакоместа 
+							attr <= attr2;
+							when others => null;						
+					end case;
+				else 
+					case (char_x) is
+						when "110" =>
+							-- задаем адрес для чтения char и attr из видео памяти
+							if (paper2 = '1') then
+								addr_read <= VCNT(7 downto 3) & HCNT(7 downto 3);
+							end if;
+						when "111" => 
+							-- задаем адрес знакоместа из шрифта для чтения
+							rom_addr <= vram_do(15 downto 8) & char_y;
+							attr2 <= vram_do(7 downto 0);
+						when "000" => 
+							-- назначаем attr для нового знакоместа 
+							attr <= attr2;
+							when others => null;						
+					end case;
+				end if;
 			end if;
 		end if;
 	 end process;
