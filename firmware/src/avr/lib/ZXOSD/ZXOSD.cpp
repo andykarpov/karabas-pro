@@ -277,7 +277,7 @@ void ZXOSD::printLogo(uint8_t x, uint8_t y)
   osd.setColor(OSD::COLOR_GREY, OSD::COLOR_BLACK);
   osd.setPos(x,y+3);
   // board revision
-  osd.print(F("Rev."));
+  /*osd.print(F("Rev."));
   switch (fpga_cfg) {
     case 0:
     case 1:
@@ -291,7 +291,7 @@ void ZXOSD::printLogo(uint8_t x, uint8_t y)
     case 37:
       osd.print(F("E"));
       break;
-  }
+  }*/
 }
 
 void ZXOSD::printLine(uint8_t y)
