@@ -1307,4 +1307,8 @@ void ZXKeyboard::eepromRestoreValues()
 
 /****************************************************************************/
 
+// Preinstantiate Objects //////////////////////////////////////////////////////
+
+ZXKeyboard zxkbd = ZXKeyboard();
+
 // vim:cin:ai:sts=2 sw=2 ft=cpp

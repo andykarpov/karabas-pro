@@ -33,10 +33,10 @@ Ukraine, 2021
 #define STRINGIFY(s) STRINGIFY1(s)
 #define STRINGIFY1(s) #s
 
-ZXKeyboard zxkbd;
+//ZXKeyboard zxkbd;
 ZXMouse zxmouse;
 ZXJoystick zxjoy;
-ZXRTC zxrtc;
+//ZXRTC zxrtc;
 ZXOSD zxosd;
 
 bool init_done = false; // init done
@@ -245,7 +245,7 @@ void setup()
   zxmouse.begin(spi_send, on_mouse);
   zxmouse.setMouseSwap(zxkbd.getMouseSwap());
   zxjoy.begin(spi_send, on_joystick);
-  zxosd.begin(spi_send, &zxkbd, &zxrtc);
+  zxosd.begin(spi_send);
   const char* ver = STRINGIFY(BUILD_VER);
   zxosd.setAvrBuildNum(ver);
 

@@ -28,10 +28,8 @@ ZXOSD::ZXOSD(void)
 
 /****************************************************************************/
 
-void ZXOSD::begin(spi_cb act, ZXKeyboard *zxkbd_, ZXRTC *zxrtc_) // todo: zxmouse, zxjoy
+void ZXOSD::begin(spi_cb act) // todo: zxmouse, zxjoy
 {
-  zxkbd = zxkbd_;
-  zxrtc = zxrtc_;
   action = act;
   tstart = millis();
   osd.begin(action);
@@ -46,7 +44,7 @@ bool ZXOSD::started() {
 void ZXOSD::handle()
 {
   // switch betweeen main osd states
-  if (zxkbd->getIsOsdOverlay()) {
+  if (zxkbd.getIsOsdOverlay()) {
     switch (osd_state) {
       case state_main:
         if (osd_prev_state != osd_state) {
@@ -123,38 +121,38 @@ void ZXOSD::handle()
   }
 
   // process osd overlay keyboard actions here
-  if (zxkbd->getIsOsdOverlay()) {
+  if (zxkbd.getIsOsdOverlay()) {
     switch (osd_state) {
       case state_main:
 
-        if (zxkbd->getIsCursorDown()) {
+        if (zxkbd.getIsCursorDown()) {
           osd_main_state++;
           if (osd_main_state > state_main_pause) osd_main_state = state_main_rom_bank;
         }
 
-        if (zxkbd->getIsCursorUp()) {
+        if (zxkbd.getIsCursorUp()) {
           osd_main_state--;
           if (osd_main_state > state_main_pause) osd_main_state = state_main_pause;
         }
 
-        if (zxkbd->getKey(ZX_K_S) || zxkbd->getKey(ZX_K_E) || zxkbd->getKey(ZX_K_R)) {
+        if (zxkbd.getKey(ZX_K_S) || zxkbd.getKey(ZX_K_E) || zxkbd.getKey(ZX_K_R)) {
           osd_state = state_rtc;
         }
 
-        if (zxkbd->getKey(ZX_K_T)) {
+        if (zxkbd.getKey(ZX_K_T)) {
           osd_state = state_test;
         }
 
-        /*if (zxkbd->getKey(ZX_K_A)) {
+        if (zxkbd.getKey(ZX_K_A)) {
           osd_state = state_about;
-        }*/
+        }
 
-        if (zxkbd->getKey(ZX_K_I)) {
+        if (zxkbd.getKey(ZX_K_I)) {
           osd_state = state_info;
         }
 
-        /*if (zxkbd->getIsEscape()) {
-          zxkbd->toggleOsdOverlay();
+        /*if (zxkbd.getIsEscape()) {
+          zxkbd.toggleOsdOverlay();
         }*/
 
         switch (osd_main_state) {
@@ -175,17 +173,17 @@ void ZXOSD::handle()
       break;
       case state_rtc:
 
-        if (zxkbd->getIsCursorDown()) {
+        if (zxkbd.getIsCursorDown()) {
           osd_rtc_state++;
           if (osd_rtc_state > state_rtc_dow) osd_rtc_state = state_rtc_hour;
         }
 
-        if (zxkbd->getIsCursorUp()) {
+        if (zxkbd.getIsCursorUp()) {
           osd_rtc_state--;
           if (osd_rtc_state > state_rtc_dow) osd_rtc_state = state_rtc_dow;
         }
 
-        if (zxkbd->getIsEscape()) {
+        if (zxkbd.getIsEscape()) {
           osd_state = state_main;
         }
 
@@ -205,7 +203,7 @@ void ZXOSD::handle()
       case state_about:
       case state_info:
 
-        if (zxkbd->getIsEscape()) {
+        if (zxkbd.getIsEscape()) {
           osd_state = state_main;
         }
 
@@ -214,8 +212,8 @@ void ZXOSD::handle()
   }
 
   // empty keyboard matrix in overlay mode before transmitting it onto FPGA side
-  if (zxkbd->getIsOsdOverlay()) {
-    zxkbd->clear(ZX_MATRIX_SIZE);
+  if (zxkbd.getIsOsdOverlay()) {
+    zxkbd.clear(ZX_MATRIX_SIZE);
   }
 }
 
@@ -277,7 +275,7 @@ void ZXOSD::printLogo(uint8_t x, uint8_t y)
   osd.setColor(OSD::COLOR_GREY, OSD::COLOR_BLACK);
   osd.setPos(x,y+3);
   // board revision
-  /*osd.print(F("Rev."));
+  osd.print(F("Rev."));
   switch (fpga_cfg) {
     case 0:
     case 1:
@@ -291,7 +289,7 @@ void ZXOSD::printLogo(uint8_t x, uint8_t y)
     case 37:
       osd.print(F("E"));
       break;
-  }*/
+  }
 }
 
 void ZXOSD::printLine(uint8_t y)
@@ -355,7 +353,7 @@ void ZXOSD::initOverlay()
   osd_state = state_main;
 
   // disable popup in overlay mode
-  zxkbd->setOsdPopup(false);
+  zxkbd.setOsdPopup(false);
 
   osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
   osd.clear();
@@ -492,10 +490,10 @@ void ZXOSD::initOverlay()
   osd.print(F("I"));
   osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
   osd.print(F("nfo "));
-  //osd.setColor(OSD::COLOR_CYAN_I, OSD::COLOR_FLASH);
-  //osd.print(F("A"));
-  //osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
-  //osd.print(F("bout"));
+  osd.setColor(OSD::COLOR_CYAN_I, OSD::COLOR_FLASH);
+  osd.print(F("A"));
+  osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
+  osd.print(F("bout"));
 
   printLine(21);
 
@@ -566,7 +564,7 @@ void ZXOSD::initPopup(uint8_t event_type)
 // init rtc osd
 void ZXOSD::initRtcOverlay()
 {
-  zxrtc->fixInvalidTime(); // try to fix invalid time
+  zxrtc.fixInvalidTime(); // try to fix invalid time
 
   osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
   osd.clear();
@@ -605,7 +603,7 @@ void ZXOSD::initRtcOverlay()
   osd.setPos(0,15); osd.print(F("DOW:"));
   updateRtcDow();
 
-/*  osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
+  osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
   osd.setPos(0, 17);
   osd.print(F("Please use arrows "));
   osd.setColor(OSD::COLOR_CYAN_I, OSD::COLOR_BLACK);
@@ -625,7 +623,7 @@ void ZXOSD::initRtcOverlay()
   osd.write(31);
   osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
   osd.setPos(0, 19);
-  osd.print(F("to navigate by menu items"));*/
+  osd.print(F("to navigate by menu items"));
 
   popupFooter();
 }
@@ -677,8 +675,6 @@ void ZXOSD::initTestOverlay()
 // init test osd
 void ZXOSD::initAboutOverlay()
 {
-  return;
-
   osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
   osd.clear();
 
@@ -840,260 +836,260 @@ void ZXOSD::popupFooter() {
 }
 
 void ZXOSD::handleRombank() {
-  uint8_t romset = zxkbd->getRombank();
+  uint8_t romset = zxkbd.getRombank();
 
-  if (zxkbd->getIsCursorLeft()) {
+  if (zxkbd.getIsCursorLeft()) {
     romset = romset-1;
     if (romset > 3) romset = 3;
-    zxkbd->setRombank(romset);
+    zxkbd.setRombank(romset);
     updateRombank();
   }
-  if (zxkbd->getIsCursorRight() || zxkbd->getIsEnter()) {
+  if (zxkbd.getIsCursorRight() || zxkbd.getIsEnter()) {
     romset = romset+1;
     if (romset >3) romset = 0;
-    zxkbd->setRombank(romset);
+    zxkbd.setRombank(romset);
     updateRombank();
   }
 }
 
 void ZXOSD::handleTurbofdc() {
-  if (zxkbd->getIsCursorLeft() || zxkbd->getIsCursorRight() || zxkbd->getIsEnter()) {
-    zxkbd->toggleTurbofdc();
+  if (zxkbd.getIsCursorLeft() || zxkbd.getIsCursorRight() || zxkbd.getIsEnter()) {
+    zxkbd.toggleTurbofdc();
     updateTurbofdc();
   }
 }
 
 void ZXOSD::handleCovox() {
-  if (zxkbd->getIsCursorLeft() || zxkbd->getIsCursorRight() || zxkbd->getIsEnter()) {
-    zxkbd->toggleCovox();
+  if (zxkbd.getIsCursorLeft() || zxkbd.getIsCursorRight() || zxkbd.getIsEnter()) {
+    zxkbd.toggleCovox();
     updateCovox();
   }
 }
 
 void ZXOSD::handleStereo() {
 
-  uint8_t stereo = zxkbd->getStereo();
+  uint8_t stereo = zxkbd.getStereo();
 
-  if (zxkbd->getIsCursorLeft()) {
+  if (zxkbd.getIsCursorLeft()) {
     stereo = stereo-1;
     if (stereo > 2) stereo = 2;
-    zxkbd->toggleStereo(stereo);
+    zxkbd.toggleStereo(stereo);
     updateStereo();
   }
-  if (zxkbd->getIsCursorRight() || zxkbd->getIsEnter()) {
+  if (zxkbd.getIsCursorRight() || zxkbd.getIsEnter()) {
     stereo = stereo+1;
     if (stereo >2) stereo = 0;
-    zxkbd->toggleStereo(stereo);
+    zxkbd.toggleStereo(stereo);
     updateStereo();
   }
 }
 
 void ZXOSD::handleSsg() {
-  if (zxkbd->getIsCursorLeft() || zxkbd->getIsCursorRight() || zxkbd->getIsEnter()) {
-    zxkbd->toggleSsg();
+  if (zxkbd.getIsCursorLeft() || zxkbd.getIsCursorRight() || zxkbd.getIsEnter()) {
+    zxkbd.toggleSsg();
     updateSsg();
   }
 }
 
 void ZXOSD::handleVideo() {
-  if (zxkbd->getIsCursorLeft() || zxkbd->getIsCursorRight() || zxkbd->getIsEnter()) {
-    zxkbd->toggleVideo();
+  if (zxkbd.getIsCursorLeft() || zxkbd.getIsCursorRight() || zxkbd.getIsEnter()) {
+    zxkbd.toggleVideo();
     updateVideo();
   }
 }
 
 void ZXOSD::handleVsync() {
-  if (zxkbd->getIsCursorLeft() || zxkbd->getIsCursorRight() || zxkbd->getIsEnter()) {
-    zxkbd->toggleVsync();
+  if (zxkbd.getIsCursorLeft() || zxkbd.getIsCursorRight() || zxkbd.getIsEnter()) {
+    zxkbd.toggleVsync();
     updateVsync();
   }
 }
 
 void ZXOSD::handleTurbo() {
-  uint8_t turbo = zxkbd->getTurbo();
-  uint8_t max_turbo = zxkbd->getMaxTurbo();
+  uint8_t turbo = zxkbd.getTurbo();
+  uint8_t max_turbo = zxkbd.getMaxTurbo();
 
-  if (zxkbd->getIsCursorLeft()) {
+  if (zxkbd.getIsCursorLeft()) {
     turbo--;
     if (turbo > max_turbo) turbo = max_turbo;
-    zxkbd->setTurbo(turbo);
+    zxkbd.setTurbo(turbo);
     updateTurbo();
   }
-  if (zxkbd->getIsCursorRight() || zxkbd->getIsEnter()) {
+  if (zxkbd.getIsCursorRight() || zxkbd.getIsEnter()) {
     turbo++;
     if (turbo > max_turbo) turbo = 0;
-    zxkbd->setTurbo(turbo);
+    zxkbd.setTurbo(turbo);
     updateTurbo();
   }
 }
 
 void ZXOSD::handleSwapAB() {
-  if (zxkbd->getIsCursorLeft() || zxkbd->getIsCursorRight() || zxkbd->getIsEnter()) {
-    zxkbd->toggleSwapAB();
+  if (zxkbd.getIsCursorLeft() || zxkbd.getIsCursorRight() || zxkbd.getIsEnter()) {
+    zxkbd.toggleSwapAB();
     updateSwapAB();
   }
 }
 
 void ZXOSD::handleJoyType() {
-  if (zxkbd->getIsCursorLeft() || zxkbd->getIsCursorRight() || zxkbd->getIsEnter()) {
-    zxkbd->toggleJoyType();
+  if (zxkbd.getIsCursorLeft() || zxkbd.getIsCursorRight() || zxkbd.getIsEnter()) {
+    zxkbd.toggleJoyType();
     updateJoystick();
   }
 }
 
 void ZXOSD::handleScreenMode() {
-  uint8_t screen_mode = zxkbd->getScreenMode();
+  uint8_t screen_mode = zxkbd.getScreenMode();
 
-  if (zxkbd->getIsCursorLeft()) {
+  if (zxkbd.getIsCursorLeft()) {
     screen_mode--;
-    if (screen_mode > zxkbd->getMaxScreenMode()) screen_mode = zxkbd->getMaxScreenMode();
-    zxkbd->setScreenMode(screen_mode);
+    if (screen_mode > zxkbd.getMaxScreenMode()) screen_mode = zxkbd.getMaxScreenMode();
+    zxkbd.setScreenMode(screen_mode);
     updateScreenMode();
   }
-  if (zxkbd->getIsCursorRight() || zxkbd->getIsEnter()) {
+  if (zxkbd.getIsCursorRight() || zxkbd.getIsEnter()) {
     screen_mode++;
-    if (screen_mode > zxkbd->getMaxScreenMode()) screen_mode = 0;
-    zxkbd->setScreenMode(screen_mode);
+    if (screen_mode > zxkbd.getMaxScreenMode()) screen_mode = 0;
+    zxkbd.setScreenMode(screen_mode);
     updateScreenMode();
   }
 }
 
 void ZXOSD::handleKeyboardType() {
-  if (zxkbd->getIsCursorLeft() || zxkbd->getIsCursorRight() || zxkbd->getIsEnter()) {
-    zxkbd->toggleKeyboardType();
+  if (zxkbd.getIsCursorLeft() || zxkbd.getIsCursorRight() || zxkbd.getIsEnter()) {
+    zxkbd.toggleKeyboardType();
     updateKeyboardType();
   }
 }
 
 void ZXOSD::handlePause() {
-  if (zxkbd->getIsCursorLeft() || zxkbd->getIsCursorRight() || zxkbd->getIsEnter()) {
-    zxkbd->doPause();
+  if (zxkbd.getIsCursorLeft() || zxkbd.getIsCursorRight() || zxkbd.getIsEnter()) {
+    zxkbd.doPause();
     updatePause();
   }
 }
 
 void ZXOSD::handleRtcHour() {
-  if (zxkbd->getIsCursorLeft()) {
-    uint8_t rtc_hours = zxrtc->getHour()-1;
+  if (zxkbd.getIsCursorLeft()) {
+    uint8_t rtc_hours = zxrtc.getHour()-1;
     if (rtc_hours > 23) rtc_hours = 0;
-    zxrtc->setHour(rtc_hours);
-    zxrtc->save();
+    zxrtc.setHour(rtc_hours);
+    zxrtc.save();
     updateRtcHour();
   }
-  if (zxkbd->getIsCursorRight() || zxkbd->getIsEnter()) {
-    uint8_t rtc_hours = zxrtc->getHour()+1;
+  if (zxkbd.getIsCursorRight() || zxkbd.getIsEnter()) {
+    uint8_t rtc_hours = zxrtc.getHour()+1;
     if (rtc_hours >23) rtc_hours = 0;
-    zxrtc->setHour(rtc_hours);
-    zxrtc->save();
+    zxrtc.setHour(rtc_hours);
+    zxrtc.save();
     updateRtcHour();
   }
 }
 
 void ZXOSD::handleRtcMinute() {
-  if (zxkbd->getIsCursorLeft()) {
-    uint8_t rtc_minutes = zxrtc->getMinute()-1;
+  if (zxkbd.getIsCursorLeft()) {
+    uint8_t rtc_minutes = zxrtc.getMinute()-1;
     if (rtc_minutes > 59) rtc_minutes = 59;
-    zxrtc->setMinute(rtc_minutes);
-    zxrtc->save();
+    zxrtc.setMinute(rtc_minutes);
+    zxrtc.save();
     updateRtcMinute();
   }
-  if (zxkbd->getIsCursorRight() || zxkbd->getIsEnter()) {
-    uint8_t rtc_minutes = zxrtc->getMinute()+1;
+  if (zxkbd.getIsCursorRight() || zxkbd.getIsEnter()) {
+    uint8_t rtc_minutes = zxrtc.getMinute()+1;
     if (rtc_minutes >59) rtc_minutes = 0;
-    zxrtc->setMinute(rtc_minutes);
-    zxrtc->save();
+    zxrtc.setMinute(rtc_minutes);
+    zxrtc.save();
     updateRtcMinute();
   }
 }
 
 void ZXOSD::handleRtcSecond() {
-  if (zxkbd->getIsCursorLeft()) {
-    uint8_t rtc_seconds = zxrtc->getSecond()-1;
+  if (zxkbd.getIsCursorLeft()) {
+    uint8_t rtc_seconds = zxrtc.getSecond()-1;
     if (rtc_seconds > 59) rtc_seconds = 59;
-    zxrtc->setSecond(rtc_seconds);
-    zxrtc->save();
+    zxrtc.setSecond(rtc_seconds);
+    zxrtc.save();
     updateRtcSecond();
   }
-  if (zxkbd->getIsCursorRight() || zxkbd->getIsEnter()) {
-    uint8_t rtc_seconds = zxrtc->getSecond()+1;
+  if (zxkbd.getIsCursorRight() || zxkbd.getIsEnter()) {
+    uint8_t rtc_seconds = zxrtc.getSecond()+1;
     if (rtc_seconds >59) rtc_seconds = 0;
-    zxrtc->setSecond(rtc_seconds);
-    zxrtc->save();
+    zxrtc.setSecond(rtc_seconds);
+    zxrtc.save();
     updateRtcSecond();
   }
 }
 
 void ZXOSD::handleRtcDay() {
-  if (zxkbd->getIsCursorLeft()) {
-    uint8_t rtc_day = zxrtc->getDay()-1;
+  if (zxkbd.getIsCursorLeft()) {
+    uint8_t rtc_day = zxrtc.getDay()-1;
     if (rtc_day < 1 || rtc_day > 31) rtc_day = 31;
-    zxrtc->setDay(rtc_day);
-    zxrtc->save();
+    zxrtc.setDay(rtc_day);
+    zxrtc.save();
     updateRtcDay();
   }
-  if (zxkbd->getIsCursorRight() || zxkbd->getIsEnter()) {
-    uint8_t rtc_day = zxrtc->getDay()+1;
+  if (zxkbd.getIsCursorRight() || zxkbd.getIsEnter()) {
+    uint8_t rtc_day = zxrtc.getDay()+1;
     if (rtc_day > 31) rtc_day = 1;
-    zxrtc->setDay(rtc_day);
-    zxrtc->save();
+    zxrtc.setDay(rtc_day);
+    zxrtc.save();
     updateRtcDay();
   }
 }
 
 void ZXOSD::handleRtcMonth() {
-  if (zxkbd->getIsCursorLeft()) {
-    uint8_t rtc_month = zxrtc->getMonth()-1;
+  if (zxkbd.getIsCursorLeft()) {
+    uint8_t rtc_month = zxrtc.getMonth()-1;
     if (rtc_month < 1 || rtc_month > 12) rtc_month = 12;
-    zxrtc->setMonth(rtc_month);
-    zxrtc->save();
+    zxrtc.setMonth(rtc_month);
+    zxrtc.save();
     updateRtcMonth();
   }
-  if (zxkbd->getIsCursorRight() || zxkbd->getIsEnter()) {
-    uint8_t rtc_month = zxrtc->getMonth()+1;
+  if (zxkbd.getIsCursorRight() || zxkbd.getIsEnter()) {
+    uint8_t rtc_month = zxrtc.getMonth()+1;
     if (rtc_month > 12) rtc_month = 1;
-    zxrtc->setMonth(rtc_month);
-    zxrtc->save();
+    zxrtc.setMonth(rtc_month);
+    zxrtc.save();
     updateRtcMonth();
   }
 }
 
 void ZXOSD::handleRtcYear() {
-  if (zxkbd->getIsCursorLeft()) {
-    int rtc_year = zxrtc->getYear()-1;
+  if (zxkbd.getIsCursorLeft()) {
+    int rtc_year = zxrtc.getYear()-1;
     if (rtc_year < 2000 || rtc_year > 4095) rtc_year = 2000;
-    zxrtc->setYear(rtc_year);
-    zxrtc->save();
+    zxrtc.setYear(rtc_year);
+    zxrtc.save();
     updateRtcYear();
   }
-  if (zxkbd->getIsCursorRight() || zxkbd->getIsEnter()) {
-    int rtc_year = zxrtc->getYear()+1;
+  if (zxkbd.getIsCursorRight() || zxkbd.getIsEnter()) {
+    int rtc_year = zxrtc.getYear()+1;
     if (rtc_year < 2000 || rtc_year > 4096) rtc_year = 2000;
-    zxrtc->setYear(rtc_year);
-    zxrtc->save();
+    zxrtc.setYear(rtc_year);
+    zxrtc.save();
     updateRtcYear();
   }
 }
 
 void ZXOSD::handleRtcDow() {
-  if (zxkbd->getIsCursorLeft()) {
-    uint8_t rtc_week = zxrtc->getWeek()-1;
+  if (zxkbd.getIsCursorLeft()) {
+    uint8_t rtc_week = zxrtc.getWeek()-1;
     if (rtc_week < 1 || rtc_week > 7) rtc_week = 7;
-    zxrtc->setWeek(rtc_week);
-    zxrtc->save();
+    zxrtc.setWeek(rtc_week);
+    zxrtc.save();
     updateRtcDow();
   }
-  if (zxkbd->getIsCursorRight() || zxkbd->getIsEnter()) {
-    uint8_t rtc_week = zxrtc->getWeek()+1;
+  if (zxkbd.getIsCursorRight() || zxkbd.getIsEnter()) {
+    uint8_t rtc_week = zxrtc.getWeek()+1;
     if (rtc_week < 1 || rtc_week > 7) rtc_week = 1;
-    zxrtc->setWeek(rtc_week);
-    zxrtc->save();
+    zxrtc.setWeek(rtc_week);
+    zxrtc.save();
     updateRtcDow();
   }
 }
 
 void ZXOSD::updateRombank()
 {
-  if (!zxkbd->getIsOsdPopup()) {
+  if (!zxkbd.getIsOsdPopup()) {
     if (osd_state != state_main) return;
 
     if (osd_main_state == state_main_rom_bank) 
@@ -1104,7 +1100,7 @@ void ZXOSD::updateRombank()
     osd.setPos(10,5);
   }
   
-  uint8_t romset = zxkbd->getRombank();
+  uint8_t romset = zxkbd.getRombank();
   switch (romset) {
     case 0: osd.print(F("Default")); break;
     case 1: osd.print(F("PQ-DOS")); osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK); osd.print(F(" ")); break;
@@ -1115,7 +1111,7 @@ void ZXOSD::updateRombank()
 
 void ZXOSD::updateTurbofdc() {
 
-  if (!zxkbd->getIsOsdPopup()) {
+  if (!zxkbd.getIsOsdPopup()) {
     if (osd_state != state_main) return;
 
     if (osd_main_state == state_main_turbofdc) 
@@ -1125,7 +1121,7 @@ void ZXOSD::updateTurbofdc() {
 
     osd.setPos(10,6);
   }
-  if (zxkbd->getTurbofdc()) { 
+  if (zxkbd.getTurbofdc()) { 
     osd.print(F("On")); 
     osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK); osd.print(F(" "));
   } else { 
@@ -1135,7 +1131,7 @@ void ZXOSD::updateTurbofdc() {
 
 void ZXOSD::updateCovox() {
 
-  if (!zxkbd->getIsOsdPopup()) {
+  if (!zxkbd.getIsOsdPopup()) {
     if (osd_state != state_main) return;
 
     if (osd_main_state == state_main_covox) 
@@ -1146,7 +1142,7 @@ void ZXOSD::updateCovox() {
     osd.setPos(10,7);
   }
 
-  if (zxkbd->getCovox()) { 
+  if (zxkbd.getCovox()) { 
     osd.print(F("On"));
     osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK); osd.print(F(" ")); 
   } else { 
@@ -1156,7 +1152,7 @@ void ZXOSD::updateCovox() {
 
 void ZXOSD::updateStereo() {
 
-  if (!zxkbd->getIsOsdPopup()) {
+  if (!zxkbd.getIsOsdPopup()) {
     if (osd_state != state_main) return;
 
     if (osd_main_state == state_main_stereo) 
@@ -1166,7 +1162,7 @@ void ZXOSD::updateStereo() {
 
     osd.setPos(10,8);
   }
-  uint8_t stereo = zxkbd->getStereo();
+  uint8_t stereo = zxkbd.getStereo();
   switch (stereo) {
     case 1: osd.print(F("ABC")); osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK); osd.print(F(" ")); break;
     case 0: osd.print(F("ACB")); osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK); osd.print(F(" ")); break;
@@ -1176,7 +1172,7 @@ void ZXOSD::updateStereo() {
 
 void ZXOSD::updateSsg() {
 
-  if (!zxkbd->getIsOsdPopup()) {
+  if (!zxkbd.getIsOsdPopup()) {
     if (osd_state != state_main) return;
 
     if (osd_main_state == state_main_ssg) 
@@ -1186,12 +1182,12 @@ void ZXOSD::updateSsg() {
 
     osd.setPos(10,9);
   }
-  if (zxkbd->getSsg()) { osd.print(F("AY3-8912")); } else { osd.print(F("YM2149F")); osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK); osd.print(F(" ")); }
+  if (zxkbd.getSsg()) { osd.print(F("AY3-8912")); } else { osd.print(F("YM2149F")); osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK); osd.print(F(" ")); }
 }
 
 void ZXOSD::updateVideo() {
 
-  if (!zxkbd->getIsOsdPopup()) {
+  if (!zxkbd.getIsOsdPopup()) {
     if (osd_state != state_main) return;
 
     if (osd_main_state == state_main_video) 
@@ -1201,12 +1197,12 @@ void ZXOSD::updateVideo() {
 
     osd.setPos(10,10);
   }
-  if (zxkbd->getVideo()) { osd.print(F("RGB 15kHz")); } else { osd.print(F("VGA 30kHz")); }
+  if (zxkbd.getVideo()) { osd.print(F("RGB 15kHz")); } else { osd.print(F("VGA 30kHz")); }
 }
 
 void ZXOSD::updateVsync() {
 
-  if (!zxkbd->getIsOsdPopup()) {
+  if (!zxkbd.getIsOsdPopup()) {
     if (osd_state != state_main) return;
 
     if (osd_main_state == state_main_sync) 
@@ -1216,12 +1212,12 @@ void ZXOSD::updateVsync() {
 
     osd.setPos(10,11);
   }
-  if (zxkbd->getVsync()) { osd.print(F("60 Hz")); } else { osd.print(F("50 Hz")); }
+  if (zxkbd.getVsync()) { osd.print(F("60 Hz")); } else { osd.print(F("50 Hz")); }
 }
 
 void ZXOSD::updateTurbo() {
 
-  if (!zxkbd->getIsOsdPopup()) {
+  if (!zxkbd.getIsOsdPopup()) {
     if (osd_state != state_main) return;
 
     if (osd_main_state == state_main_turbo) 
@@ -1231,7 +1227,7 @@ void ZXOSD::updateTurbo() {
 
     osd.setPos(10,12);
   }
-  uint8_t turbo = zxkbd->getTurbo();
+  uint8_t turbo = zxkbd.getTurbo();
   switch (turbo) {
     case 0: osd.print(F("Off")); osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK); osd.print(F(" ")); break;
     case 1: osd.print(F("2x"));  osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK); osd.print(F(" ")); break;
@@ -1243,7 +1239,7 @@ void ZXOSD::updateTurbo() {
 
 void ZXOSD::updateSwapAB() {
 
-  if (!zxkbd->getIsOsdPopup()) {
+  if (!zxkbd.getIsOsdPopup()) {
     if (osd_state != state_main) return;
 
     if (osd_main_state == state_main_swap_ab) 
@@ -1252,7 +1248,7 @@ void ZXOSD::updateSwapAB() {
       osd.setColor(OSD::COLOR_MAGENTA_I, OSD::COLOR_BLACK);
     osd.setPos(10,13);
   }
-  if (zxkbd->getSwapAB()) { 
+  if (zxkbd.getSwapAB()) { 
     osd.print(F("On")); 
     osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK); osd.print(F(" ")); 
   } else { 
@@ -1262,7 +1258,7 @@ void ZXOSD::updateSwapAB() {
 
 void ZXOSD::updateJoystick() {
 
-  if (!zxkbd->getIsOsdPopup()) {
+  if (!zxkbd.getIsOsdPopup()) {
     if (osd_state != state_main) return;
 
     if (osd_main_state == state_main_joy_type) 
@@ -1272,7 +1268,7 @@ void ZXOSD::updateJoystick() {
     osd.setPos(10,14);
   }
 
-  if (zxkbd->getJoyType()) { 
+  if (zxkbd.getJoyType()) { 
     osd.print(F("SEGA")); 
     osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK); osd.print(F(" ")); 
   } else { 
@@ -1282,7 +1278,7 @@ void ZXOSD::updateJoystick() {
 
 void ZXOSD::updateScreenMode() {
 
-  if (!zxkbd->getIsOsdPopup()) {
+  if (!zxkbd.getIsOsdPopup()) {
     if (osd_state != state_main) return;
 
     if (osd_main_state == state_main_screen_mode) 
@@ -1292,16 +1288,16 @@ void ZXOSD::updateScreenMode() {
     osd.setPos(10,15);
   }
 
-  switch (zxkbd->getScreenMode()) { 
+  switch (zxkbd.getScreenMode()) { 
     case 0: osd.print(F("Pentagon")); break;
     case 1: osd.print(F("Classic")); osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK); osd.print(F(" ")); break;
-    //default: osd.print(F("Unknown")); osd.print(zxkbd->getScreenMode());
+    //default: osd.print(F("Unknown")); osd.print(zxkbd.getScreenMode());
   }
 }
 
 void ZXOSD::updateKeyboardType() {
 
-  if (!zxkbd->getIsOsdPopup()) {
+  if (!zxkbd.getIsOsdPopup()) {
     if (osd_state != state_main) return;
 
     if (osd_main_state == state_main_keyboard_type) 
@@ -1310,12 +1306,12 @@ void ZXOSD::updateKeyboardType() {
       osd.setColor(OSD::COLOR_MAGENTA_I, OSD::COLOR_BLACK);
     osd.setPos(10,16);
   }
-  if (zxkbd->getKeyboardType()) { osd.print(F("Profi XT")); } else { osd.print(F("Spectrum")); }
+  if (zxkbd.getKeyboardType()) { osd.print(F("Profi XT")); } else { osd.print(F("Spectrum")); }
 }
 
 void ZXOSD::updatePause() {
 
-  if (!zxkbd->getIsOsdPopup()) {
+  if (!zxkbd.getIsOsdPopup()) {
     if (osd_state != state_main) return;
 
     if (osd_main_state == state_main_pause) 
@@ -1326,7 +1322,7 @@ void ZXOSD::updatePause() {
     osd.setPos(10,17);
   }
 
-  if (zxkbd->getPause()) { osd.print(F("On")); osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK); osd.print(F(" ")); } else { osd.print(F("Off")); }
+  if (zxkbd.getPause()) { osd.print(F("On")); osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK); osd.print(F(" ")); } else { osd.print(F("Off")); }
 }
 
 void ZXOSD::updateRtcHour() {
@@ -1336,8 +1332,8 @@ void ZXOSD::updateRtcHour() {
   else 
     osd.setColor(OSD::COLOR_MAGENTA_I, OSD::COLOR_BLACK);
   osd.setPos(10,7);
-  if (zxrtc->getHour() < 10) osd.print(F("0"));
-  osd.print(zxrtc->getHour(), DEC);
+  if (zxrtc.getHour() < 10) osd.print(F("0"));
+  osd.print(zxrtc.getHour(), DEC);
 }
 
 void ZXOSD::updateRtcMinute() {
@@ -1347,8 +1343,8 @@ void ZXOSD::updateRtcMinute() {
   else 
     osd.setColor(OSD::COLOR_MAGENTA_I, OSD::COLOR_BLACK);
   osd.setPos(10,8);
-  if (zxrtc->getMinute() < 10) osd.print(F("0"));
-  osd.print(zxrtc->getMinute(), DEC);
+  if (zxrtc.getMinute() < 10) osd.print(F("0"));
+  osd.print(zxrtc.getMinute(), DEC);
 }
 
 void ZXOSD::updateRtcSecond() {
@@ -1358,8 +1354,8 @@ void ZXOSD::updateRtcSecond() {
   else 
     osd.setColor(OSD::COLOR_MAGENTA_I, OSD::COLOR_BLACK);
   osd.setPos(10,9);
-  if (zxrtc->getSecond() < 10) osd.print(F("0"));
-  osd.print(zxrtc->getSecond(), DEC);
+  if (zxrtc.getSecond() < 10) osd.print(F("0"));
+  osd.print(zxrtc.getSecond(), DEC);
 }
 
 void ZXOSD::updateRtcDay() {
@@ -1369,8 +1365,8 @@ void ZXOSD::updateRtcDay() {
   else 
     osd.setColor(OSD::COLOR_MAGENTA_I, OSD::COLOR_BLACK);
   osd.setPos(10,11);
-  if (zxrtc->getDay() < 10) osd.print(F("0"));
-  osd.print(zxrtc->getDay(), DEC);
+  if (zxrtc.getDay() < 10) osd.print(F("0"));
+  osd.print(zxrtc.getDay(), DEC);
 }
 
 void ZXOSD::updateRtcMonth() {
@@ -1380,7 +1376,7 @@ void ZXOSD::updateRtcMonth() {
   else 
     osd.setColor(OSD::COLOR_MAGENTA_I, OSD::COLOR_BLACK);
   osd.setPos(10,12);
-  switch (zxrtc->getMonth()) {
+  switch (zxrtc.getMonth()) {
     case 1:  osd.print(F("Jan")); break;
     case 2:  osd.print(F("Feb")); break;
     case 3:  osd.print(F("Mar")); break;
@@ -1404,10 +1400,10 @@ void ZXOSD::updateRtcYear() {
   else 
     osd.setColor(OSD::COLOR_MAGENTA_I, OSD::COLOR_BLACK);
   osd.setPos(10,13);
-  if (zxrtc->getYear() < 1000) osd.print(F("0"));
-  if (zxrtc->getYear() < 100) osd.print(F("0"));
-  if (zxrtc->getYear() < 10) osd.print(F("0"));
-  osd.print(zxrtc->getYear(), DEC);
+  if (zxrtc.getYear() < 1000) osd.print(F("0"));
+  if (zxrtc.getYear() < 100) osd.print(F("0"));
+  if (zxrtc.getYear() < 10) osd.print(F("0"));
+  osd.print(zxrtc.getYear(), DEC);
 }
 
 void ZXOSD::updateRtcDow() {
@@ -1417,7 +1413,7 @@ if (osd_state != state_rtc) return;
   else 
     osd.setColor(OSD::COLOR_MAGENTA_I, OSD::COLOR_BLACK);
   osd.setPos(10,15);
-  switch (zxrtc->getWeek()) {
+  switch (zxrtc.getWeek()) {
     case 2: osd.print(F("Mon")); break;
     case 3: osd.print(F("Tue")); break;
     case 4: osd.print(F("Wed")); break;
@@ -1432,19 +1428,19 @@ if (osd_state != state_rtc) return;
 void ZXOSD::updateTime() {
   osd.setColor(OSD::COLOR_CYAN_I, OSD::COLOR_BLACK);
   osd.setPos(24,0);
-  if (zxrtc->getHour() < 10) osd.print("0"); 
-  osd.print(zxrtc->getHour(), DEC); osd.print(F(":"));
-  if (zxrtc->getMinute() < 10) osd.print("0"); 
-  osd.print(zxrtc->getMinute(), DEC); osd.print(F(":"));
-  if (zxrtc->getSecond() < 10) osd.print("0"); 
-  osd.print(zxrtc->getSecond(), DEC);
+  if (zxrtc.getHour() < 10) osd.print("0"); 
+  osd.print(zxrtc.getHour(), DEC); osd.print(F(":"));
+  if (zxrtc.getMinute() < 10) osd.print("0"); 
+  osd.print(zxrtc.getMinute(), DEC); osd.print(F(":"));
+  if (zxrtc.getSecond() < 10) osd.print("0"); 
+  osd.print(zxrtc.getSecond(), DEC);
   osd.setColor(OSD::COLOR_CYAN_I, OSD::COLOR_BLACK);
   osd.setPos(22,1);
-  if (zxrtc->getDay() < 10) osd.print("0"); 
-  osd.print(zxrtc->getDay(), DEC); osd.print(F("."));
-  if (zxrtc->getMonth() < 10) osd.print("0"); 
-  osd.print(zxrtc->getMonth(), DEC); osd.print(F("."));
-  osd.print(zxrtc->getYear(), DEC);
+  if (zxrtc.getDay() < 10) osd.print("0"); 
+  osd.print(zxrtc.getDay(), DEC); osd.print(F("."));
+  if (zxrtc.getMonth() < 10) osd.print("0"); 
+  osd.print(zxrtc.getMonth(), DEC); osd.print(F("."));
+  osd.print(zxrtc.getYear(), DEC);
   if (osd_state == state_rtc) {
     updateRtcHour();
     updateRtcMinute();

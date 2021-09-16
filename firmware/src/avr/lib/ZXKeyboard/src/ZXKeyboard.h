@@ -307,5 +307,7 @@ public:
 
 };
 
+extern ZXKeyboard zxkbd;
+
 #endif // __ZXKEYBOARD_H__
 // vim:cin:ai:sts=2 sw=2 ft=cpp

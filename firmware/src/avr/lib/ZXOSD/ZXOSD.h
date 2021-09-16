@@ -36,8 +36,6 @@ class ZXOSD
 private:
   spi_cb action;
 	OSD osd;
-  ZXKeyboard *zxkbd;
-  ZXRTC *zxrtc;
   bool is_started = false;
 
   uint8_t fpga_cfg;
@@ -95,7 +93,7 @@ public:
 
   ZXOSD();
 
-  void begin(spi_cb act, ZXKeyboard *zxkbd_, ZXRTC *zxrtc_); // TODO: zxmouse, zxjoy
+  void begin(spi_cb act); // TODO: zxmouse, zxjoy
   bool started();
   void handle();
 
