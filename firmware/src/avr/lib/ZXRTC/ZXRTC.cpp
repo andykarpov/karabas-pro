@@ -246,4 +246,6 @@ void ZXRTC::setYear(int val) {
 
 /****************************************************************************/
 
+ZXRTC zxrtc = ZXRTC();
+
 // vim:cin:ai:sts=2 sw=2 ft=cpp

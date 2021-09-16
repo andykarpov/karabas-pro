@@ -52,4 +52,8 @@
 // NOP command
 #define CMD_NONE 0xFF
 
+// Popup timeouts
+#define POPUP_TIMEOUT 2000
+#define BOOT_POPUP_TIMEOUT 7000
+
 #endif

@@ -179,6 +179,7 @@ signal kb_wait 		: std_logic := '0';
 signal kb_mode 		: std_logic := '1';
 signal joy_type 		: std_logic := '0';
 signal kb_loaded 		: std_logic := '0';
+signal kb_screen_mode: std_logic_vector(1 downto 0) := "00";
 
 -- Joy
 signal joy_bus 		: std_logic_vector(7 downto 0) := "00000000";
@@ -213,6 +214,7 @@ signal blink 			: std_logic;
 
 -- OSD overlay
 signal osd_overlay 	: std_logic := '0';
+signal osd_popup 		: std_logic := '0';
 signal osd_command 	: std_logic_vector(15 downto 0);
 
 -- Z-Controller
@@ -448,6 +450,10 @@ signal board_reset 	: std_logic := '0'; -- board reset on rombank switch
 signal tape_in_out_enable : std_logic := '0'; -- revDS uses SW3 switches as tape in / out
 signal tape_in_monitor : std_logic := '0';
 
+-- memory contention
+signal count_block 		: std_logic := '0';
+signal memory_contention : std_logic := '0';
+
 -- debug 
 signal fdd_oe_n 		: std_logic := '1';
 signal hdd_oe_n 		: std_logic := '1';
@@ -652,7 +658,11 @@ port map (
 
 	-- rom
 	ROM_BANK 		=> rom14,
-	EXT_ROM_BANK   => ext_rom_bank_pq
+	EXT_ROM_BANK   => ext_rom_bank_pq,
+	
+	-- contended memory signals
+	COUNT_BLOCK		=> count_block,
+	CONTENDED 		=> memory_contention
 );	
 
 -- Video Spectrum/Pentagon
@@ -691,14 +701,13 @@ port map (
 	HCNT 				=> vid_hcnt,
 	VCNT 				=> vid_vcnt,
 	ISPAPER 			=> vid_ispaper,
-	BLINK 			=> blink
+	BLINK 			=> blink,
+	SCREEN_MODE    => kb_screen_mode,
+	COUNT_BLOCK 	=> count_block
 );
 
--- osd (debug)
-U8: entity work.osd
-generic map (
-	enable_osd_overlay => enable_osd_overlay
-)
+-- osd overlay
+U8: entity work.overlay
 port map (
 	CLK 				=> clk_bus,
 	CLK2 				=> clk_div2,
@@ -710,25 +719,9 @@ port map (
 	PAPER_I 			=> vid_ispaper,
 	BLINK 			=> blink,
 
-	LOADED 			=> kb_loaded,
-	
-	-- sensors
-	TURBO 			=> kb_turbo,
-	SCANDOUBLER_EN => vid_scandoubler_enable,
-	MODE60 			=> soft_sw(2),
-	ROM_BANK 		=> ext_rom_bank_pq,
-	KB_MODE 			=> kb_mode,
-	KB_WAIT 			=> kb_wait,
-	SSG_MODE 		=> soft_sw(8),
-	SSG_STEREO 		=> soft_sw(7),
-	COVOX_EN			=> soft_sw(6),
-	TURBO_FDC		=> turbo_fdc_off,
-	SSG_MONO 		=> soft_sw(9),
-	FDC_SWAP			=> fdc_swap,
-	JOY_TYPE 		=> joy_type,
-	
 	-- osd overlay
 	OSD_OVERLAY		=> osd_overlay,
+	OSD_POPUP 		=> osd_popup,
 	OSD_COMMAND 	=> osd_command
 );
 
@@ -902,8 +895,10 @@ port map (
 	 WAIT_CPU 		=> kb_wait,
 	 JOY_TYPE 		=> joy_type,
 	 OSD_OVERLAY 	=> osd_overlay,
+	 OSD_POPUP 		=> osd_popup,
 	 OSD_COMMAND	=> osd_command,
 	 MAX_TURBO 		=> max_turbo,
+	 SCREEN_MODE   => kb_screen_mode,
 	 
 	 LOADED 			=> kb_loaded,
 	 
@@ -1151,7 +1146,7 @@ G_MAX_TURBO_SRAM: if not enable_2port_vram generate
 	max_turbo <= "01";
 end generate G_MAX_TURBO_SRAM;
 
-clk_cpu <= '0' when kb_wait = '1' else 
+clk_cpu <= '0' when kb_wait = '1' or  (kb_screen_mode = "01" and memory_contention = '1' and DS80 = '0') else 
 	clk_bus when kb_turbo = "11" and kb_turbo <= max_turbo else 
 	clk_bus and ena_div2 when kb_turbo = "10" and kb_turbo <= max_turbo else 
 	clk_bus and ena_div4 when kb_turbo = "01" and kb_turbo <= max_turbo else 

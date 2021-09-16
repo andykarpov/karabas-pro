@@ -36,8 +36,6 @@ class ZXOSD
 private:
   spi_cb action;
 	OSD osd;
-  ZXKeyboard *zxkbd;
-  ZXRTC *zxrtc;
   bool is_started = false;
 
   uint8_t fpga_cfg;
@@ -66,6 +64,7 @@ private:
     state_main_turbo,
     state_main_swap_ab,
     state_main_joy_type,
+    state_main_screen_mode,
     state_main_keyboard_type,
     state_main_pause
   };
@@ -90,23 +89,35 @@ private:
 
 protected:
 
+  void highlight(bool val);
+  void hint(const __FlashStringHelper* msg);
+  void param(const __FlashStringHelper* msg);
+  void text(const __FlashStringHelper* msg);
+  void flash(const __FlashStringHelper* msg);
+
 public:
 
   ZXOSD();
 
-  void begin(spi_cb act, ZXKeyboard *zxkbd_, ZXRTC *zxrtc_); // TODO: zxmouse, zxjoy
+  void begin(spi_cb act); // TODO: zxmouse, zxjoy
   bool started();
   void handle();
 
   void printHeader();
   void printLogo(uint8_t x, uint8_t y);
   void printLine(uint8_t y);
+  void printSpace();
+  void clear();
+
   void initOverlay();
+  void initPopup(uint8_t event_type);
   void initRtcOverlay();
   void initTestOverlay();
   void initAboutOverlay();
   void initInfoOverlay();
+
   void popupFooter();
+  
   void handleRombank();
   void handleTurbofdc();
   void handleCovox();
@@ -117,8 +128,10 @@ public:
   void handleTurbo();
   void handleSwapAB();
   void handleJoyType();
+  void handleScreenMode();
   void handleKeyboardType();
   void handlePause();
+
   void handleRtcHour();
   void handleRtcMinute();
   void handleRtcSecond();
@@ -126,6 +139,7 @@ public:
   void handleRtcMonth();
   void handleRtcYear();
   void handleRtcDow();
+
   void updateRombank();
   void updateTurbofdc();
   void updateCovox();
@@ -136,8 +150,10 @@ public:
   void updateTurbo();
   void updateSwapAB();
   void updateJoystick();
+  void updateScreenMode();
   void updateKeyboardType();
   void updatePause();
+
   void updateRtcHour();
   void updateRtcMinute();
   void updateRtcSecond();
@@ -145,6 +161,7 @@ public:
   void updateRtcMonth();
   void updateRtcYear();
   void updateRtcDow();
+  
   void updateTime();
   void updateUptime();
   void updateScancode(uint16_t c);

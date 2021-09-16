@@ -109,5 +109,7 @@ public:
 
 };
 
+extern ZXRTC zxrtc;
+
 #endif // __ZXRTC_H__
 // vim:cin:ai:sts=2 sw=2 ft=cpp
