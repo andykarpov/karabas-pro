@@ -45,6 +45,7 @@ bool led1_state = false;
 bool led2_state = false;
 bool led1_overwrite = false;
 bool led2_overwrite = false;
+bool boot_popup = true;
 
 unsigned long tl, tl1, tl2, tb, tb1, tb2, tpopup = 0; // last time
 
@@ -265,6 +266,12 @@ void setup()
   spi_send(CMD_BUILD_REQ6, 0x00);
   spi_send(CMD_BUILD_REQ7, 0x00);
 
+  tpopup = millis();
+  zxosd.clear();
+  zxkbd.setOsdPopup(true);
+  zxosd.initPopup(ZXKeyboard::EVENT_OSD_POPUP);
+  boot_popup = true;
+
   digitalWrite(PIN_LED1, LOW);
 }
 
@@ -344,8 +351,9 @@ void loop()
 #endif
 
   // hide osd popup after 1 second
-  if (zxkbd.getIsOsdPopup() && (millis() - tpopup > 1000)) {
+  if (zxkbd.getIsOsdPopup() && (millis() - tpopup > ((boot_popup) ? BOOT_POPUP_TIMEOUT : POPUP_TIMEOUT))) {
     zxkbd.setOsdPopup(false);
+    boot_popup = false;
   }
 
   // reset pressed keys for OSD

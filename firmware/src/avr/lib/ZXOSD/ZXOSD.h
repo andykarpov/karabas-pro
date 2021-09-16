@@ -89,6 +89,12 @@ private:
 
 protected:
 
+  void highlight(bool val);
+  void hint(const __FlashStringHelper* msg);
+  void param(const __FlashStringHelper* msg);
+  void text(const __FlashStringHelper* msg);
+  void flash(const __FlashStringHelper* msg);
+
 public:
 
   ZXOSD();
