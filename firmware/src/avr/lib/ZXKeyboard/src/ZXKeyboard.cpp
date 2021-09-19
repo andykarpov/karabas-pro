@@ -26,7 +26,7 @@ ZXKeyboard::ZXKeyboard(void)
 
 /****************************************************************************/
 
-void ZXKeyboard::begin(spi_cb act, event_cb evt)
+void ZXKeyboard::begin(spi_cb act, event_cb evt, bool send_echo)
 {
   action = act;
   event = evt;
@@ -36,15 +36,18 @@ void ZXKeyboard::begin(spi_cb act, event_cb evt)
 
   kbd.begin(PIN_KBD_DAT, PIN_KBD_CLK);
 
-  kbd.echo(); // ping keyboard to see if there
-  delay(6);
-  uint16_t c = kbd.read();
-  if( (c & 0xFF) == PS2_KEY_ECHO || (c & 0xFF) == PS2_KEY_BAT ) {
-    // Response was Echo or power up
-    //kbd.setNoBreak(0);
-    //kbd.setNoRepeat(0);
-    //kbd.typematic(0xb, 1);
-    kbd.setLock(PS2_LOCK_SCROLL);
+  // send echo command on start - to force USB keyboards work as ps/2
+  if (send_echo) {
+    kbd.echo(); // ping keyboard to see if there
+    delay(6);
+    uint16_t c = kbd.read();
+    if( (c & 0xFF) == PS2_KEY_ECHO || (c & 0xFF) == PS2_KEY_BAT ) {
+      // Response was Echo or power up
+      //kbd.setNoBreak(0);
+      //kbd.setNoRepeat(0);
+      //kbd.typematic(0xb, 1);
+      kbd.setLock(PS2_LOCK_SCROLL);
+    }
   }
 
   // clear full matrix

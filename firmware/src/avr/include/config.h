@@ -9,6 +9,10 @@
 #define ALLOW_LED_OVERRIDE 0
 #endif
 
+#ifndef SEND_ECHO_ON_START
+#define SEND_ECHO_ON_START 0
+#endif
+
 #ifndef BUILD_VER
 #define BUILD_VER DEVBUILD
 #endif

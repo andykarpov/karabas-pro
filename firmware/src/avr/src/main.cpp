@@ -241,7 +241,7 @@ void setup()
   pinMode(PIN_BTN1, INPUT_PULLUP);
   pinMode(PIN_BTN2, INPUT_PULLUP);
 
-  zxkbd.begin(spi_send, on_keyboard);
+  zxkbd.begin(spi_send, on_keyboard, SEND_ECHO_ON_START);
   zxrtc.begin(spi_send, on_time);
   zxmouse.begin(spi_send, on_mouse);
   zxmouse.setMouseSwap(zxkbd.getMouseSwap());

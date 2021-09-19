@@ -244,7 +244,7 @@ public:
 
   ZXKeyboard();
 
-  void begin(spi_cb act, event_cb evt);
+  void begin(spi_cb act, event_cb evt, bool send_echo);
   bool started();
   void handle();
 
