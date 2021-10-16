@@ -675,7 +675,7 @@ port map (
 	CLK2x 			=> clk_bus, 	-- 28 / 24
 	ENA 				=> clk_div4, 	-- 7 / 6
 	RESET 			=> reset,	
-	BORDER 			=> port_xxfe_reg(3 downto 0),
+	BORDER 			=> port_xxfe_reg(7 downto 0),
 	DI 				=> vid_do_bus,
 	TURBO 			=> turbo_cpu,	-- turbo signal for int length
 	INTA 				=> cpu_inta_n,
