@@ -17,7 +17,7 @@ entity video is
 		ENA		: in std_logic; -- 7 MHz 
 		RESET 	: in std_logic := '0';
 
-		BORDER	: in std_logic_vector(3 downto 0);	-- bordr color (port #xxFE)
+		BORDER	: in std_logic_vector(7 downto 0);	-- bordr color (port #xxFE)
 		DI			: in std_logic_vector(7 downto 0);	-- video data from memory
 		TURBO 	: in std_logic_vector := "00"; -- 01 = turbo 2x mode, 10 - turbo 4x mode, 11 - turbo 8x mode, 00 = normal mode
 		INTA		: in std_logic := '0'; -- int request for turbo mode
@@ -156,7 +156,7 @@ begin
 		CLK2x => CLK2x, -- 28
 		ENA => ENA, -- 7
 		TURBO => TURBO,
-		BORDER => BORDER,
+		BORDER => BORDER(3 downto 0),
 		DI => DI,
 		INTA => INTA,
 		INT => int_profi,
@@ -220,7 +220,7 @@ begin
 			);
 		elsif rising_edge(CLK2x) then 
 			if CLK = '1' and palette_wr = '1' then
-					palette(to_integer(unsigned(BORDER(3 downto 0) xor X"F"))) <= (not BUS_A) & '0';
+					palette(to_integer(unsigned(BORDER(3 downto 0) xor X"F"))) <= (not BUS_A) & BORDER(7);
 			end if;
 		end if;
 	end process;
