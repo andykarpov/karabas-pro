@@ -87,6 +87,7 @@ signal VGA_SGI1_BGN   : std_logic_vector(9 downto 0); -- начало строч
 signal VGA_SGI1_END   : std_logic_vector(9 downto 0); -- конец  строчного ГИ
 signal VGA_SGI2_BGN   : std_logic_vector(9 downto 0); -- начало строчного ГИ
 signal VGA_SGI2_END   : std_logic_vector(9 downto 0); -- конец  строчного ГИ
+signal VGA_H0 			 : std_logic := '0';
 --------------------------------------------------------------------------------
 -- кадровая развертка VGA:
 
@@ -436,12 +437,19 @@ port map (
 	wren_a 	 => '1',
 	q_a 		 => open,
 	
-	address_b => (not VIDEO_V(0)) & VGA_H(8 downto 0) & CLK,
+	address_b => (not VIDEO_V(0)) & VGA_H(8 downto 0) & VGA_H0,
 	clock_b 	 => VGA_RBGI_CLK,
 	data_b 	 => (others => '1'),
 	wren_b 	 => '0',
 	q_b 		 => RD_REG
 );
+
+process (VGA_RBGI_CLK)
+begin 
+	if (rising_edge(VGA_RBGI_CLK)) then 
+		VGA_H0 <= not VGA_H0;
+	end if;
+end process;
 
 --------------------------------------------------------------------------------
 -- синхронизация гасящих импульсов и вывод синхроимпульсов
