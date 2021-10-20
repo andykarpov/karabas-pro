@@ -12,7 +12,7 @@ The idea was to make a smaller Profi (Профи) ZX Spectrum clone, with real F
 
 ## Firmwares
 
-**The main firmware is almost finished, but some minor features are still in progress. Currently it implements:**
+**The main firmware is finished and currently it implements:**
 
 1) ZX Spectrum classic and profi hi-res hi-color mode (with palette) (512x240)
 2) ZX Profi CMR ports for extended peripherial
@@ -42,7 +42,7 @@ The idea was to make a smaller Profi (Профи) ZX Spectrum clone, with real F
 
 **ERRATA for PCB rev.С:** [See ERRATA Rev.С](https://github.com/andykarpov/karabas-pro/blob/master/ERRATA-REVC.md).
 
-**Latest revision:** rev.DS.
+**Latest stable revision:** rev.DS'.
 
 **Latest development revision:** rev.E.
 
