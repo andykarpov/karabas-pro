@@ -502,8 +502,6 @@ generic (
 );
 port (
 	clk_bus : in std_logic;
-	clk_div2 : in std_logic;
-	clk_div4 : in std_logic;
 	ds80 : in std_logic;
 	zxuno_addr : in std_logic_vector(7 downto 0);
 	zxuno_regrd : in std_logic;
@@ -519,8 +517,6 @@ end component;
 component uart 
 port ( 
 	clk_bus: in std_logic;
-	clk_div2 : in std_logic;
-	clk_div4 : in std_logic;
 	txdata: in std_logic_vector(7 downto 0);
 	txbegin: in std_logic;
 	txbusy : out std_logic;
@@ -1002,8 +998,6 @@ port map(
 U22: zxunouart 
 port map(
 	clk_bus => clk_bus,
-	clk_div2 => clk_div2,
-	clk_div4 => clk_div4, -- 7 or 6 mhz
 	ds80 => ds80,
 	zxuno_addr => zxuno_addr,
 	zxuno_regrd => zxuno_regrd,
@@ -1024,8 +1018,6 @@ generic map (
 )
 port map(
 	clk_bus => clk_bus,
-	clk_div2 => clk_div2,
-	clk_div4 => clk_div4, -- 7 or 6 mhz
 	ds80 => ds80,
 	zxuno_addr => zxuno_addr,
 	zxuno_regrd => zxuno_regrd,

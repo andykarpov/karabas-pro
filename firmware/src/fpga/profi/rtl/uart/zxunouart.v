@@ -23,8 +23,6 @@
 
 module zxunouart (
     input wire clk_bus,
-	 input wire clk_div2,
-	 input wire clk_div4,
 	 input wire ds80,
     input wire [7:0] zxuno_addr,
     input wire zxuno_regrd,
@@ -52,8 +50,6 @@ module zxunouart (
     
     uart uartchip (
         .clk_bus(clk_bus),
-		  .clk_div2(clk_div2),
-		  .clk_div4(clk_div4),
 		  .ds80(ds80),
         .txdata(din),
         .txbegin(comenzar_trans),
@@ -82,25 +78,23 @@ module zxunouart (
     end
 
     always @(posedge clk_bus) begin
-		  if (clk_div2 == 1'b1 && clk_div4 == 1'b1) begin
-			  if (zxuno_addr == UARTDATA && zxuno_regwr == 1'b1 && comenzar_trans == 1'b0 && txbusy == 1'b0) begin
-					comenzar_trans <= 1'b1;
-			  end
-			  if (comenzar_trans == 1'b1 && txbusy == 1'b1) begin
-					comenzar_trans <= 1'b0;
-			  end
+		  if (zxuno_addr == UARTDATA && zxuno_regwr == 1'b1 && comenzar_trans == 1'b0 && txbusy == 1'b0) begin
+				comenzar_trans <= 1'b1;
+		  end
+		  if (comenzar_trans == 1'b1 && txbusy == 1'b1) begin
+				comenzar_trans <= 1'b0;
+		  end
 
-			  if (data_received == 1'b1)
-					rxrecv <= 1'b1;
+		  if (data_received == 1'b1)
+				rxrecv <= 1'b1;
 
-			  if (data_received == 1'b0) begin
-					if (zxuno_addr == UARTSTAT && zxuno_regrd == 1'b1)
-						 leyendo_estado <= 1'b1;
-					if (leyendo_estado == 1'b1 && (zxuno_addr != UARTSTAT || zxuno_regrd == 1'b0)) begin
-						 leyendo_estado <= 1'b0;
-						 rxrecv <= 1'b0;
-					end
-			  end
+		  if (data_received == 1'b0) begin
+				if (zxuno_addr == UARTSTAT && zxuno_regrd == 1'b1)
+					 leyendo_estado <= 1'b1;
+				if (leyendo_estado == 1'b1 && (zxuno_addr != UARTSTAT || zxuno_regrd == 1'b0)) begin
+					 leyendo_estado <= 1'b0;
+					 rxrecv <= 1'b0;
+				end
 		  end
     end
 endmodule

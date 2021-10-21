@@ -24,8 +24,6 @@
 module uart (
     // CPU interface
 	 input wire clk_bus,
-	 input wire clk_div2,
-    input wire clk_div4,  // 7 MHz or 6 MHz 
 	 input wire ds80, 
     input wire [7:0] txdata,
     input wire txbegin,
@@ -41,8 +39,6 @@ module uart (
 
     uart_tx transmitter (
         .clk_bus(clk_bus),
-		  .clk_div2(clk_div2),
-		  .clk_div4(clk_div4),
 		  .ds80(ds80),
         .txdata(txdata),
         .txbegin(txbegin),
@@ -52,8 +48,6 @@ module uart (
 
     uart_rx receiver (
         .clk_bus(clk_bus),
-		  .clk_div2(clk_div2),
-		  .clk_div4(clk_div4),
 		  .ds80(ds80),
         .rxdata(rxdata),
         .rxrecv(rxrecv),
@@ -66,8 +60,6 @@ endmodule
 module uart_tx (
     // CPU interface
 	 input wire clk_bus,
-	 input wire clk_div2,
-    input wire clk_div4,  // 7 MHz or 6 MHz
 	 input wire ds80,
     input wire [7:0] txdata,
     input wire txbegin,
@@ -78,8 +70,8 @@ module uart_tx (
 
     initial tx = 1'b1;
 
-    parameter CLK = 7000000;
-	 parameter CLKDS80 = 6000000;
+    parameter CLK = 28000000;
+	 parameter CLKDS80 = 24000000;
     parameter BPS = 115200;
     parameter PERIOD = CLK / BPS;
 	 parameter PERIODDS80 = CLKDS80 / BPS;
@@ -92,13 +84,12 @@ module uart_tx (
   
     reg [7:0] txdata_reg;
     reg [1:0] state = IDLE;
-    reg [15:0] bpscounter;
+    reg [17:0] bpscounter;
     reg [2:0] bitcnt;
     reg txbusy_ff = 1'b0;
     assign txbusy = txbusy_ff;
 
     always @(posedge clk_bus) begin
-		  if (clk_div2 == 1'b1 && clk_div4 == 1'b1) begin
         if (txbegin == 1'b1 && txbusy_ff == 1'b0 && state == IDLE) begin
             txdata_reg <= txdata;
             txbusy_ff <= 1'b1;
@@ -146,7 +137,6 @@ module uart_tx (
                         txbusy_ff <= 1'b0;
                     end
             endcase
-        end
 		  end
     end
 endmodule
@@ -154,8 +144,6 @@ endmodule
 module uart_rx (
     // CPU interface
 	 input wire clk_bus,
-	 input wire clk_div2,
-    input wire clk_div4,  // 7 MHz or 6 MHz
 	 input wire ds80,
     output reg [7:0] rxdata,
     output reg rxrecv,
@@ -168,8 +156,8 @@ module uart_rx (
     initial rxrecv = 1'b0;
 	 initial rts = 1'b0;
 
-    parameter CLK = 7000000;
-	 parameter CLKDS80 = 6000000;
+    parameter CLK = 28000000;
+	 parameter CLKDS80 = 24000000;
     parameter BPS = 115200;
     parameter PERIOD = CLK / BPS;	 
     parameter HALFPERIOD = PERIOD / 2;
@@ -186,31 +174,26 @@ module uart_rx (
     // Sincronizacin de seales externas
     reg [1:0] rx_ff = 2'b00;
     always @(posedge clk_bus) begin
-		if (clk_div2 == 1'b1 && clk_div4 == 1'b1) begin
-			  rx_ff[1] <= rx_ff[0];
-			  rx_ff[0] <= rx;
-		  end
+		  rx_ff[1] <= rx_ff[0];
+		  rx_ff[0] <= rx;
     end
     wire rx_int = rx_ff[1];
     
     reg [7:0] rxvalues = 8'h00;
     always @(posedge clk_bus) begin
-		if (clk_div2 == 1'b1 && clk_div4 == 1'b1) begin
 			rxvalues <= {rxvalues[6:0], rx_int};
-		  end 
     end
     wire rx_is_1    = (rxvalues==8'hFF)? 1'b1: 1'b0;
     wire rx_is_0    = (rxvalues==8'h00)? 1'b1: 1'b0;
     wire rx_negedge = (rxvalues==8'hF0)? 1'b1: 1'b0;
     
-    reg [15:0] bpscounter;
+    reg [17:0] bpscounter;
     reg [2:0] state = IDLE;
     reg [2:0] bitcnt;
     
     reg [7:0] rxshiftreg;
 
     always @(posedge clk_bus) begin
-		if (clk_div2 == 1'b1 && clk_div4 == 1'b1) begin
         case (state)
             IDLE:
                 begin
@@ -286,6 +269,5 @@ module uart_rx (
                 end
             default: state <= IDLE;
         endcase
-		end 
     end
 endmodule    
