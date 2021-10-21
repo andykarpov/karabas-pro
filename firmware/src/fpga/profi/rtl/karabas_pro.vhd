@@ -906,8 +906,6 @@ U16: entity work.tda1543
 port map (
 	RESET				=> reset,
 	CLK_BUS 			=> clk_bus,
-	CLK_DIV2 		=> clk_div2,
-	CLK_div4			=> clk_div4,
 	DAC_TYPE 		=> audio_dac_type,
 	CS 				=> '1',
 	DATA_L 			=> audio_l,

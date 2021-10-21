@@ -44,8 +44,6 @@ entity tda1543 is
 		RESET		: in std_logic;
 		DAC_TYPE : in std_logic := '0'; -- 0 = TDA1543, 1 = TDA1543A
 		CLK_BUS 	: in std_logic;
-		CLK_DIV2	: in std_logic;
-		CLK_DIV4 : in std_logic;
 		CS			: in std_logic;
       DATA_L	: in std_logic_vector (15 downto 0);
       DATA_R	: in std_logic_vector (15 downto 0);
@@ -59,15 +57,26 @@ architecture tda1543_arch of tda1543 is
 
 signal shift_reg : std_logic_vector(47 downto 0) := (others => '0');
 signal cnt : std_logic_vector(5 downto 0) := (others => '0');
+signal cnt_clk : std_logic_vector(1 downto 0) := (others => '0');
 
 begin
 
+-- clk counter 
+process (RESET, CS, CLK_BUS, cnt_clk)
+begin 
+	if (RESET = '1' or CS = '0') then 
+		cnt_clk <= (others => '0');
+	elsif (falling_edge(CLK_BUS)) then 
+		cnt_clk <= cnt_clk + 1;
+	end if;
+end process;
+
 -- counter
-process (RESET, CS, CLK_BUS, CLK_DIV2, CLK_DIV4, cnt, DAC_TYPE)
+process (RESET, CS, CLK_BUS, cnt, cnt_clk, DAC_TYPE)
 begin 
 	if (RESET = '1' or CS = '0') then 
 		cnt <= (others => '0');
-	elsif (CLK_BUS'event and CLK_BUS = '1' and CLK_DIV2 = '1' and CLK_DIV4 = '0') then
+	elsif (CLK_BUS'event and CLK_BUS = '0' and cnt_clk = "00") then
 		case DAC_TYPE is 
 			when '0' => 
 				if (cnt < 31) then 
@@ -87,11 +96,11 @@ begin
 end process;
 
 -- WS
-process (RESET, CS, CLK_BUS, CLK_DIV2, CLK_DIV4, cnt, DAC_TYPE)
+process (RESET, CS, CLK_BUS, cnt_clk, cnt, DAC_TYPE)
 begin 
 	if (RESET = '1' or CS = '0') then 
 		WS <= '0';		
-	elsif (CLK_BUS'event and CLK_BUS = '1' and CLK_DIV2 = '1' and CLK_DIV4 = '0') then
+	elsif (CLK_BUS'event and CLK_BUS = '0' and cnt_clk = "00") then
 		case DAC_TYPE is 
 			when '0' => 
 				if cnt = 0 then 
@@ -111,11 +120,11 @@ begin
 end process;
 
 -- shift register
-process (RESET, CLK_BUS, CLK_DIV2, CLK_DIV4, CS, DAC_TYPE, shift_reg, DATA_L, DATA_R)
+process (RESET, CLK_BUS, cnt_clk, CS, DAC_TYPE, shift_reg, DATA_L, DATA_R)
 begin
 	if (RESET = '1' or CS = '0') then
 		shift_reg <= (others => '0');
-	elsif (CLK_BUS'event and CLK_BUS = '1' and CLK_DIV2 = '1' and CLK_DIV4 = '0') then
+	elsif (CLK_BUS'event and CLK_BUS = '0' and cnt_clk = "00") then
 		case DAC_TYPE is 
 			when '0' =>
 				if cnt = 0 then 
@@ -135,6 +144,6 @@ begin
 end process;
 
 DATA <= shift_reg(47);
-BCK <= CLK_DIV4 when CS = '1' else '1';
+BCK <= '0' when cnt_clk(1) = '1' and CS = '1' else '1';
 
 end tda1543_arch;
