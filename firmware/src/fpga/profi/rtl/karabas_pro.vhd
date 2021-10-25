@@ -1536,9 +1536,9 @@ saa_wr_n <= '0' when (cpu_iorq_n = '0' and cpu_wr_n = '0' and cpu_a_bus(7 downto
 mc146818_wr <= '1' when (cs_rtc_ds = '1' and cpu_iorq_n = '0' and cpu_wr_n = '0' and cpu_m1_n = '1') else '0';
 
 -- Z-controller spi
-zc_spi_start <= '1' when cpu_a_bus(7 downto 0)=X"57" and cpu_iorq_n='0' and cpu_m1_n='1' and cpm='0' and loader_act='0' and is_flash_not_sd='0' else '0';
-zc_wr_en <= '1' when cpu_a_bus(7 downto 0)=X"57" and cpu_iorq_n='0' and cpu_m1_n='1' and cpu_wr_n='0' and cpm='0' and loader_act='0' and is_flash_not_sd='0' else '0';
-port77_wr <= '1' when cpu_a_bus(7 downto 0)=X"77" and cpu_iorq_n='0' and cpu_m1_n='1' and cpu_wr_n='0' and cpm='0' and loader_act='0' and is_flash_not_sd='0' else '0';
+zc_spi_start <= '1' when cpu_a_bus(7 downto 0)=X"57" and cpu_iorq_n='0' and cpu_m1_n='1' and loader_act='0' and is_flash_not_sd='0' else '0';
+zc_wr_en <= '1' when cpu_a_bus(7 downto 0)=X"57" and cpu_iorq_n='0' and cpu_m1_n='1' and cpu_wr_n='0' and loader_act='0' and is_flash_not_sd='0' else '0';
+port77_wr <= '1' when cpu_a_bus(7 downto 0)=X"77" and cpu_iorq_n='0' and cpu_m1_n='1' and cpu_wr_n='0' and loader_act='0' and is_flash_not_sd='0' else '0';
 
 process (port77_wr, loader_act, reset, clk_bus)
 	begin
@@ -1580,7 +1580,7 @@ begin
 		when x"02" => cpu_di_bus <= GX0 & TAPE_IN & kb_do_bus;
 		when x"03" => cpu_di_bus <= zc_do_bus;
 		when x"04" => cpu_di_bus <= "11111100";	
-		--when x"04" => cpu_di_bus <= "1111110" & SD_NDET;
+		--when x"04" => cpu_di_bus <= "1111110" & SD_NDET; -- детект карты убран как атавизм :)
 		when x"05" => cpu_di_bus <= joy_bus;
 		when x"06" => cpu_di_bus <= ssg_cn0_bus;
 		when x"07" => cpu_di_bus <= ssg_cn1_bus;
@@ -1607,8 +1607,8 @@ selector <=
 	x"00" when (ram_oe_n = '0') else -- ram / rom
 	x"01" when (cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_m1_n = '1' and cs_rtc_ds = '1') else -- RTC MC146818A
 	x"02" when (cs_xxfe = '1' and cpu_rd_n = '0') else 									-- Keyboard, port #FE
-	x"03" when (cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_m1_n = '1' and cpu_a_bus(7 downto 0) = X"57" and cpm='0' and is_flash_not_sd = '0') else 	-- Z-Controller
-	x"04" when (cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_m1_n = '1' and cpu_a_bus(7 downto 0) = X"77" and cpm='0' and is_flash_not_sd = '0') else 	-- Z-Controller
+	x"03" when (cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_m1_n = '1' and cpu_a_bus(7 downto 0) = X"57" and is_flash_not_sd = '0') else 	-- Z-Controller
+	x"04" when (cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_m1_n = '1' and cpu_a_bus(7 downto 0) = X"77" and is_flash_not_sd = '0') else 	-- Z-Controller
 	x"05" when (cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_m1_n = '1' and cpu_a_bus( 7 downto 0) = X"1F" and dos_act = '0' and cpm = '0') else -- Joystick, port #1F
 	x"06" when (cs_fffd = '1' and cpu_rd_n = '0' and ssg_sel = '0') else 			-- TurboSound
 	x"07" when (cs_fffd = '1' and cpu_rd_n = '0' and ssg_sel = '1') else
