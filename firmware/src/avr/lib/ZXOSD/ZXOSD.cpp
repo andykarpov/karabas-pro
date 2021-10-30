@@ -460,6 +460,7 @@ void ZXOSD::clear()
 void ZXOSD::initPopup(uint8_t event_type)
 {
   osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
+  osd.clear();  
   bool is_boot = (event_type == ZXKeyboard::EVENT_OSD_POPUP);
   printLogo(0,is_boot ? 5 : 0);
 
@@ -1260,19 +1261,31 @@ void ZXOSD::updateRtcDow() {
 void ZXOSD::updateTime() {
   osd.setColor(OSD::COLOR_CYAN_I, OSD::COLOR_BLACK);
   osd.setPos(24,0);
-  if (zxrtc.getHour() < 10) osd.print("0"); 
-  osd.print(zxrtc.getHour(), DEC); osd.print(F(":"));
-  if (zxrtc.getMinute() < 10) osd.print("0"); 
-  osd.print(zxrtc.getMinute(), DEC); osd.print(F(":"));
-  if (zxrtc.getSecond() < 10) osd.print("0"); 
-  osd.print(zxrtc.getSecond(), DEC);
+  if (zxrtc.getTimeIsValid()) {
+    if (zxrtc.getHour() < 10) osd.print("0"); 
+    osd.print(zxrtc.getHour(), DEC); osd.print(F(":"));
+    if (zxrtc.getMinute() < 10) osd.print("0"); 
+    osd.print(zxrtc.getMinute(), DEC); osd.print(F(":"));
+    if (zxrtc.getSecond() < 10) osd.print("0"); 
+    osd.print(zxrtc.getSecond(), DEC);
+  } else {
+    osd.setColor(OSD::COLOR_CYAN_I, OSD::COLOR_FLASH);
+    osd.print(F("--:--:--"));
+  }
+
   osd.setColor(OSD::COLOR_CYAN_I, OSD::COLOR_BLACK);
   osd.setPos(22,1);
-  if (zxrtc.getDay() < 10) osd.print("0"); 
-  osd.print(zxrtc.getDay(), DEC); osd.print(F("."));
-  if (zxrtc.getMonth() < 10) osd.print("0"); 
-  osd.print(zxrtc.getMonth(), DEC); osd.print(F("."));
-  osd.print(zxrtc.getYear(), DEC);
+  if (zxrtc.getDateIsValid()) {
+    if (zxrtc.getDay() < 10) osd.print("0"); 
+    osd.print(zxrtc.getDay(), DEC); osd.print(F("."));
+    if (zxrtc.getMonth() < 10) osd.print("0"); 
+    osd.print(zxrtc.getMonth(), DEC); osd.print(F("."));
+    osd.print(zxrtc.getYear(), DEC);
+  } else {
+    osd.setColor(OSD::COLOR_CYAN_I, OSD::COLOR_FLASH);
+    osd.print(F("--.--.----"));
+  }
+  
   if (osd_state == state_rtc) {
     updateRtcHour();
     updateRtcMinute();

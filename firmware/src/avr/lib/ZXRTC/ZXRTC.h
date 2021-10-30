@@ -107,6 +107,9 @@ public:
   bool getInitDone();
   void setInitDone(bool val);
 
+  bool getTimeIsValid();
+  bool getDateIsValid();
+
 };
 
 extern ZXRTC zxrtc;

@@ -244,6 +244,14 @@ void ZXRTC::setYear(int val) {
     rtc_init_done = val;
   }
 
+bool ZXRTC::getTimeIsValid() {
+  return (rtc_hours <= 23 && rtc_minutes <= 59 && rtc_seconds <= 59);
+}
+
+bool ZXRTC::getDateIsValid() {
+  return (rtc_year < 9999 && rtc_month <= 12 && rtc_day <= 31 && rtc_week <= 7);
+}
+
 /****************************************************************************/
 
 ZXRTC zxrtc = ZXRTC();
