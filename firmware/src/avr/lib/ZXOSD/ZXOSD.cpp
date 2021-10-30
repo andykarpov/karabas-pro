@@ -279,7 +279,7 @@ void ZXOSD::printLogo(uint8_t x, uint8_t y)
   switch (fpga_cfg) {
     case 0:
     case 1:
-      osd.print(F("A"));
+      osd.print(F("A-D"));
       break;
     case 4:
     case 5:
@@ -1285,7 +1285,7 @@ void ZXOSD::updateTime() {
     osd.setColor(OSD::COLOR_CYAN_I, OSD::COLOR_FLASH);
     osd.print(F("--.--.----"));
   }
-  
+
   if (osd_state == state_rtc) {
     updateRtcHour();
     updateRtcMinute();
