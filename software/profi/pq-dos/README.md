@@ -27,4 +27,6 @@ PQ-DOS boot
 ## Перезагружаемся без дискеты
 9) профит! :)
 
+ЗЫ: готовый образ 1ГБ CF-карточки можно скачать тут: 
+https://drive.google.com/file/d/1a-WIUXuHLKoJI3obKjNGY0Axmqy46rGw/view?usp=sharing
 
