@@ -1580,7 +1580,6 @@ begin
 		when x"02" => cpu_di_bus <= GX0 & TAPE_IN & kb_do_bus;
 		when x"03" => cpu_di_bus <= zc_do_bus;
 		when x"04" => cpu_di_bus <= "11111100";	
-		--when x"04" => cpu_di_bus <= "1111110" & SD_NDET; -- детект карты убран как атавизм :)
 		when x"05" => cpu_di_bus <= joy_bus;
 		when x"06" => cpu_di_bus <= ssg_cn0_bus;
 		when x"07" => cpu_di_bus <= ssg_cn1_bus;
@@ -1599,7 +1598,8 @@ begin
 		when x"14" => cpu_di_bus <= port_018b_reg;
 		when x"15" => cpu_di_bus <= port_028b_reg;
 		when x"16" => cpu_di_bus <= vid_attr;
-		when others => cpu_di_bus <= cpld_do;
+		when x"17" => cpu_di_bus <= cpld_do;
+		when others => cpu_di_bus <= (others => '1');
 	end case;
 end process;
 
@@ -1626,7 +1626,8 @@ selector <=
 	x"13" when (cs_008b = '1' and cpu_rd_n = '0') else										-- port #008B
 	x"14" when (cs_018b = '1' and cpu_rd_n = '0') else										-- port #018B
 	x"15" when (cs_028b = '1' and cpu_rd_n = '0') else										-- port #028B
-	x"16" when (vid_pff_cs = '1' and cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_a_bus( 7 downto 0) = X"FF") and dos_act='0' else -- Port FF select
+	x"16" when (vid_pff_cs = '1' and cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_a_bus( 7 downto 0) = X"FF") and dos_act='0' and cpm = '0' and ds80 = '0' else -- Port FF select
+	x"17" when cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_m1_n = '1' else -- cpld 
 	(others => '1');
 	
 end rtl;
