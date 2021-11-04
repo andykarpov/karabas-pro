@@ -1317,7 +1317,7 @@ cs_xx7e <= '1' when cs_xxfe = '1' and cpu_a_bus(7) = '0' else '0';
 cs_eff7 <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and cpu_a_bus = X"EFF7" else '0';
 cs_fffd <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and cpu_a_bus = X"FFFD" and fd_port = '1' else '0';
 cs_dffd <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and cpu_a_bus = X"DFFD" and fd_port = '1' and lock_dffd = '0' else '0';
-cs_7ffd <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and cpu_a_bus = X"7FFD" else '0';
+cs_7ffd <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and cpu_a_bus = X"7FFD" and fd_port = '1' else '0';
 cs_xxfd <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and cpu_a_bus(15) = '0' and cpu_a_bus(1) = '0' else '0';
 
 -- Регистры SPI-FLASH
@@ -1404,8 +1404,13 @@ begin
 			
 			-- #7FFD
 			if cs_xxfd = '1' and cpu_wr_n = '0' and (port_7ffd_reg(5) = '0' or port_dffd_reg(4)='1') then -- short #FD
-				port_7ffd_reg <= cpu_do_bus;
+			  port_7ffd_reg(5 downto 0) <= cpu_do_bus(5 downto 0);
 			end if;
+			
+			if cs_7ffd = '1' and cpu_wr_n = '0' and (port_7ffd_reg(5) = '0' or port_dffd_reg(4)='1') then -- short #FD
+			  port_7ffd_reg(7 downto 6) <= cpu_do_bus(7 downto 6);
+			end if;
+
 			
 			-- #xxC7
 			if cs_xxC7 = '1' and cpu_wr_n = '0' then
