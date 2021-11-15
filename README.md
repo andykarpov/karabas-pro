@@ -54,7 +54,7 @@ The idea was to make a smaller Profi (Профи) ZX Spectrum clone, with real F
 
 ### Pre-production renders:
 
-![image](https://github.com/andykarpov/karabas-pro/raw/master/docs/photos/karabas-pro-revDS-top.png)
+![image](https://github.com/andykarpov/karabas-pro/raw/master/docs/photos/karabas-pro-revER-top.png)
 
-![image](https://github.com/andykarpov/karabas-pro/raw/master/docs/photos/karabas-pro-revDS-bot.png)
+![image](https://github.com/andykarpov/karabas-pro/raw/master/docs/photos/karabas-pro-revER-bottom.png)
 
