@@ -1,5 +1,9 @@
 # Karabas-Pro PCB changelog:
 
+## Rev.ER:
+- Added russian labels on the board
+- Changed TRRS footprints to a universal SMT/THT
+
 ## Rev.E:
 - Added 2 more SRAM chips, up to 6 MB SRAM total, 4 MB available as host RAM, 1-2 MB as host ROM
 - Changed uBus with 5-pin header for secondary UART
