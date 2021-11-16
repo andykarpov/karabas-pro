@@ -3,6 +3,8 @@
 ## Rev.ER:
 - Added russian labels on the board
 - Changed TRRS footprints to a universal SMT/THT
+- Added a standalone 3.3V LDO for ESP-8266
+- Changed uSD footprint
 
 ## Rev.E:
 - Added 2 more SRAM chips, up to 6 MB SRAM total, 4 MB available as host RAM, 1-2 MB as host ROM
