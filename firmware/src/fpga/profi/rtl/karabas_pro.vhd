@@ -460,10 +460,10 @@ signal hdd_oe_n 		: std_logic := '1';
 signal port_nreset 	: std_logic := '1';
 
 -- wait signal
---signal WAIT_C			:std_logic_vector(3 downto 0);
---signal WAIT_IO			:std_logic;
---signal WAIT_EN			:std_logic;
---signal WAIT_C_STOP	:std_logic;
+signal WAIT_C			:std_logic_vector(1 downto 0);
+signal WAIT_IO			:std_logic;
+signal WAIT_EN			:std_logic;
+signal WAIT_C_STOP	:std_logic;
 
 component saa1099
 port (
@@ -1028,7 +1028,7 @@ port map(
 	uart_rts => UART2_CTS
 );	
 PIN_141		<= uart2_tx;
-PIN_138 		<= uart2_cts;
+--PIN_138 		<= uart2_cts;
 uart2_rx 		<= PIN_25;
 end generate G_UNO_UART2;
 
@@ -1123,19 +1123,8 @@ cpu_reset_n <= not(reset) and not(loader_reset); -- CPU reset
 cpu_inta_n <= cpu_iorq_n or cpu_m1_n;	-- INTA
 cpu_nmi_n <= '0' when kb_magic = '1' and cpu_m1_n = '0' and cpu_mreq_n = '0' and (cpu_a_bus(15 downto 14) /= "00") else '1'; -- NMI
 --cpu_wait_n <= '0' when kb_wait = '1' else '1'; -- WAIT
---cpu_wait_n <= '1';
+cpu_wait_n <= '1';
 turbo_cpu <= kb_turbo when (kb_turbo /= "00" or turbo_on = '1') and turbo_off = '0' else "00";
-
-process (clk_cpu, turbo_cpu, vbus_mode, cpu_mreq_n, cpu_wr_n, cpu_rd_n, cpu_m1_n, cpu_rfsh_n)
-begin
-	if rising_edge(clk_cpu) then
-		if turbo_cpu(1) = '1' and vbus_mode='1' and ((cpu_mreq_n = '0' and (cpu_wr_n = '0' or cpu_rd_n = '0')) or (cpu_mreq_n = '0' and cpu_m1_n = '0' and cpu_rd_n = '0' and cpu_rfsh_n = '1')) then
-			cpu_wait_n <= '0';
-		else
-			cpu_wait_n <= '1';
-		end if;
-	end if;
-end process;
 
 -- max turbo = 14 MHz for 2 port vram
 --G_MAX_TURBO_2PORT: if enable_2port_vram generate 
@@ -1147,7 +1136,7 @@ end process;
 --	max_turbo <= "01";
 --end generate G_MAX_TURBO_SRAM;
 
-clk_cpu <= '0' when kb_wait = '1' or  (kb_screen_mode = "01" and memory_contention = '1' and DS80 = '0') else 
+clk_cpu <= '0' when kb_wait = '1' or  (kb_screen_mode = "01" and memory_contention = '1' and DS80 = '0') or WAIT_IO = '0' else 
 	clk_bus when kb_turbo = "11"  and turbo_off = '0'and kb_turbo <= max_turbo else 
 	clk_bus and ena_div2 when kb_turbo = "10" and turbo_off = '0' and kb_turbo <= max_turbo else 
 	clk_bus and ena_div4 when kb_turbo = "01" and turbo_off = '0' and kb_turbo <= max_turbo else 
@@ -1157,23 +1146,25 @@ clk_cpu <= '0' when kb_wait = '1' or  (kb_screen_mode = "01" and memory_contenti
 -- dlja rabotosposobnosti periferii v turbe ili v rezhime 
 -- rasshirennogo jekrana pri podkljuchenii tret'ego kvarca XMHz
 
---WAIT_IO <= WAIT_C(3) and WAIT_C(2) and WAIT_C(1);
---WAIT_C_STOP <=WAIT_C(3) and WAIT_C(2) and WAIT_C(1) and not WAIT_C(0);
---WAIT_EN <= reset or kb_turbo;
---process (ena_div2, reset, cpu_iorq_n, WAIT_EN) 	
---	begin					
---		if WAIT_EN = '1' then	
---			WAIT_C <= "1111";
---        elsif ena_div2'event and ena_div2='0' then
---			if cpu_iorq_n='1' then
---				WAIT_C <= "1111"; --WAIT IORQ = 0
---			elsif WAIT_C_STOP='0' then
---				WAIT_C <= WAIT_C + "001"; --COUNT
---			elsif WAIT_C_STOP='1' then
---				WAIT_C <= WAIT_C; --STOP
---			end if;
---		end if;
---	end process;
+WAIT_IO <= WAIT_C(1);
+WAIT_C_STOP <=WAIT_C(1) and not WAIT_C(0);
+WAIT_EN <= reset or not turbo_cpu(1);
+process (ena_div2, cpu_mreq_n, WAIT_EN, WAIT_C_STOP) 	
+	begin					
+		if WAIT_EN = '1' then	
+			WAIT_C <= "11";
+        elsif ena_div2'event and ena_div2='0' then
+			if cpu_mreq_n='1' then
+				WAIT_C <= "11"; --WAIT MREQ = 0
+			elsif WAIT_C_STOP='0' then
+				WAIT_C <= WAIT_C + "01"; --COUNT
+			elsif WAIT_C_STOP='1' then
+				WAIT_C <= WAIT_C; --STOP
+			end if;
+		end if;
+	end process;
+
+--PIN_138	<= WAIT_IO;
 
 -- HDD / SD access
 led1_overwrite <= '1';
