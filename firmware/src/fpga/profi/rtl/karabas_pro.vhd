@@ -1028,7 +1028,7 @@ port map(
 	uart_rts => UART2_CTS
 );	
 PIN_141		<= uart2_tx;
---PIN_138 		<= uart2_cts;
+PIN_138 		<= uart2_cts;
 uart2_rx 		<= PIN_25;
 end generate G_UNO_UART2;
 
