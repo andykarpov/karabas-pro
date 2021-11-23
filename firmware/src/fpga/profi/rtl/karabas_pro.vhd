@@ -1151,10 +1151,10 @@ WAIT_C_STOP <=WAIT_C(1) and not WAIT_C(0);
 WAIT_EN <= reset or not turbo_cpu(1);
 process (ena_div2, cpu_mreq_n, WAIT_EN, WAIT_C_STOP) 	
 	begin					
-		if WAIT_EN = '1' then	
-			WAIT_C <= "11";
-        elsif ena_div2'event and ena_div2='0' then
-			if cpu_mreq_n='1' then
+		if ena_div2'event and ena_div2='0' then
+			if WAIT_EN = '1' then	
+				WAIT_C <= "11";
+			elsif cpu_mreq_n='1' then
 				WAIT_C <= "11"; --WAIT MREQ = 0
 			elsif WAIT_C_STOP='0' then
 				WAIT_C <= WAIT_C + "01"; --COUNT
