@@ -178,7 +178,7 @@ begin
 	-- для SRAM в качестве VRAM
 	G_SRAM_VRAM: if not enable_2port_vram generate
 	
-		vbus_req <= '0' when ( N_MREQ = '0' or N_IORQ = '0' ) and ( N_WR = '0' or N_RD = '0' ) else '1';
+		vbus_req <= '0' when N_MREQ = '0' and ( N_WR = '0' or N_RD = '0' ) else '1';
 		vbus_rdy <= '0' when (CLKX = '0' or CLK_CPU = '0')  else '1';
 
 		VBUS_MODE_O <= vbus_mode;
@@ -265,7 +265,7 @@ begin
 		
 	mux <= A(15 downto 14);
 		
-	process (mux, RAM_EXT, RAM_BANK, SCR, SCO)
+	process (mux, RAM_EXT, RAM_BANK, SCR, SCO, RAM_6MB)
 	begin
 		case mux is
 			when "00" => ram_page <= "000000000";                 -- Seg0 ROM 0000-3FFF or Seg0 RAM 0000-3FFF	

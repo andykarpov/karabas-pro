@@ -92,7 +92,7 @@ port (
 	PIN_120		: out std_logic := '1'; -- /ramce2
 	PIN_7 		: out std_logic := '1'; -- /ramce3
 	
-   FDC_STEP    : inout std_logic; -- PIN_119 connected to FDC_STEP for TurboFDC
+   FDC_STEP    : in std_logic; -- PIN_119 connected to FDC_STEP for TurboFDC
    SD_MOSI     : inout std_logic; -- PIN_115 connected to SD_S
 	TAPE_IN 		: in std_logic := '1';  -- PIN_24
 	TAPE_OUT 	: out std_logic; -- PIN_10
@@ -329,13 +329,13 @@ signal ena_div2	: std_logic := '0';
 signal ena_div4	: std_logic := '0';
 signal ena_div8	: std_logic := '0';
 signal ena_div16	: std_logic := '0';
-signal ena_div32	: std_logic := '0';
-signal ena_cnt		: std_logic_vector(5 downto 0) := "000000";
+--signal ena_div32	: std_logic := '0';
+signal ena_cnt		: std_logic_vector(3 downto 0) := "0000";
 
 -- System
 signal reset			: std_logic;
 signal areset			: std_logic;
-signal locked			: std_logic;
+--signal locked			: std_logic;
 signal locked_tri 	: std_logic := '0';
 signal loader_act		: std_logic := '1';
 signal loader_reset 	: std_logic := '0';
@@ -460,10 +460,10 @@ signal hdd_oe_n 		: std_logic := '1';
 signal port_nreset 	: std_logic := '1';
 
 -- wait signal
---signal WAIT_C			:std_logic_vector(3 downto 0);
---signal WAIT_IO			:std_logic;
---signal WAIT_EN			:std_logic;
---signal WAIT_C_STOP	:std_logic;
+signal WAIT_C			:std_logic_vector(1 downto 0);
+signal WAIT_IO			:std_logic;
+signal WAIT_EN			:std_logic;
+signal WAIT_C_STOP	:std_logic;
 
 component saa1099
 port (
@@ -534,7 +534,7 @@ begin
 U1: entity work.altpll0
 port map (
 	inclk0			=> CLK_50MHZ,
-	locked			=> locked,
+	locked			=> open,
 	c0 				=> clk_112
 	);
 	
@@ -1099,7 +1099,7 @@ ena_div2 <= ena_cnt(0);
 ena_div4 <= ena_cnt(1) and ena_cnt(0);
 ena_div8 <= ena_cnt(2) and ena_cnt(1) and ena_cnt(0);
 ena_div16 <= ena_cnt(3) and ena_cnt(2) and ena_cnt(1) and ena_cnt(0);
-ena_div32 <= ena_cnt(5) and ena_cnt(4) and ena_cnt(3) and ena_cnt(2) and ena_cnt(1) and ena_cnt(0);
+--ena_div32 <= ena_cnt(5) and ena_cnt(4) and ena_cnt(3) and ena_cnt(2) and ena_cnt(1) and ena_cnt(0);
 	
 -------------------------------------------------------------------------------
 -- Global signals
@@ -1127,16 +1127,16 @@ cpu_wait_n <= '1';
 turbo_cpu <= kb_turbo when (kb_turbo /= "00" or turbo_on = '1') and turbo_off = '0' else "00";
 
 -- max turbo = 14 MHz for 2 port vram
-G_MAX_TURBO_2PORT: if enable_2port_vram generate 
+--G_MAX_TURBO_2PORT: if enable_2port_vram generate 
 	max_turbo <= "10";
-end generate G_MAX_TURBO_2PORT;
+--end generate G_MAX_TURBO_2PORT;
+--
+---- max turbo = 7 MHz for sram vram
+--G_MAX_TURBO_SRAM: if not enable_2port_vram generate 
+--	max_turbo <= "01";
+--end generate G_MAX_TURBO_SRAM;
 
--- max turbo = 7 MHz for sram vram
-G_MAX_TURBO_SRAM: if not enable_2port_vram generate 
-	max_turbo <= "01";
-end generate G_MAX_TURBO_SRAM;
-
-clk_cpu <= '0' when kb_wait = '1' or  (kb_screen_mode = "01" and memory_contention = '1' and DS80 = '0') else 
+clk_cpu <= '0' when kb_wait = '1' or  (kb_screen_mode = "01" and memory_contention = '1' and DS80 = '0') or WAIT_IO = '0' else 
 	clk_bus when kb_turbo = "11"  and turbo_off = '0'and kb_turbo <= max_turbo else 
 	clk_bus and ena_div2 when kb_turbo = "10" and turbo_off = '0' and kb_turbo <= max_turbo else 
 	clk_bus and ena_div4 when kb_turbo = "01" and turbo_off = '0' and kb_turbo <= max_turbo else 
@@ -1146,23 +1146,25 @@ clk_cpu <= '0' when kb_wait = '1' or  (kb_screen_mode = "01" and memory_contenti
 -- dlja rabotosposobnosti periferii v turbe ili v rezhime 
 -- rasshirennogo jekrana pri podkljuchenii tret'ego kvarca XMHz
 
---WAIT_IO <= WAIT_C(3) and WAIT_C(2) and WAIT_C(1);
---WAIT_C_STOP <=WAIT_C(3) and WAIT_C(2) and WAIT_C(1) and not WAIT_C(0);
---WAIT_EN <= reset or kb_turbo;
---process (ena_div2, reset, cpu_iorq_n, WAIT_EN) 	
---	begin					
---		if WAIT_EN = '1' then	
---			WAIT_C <= "1111";
---        elsif ena_div2'event and ena_div2='0' then
---			if cpu_iorq_n='1' then
---				WAIT_C <= "1111"; --WAIT IORQ = 0
---			elsif WAIT_C_STOP='0' then
---				WAIT_C <= WAIT_C + "001"; --COUNT
---			elsif WAIT_C_STOP='1' then
---				WAIT_C <= WAIT_C; --STOP
---			end if;
---		end if;
---	end process;
+WAIT_IO <= WAIT_C(1);
+WAIT_C_STOP <=WAIT_C(1) and not WAIT_C(0);
+WAIT_EN <= reset or not turbo_cpu(1);
+process (ena_div2, cpu_mreq_n, WAIT_EN, WAIT_C_STOP) 	
+	begin					
+		if ena_div2'event and ena_div2='0' then
+			if WAIT_EN = '1' then	
+				WAIT_C <= "11";
+			elsif cpu_mreq_n='1' then
+				WAIT_C <= "11"; --WAIT MREQ = 0
+			elsif WAIT_C_STOP='0' then
+				WAIT_C <= WAIT_C + "01"; --COUNT
+			elsif WAIT_C_STOP='1' then
+				WAIT_C <= WAIT_C; --STOP
+			end if;
+		end if;
+	end process;
+
+--PIN_138	<= WAIT_IO;
 
 -- HDD / SD access
 led1_overwrite <= '1';
@@ -1577,7 +1579,7 @@ port map(
 
 process (selector, cpu_a_bus, gx0, serial_ms_do_bus, ram_do_bus, mc146818_do_bus, kb_do_bus, zc_do_bus, ssg_cn0_bus, ssg_cn1_bus, port_7ffd_reg, port_dffd_reg, zxuno_uart_do_bus,
 			zxuno_uart2_do_bus, cpld_do, vid_attr, port_eff7_reg, joy_bus, ms_z, ms_b, ms_x, ms_y, zxuno_addr_to_cpu, port_xxC7_reg, flash_rdy, flash_busy, flash_do_bus, port_008b_reg,
-			port_018b_reg, port_028b_reg)
+			port_018b_reg, port_028b_reg, TAPE_IN)
 begin
 	case selector is
 		when x"00" => cpu_di_bus <= ram_do_bus;

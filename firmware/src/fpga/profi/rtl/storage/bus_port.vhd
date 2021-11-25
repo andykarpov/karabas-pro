@@ -53,7 +53,7 @@ begin
 	SA <= cnt;	
 	BUS_DO <= SD(15 downto 8);
 
-	process (CLK_CPU, BUS_HDD_CS_N, BUS_FDC_NCS, BUS_CSFF, BUS_CS3FX, BUS_RWE, BUS_RWW, BUS_WWE, BUS_WWC, BUS_FDC_STEP, BUS_RD_N, BUS_WR_N, bus_a, bus_di)
+	process (CLK, BUS_HDD_CS_N, BUS_FDC_NCS, BUS_CSFF, BUS_CS3FX, BUS_RWE, BUS_RWW, BUS_WWE, BUS_WWC, BUS_FDC_STEP, BUS_RD_N, BUS_WR_N, bus_a, bus_di)
 	begin 
 		if CLK'event and CLK = '1' then
 			if cnt = "10" then 
@@ -63,7 +63,7 @@ begin
 		end if;
 	end process;
 
-	process (RESET, CLK, cnt, CLK_CPU, prev_clk_cpu)
+	process (RESET, CLK, cnt, prev_clk_cpu)
 	begin 
 		if RESET = '1' then 
 			cnt <= "11";

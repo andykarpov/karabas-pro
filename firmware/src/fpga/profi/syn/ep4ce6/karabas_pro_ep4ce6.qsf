@@ -248,7 +248,6 @@ set_global_assignment -name VERILOG_FILE ../../rtl/uart/uart.v
 set_global_assignment -name VHDL_FILE ../../rtl/storage/bus_port.vhd
 set_global_assignment -name QIP_FILE ../../rtl/storage/bus_mux.qip
 set_global_assignment -name VHDL_FILE ../../rtl/avr/avr.vhd
-set_global_assignment -name VHDL_FILE ../../rtl/avr/spi_slave.vhd
 set_global_assignment -name QIP_FILE ../../rtl/avr/rtc.qip
 set_global_assignment -name QIP_FILE ../../rtl/avr/queue.qip
 set_global_assignment -name VHDL_FILE ../../rtl/mouse/serial_mouse.vhd
