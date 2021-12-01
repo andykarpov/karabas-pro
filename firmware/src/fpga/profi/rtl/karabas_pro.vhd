@@ -1121,7 +1121,7 @@ reset <= areset or kb_reset or loader_reset or loader_act or board_reset; -- hot
 
 cpu_reset_n <= not(reset) and not(loader_reset); -- CPU reset
 cpu_inta_n <= cpu_iorq_n or cpu_m1_n;	-- INTA
-cpu_nmi_n <= '0' when kb_magic = '1' and cpu_m1_n = '0' and cpu_mreq_n = '0' and (cpu_a_bus(15 downto 14) /= "00") else '1'; -- NMI
+cpu_nmi_n <= '0' when kb_magic = '1' and ((cpu_m1_n = '0' and cpu_mreq_n = '0' and cpu_a_bus(15 downto 14) /= "00") or DS80 = '1') else '1'; -- NMI
 --cpu_wait_n <= '0' when kb_wait = '1' else '1'; -- WAIT
 cpu_wait_n <= '1';
 turbo_cpu <= kb_turbo when (kb_turbo /= "00" or turbo_on = '1') and turbo_off = '0' else "00";
@@ -1455,7 +1455,7 @@ begin
 			end if;
 			
 			-- TR-DOS FLAG
-			if (((cpu_m1_n = '0' and cpu_mreq_n = '0' and cpu_a_bus(15 downto 8) = X"3D" and (rom14 = '1' or unlock_128 = '1')) or cpu_nmi_n = '0') and port_dffd_reg(4) = '0') or (onrom = '1') then dos_act <= '1';
+			if (((cpu_m1_n = '0' and cpu_mreq_n = '0' and cpu_a_bus(15 downto 8) = X"3D" and (rom14 = '1' or unlock_128 = '1')) or (cpu_nmi_n = '0'  and DS80 = '0')) and port_dffd_reg(4) = '0') or (onrom = '1') then dos_act <= '1';
 			elsif ((cpu_m1_n = '0' and cpu_mreq_n = '0' and cpu_a_bus(15 downto 14) /= "00") or (port_dffd_reg(4) = '1')) then dos_act <= '0'; end if;
 				
 	end if;
