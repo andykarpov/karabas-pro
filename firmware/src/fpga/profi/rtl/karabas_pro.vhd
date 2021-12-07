@@ -1,4 +1,4 @@
--------------------------------------------------------------------------------------------------------------------
+ -------------------------------------------------------------------------------------------------------------------
 -- 
 -- 
 -- #       #######                                                 #                                               
@@ -1292,15 +1292,15 @@ turbo_off <= port_028b_reg(5);									-- 5 - Forced Turbo Off
 turbo_on <=  port_028b_reg(6); 									-- 6 - Forced Turbo on
 lock_dffd <= port_028b_reg(7);								 	-- 7 - Lock port DFFD
 
--- Config PORT X"008B"
+-- Config PORT X"108B"
 cs_108b <='1' when cpu_a_bus(15 downto 0)=X"108B" and cpu_iorq_n='0' and cpu_m1_n = '1' and ((cpm='1' and rom14='1') or (dos_act='1' and rom14='0')) else '0';
--- Config PORT X"008B"
+-- Config PORT X"118B"
 cs_118b <='1' when cpu_a_bus(15 downto 0)=X"118B" and cpu_iorq_n='0' and cpu_m1_n = '1' and ((cpm='1' and rom14='1') or (dos_act='1' and rom14='0')) else '0';
--- Config PORT X"008B"
+-- Config PORT X"128B"
 cs_128b <='1' when cpu_a_bus(15 downto 0)=X"128B" and cpu_iorq_n='0' and cpu_m1_n = '1' and ((cpm='1' and rom14='1') or (dos_act='1' and rom14='0')) else '0';
--- Config PORT X"008B"
+-- Config PORT X"138B"
 cs_138b <='1' when cpu_a_bus(15 downto 0)=X"138B" and cpu_iorq_n='0' and cpu_m1_n = '1' and ((cpm='1' and rom14='1') or (dos_act='1' and rom14='0')) else '0';
--- Config PORT X"008B"
+-- Config PORT X"218B"
 cs_218b <='1' when cpu_a_bus(15 downto 0)=X"218B" and cpu_iorq_n='0' and cpu_m1_n = '1' and ((cpm='1' and rom14='1') or (dos_act='1' and rom14='0')) else '0';
 
 SDIR <= fdc_swap;
@@ -1322,7 +1322,8 @@ cs_xxfe <= '1' when cpu_iorq_n = '0' and cpu_a_bus(0) = '0' else '0';
 cs_xx7e <= '1' when cs_xxfe = '1' and cpu_a_bus(7) = '0' else '0';
 cs_eff7 <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and cpu_a_bus = X"EFF7" else '0';
 cs_fffd <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and cpu_a_bus = X"FFFD" and fd_port = '1' else '0';
-cs_dffd <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and cpu_a_bus = X"DFFD" and fd_port = '1' and lock_dffd = '0' else '0';
+--cs_dffd <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and cpu_a_bus = X"DFFD" and fd_port = '1' and lock_dffd = '0' else '0';
+cs_dffd <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and cpu_a_bus = X"DFFD" else '0';
 cs_7ffd <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and cpu_a_bus = X"7FFD" and fd_port = '1' else '0';
 cs_xxfd <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and cpu_a_bus(15) = '0' and cpu_a_bus(1) = '0' else '0';
 
@@ -1410,18 +1411,32 @@ begin
 
 			-- #DFFD
 			if cs_dffd = '1' and cpu_wr_n = '0' then
-				port_dffd_reg <= cpu_do_bus;
-				port_218b_reg(3) <= cpu_do_bus(4);
+				if port_218b_reg(7 downto 6) = "00" then
+					port_dffd_reg(7 downto 3) <= cpu_do_bus(7 downto 3);
+					port_dffd_reg(1 downto 0) <= cpu_do_bus(1 downto 0);
+					port_218b_reg(3) <= cpu_do_bus(4);
+					port_138b_reg(4 downto 3) <= cpu_do_bus(1 downto 0);
+				elsif port_218b_reg(7 downto 6) = "10" and fd_port = '1' then
+					port_dffd_reg <= cpu_do_bus;
+					port_218b_reg(3) <= cpu_do_bus(4);
+					port_138b_reg(5 downto 3) <= cpu_do_bus(2 downto 0);
+				elsif port_218b_reg(7 downto 6) = "11" then
+					port_dffd_reg <= cpu_do_bus;
+					port_218b_reg(3) <= cpu_do_bus(4);
+					port_138b_reg(5 downto 3) <= cpu_do_bus(2 downto 0);
+				end if;
 			end if;
 			
 			-- #7FFD
 			if cs_xxfd = '1' and cpu_wr_n = '0' and (port_7ffd_reg(5) = '0' or port_dffd_reg(4)='1') then -- short #FD
 			  port_7ffd_reg(5 downto 0) <= cpu_do_bus(5 downto 0);
 			  port_218b_reg(0) <= cpu_do_bus(4);
+			  port_138b_reg(2 downto 0) <= cpu_do_bus(2 downto 0);
 			end if;
 			
 			if cs_7ffd = '1' and cpu_wr_n = '0' and (port_7ffd_reg(5) = '0' or port_dffd_reg(4)='1') then -- short #FD
 			  port_7ffd_reg(7 downto 6) <= cpu_do_bus(7 downto 6);
+			  port_138b_reg(2 downto 0) <= cpu_do_bus(2 downto 0);
 			end if;
 
 			
