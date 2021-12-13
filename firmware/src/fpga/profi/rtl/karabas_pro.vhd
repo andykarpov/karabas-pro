@@ -1413,17 +1413,17 @@ begin
 			if cs_dffd = '1' and cpu_wr_n = '0' then
 				if port_218b_reg(7 downto 6) = "00" then
 					port_dffd_reg(7 downto 3) <= cpu_do_bus(7 downto 3);
-					port_dffd_reg(1 downto 0) <= cpu_do_bus(1 downto 0);
+					port_dffd_reg(2 downto 0) <= '0'&cpu_do_bus(1 downto 0);
 					port_218b_reg(3) <= cpu_do_bus(4);
-					port_138b_reg(4 downto 3) <= cpu_do_bus(1 downto 0);
+					port_138b_reg(7 downto 3) <= "000"&cpu_do_bus(1 downto 0);
 				elsif port_218b_reg(7 downto 6) = "10" and fd_port = '1' then
 					port_dffd_reg <= cpu_do_bus;
 					port_218b_reg(3) <= cpu_do_bus(4);
-					port_138b_reg(5 downto 3) <= cpu_do_bus(2 downto 0);
+					port_138b_reg(7 downto 3) <= "00"&cpu_do_bus(2 downto 0);
 				elsif port_218b_reg(7 downto 6) = "11" then
 					port_dffd_reg <= cpu_do_bus;
 					port_218b_reg(3) <= cpu_do_bus(4);
-					port_138b_reg(5 downto 3) <= cpu_do_bus(2 downto 0);
+					port_138b_reg(7 downto 3) <= "00"&cpu_do_bus(2 downto 0);
 				end if;
 			end if;
 			
