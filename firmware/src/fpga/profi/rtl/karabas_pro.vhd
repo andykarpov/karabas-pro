@@ -632,6 +632,11 @@ port map (
 	-- ram pages
 	RAM_BANK 		=> port_7ffd_reg(2 downto 0),
 	RAM_EXT 			=> ram_ext, -- seg A3 - seg A5
+	Page0_reg		=> port_108b_reg,
+	Page1_reg		=> port_118b_reg,
+	Page2_reg		=> port_128b_reg,
+	Page3_reg		=> port_138b_reg,
+	MemConfig_reg	=> port_218b_reg,
 
 	-- TRDOS 
 	TRDOS 			=> dos_act,	
@@ -1293,15 +1298,15 @@ turbo_on <=  port_028b_reg(6); 									-- 6 - Forced Turbo on
 lock_dffd <= port_028b_reg(7);								 	-- 7 - Lock port DFFD
 
 -- Config PORT X"108B"
-cs_108b <='1' when cpu_a_bus(15 downto 0)=X"108B" and cpu_iorq_n='0' and cpu_m1_n = '1' and ((cpm='1' and rom14='1') or (dos_act='1' and rom14='0')) else '0';
+cs_108b <='1' when cpu_a_bus(15 downto 0)=X"108B" and cpu_iorq_n='0' and cpu_m1_n = '1' else '0';
 -- Config PORT X"118B"
-cs_118b <='1' when cpu_a_bus(15 downto 0)=X"118B" and cpu_iorq_n='0' and cpu_m1_n = '1' and ((cpm='1' and rom14='1') or (dos_act='1' and rom14='0')) else '0';
+cs_118b <='1' when cpu_a_bus(15 downto 0)=X"118B" and cpu_iorq_n='0' and cpu_m1_n = '1' else '0';
 -- Config PORT X"128B"
-cs_128b <='1' when cpu_a_bus(15 downto 0)=X"128B" and cpu_iorq_n='0' and cpu_m1_n = '1' and ((cpm='1' and rom14='1') or (dos_act='1' and rom14='0')) else '0';
+cs_128b <='1' when cpu_a_bus(15 downto 0)=X"128B" and cpu_iorq_n='0' and cpu_m1_n = '1' else '0';
 -- Config PORT X"138B"
-cs_138b <='1' when cpu_a_bus(15 downto 0)=X"138B" and cpu_iorq_n='0' and cpu_m1_n = '1' and ((cpm='1' and rom14='1') or (dos_act='1' and rom14='0')) else '0';
+cs_138b <='1' when cpu_a_bus(15 downto 0)=X"138B" and cpu_iorq_n='0' and cpu_m1_n = '1' else '0';
 -- Config PORT X"218B"
-cs_218b <='1' when cpu_a_bus(15 downto 0)=X"218B" and cpu_iorq_n='0' and cpu_m1_n = '1' and ((cpm='1' and rom14='1') or (dos_act='1' and rom14='0')) else '0';
+cs_218b <='1' when cpu_a_bus(15 downto 0)=X"218B" and cpu_iorq_n='0' and cpu_m1_n = '1' else '0';
 
 SDIR <= fdc_swap;
 
@@ -1411,20 +1416,23 @@ begin
 
 			-- #DFFD
 			if cs_dffd = '1' and cpu_wr_n = '0' then
-				if port_218b_reg(7 downto 6) = "00" then
-					port_dffd_reg(7 downto 3) <= cpu_do_bus(7 downto 3);
-					port_dffd_reg(2 downto 0) <= '0'&cpu_do_bus(1 downto 0);
-					port_218b_reg(3) <= cpu_do_bus(4);
-					port_138b_reg(7 downto 3) <= "000"&cpu_do_bus(1 downto 0);
-				elsif port_218b_reg(7 downto 6) = "10" and fd_port = '1' then
-					port_dffd_reg <= cpu_do_bus;
-					port_218b_reg(3) <= cpu_do_bus(4);
-					port_138b_reg(7 downto 3) <= "00"&cpu_do_bus(2 downto 0);
-				elsif port_218b_reg(7 downto 6) = "11" then
-					port_dffd_reg <= cpu_do_bus;
-					port_218b_reg(3) <= cpu_do_bus(4);
-					port_138b_reg(7 downto 3) <= "00"&cpu_do_bus(2 downto 0);
-				end if;
+				case port_218b_reg(7 downto 6) is
+					when "00" =>	port_dffd_reg(7 downto 3) <= cpu_do_bus(7 downto 3);
+										port_dffd_reg(2 downto 0) <= '0'&cpu_do_bus(1 downto 0);
+										port_218b_reg(3) <= cpu_do_bus(4);
+										port_138b_reg(7 downto 3) <= "000"&cpu_do_bus(1 downto 0);
+					when "01" =>	port_dffd_reg <= "00000000";
+										port_218b_reg(3) <= '0';
+										port_138b_reg(7 downto 3) <= "00000";
+					when "10" =>	if fd_port = '1' then
+											port_dffd_reg <= cpu_do_bus;
+											port_218b_reg(3) <= cpu_do_bus(4);
+											port_138b_reg(7 downto 3) <= "00"&cpu_do_bus(2 downto 0);
+										end if;
+					when "11" =>	port_dffd_reg <= cpu_do_bus;
+										port_218b_reg(3) <= cpu_do_bus(4);
+										port_138b_reg(7 downto 3) <= "00"&cpu_do_bus(2 downto 0);
+				end case;
 			end if;
 			
 			-- #7FFD

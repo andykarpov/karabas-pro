@@ -44,8 +44,13 @@ port (
 	N_CE2 		: out std_logic := '1';
 	N_CE3 		: out std_logic := '1';
 	
-	RAM_BANK		: in std_logic_vector(2 downto 0);
-	RAM_EXT 		: in std_logic_vector(4 downto 0);
+	RAM_BANK			: in std_logic_vector(2 downto 0);
+	RAM_EXT 			: in std_logic_vector(4 downto 0);
+	Page0_reg		: in std_logic_vector(7 downto 0);
+	Page1_reg		: in std_logic_vector(7 downto 0);
+	Page2_reg		: in std_logic_vector(7 downto 0);
+	Page3_reg		: in std_logic_vector(7 downto 0);
+	MemConfig_reg	: in std_logic_vector(7 downto 0);
 	
 	TRDOS 		: in std_logic;
 	
@@ -66,7 +71,7 @@ port (
 	SCR 			: in std_logic := '0';
 	WOROM 		: in std_logic := '0';
 	
-	ROM_BANK : in std_logic := '0';
+	ROM_BANK 	: in std_logic := '0';
 	EXT_ROM_BANK : in std_logic_vector(1 downto 0) := "00";
 	
 	COUNT_BLOCK : in std_logic := '0'; -- paper = '0' and (not (chr_col_cnt(2) and hor_cnt(0)));
