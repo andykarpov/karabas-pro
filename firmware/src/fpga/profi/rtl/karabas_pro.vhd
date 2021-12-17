@@ -1437,17 +1437,16 @@ begin
 			
 			-- #7FFD
 			if cs_xxfd = '1' and cpu_wr_n = '0' and (port_7ffd_reg(5) = '0' or port_dffd_reg(4)='1') then -- short #FD
-			  port_7ffd_reg(5 downto 0) <= cpu_do_bus(5 downto 0);
-			  port_218b_reg(0) <= cpu_do_bus(4);
-			  port_138b_reg(2 downto 0) <= cpu_do_bus(2 downto 0);
+				case port_218b_reg(7 downto 6) is
+					when "01" =>	port_7ffd_reg <= cpu_do_bus;
+										port_218b_reg(0) <= cpu_do_bus(4);
+										port_138b_reg(7 downto 0) <= "00000"&cpu_do_bus(2 downto 0);
+					when others =>	port_7ffd_reg <= cpu_do_bus;
+										port_218b_reg(0) <= cpu_do_bus(4);
+										port_138b_reg(2 downto 0) <= cpu_do_bus(2 downto 0);
+				end case;
 			end if;
-			
-			if cs_7ffd = '1' and cpu_wr_n = '0' and (port_7ffd_reg(5) = '0' or port_dffd_reg(4)='1') then -- short #FD
-			  port_7ffd_reg(7 downto 6) <= cpu_do_bus(7 downto 6);
-			  port_138b_reg(2 downto 0) <= cpu_do_bus(2 downto 0);
-			end if;
-
-			
+		
 			-- #xxC7
 			if cs_xxC7 = '1' and cpu_wr_n = '0' then
 				port_xxC7_reg <= cpu_do_bus;
