@@ -232,7 +232,7 @@ begin
 	palette_grb <= palette(to_integer(unsigned(palette_a)));
 	
 	-- возвращаем наверх (top level) значение младшего разряда зеленого компонента палитры, это служит для отпределения наличия палитры в системе
-	GX0 <= palette_grb(6) when ds80 = '1' else '1';
+	GX0 <= palette_grb(6) xor palette_grb(0) when ds80 = '1' else '1';
 	
 	-- применяем blank для профи, ибо в видеоконтроллере он после палитры
 	process(CLK2x, CLK, blank_profi, palette_grb, ds80) 
