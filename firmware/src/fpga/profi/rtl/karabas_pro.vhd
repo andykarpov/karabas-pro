@@ -1637,7 +1637,7 @@ port map(
 
 process (selector, cpu_a_bus, gx0, serial_ms_do_bus, ram_do_bus, mc146818_do_bus, kb_do_bus, zc_do_bus, ssg_cn0_bus, ssg_cn1_bus, port_7ffd_reg, port_dffd_reg, zxuno_uart_do_bus,
 			zxuno_uart2_do_bus, cpld_do, vid_attr, port_eff7_reg, joy_bus, ms_z, ms_b, ms_x, ms_y, zxuno_addr_to_cpu, port_xxC7_reg, flash_rdy, flash_busy, flash_do_bus, port_008b_reg,
-			port_028b_reg, TAPE_IN, port_128b_reg, port_138b_reg)
+			port_028b_reg, TAPE_IN, port_128b_reg, port_138b_reg, board_revision)
 begin
 	case selector is
 		when x"00" => cpu_di_bus <= ram_do_bus;
@@ -1662,8 +1662,9 @@ begin
 		when x"13" => cpu_di_bus <= port_028b_reg;
 		when x"14" => cpu_di_bus <= port_128b_reg;
 		when x"15" => cpu_di_bus <= port_138b_reg;
-		when x"16" => cpu_di_bus <= vid_attr;
-		when x"17" => cpu_di_bus <= cpld_do;
+		when x"16" => cpu_di_bus <= board_revision;
+		when x"17" => cpu_di_bus <= vid_attr;
+		when x"18" => cpu_di_bus <= cpld_do;
 		when others => cpu_di_bus <= (others => '1');
 	end case;
 end process;
@@ -1691,8 +1692,9 @@ selector <=
 	x"13" when (cs_028b = '1' and cpu_rd_n = '0') else										-- port #028B
 	x"14" when (cs_128b = '1' and cpu_rd_n = '0') else										-- port #128B
 	x"15" when (cs_138b = '1' and cpu_rd_n = '0') else										-- port #138B
-	x"16" when (vid_pff_cs = '1' and cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_a_bus( 7 downto 0) = X"FF") and dos_act='0' and cpm = '0' and ds80 = '0' else -- Port FF select
-	x"17" when cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_m1_n = '1' else -- cpld 
+	x"16" when (cs_008b = '1' and cpu_rd_n = '0') else										-- port #008B Board Revision
+	x"17" when (vid_pff_cs = '1' and cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_a_bus( 7 downto 0) = X"FF") and dos_act='0' and cpm = '0' and ds80 = '0' else -- Port FF select
+	x"18" when cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_m1_n = '1' else -- cpld 
 	(others => '1');
 	
 end rtl;
