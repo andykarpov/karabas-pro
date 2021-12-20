@@ -217,7 +217,8 @@ begin
 
 		MA(20 downto 14) <= 
 			loader_ram_a(20 downto 14) when loader_act = '1' else -- loader ram
-			"100" & EXT_ROM_BANK(1 downto 0) & rom_page(1 downto 0) when is_rom = '1' and vbus_mode = '0' else -- rom from sram high bank 
+			"10" & Page0_reg (4 downto 0) when MemConfig_reg(2) = '0' and is_rom = '1' and vbus_mode = '0' else -- rom from sram high bank normal mode
+			"10" & Page0_reg (4 downto 2) & (not TRDOS) & MemConfig_reg (0) when MemConfig_reg(2) = '1' and is_rom = '1' and vbus_mode = '0' else -- rom from sram high bank mapped mode
 			ram_page(6 downto 0) when vbus_mode = '0' else 
 			"00001" & VID_PAGE & '1' when vbus_mode = '1' and DS80 = '0' else -- spectrum screen
 			"00001" & VID_PAGE & '0' when vbus_mode = '1' and DS80 = '1' and vid_rd = '0' else -- profi bitmap 

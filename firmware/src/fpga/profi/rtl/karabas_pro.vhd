@@ -661,7 +661,7 @@ port map (
 
 	-- rom
 	ROM_BANK 		=> rom14,
-	EXT_ROM_BANK   => ext_rom_bank_pq,
+	EXT_ROM_BANK   => port_108b_reg(3 downto 2),
 	
 	-- contended memory signals
 	COUNT_BLOCK		=> count_block,
@@ -1053,11 +1053,9 @@ port map(
 	
 	SOFT_SW1 => soft_sw(1),
 	SOFT_SW2 => soft_sw(2),
-	SOFT_SW3 => soft_sw(3),
-	SOFT_SW4 => soft_sw(4),
+	ROM_BANK => soft_sw(4)&soft_sw(3),
 	
 	AUDIO_DAC_TYPE => audio_dac_type,
-	ROM_BANK => ext_rom_bank,
 	SCANDOUBLER_EN => vid_scandoubler_enable,
 	TAPE_IN_OUT_EN => tape_in_out_enable,
 	
@@ -1310,7 +1308,7 @@ cs_218b <='1' when cpu_a_bus(15 downto 0)=X"218B" and cpu_iorq_n='0' and cpu_m1_
 
 SDIR <= fdc_swap;
 
-ext_rom_bank_pq <= ext_rom_bank when rom0 = '0' else "01";	-- ROMBANK ALT
+--ext_rom_bank_pq <= ext_rom_bank when rom0 = '0' else "01";	-- ROMBANK ALT
 
 rom14 <= port_7ffd_reg(4); -- rom bank
 cpm 	<= port_dffd_reg(5); -- 1 - блокирует работу контроллера из ПЗУ TR-DOS и включает порты на доступ из ОЗУ (ROM14=0); При ROM14=1 - мод. доступ к расширен. периферии
@@ -1382,7 +1380,7 @@ fdd_cs_n <= RT_F1 and P0;
 --portAS <= '1' when adress(9)='0' and adress(7)='1' and adress(5)='1' and adress(3 downto 0)=X"F" and iorq='0' and cpm='0' and rom14='1' else '0';
 --portDS <= '1' when adress(9)='0' and adress(7)='1' and adress(5)='0' and adress(3 downto 0)=X"F" and iorq='0' and cpm='0' and rom14='1' else '0';
 
-process (reset, areset, clk_bus, cpu_a_bus, dos_act, cs_xxfe, cs_eff7, cs_7ffd, cs_xxfd, port_7ffd_reg, cpu_mreq_n, cpu_m1_n, cpu_wr_n, cpu_do_bus, fd_port, cs_008b)
+process (reset, areset, clk_bus, cpu_a_bus, dos_act, cs_xxfe, cs_eff7, cs_7ffd, cs_xxfd, port_7ffd_reg, cpu_mreq_n, cpu_m1_n, cpu_wr_n, cpu_do_bus, fd_port, cs_008b, soft_sw)
 begin
 	if reset = '1' then
 		port_eff7_reg <= (others => '0');
@@ -1396,11 +1394,11 @@ begin
 		port_008b_reg <= (others => '0');
 --		port_018b_reg <= (others => '0');
 		port_028b_reg <= (others => '0');
-		port_108b_reg <= (others => '0');
+		port_108b_reg <= "0000"&soft_sw(4)&soft_sw(3)&"00";
 		port_118b_reg <= (others => '0');
 		port_128b_reg <= (others => '0');
 		port_138b_reg <= (others => '0');
-		port_218b_reg <= (others => '0');
+		port_218b_reg <= "10000100";
 		dos_act <= '1';
 	elsif clk_bus'event and clk_bus = '1' then
 
