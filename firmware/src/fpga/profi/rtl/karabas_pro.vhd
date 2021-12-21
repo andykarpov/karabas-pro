@@ -661,7 +661,7 @@ port map (
 
 	-- rom
 	ROM_BANK 		=> rom14,
-	EXT_ROM_BANK   => port_108b_reg(3 downto 2),
+	EXT_ROM_BANK   => soft_sw(4)&soft_sw(3),
 	
 	-- contended memory signals
 	COUNT_BLOCK		=> count_block,
@@ -1394,9 +1394,9 @@ begin
 		port_008b_reg <= (others => '0');
 --		port_018b_reg <= (others => '0');
 		port_028b_reg <= (others => '0');
-		port_108b_reg <= "0000"&soft_sw(4)&soft_sw(3)&"00";
-		port_118b_reg <= (others => '0');
-		port_128b_reg <= (others => '0');
+		port_108b_reg <= (others => '0');
+		port_118b_reg <= "00000101";
+		port_128b_reg <= "00000010";
 		port_138b_reg <= (others => '0');
 		port_218b_reg <= "10000100";
 		dos_act <= '1';
