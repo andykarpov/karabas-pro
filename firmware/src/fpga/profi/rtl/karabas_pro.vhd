@@ -1314,7 +1314,7 @@ rom14 <= port_7ffd_reg(4); -- rom bank
 cpm 	<= port_dffd_reg(5); -- 1 - блокирует работу контроллера из ПЗУ TR-DOS и включает порты на доступ из ОЗУ (ROM14=0); При ROM14=1 - мод. доступ к расширен. периферии
 worom <= port_dffd_reg(4); -- 1 - отключает блокировку порта 7ffd и выключает ПЗУ, помещая на его место ОЗУ из seg 00
 ds80 	<= port_dffd_reg(7); -- 0 = seg05 spectrum bitmap, 1 = profi bitmap seg06 & seg 3a & seg 04 & seg 38
-scr 	<= port_dffd_reg(6); -- памяти CPU на место seg 02, при этом бит D3 CMR0 должен быть в 1 (#8000-#BFFF)
+scr 	<= port_dffd_reg(6); -- Проецирует дополнительный экран SEG06 на место SEG02 при этом бит D3 CMR0 должен быть в "1" (8000-BFFF) 
 sco 	<= port_dffd_reg(3); -- Выбор положения окна проецирования сегментов:
 									-- 0 - окно номер 1 (#C000-#FFFF)
 									-- 1 - окно номер 2 (#4000-#7FFF)
@@ -1417,18 +1417,18 @@ begin
 				case port_218b_reg(7 downto 6) is
 					when "00" =>	port_dffd_reg(7 downto 3) <= cpu_do_bus(7 downto 3);
 										port_dffd_reg(2 downto 0) <= '0'&cpu_do_bus(1 downto 0);
-										port_218b_reg(3) <= cpu_do_bus(4);
+										port_218b_reg(5 downto 3) <= cpu_do_bus(6)&cpu_do_bus(3)&cpu_do_bus(4);
 										port_138b_reg(7 downto 3) <= "000"&cpu_do_bus(1 downto 0);
 					when "01" =>	port_dffd_reg <= "00000000";
-										port_218b_reg(3) <= '0';
+										port_218b_reg(5 downto 3) <= "000";
 										port_138b_reg(7 downto 3) <= "00000";
 					when "10" =>	if fd_port = '1' then
 											port_dffd_reg <= cpu_do_bus;
-											port_218b_reg(3) <= cpu_do_bus(4);
+											port_218b_reg(5 downto 3) <= cpu_do_bus(6)&cpu_do_bus(3)&cpu_do_bus(4);
 											port_138b_reg(7 downto 3) <= "00"&cpu_do_bus(2 downto 0);
 										end if;
 					when "11" =>	port_dffd_reg <= cpu_do_bus;
-										port_218b_reg(3) <= cpu_do_bus(4);
+										port_218b_reg(5 downto 3) <= cpu_do_bus(6)&cpu_do_bus(3)&cpu_do_bus(4);
 										port_138b_reg(7 downto 3) <= "00"&cpu_do_bus(2 downto 0);
 				end case;
 			end if;
@@ -1509,6 +1509,8 @@ begin
 			if cs_218b = '1' and cpu_wr_n='0' then
 				port_218b_reg <= cpu_do_bus;
 				port_dffd_reg(4) <= cpu_do_bus(3);
+				port_dffd_reg(3) <= cpu_do_bus(4);
+				port_dffd_reg(6) <= cpu_do_bus(5);
 				port_7ffd_reg(4) <= cpu_do_bus(0);
 			end if;
 			
