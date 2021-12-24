@@ -217,9 +217,8 @@ begin
 
 		MA(20 downto 14) <= 
 			loader_ram_a(20 downto 14) when loader_act = '1' else -- loader ram
-			"100" & EXT_ROM_BANK & (not TRDOS) & ROM_BANK when MemConfig_reg(4) = '0' and is_rom = '1' and vbus_mode = '0' else 																-- rom from sram high bank old mapper
-			"10" & Page0_reg (4 downto 0) when MemConfig_reg(4) = '1' and MemConfig_reg(2) = '0' and is_rom = '1' and vbus_mode = '0' else 												-- rom from sram high bank normal mode
-			"10" & Page0_reg (4 downto 2) & (not TRDOS) & MemConfig_reg (0) when MemConfig_reg(4) = '1' and MemConfig_reg(2) = '1' and is_rom = '1' and vbus_mode = '0' else	-- rom from sram high bank mapped mode
+			"10" & Page0_reg (4 downto 0) when MemConfig_reg(2) = '0' and is_rom = '1' and vbus_mode = '0' else -- rom from sram high bank normal mode
+			"11" & Page0_reg (4) & EXT_ROM_BANK & (not TRDOS) & MemConfig_reg (0) when MemConfig_reg(2) = '1' and is_rom = '1' and vbus_mode = '0' else -- rom from sram high bank mapped mode
 			ram_page(6 downto 0) when vbus_mode = '0' else 
 			"00001" & VID_PAGE & '1' when vbus_mode = '1' and DS80 = '0' else -- spectrum screen
 			"00001" & VID_PAGE & '0' when vbus_mode = '1' and DS80 = '1' and vid_rd = '0' else -- profi bitmap 
@@ -275,46 +274,30 @@ begin
 	process (mux, RAM_EXT, RAM_BANK, SCR, SCO, RAM_6MB)
 	begin
 		case mux is
-			when "00" => if MemConfig_reg(4) = '0' then
-								ram_page <= "000000000";
-							 else 
-								ram_page <= '0' & Page0_reg;
-							 end if;												-- Seg0 ROM 0000-3FFF or Seg0 RAM 0000-3FFF	
-			when "01" => if MemConfig_reg(4) = '0' then
-								if SCO='0' then 
-									ram_page <= "000000101";
-								else 
-									if RAM_6MB = '1' then 
-										ram_page <= '0' & RAM_EXT (4 downto 0) & RAM_BANK; 
-									else 
-										ram_page <= "000" & RAM_EXT (2 downto 0) & RAM_BANK; 
-									end if;
-								end if;
-							 else
+			when "00" => ram_page <= '0' & Page0_reg;                 -- Seg0 ROM 0000-3FFF or Seg0 RAM 0000-3FFF	
+			when "01" => if SCO='0' then 
 								ram_page <= '0' & Page1_reg;
-							 end if;												-- Seg1 RAM 4000-7FFF	
-			when "10" => if MemConfig_reg(4) = '0' then
-								if SCR='0' then 
-									ram_page <= "000000010"; 	
+							 else 
+								if RAM_6MB = '1' then 
+									ram_page <= '0' & Page3_reg; 
 								else 
-									ram_page <= "000000110"; 
+									ram_page <= "000" & Page3_reg(5 downto 0); 
 								end if;
-							 else
-								ram_page <= '0' & Page2_reg;
-							 end if;												-- Seg2 RAM 8000-BFFF
-			when "11" => if MemConfig_reg(4) = '0' then
-								if SCO='0' then 
-									if RAM_6MB = '1' then 
-										ram_page <= '0' & RAM_EXT (4 downto 0) & RAM_BANK; 
-									else 
-										ram_page <= "000" & RAM_EXT (2 downto 0) & RAM_BANK; 
-									end if;
+							 end if;	                               -- Seg1 RAM 4000-7FFF	
+			when "10" => if SCR='0' then 
+								ram_page <= '0' & Page2_reg; 	
+							 else 
+								ram_page <= "000000110"; 
+							 end if;                                -- Seg2 RAM 8000-BFFF
+			when "11" => if SCO='0' then 
+								if RAM_6MB = '1' then 
+									ram_page <= '0' & Page3_reg;	
 								else 
-									ram_page <= "000000111";
+									ram_page <= "000" & Page3_reg(5 downto 0);	
 								end if;
-							 else
-								ram_page <= '0' & Page3_reg;
-							 end if;												-- Seg3 RAM C000-FFFF
+							 else 
+								ram_page <= "000000111";               -- Seg3 RAM C000-FFFF	
+							 end if;
 			when others => null;
 		end case;
 	end process;

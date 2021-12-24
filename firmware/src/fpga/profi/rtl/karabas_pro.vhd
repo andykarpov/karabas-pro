@@ -1395,8 +1395,8 @@ begin
 --		port_018b_reg <= (others => '0');
 		port_028b_reg <= (others => '0');
 		port_108b_reg <= (others => '0');
-		port_118b_reg <= (others => '0');
-		port_128b_reg <= (others => '0');
+		port_118b_reg <= "00000101";
+		port_128b_reg <= "00000010";
 		port_138b_reg <= (others => '0');
 		port_218b_reg <= "10000100";
 		dos_act <= '1';
@@ -1417,31 +1417,32 @@ begin
 				case port_218b_reg(7 downto 6) is
 					when "00" =>	port_dffd_reg(7 downto 3) <= cpu_do_bus(7 downto 3);
 										port_dffd_reg(2 downto 0) <= '0'&cpu_do_bus(1 downto 0);
-										port_218b_reg(3) <= cpu_do_bus(4);
+										port_218b_reg(5 downto 3) <= cpu_do_bus(6)&cpu_do_bus(3)&cpu_do_bus(4);
+										port_138b_reg(7 downto 3) <= "000"&cpu_do_bus(1 downto 0);
 					when "01" =>	port_dffd_reg <= "00000000";
-										port_218b_reg(3) <= '0';
+										port_218b_reg(5 downto 3) <= "000";
+										port_138b_reg(7 downto 3) <= "00000";
 					when "10" =>	if fd_port = '1' then
 											port_dffd_reg <= cpu_do_bus;
-											port_218b_reg(3) <= cpu_do_bus(4);
+											port_218b_reg(5 downto 3) <= cpu_do_bus(6)&cpu_do_bus(3)&cpu_do_bus(4);
+											port_138b_reg(7 downto 3) <= "00"&cpu_do_bus(2 downto 0);
 										end if;
 					when "11" =>	port_dffd_reg <= cpu_do_bus;
-										port_218b_reg(3) <= cpu_do_bus(4);
+										port_218b_reg(5 downto 3) <= cpu_do_bus(6)&cpu_do_bus(3)&cpu_do_bus(4);
+										port_138b_reg(7 downto 3) <= "00"&cpu_do_bus(2 downto 0);
 				end case;
 			end if;
 			
 			-- #7FFD
 			if cs_xxfd = '1' and cpu_wr_n = '0' and (port_7ffd_reg(5) = '0' or port_dffd_reg(4)='1') then -- short #FD
 				case port_218b_reg(7 downto 6) is
-					when "01" =>	port_7ffd_reg(5 downto 0) <= cpu_do_bus(5 downto 0);
+					when "01" =>	port_7ffd_reg <= cpu_do_bus;
 										port_218b_reg(0) <= cpu_do_bus(4);
-										port_dffd_reg <= "00000000";
-					when others =>	port_7ffd_reg(5 downto 0) <= cpu_do_bus(5 downto 0);
+										port_138b_reg(7 downto 0) <= "00000"&cpu_do_bus(2 downto 0);
+					when others =>	port_7ffd_reg <= cpu_do_bus;
 										port_218b_reg(0) <= cpu_do_bus(4);
+										port_138b_reg(2 downto 0) <= cpu_do_bus(2 downto 0);
 				end case;
-			end if;
-			
-			if cs_7ffd = '1' and cpu_wr_n = '0' and (port_7ffd_reg(5) = '0' or port_dffd_reg(4)='1') then -- short #FD
-			  port_7ffd_reg(7 downto 6) <= cpu_do_bus(7 downto 6);
 			end if;
 		
 			-- #xxC7
@@ -1508,6 +1509,8 @@ begin
 			if cs_218b = '1' and cpu_wr_n='0' then
 				port_218b_reg <= cpu_do_bus;
 				port_dffd_reg(4) <= cpu_do_bus(3);
+				port_dffd_reg(3) <= cpu_do_bus(4);
+				port_dffd_reg(6) <= cpu_do_bus(5);
 				port_7ffd_reg(4) <= cpu_do_bus(0);
 			end if;
 			
