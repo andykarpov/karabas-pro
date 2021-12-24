@@ -1325,8 +1325,7 @@ cs_xxfe <= '1' when cpu_iorq_n = '0' and cpu_a_bus(0) = '0' else '0';
 cs_xx7e <= '1' when cs_xxfe = '1' and cpu_a_bus(7) = '0' else '0';
 cs_eff7 <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and cpu_a_bus = X"EFF7" else '0';
 cs_fffd <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and cpu_a_bus = X"FFFD" and fd_port = '1' else '0';
---cs_dffd <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and cpu_a_bus = X"DFFD" and fd_port = '1' and lock_dffd = '0' else '0';
-cs_dffd <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and cpu_a_bus = X"DFFD" else '0';
+cs_dffd <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and cpu_a_bus = X"DFFD" and fd_port = '1' and lock_dffd = '0' else '0';
 cs_7ffd <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and cpu_a_bus = X"7FFD" and fd_port = '1' else '0';
 cs_xxfd <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and cpu_a_bus(15) = '0' and cpu_a_bus(1) = '0' else '0';
 
@@ -1380,7 +1379,7 @@ fdd_cs_n <= RT_F1 and P0;
 --portAS <= '1' when adress(9)='0' and adress(7)='1' and adress(5)='1' and adress(3 downto 0)=X"F" and iorq='0' and cpm='0' and rom14='1' else '0';
 --portDS <= '1' when adress(9)='0' and adress(7)='1' and adress(5)='0' and adress(3 downto 0)=X"F" and iorq='0' and cpm='0' and rom14='1' else '0';
 
-process (reset, areset, clk_bus, cpu_a_bus, dos_act, cs_xxfe, cs_eff7, cs_7ffd, cs_xxfd, port_7ffd_reg, cpu_mreq_n, cpu_m1_n, cpu_wr_n, cpu_do_bus, fd_port, cs_008b, soft_sw)
+process (reset, areset, clk_bus, cpu_a_bus, dos_act, cs_xxfe, cs_eff7, cs_7ffd, cs_xxfd, port_7ffd_reg, cpu_mreq_n, cpu_m1_n, cpu_wr_n, cpu_do_bus, fd_port, cs_008b)
 begin
 	if reset = '1' then
 		port_eff7_reg <= (others => '0');
@@ -1398,7 +1397,7 @@ begin
 		port_118b_reg <= "00000101";
 		port_128b_reg <= "00000010";
 		port_138b_reg <= (others => '0');
-		port_218b_reg <= "10000100";
+		port_218b_reg <= "00000100";
 		dos_act <= '1';
 	elsif clk_bus'event and clk_bus = '1' then
 
@@ -1414,35 +1413,28 @@ begin
 
 			-- #DFFD
 			if cs_dffd = '1' and cpu_wr_n = '0' then
-				case port_218b_reg(7 downto 6) is
-					when "00" =>	port_dffd_reg(7 downto 3) <= cpu_do_bus(7 downto 3);
-										port_dffd_reg(2 downto 0) <= '0'&cpu_do_bus(1 downto 0);
-										port_218b_reg(5 downto 3) <= cpu_do_bus(6)&cpu_do_bus(3)&cpu_do_bus(4);
-										port_138b_reg(7 downto 3) <= "000"&cpu_do_bus(1 downto 0);
-					when "01" =>	port_dffd_reg <= "00000000";
-										port_218b_reg(5 downto 3) <= "000";
-										port_138b_reg(7 downto 3) <= "00000";
-					when "10" =>	if fd_port = '1' then
-											port_dffd_reg <= cpu_do_bus;
-											port_218b_reg(5 downto 3) <= cpu_do_bus(6)&cpu_do_bus(3)&cpu_do_bus(4);
-											port_138b_reg(7 downto 3) <= "00"&cpu_do_bus(2 downto 0);
-										end if;
-					when "11" =>	port_dffd_reg <= cpu_do_bus;
-										port_218b_reg(5 downto 3) <= cpu_do_bus(6)&cpu_do_bus(3)&cpu_do_bus(4);
-										port_138b_reg(7 downto 3) <= "00"&cpu_do_bus(2 downto 0);
-				end case;
+				if port_218b_reg(7) = '0' then
+					port_dffd_reg <= cpu_do_bus;
+					port_218b_reg(5 downto 3) <= cpu_do_bus(6)&cpu_do_bus(3)&cpu_do_bus(4);
+					port_138b_reg(7 downto 3) <= "00"&cpu_do_bus(2 downto 0);
+				else 
+					port_dffd_reg <= "00000000";
+					port_218b_reg(5 downto 3) <= "000";
+					port_138b_reg(7 downto 3) <= "00000";
+				end if;
 			end if;
 			
 			-- #7FFD
 			if cs_xxfd = '1' and cpu_wr_n = '0' and (port_7ffd_reg(5) = '0' or port_dffd_reg(4)='1') then -- short #FD
-				case port_218b_reg(7 downto 6) is
-					when "01" =>	port_7ffd_reg <= cpu_do_bus;
-										port_218b_reg(0) <= cpu_do_bus(4);
-										port_138b_reg(7 downto 0) <= "00000"&cpu_do_bus(2 downto 0);
-					when others =>	port_7ffd_reg <= cpu_do_bus;
-										port_218b_reg(0) <= cpu_do_bus(4);
-										port_138b_reg(2 downto 0) <= cpu_do_bus(2 downto 0);
-				end case;
+				if port_218b_reg(7) = '0' then
+					port_7ffd_reg <= cpu_do_bus;
+					port_218b_reg(0) <= cpu_do_bus(4);
+					port_138b_reg(2 downto 0) <= cpu_do_bus(2 downto 0);
+				else
+					port_7ffd_reg <= cpu_do_bus;
+					port_218b_reg(0) <= cpu_do_bus(4);
+					port_138b_reg(7 downto 0) <= "00000"&cpu_do_bus(2 downto 0);
+				end if;
 			end if;
 		
 			-- #xxC7
@@ -1508,10 +1500,6 @@ begin
 			-- #218B MemConfig
 			if cs_218b = '1' and cpu_wr_n='0' then
 				port_218b_reg <= cpu_do_bus;
-				port_dffd_reg(4) <= cpu_do_bus(3);
-				port_dffd_reg(3) <= cpu_do_bus(4);
-				port_dffd_reg(6) <= cpu_do_bus(5);
-				port_7ffd_reg(4) <= cpu_do_bus(0);
 			end if;
 			
 			-- TR-DOS FLAG

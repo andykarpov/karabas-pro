@@ -274,31 +274,22 @@ begin
 	process (mux, RAM_EXT, RAM_BANK, SCR, SCO, RAM_6MB)
 	begin
 		case mux is
-			when "00" => ram_page <= '0' & Page0_reg;                 -- Seg0 ROM 0000-3FFF or Seg0 RAM 0000-3FFF	
-			when "01" => if SCO='0' then 
-								ram_page <= '0' & Page1_reg;
+			when "00" => ram_page <= '0' & Page0_reg;		-- Seg0 ROM 0000-3FFF
+			when "01" => if SCO='0' then
+								ram_page <= '0' & "00000101";
 							 else 
-								if RAM_6MB = '1' then 
-									ram_page <= '0' & Page3_reg; 
-								else 
-									ram_page <= "000" & Page3_reg(5 downto 0); 
-								end if;
-							 end if;	                               -- Seg1 RAM 4000-7FFF	
+								ram_page <= '0' & Page3_reg; 
+							 end if;									-- Seg1 RAM 4000-7FFF	
 			when "10" => if SCR='0' then 
-								ram_page <= '0' & Page2_reg; 	
+								ram_page <= '0' & "00000010";
 							 else 
-								ram_page <= "000000110"; 
-							 end if;                                -- Seg2 RAM 8000-BFFF
+								ram_page <= '0' & "00000110"; 
+							 end if;									-- Seg2 RAM 8000-BFFF
 			when "11" => if SCO='0' then 
-								if RAM_6MB = '1' then 
-									ram_page <= '0' & Page3_reg;	
-								else 
-									ram_page <= "000" & Page3_reg(5 downto 0);	
-								end if;
+								ram_page <= '0' & Page3_reg;	
 							 else 
-								ram_page <= "000000111";               -- Seg3 RAM C000-FFFF	
-							 end if;
-			when others => null;
+								ram_page <= "000000111";
+							 end if;									-- Seg3 RAM C000-FFFF	
 		end case;
 	end process;
 	
