@@ -157,8 +157,7 @@ signal rom4				: std_logic;
 signal rom5				: std_logic;
 signal onrom			: std_logic;
 signal unlock_128		: std_logic;
-signal turbo_off		: std_logic;
-signal turbo_on		: std_logic;
+signal turbo_mode		: std_logic_vector(1 downto 0) := "00";
 signal lock_dffd		: std_logic;
 signal sound_off		: std_logic;
 signal hdd_type		: std_logic;
@@ -172,6 +171,7 @@ signal kb_reset 		: std_logic := '0';
 signal kb_magic 		: std_logic := '0';
 signal kb_special 	: std_logic := '0';
 signal kb_turbo 		: std_logic_vector(1 downto 0) := "00";
+signal kb_turbo_old	: std_logic_vector(1 downto 0) := "00";
 signal kb_wait 		: std_logic := '0';
 signal kb_mode 		: std_logic := '1';
 signal joy_type 		: std_logic := '0';
@@ -355,7 +355,6 @@ signal vid_rd 			: std_logic := '0';
 signal vid_rd2 		: std_logic := '0';
 signal ext_rom_bank  : std_logic_vector(1 downto 0) := "00";
 signal ext_rom_bank_pq	: std_logic_vector(1 downto 0) := "00";
-signal turbo_cpu 		: std_logic_vector(1 downto 0) := "00";
 signal max_turbo 		: std_logic_vector(1 downto 0) := "11";
 
 -- Loader
@@ -680,7 +679,7 @@ port map (
 	RESET 			=> reset,	
 	BORDER 			=> port_xxfe_reg(7 downto 0),
 	DI 				=> vid_do_bus,
-	TURBO 			=> turbo_cpu,	-- turbo signal for int length
+	TURBO 			=> turbo_mode,	-- turbo signal for int length
 	INTA 				=> cpu_inta_n,
 	INT 				=> cpu_int_n,
 	pFF_CS			=> vid_pff_cs, -- port FF select
@@ -1127,9 +1126,7 @@ reset <= areset or kb_reset or loader_reset or loader_act or board_reset; -- hot
 cpu_reset_n <= not(reset) and not(loader_reset); -- CPU reset
 cpu_inta_n <= cpu_iorq_n or cpu_m1_n;	-- INTA
 cpu_nmi_n <= '0' when kb_magic = '1' and ((cpu_m1_n = '0' and cpu_mreq_n = '0' and cpu_a_bus(15 downto 14) /= "00") or DS80 = '1') else '1'; -- NMI
---cpu_wait_n <= '0' when kb_wait = '1' else '1'; -- WAIT
 cpu_wait_n <= '1';
-turbo_cpu <= kb_turbo when (kb_turbo /= "00" or turbo_on = '1') and turbo_off = '0' else "00";
 
 -- max turbo = 14 MHz for 2 port vram
 --G_MAX_TURBO_2PORT: if enable_2port_vram generate 
@@ -1142,9 +1139,9 @@ turbo_cpu <= kb_turbo when (kb_turbo /= "00" or turbo_on = '1') and turbo_off = 
 --end generate G_MAX_TURBO_SRAM;
 
 clk_cpu <= '0' when kb_wait = '1' or  (kb_screen_mode = "01" and memory_contention = '1' and DS80 = '0') or WAIT_IO = '0' else 
-	clk_bus when kb_turbo = "11"  and turbo_off = '0'and kb_turbo <= max_turbo else 
-	clk_bus and ena_div2 when kb_turbo = "10" and turbo_off = '0' and kb_turbo <= max_turbo else 
-	clk_bus and ena_div4 when kb_turbo = "01" and turbo_off = '0' and kb_turbo <= max_turbo else 
+	clk_bus when turbo_mode = "11" and turbo_mode <= max_turbo else 
+	clk_bus and ena_div2 when turbo_mode = "10" and turbo_mode <= max_turbo else 
+	clk_bus and ena_div4 when turbo_mode = "01" and turbo_mode <= max_turbo else 
 	clk_bus and ena_div8;
 
 -- odnovibrator - po spadu nIORQ otschityvaet 400ns WAIT proca
@@ -1153,7 +1150,7 @@ clk_cpu <= '0' when kb_wait = '1' or  (kb_screen_mode = "01" and memory_contenti
 
 WAIT_IO <= WAIT_C(1);
 WAIT_C_STOP <=WAIT_C(1) and not WAIT_C(0);
-WAIT_EN <= reset or not turbo_cpu(1);
+WAIT_EN <= reset or not turbo_mode(1);
 process (ena_div2, cpu_mreq_n, WAIT_EN, WAIT_C_STOP) 	
 	begin					
 		if ena_div2'event and ena_div2='0' then
@@ -1168,8 +1165,6 @@ process (ena_div2, cpu_mreq_n, WAIT_EN, WAIT_C_STOP)
 			end if;
 		end if;
 	end process;
-
---PIN_138	<= WAIT_IO;
 
 -- HDD / SD access
 led1_overwrite <= '1';
@@ -1284,16 +1279,15 @@ unlock_128 <= port_008b_reg(7);									-- 7 - Unlock 128 ROM page for DOS
 --cs_018b <='1' when cpu_a_bus(15 downto 0)=X"018B" and cpu_iorq_n='0' and cpu_m1_n = '1' and ((cpm='1' and rom14='1') or (dos_act='1' and rom14='0')) else '0';
 
 -- Config PORT X"028B"
-cs_028b <='1' when cpu_a_bus(15 downto 0)=X"028B" and cpu_iorq_n='0' and cpu_m1_n = '1' and ((cpm='1' and rom14='1') or (dos_act='1' and rom14='0')) else '0';
+cs_028b <='1' when cpu_a_bus(15 downto 0)=X"028B" and cpu_iorq_n='0' and cpu_m1_n = '1' else '0';
 
-hdd_off <= port_028b_reg(0);										-- 0 - HDD_off
-hdd_type <= port_028b_reg(1);										-- 1 - HDD type Profi/Nemo
-turbo_fdc_off <= not port_028b_reg(2) and soft_sw(5);		-- 2 - TURBO_FDC_off
-fdc_swap <= port_028b_reg(3) or soft_sw(10);					-- 3 - Floppy Disk Drive Selector Change
-sound_off <= port_028b_reg(4);									-- 4 - Sound_off
-turbo_off <= port_028b_reg(5);									-- 5 - Forced Turbo Off
-turbo_on <=  port_028b_reg(6); 									-- 6 - Forced Turbo on
-lock_dffd <= port_028b_reg(7);								 	-- 7 - Lock port DFFD
+hdd_off <= port_028b_reg(0);										-- 0 	- HDD_off
+hdd_type <= port_028b_reg(1);										-- 1 	- HDD type Profi/Nemo
+turbo_fdc_off <= not port_028b_reg(2) and soft_sw(5);		-- 2 	- TURBO_FDC_off
+fdc_swap <= port_028b_reg(3) or soft_sw(10);					-- 3 	- Floppy Disk Drive Selector Change
+sound_off <= port_028b_reg(4);									-- 4 	- Sound_off
+turbo_mode <= port_028b_reg(6 downto 5);						-- 5,6- Turbo Mode Selector 
+lock_dffd <= port_028b_reg(7);								 	-- 7 	- Lock port DFFD
 
 -- Config PORT X"108B"
 cs_108b <='1' when cpu_a_bus(15 downto 0)=X"108B" and cpu_iorq_n='0' and cpu_m1_n = '1' else '0';
@@ -1379,7 +1373,7 @@ fdd_cs_n <= RT_F1 and P0;
 --portAS <= '1' when adress(9)='0' and adress(7)='1' and adress(5)='1' and adress(3 downto 0)=X"F" and iorq='0' and cpm='0' and rom14='1' else '0';
 --portDS <= '1' when adress(9)='0' and adress(7)='1' and adress(5)='0' and adress(3 downto 0)=X"F" and iorq='0' and cpm='0' and rom14='1' else '0';
 
-process (reset, areset, clk_bus, cpu_a_bus, dos_act, cs_xxfe, cs_eff7, cs_7ffd, cs_xxfd, port_7ffd_reg, cpu_mreq_n, cpu_m1_n, cpu_wr_n, cpu_do_bus, fd_port, cs_008b)
+process (reset, areset, clk_bus, cpu_a_bus, dos_act, cs_xxfe, cs_eff7, cs_7ffd, cs_xxfd, port_7ffd_reg, cpu_mreq_n, cpu_m1_n, cpu_wr_n, cpu_do_bus, fd_port, cs_008b, kb_turbo, kb_turbo_old)
 begin
 	if reset = '1' then
 		port_eff7_reg <= (others => '0');
@@ -1399,6 +1393,7 @@ begin
 		port_138b_reg <= (others => '0');
 		port_218b_reg <= "00000100";
 		dos_act <= '1';
+		kb_turbo_old <= "00";
 	elsif clk_bus'event and clk_bus = '1' then
 
 			-- #EFF7
@@ -1436,7 +1431,7 @@ begin
 					port_138b_reg(7 downto 0) <= "00000"&cpu_do_bus(2 downto 0);
 				end if;
 			end if;
-		
+
 			-- #xxC7
 			if cs_xxC7 = '1' and cpu_wr_n = '0' then
 				port_xxC7_reg <= cpu_do_bus;
@@ -1475,6 +1470,9 @@ begin
 			-- #028B
 			if cs_028b = '1' and cpu_wr_n='0' then
 				port_028b_reg <= cpu_do_bus;
+			elsif kb_turbo /= kb_turbo_old then
+				port_028b_reg (6 downto 5) <= kb_turbo (1 downto 0);
+				kb_turbo_old <= kb_turbo;
 			end if;
 			
 			-- #108B Page0
