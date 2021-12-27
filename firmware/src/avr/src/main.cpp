@@ -101,6 +101,10 @@ void process_in_cmd(uint8_t cmd, uint8_t data)
   }
 #endif
 
+  if (cmd == CMD_RTC_BANK) {
+    zxrtc.setBank(data);
+  }
+
   if (cmd >= CMD_RTC_WRITE && cmd < CMD_RTC_WRITE + 64) {
     // write rtc register
     zxrtc.setReg(cmd - CMD_RTC_WRITE, data);

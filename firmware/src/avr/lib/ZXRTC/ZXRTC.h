@@ -34,6 +34,8 @@
 #define CMD_RTC_WRITE 0x80 // + regnum 0e-3f (128 ... 191)
 // RTC INIT command
 #define CMD_RTC_INIT_REQ 0xFC // rtc init request
+// RTC BANK command (0..3)
+#define CMD_RTC_BANK 0xFB // rtc bank to transfer
 
 class ZXRTC
 {
@@ -59,6 +61,8 @@ private:
   uint8_t rtc_hours_alarm = 0;
   uint8_t rtc_week = 1;
 
+  uint8_t rtc_bank = 0;
+
   uint8_t rtc_last_write_reg = 0;
   uint8_t rtc_last_write_data = 0;
 
@@ -80,10 +84,13 @@ public:
 
   void save();
   void fixInvalidTime();
+  void sendBank(uint8_t bank);
   void send(uint8_t reg, uint8_t data);
   void sendTime();
   void sendAll();
 
+  uint8_t getBank();
+  void setBank(uint8_t bank);
   void setReg(uint8_t reg, uint8_t data);
 
   void readAll();
