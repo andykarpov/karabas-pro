@@ -30,7 +30,7 @@ entity avr is
 	 MS_DELTA_X : out signed(7 downto 0) := "00000000";
 	 MS_DELTA_Y : out signed(7 downto 0) := "00000000";
 	 
-	 RTC_A 		: in std_logic_vector(5 downto 0);
+	 RTC_A 		: in std_logic_vector(7 downto 0);
 	 RTC_DI 		: in std_logic_vector(7 downto 0);
 	 RTC_DO 		: out std_logic_vector(7 downto 0);
 	 RTC_CS 		: in std_logic := '0';
@@ -104,9 +104,12 @@ architecture RTL of avr is
 	 
 	 -- rtc 2-port ram signals
 	 signal rtcw_di 			: std_logic_vector(7 downto 0);
-	 signal rtcw_a 			: std_logic_vector(5 downto 0);
+	 signal rtcw_a 			: std_logic_vector(7 downto 0);
+	 signal rtc_bank 			: std_logic_vector(1 downto 0);
 	 signal rtcw_wr 			: std_logic := '0';
 	 signal rtcr_do 			: std_logic_vector(7 downto 0);
+	 signal tmp_rtcw_a 		: std_logic_vector(5 downto 0);
+	 signal tmp_rtcw_d 		: std_logic_vector(7 downto 0);
 	
 	-- rtc fifo 
 	signal queue_di			: std_logic_vector(15 downto 0);
@@ -128,7 +131,7 @@ architecture RTL of avr is
 		wait_loader_done, wait_init, init_ack, 
 		idle, 
 		build_req, build_data, build_ack, 
-		rtc_wr_req, rtc_wr_ack,
+		rtc_wr_req, rtc_wr_bank_ack, rtc_wr_data, rtc_wr_ack,
 		led_req, led_ack);
 	signal qstate : qmachine := wait_loader_done;
 	
@@ -243,6 +246,10 @@ begin
 					when X"F0"|X"F1"|X"F2"|X"F3"|X"F4"|X"F5"|X"F6"|X"F7" =>
 						tx_build <= '1';
 						tx_build_pos <= spi_do(10 downto 8);
+						
+					-- rtc bank
+					when X"FB" => 
+						rtc_bank <= spi_do(1 downto 0);
 						
 					when X"FD" => 
 						fpga_init_req <= '1';
@@ -498,10 +505,23 @@ begin
 					queue_wr_req <= '0';	
 					qstate <= idle;
 					
-				-- RTC write request
+				-- RTC write request (sending a bank, then address + data)
 				when rtc_wr_req => 
 					queue_wr_req <= '1';
-					queue_di <= "10" & RTC_A & RTC_DI;
+					queue_di <= x"FB" & "000000" & RTC_A(7 downto 6);
+					tmp_rtcw_a <= RTC_A(5 downto 0);
+					tmp_rtcw_d <= RTC_DI;
+					qstate <= rtc_wr_bank_ack;
+				
+				-- RTC send bank ack
+				when rtc_wr_bank_ack =>
+					queue_wr_req <= '0';
+					qstate <= rtc_wr_data;
+				
+				-- RTC write data
+				when rtc_wr_data =>	
+					queue_wr_req <= '1';
+					queue_di <= "10" & tmp_rtcw_a & tmp_rtcw_d;
 					qstate <= rtc_wr_ack;
 					
 				-- RTC write request end
@@ -540,7 +560,7 @@ begin
 			elsif rtc_cmd(7 downto 6) = "01" then
 				-- rtc from avr
 				rtcw_wr <= '1';
-				rtcw_a <= rtc_cmd(5 downto 0);
+				rtcw_a <= rtc_bank & rtc_cmd(5 downto 0);
 				rtcw_di <= rtc_data;
 			end if;
 		end if;
