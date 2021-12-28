@@ -35,13 +35,13 @@ architecture RTL of cpld_kbd is
 
 	 -- spi
 	 signal spi_do_valid : std_logic := '0';
-	 signal spi_do : std_logic_vector(15 downto 0);
+	 signal spi_do : std_logic_vector(23 downto 0);
 	 
 begin
 
 U_SPI: entity work.spi_slave
     generic map(
-        N              => 16 -- 2 bytes (cmd + data)       
+        N              => 24 -- 3 bytes (cmd + reg + data)       
     )
     port map(
         clk_i          => CLK,
@@ -51,7 +51,7 @@ U_SPI: entity work.spi_slave
         spi_miso_o     => AVR_MISO,
 
         di_req_o       => open,
-        di_i           => x"FD" & CFG, -- AVR init command
+        di_i           => x"FD" & x"00" & CFG, -- AVR init command
         wren_i         => '1',
         do_valid_o     => spi_do_valid,
         do_o           => spi_do,
@@ -69,21 +69,28 @@ process (CLK, spi_do_valid, spi_do)
 begin
 	if (rising_edge(CLK)) then
 		if spi_do_valid = '1' then
-			case spi_do(15 downto 8) is 
-				-- keyboard matrix
-				when X"01" => kb_data(7 downto 0) <= spi_do (7 downto 0);
-				when X"02" => kb_data(15 downto 8) <= spi_do (7 downto 0);
-				when X"03" => kb_data(23 downto 16) <= spi_do (7 downto 0);
-				when X"04" => kb_data(31 downto 24) <= spi_do (7 downto 0);
-				when X"05" => kb_data(39 downto 32) <= spi_do (7 downto 0);
-				when X"06" => kb_data(40) <= spi_do (0); 
-								  rst <= spi_do(1);			-- RESET hotkey
-								  SCANLINES <= spi_do(2);  -- TURBO hotkey
+			case spi_do(23 downto 16) is
+
+				-- keyboard
+				when x"01" =>
+					case spi_do(15 downto 8) is 
+						-- keyboard matrix
+						when X"01" => kb_data(7 downto 0) <= spi_do (7 downto 0);
+						when X"02" => kb_data(15 downto 8) <= spi_do (7 downto 0);
+						when X"03" => kb_data(23 downto 16) <= spi_do (7 downto 0);
+						when X"04" => kb_data(31 downto 24) <= spi_do (7 downto 0);
+						when X"05" => kb_data(39 downto 32) <= spi_do (7 downto 0);
+						when X"06" => kb_data(40) <= spi_do (0);
+										  rst <= spi_do(1);			-- RESET hotkey
+										  SCANLINES <= spi_do(2);  -- TURBO hotkey
+						when others => null;
+					end case;
+
 				-- joy data
 				when X"0D" => joy(4 downto 0) <= spi_do(5 downto 2) & spi_do(0); -- right, left,  down, up, fire2, fire
-				
+	
 				when others => null;
-			end case;	
+			end case;
 		end if;
 	end if;
 end process;		  
