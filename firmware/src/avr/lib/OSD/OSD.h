@@ -32,7 +32,7 @@
 class OSD : public Print
 {
 
-  using m_cb = void (*)(uint8_t addr, uint8_t data); // alias function pointer
+  using m_cb = void (*)(uint8_t cmd, uint8_t addr, uint8_t data); // alias function pointer
 
 private:
   uint8_t fg_color;

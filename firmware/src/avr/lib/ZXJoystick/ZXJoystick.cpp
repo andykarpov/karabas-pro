@@ -133,7 +133,7 @@ uint8_t ZXJoystick::getJoyByte()
 void ZXJoystick::transmit()
 {
   uint8_t data = getJoyByte();
-  action(CMD_JOY, data);
+  action(CMD_JOY, 0, data);
 }
 
 

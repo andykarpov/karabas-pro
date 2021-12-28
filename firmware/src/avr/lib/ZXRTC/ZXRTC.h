@@ -28,18 +28,15 @@
 #define RTC_ADDRESS 0xA0
 #define EEPROM_RTC_OFFSET 0x10
 
-// RTC RD command
-#define CMD_RTC_READ 0x40 // + regnum 0e-3f (64 ... 127)
-// RTC WR command 
-#define CMD_RTC_WRITE 0x80 // + regnum 0e-3f (128 ... 191)
 // RTC INIT command
-#define CMD_RTC_INIT_REQ 0xFC // rtc init request
-// RTC BANK command (0..3)
-#define CMD_RTC_BANK 0xFB // rtc bank to transfer
+#define CMD_RTC_INIT_REQ 0xFC
+
+// RTC DATA XCHANGE command
+#define CMD_RTC 0xFA
 
 class ZXRTC
 {
-  using spi_cb = void (*)(uint8_t addr, uint8_t data); // alias function pointer
+  using spi_cb = void (*)(uint8_t cmd, uint8_t addr, uint8_t data); // alias function pointer
   using osd_cb = void (*)(void); // alias function pointer
 
 private:
@@ -61,10 +58,8 @@ private:
   uint8_t rtc_hours_alarm = 0;
   uint8_t rtc_week = 1;
 
-  uint8_t rtc_bank = 0;
-
-  uint8_t rtc_last_write_reg = 0;
-  uint8_t rtc_last_write_data = 0;
+  volatile int rtc_last_write_reg = 0;
+  volatile uint8_t rtc_last_write_data = 0;
 
   bool rtc_init_done = false;
   bool rtc_is_bcd = false;
@@ -84,14 +79,11 @@ public:
 
   void save();
   void fixInvalidTime();
-  void sendBank(uint8_t bank);
   void send(uint8_t reg, uint8_t data);
   void sendTime();
   void sendAll();
 
-  uint8_t getBank();
-  void setBank(uint8_t bank);
-  void setReg(uint8_t reg, uint8_t data);
+  void setData(uint8_t addr, uint8_t data);
 
   void readAll();
 
