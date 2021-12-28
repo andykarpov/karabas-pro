@@ -84,11 +84,15 @@ architecture RTL of memory is
 	signal buf_md		: std_logic_vector(7 downto 0) := "11111111";
 	signal is_buf_wr	: std_logic := '0';
 
-	signal is_rom : std_logic := '0';
-	signal is_ram : std_logic := '0';
+	signal is_rom 		: std_logic := '0';
+	signal is_ram 		: std_logic := '0';
 	
-	signal rom_page : std_logic_vector(1 downto 0) := "00";
-	signal ram_page : std_logic_vector(8 downto 0) := "000000000";
+	signal rom_page	: std_logic_vector(1 downto 0) := "00";
+	signal ram_page 	: std_logic_vector(8 downto 0) := "000000000";
+	signal cpu_page0 	: std_logic_vector(8 downto 0) := "000000000";
+	signal cpu_page1 	: std_logic_vector(8 downto 0) := "000000000";
+	signal cpu_page2 	: std_logic_vector(8 downto 0) := "000000000";
+	signal cpu_page3 	: std_logic_vector(8 downto 0) := "000000000";
 
 	signal vbus_req	: std_logic := '1';
 	signal vbus_mode	: std_logic := '1';	
@@ -269,28 +273,45 @@ begin
 	rom_page <= (not(TRDOS)) & ROM_BANK;
 					
 	N_OE <= '0' when (is_ram = '1' or is_rom = '1') and N_RD = '0' else '1';
+	
+	process( CLK2X, MemConfig_reg, Page0_reg, Page1_reg, Page2_reg, Page3_reg, RAM_EXT, RAM_BANK, SCR, SCO)
+		begin
+			if CLK2X'event and CLK2X = '1' then 
+				if MemConfig_reg(6) = '1' then
+					cpu_page0 <= '0' & Page0_reg;
+					cpu_page1 <= '0' & Page1_reg;
+					cpu_page2 <= '0' & Page2_reg;
+					cpu_page3 <= '0' & Page3_reg;
+				else
+					cpu_page0 <= '0' & "00000000";
+					
+					if SCO='0' then
+						cpu_page1 <= '0' & "00000101";
+						cpu_page3 <= '0' & RAM_EXT & RAM_BANK;
+					else 
+						cpu_page1 <= '0' & RAM_EXT & RAM_BANK;
+						cpu_page3 <= '0' & "00000111";
+					end if;
+					
+					if SCR='0' then 
+						cpu_page2 <= '0' & "00000010";
+					else 
+						cpu_page2 <= '0' & "00000110";
+					end if;
+
+				end if;		
+			end if;		
+		end process;
 		
 	mux <= A(15 downto 14);
 		
-	process (mux, RAM_EXT, RAM_BANK, SCR, SCO, RAM_6MB)
+	process (mux, cpu_page0, cpu_page1, cpu_page2, cpu_page3)
 	begin
 		case mux is
-			when "00" => ram_page <= '0' & "00000000";		-- Seg0 ROM 0000-3FFF
-			when "01" => if SCO='0' then
-								ram_page <= '0' & "00000101";
-							 else 
-								ram_page <= '0' & RAM_EXT & RAM_BANK; 
-							 end if;									-- Seg1 RAM 4000-7FFF	
-			when "10" => if SCR='0' then 
-								ram_page <= '0' & "00000010";
-							 else 
-								ram_page <= '0' & "00000110"; 
-							 end if;									-- Seg2 RAM 8000-BFFF
-			when "11" => if SCO='0' then 
-								ram_page <= '0' & RAM_EXT & RAM_BANK;	
-							 else 
-								ram_page <= "000000111";
-							 end if;									-- Seg3 RAM C000-FFFF	
+			when "00" => ram_page <= cpu_page0;		-- Seg0 ROM 0000-3FFF
+			when "01" => ram_page <= cpu_page1;		-- Seg1 RAM 4000-7FFF	
+			when "10" => ram_page <= cpu_page2;		-- Seg2 RAM 8000-BFFF
+			when "11" => ram_page <= cpu_page3;		-- Seg3 RAM C000-FFFF	
 		end case;
 	end process;
 	

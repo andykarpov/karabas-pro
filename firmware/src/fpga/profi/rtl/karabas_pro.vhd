@@ -1637,7 +1637,7 @@ port map(
 
 process (selector, cpu_a_bus, gx0, serial_ms_do_bus, ram_do_bus, mc146818_do_bus, kb_do_bus, zc_do_bus, ssg_cn0_bus, ssg_cn1_bus, port_7ffd_reg, port_dffd_reg, zxuno_uart_do_bus,
 			zxuno_uart2_do_bus, cpld_do, vid_attr, port_eff7_reg, joy_bus, ms_z, ms_b, ms_x, ms_y, zxuno_addr_to_cpu, port_xxC7_reg, flash_rdy, flash_busy, flash_do_bus, port_008b_reg,
-			port_028b_reg, TAPE_IN, port_128b_reg, port_138b_reg, board_revision)
+			port_028b_reg, TAPE_IN, port_128b_reg, port_138b_reg, board_revision, port_218b_reg)
 begin
 	case selector is
 		when x"00" => cpu_di_bus <= ram_do_bus;
