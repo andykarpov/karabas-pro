@@ -116,7 +116,7 @@ void ZXRTC::sendTime() {
 
 void ZXRTC::sendAll() {
   uint8_t data;
-  for (uint8_t reg = 0; reg < 255; reg++) {
+  for (int reg = 0; reg <= 255; reg++) {
     switch (reg) {
       case 0: send(reg, rtc_is_bcd ? bin2bcd(rtc_seconds) : rtc_seconds); break;
       case 1: send(reg, rtc_is_bcd ? bin2bcd(rtc_seconds_alarm) : rtc_seconds_alarm); break;
