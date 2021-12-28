@@ -1391,7 +1391,7 @@ begin
 		port_118b_reg <= "00000101";
 		port_128b_reg <= "00000010";
 		port_138b_reg <= (others => '0');
-		port_218b_reg <= "00000100";
+		port_218b_reg <= (others => '0');
 		dos_act <= '1';
 		kb_turbo_old <= "00";
 	elsif clk_bus'event and clk_bus = '1' then
@@ -1413,22 +1413,34 @@ begin
 					port_218b_reg(5 downto 3) <= cpu_do_bus(6)&cpu_do_bus(3)&cpu_do_bus(4);
 					port_138b_reg(7 downto 3) <= "00"&cpu_do_bus(2 downto 0);
 				else 
-					port_dffd_reg <= "00000000";
+					port_dffd_reg <= "00"&cpu_do_bus(5)&"00000";
 					port_218b_reg(5 downto 3) <= "000";
 					port_138b_reg(7 downto 3) <= "00000";
 				end if;
 			end if;
 			
 			-- #7FFD
-			if cs_xxfd = '1' and cpu_wr_n = '0' and (port_7ffd_reg(5) = '0' or port_dffd_reg(4)='1') then -- short #FD
+			if cs_xxfd = '1' and cpu_wr_n = '0' and (port_7ffd_reg(5) = '0' or port_218b_reg(3)='1') then -- short #FD
 				if port_218b_reg(7) = '0' then
-					port_7ffd_reg <= cpu_do_bus;
+					port_7ffd_reg(5 downto 0) <= cpu_do_bus(5 downto 0);
 					port_218b_reg(0) <= cpu_do_bus(4);
 					port_138b_reg(2 downto 0) <= cpu_do_bus(2 downto 0);
 				else
-					port_7ffd_reg <= cpu_do_bus;
+					port_7ffd_reg(7 downto 0) <= "00" & cpu_do_bus(5 downto 0);
 					port_218b_reg(0) <= cpu_do_bus(4);
-					port_138b_reg(7 downto 0) <= "00000"&cpu_do_bus(2 downto 0);
+					port_138b_reg(7 downto 0) <= "00000" & cpu_do_bus(2 downto 0);
+				end if;
+			end if;
+			
+			if cs_7ffd = '1' and cpu_wr_n = '0' and (port_7ffd_reg(5) = '0' or port_218b_reg(3)='1') then -- short #FD
+				if port_218b_reg(7) = '0' then
+					port_7ffd_reg(7 downto 6) <= cpu_do_bus(7 downto 6);
+					port_218b_reg(0) <= cpu_do_bus(4);
+					port_138b_reg(2 downto 0) <= cpu_do_bus(2 downto 0);
+				else
+					port_7ffd_reg(7 downto 6) <= "00";
+					port_218b_reg(0) <= cpu_do_bus(4);
+					port_138b_reg(7 downto 0) <= "00000" & cpu_do_bus(2 downto 0);
 				end if;
 			end if;
 
@@ -1650,9 +1662,10 @@ begin
 		when x"13" => cpu_di_bus <= port_028b_reg;
 		when x"14" => cpu_di_bus <= port_128b_reg;
 		when x"15" => cpu_di_bus <= port_138b_reg;
-		when x"16" => cpu_di_bus <= board_revision;
-		when x"17" => cpu_di_bus <= vid_attr;
-		when x"18" => cpu_di_bus <= cpld_do;
+		when x"16" => cpu_di_bus <= port_218b_reg;
+		when x"17" => cpu_di_bus <= board_revision;
+		when x"18" => cpu_di_bus <= vid_attr;
+		when x"19" => cpu_di_bus <= cpld_do;
 		when others => cpu_di_bus <= (others => '1');
 	end case;
 end process;
@@ -1680,9 +1693,10 @@ selector <=
 	x"13" when (cs_028b = '1' and cpu_rd_n = '0') else										-- port #028B
 	x"14" when (cs_128b = '1' and cpu_rd_n = '0') else										-- port #128B
 	x"15" when (cs_138b = '1' and cpu_rd_n = '0') else										-- port #138B
-	x"16" when (cs_008b = '1' and cpu_rd_n = '0') else										-- port #008B Board Revision
-	x"17" when (vid_pff_cs = '1' and cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_a_bus( 7 downto 0) = X"FF") and dos_act='0' and cpm = '0' and ds80 = '0' else -- Port FF select
-	x"18" when cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_m1_n = '1' else -- cpld 
+	x"16" when (cs_218b = '1' and cpu_rd_n = '0') else										-- port #218B
+	x"17" when (cs_008b = '1' and cpu_rd_n = '0') else										-- port #008B Board Revision
+	x"18" when (vid_pff_cs = '1' and cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_a_bus( 7 downto 0) = X"FF") and dos_act='0' and cpm = '0' and ds80 = '0' else -- Port FF select
+	x"19" when cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_m1_n = '1' else -- cpld 
 	(others => '1');
 	
 end rtl;
