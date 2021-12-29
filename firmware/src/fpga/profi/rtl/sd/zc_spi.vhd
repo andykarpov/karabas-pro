@@ -19,7 +19,7 @@ end;
 
 architecture spi_rtl of zc_spi is
 
-signal COUNTER      : std_logic_vector(3 downto 0) := "0000";
+signal COUNTER      : std_logic_vector(3 downto 0) := "1110";
 signal SHIFT_IN     : std_logic_vector(7 downto 0) := "00000000";
 signal SHIFT_OUT    : std_logic_vector(7 downto 0) := "11111111";
 signal COUNTER_EN   : std_logic;

@@ -40,7 +40,7 @@ entity bus_port is
     end bus_port;
 architecture RTL of bus_port is
 
-signal cnt			: std_logic_vector(1 downto 0) := "00";
+signal cnt			: std_logic_vector(1 downto 0) := "11";
 signal prev_clk_cpu : std_logic := '0';
 signal bus_a_reg	: std_logic_vector(15 downto 0);
 signal bus_d_reg	: std_logic_vector(7 downto 0);

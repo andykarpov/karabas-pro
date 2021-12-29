@@ -143,8 +143,8 @@ signal port_008b_reg	: std_logic_vector(7 downto 0) := "00000000";
 --signal port_018b_reg	: std_logic_vector(7 downto 0) := "00000000";
 signal port_028b_reg	: std_logic_vector(7 downto 0) := "00000000";
 signal port_108b_reg	: std_logic_vector(7 downto 0) := "00000000";	--Page0
-signal port_118b_reg	: std_logic_vector(7 downto 0) := "00000000";	--Page1
-signal port_128b_reg	: std_logic_vector(7 downto 0) := "00000000";	--Page2
+signal port_118b_reg	: std_logic_vector(7 downto 0) := "00000101";	--Page1
+signal port_128b_reg	: std_logic_vector(7 downto 0) := "00000010";	--Page2
 signal port_138b_reg	: std_logic_vector(7 downto 0) := "00000000";	--Page3
 signal port_218b_reg	: std_logic_vector(7 downto 0) := "00000000";	--MemConfig
 
@@ -160,10 +160,10 @@ signal unlock_128		: std_logic;
 signal turbo_mode		: std_logic_vector(1 downto 0) := "00";
 signal lock_dffd		: std_logic;
 signal sound_off		: std_logic;
-signal hdd_type		: std_logic;
+--signal hdd_type		: std_logic;
 signal fdc_swap		: std_logic;
 signal turbo_fdc_off	: std_logic;
-signal hdd_off			: std_logic;
+--signal hdd_off			: std_logic;
 
 -- Keyboard
 signal kb_do_bus		: std_logic_vector(5 downto 0);
@@ -1281,8 +1281,8 @@ unlock_128 <= port_008b_reg(7);									-- 7 - Unlock 128 ROM page for DOS
 -- Config PORT X"028B"
 cs_028b <='1' when cpu_a_bus(15 downto 0)=X"028B" and cpu_iorq_n='0' and cpu_m1_n = '1' else '0';
 
-hdd_off <= port_028b_reg(0);										-- 0 	- HDD_off
-hdd_type <= port_028b_reg(1);										-- 1 	- HDD type Profi/Nemo
+--hdd_off <= port_028b_reg(0);										-- 0 	- HDD_off
+--hdd_type <= port_028b_reg(1);										-- 1 	- HDD type Profi/Nemo
 turbo_fdc_off <= not port_028b_reg(2) and soft_sw(5);		-- 2 	- TURBO_FDC_off
 fdc_swap <= port_028b_reg(3) or soft_sw(10);					-- 3 	- Floppy Disk Drive Selector Change
 sound_off <= port_028b_reg(4);									-- 4 	- Sound_off
@@ -1304,9 +1304,9 @@ SDIR <= fdc_swap;
 
 --ext_rom_bank_pq <= ext_rom_bank when rom0 = '0' else "01";	-- ROMBANK ALT
 
-rom14 <= port_7ffd_reg(4); -- rom bank
+rom14 <= port_218b_reg(0); -- rom bank
 cpm 	<= port_dffd_reg(5); -- 1 - блокирует работу контроллера из ПЗУ TR-DOS и включает порты на доступ из ОЗУ (ROM14=0); При ROM14=1 - мод. доступ к расширен. периферии
-worom <= port_dffd_reg(4); -- 1 - отключает блокировку порта 7ffd и выключает ПЗУ, помещая на его место ОЗУ из seg 00
+worom <= port_218b_reg(3); -- 1 - отключает блокировку порта 7ffd и выключает ПЗУ, помещая на его место ОЗУ из seg 00
 ds80 	<= port_dffd_reg(7); -- 0 = seg05 spectrum bitmap, 1 = profi bitmap seg06 & seg 3a & seg 04 & seg 38
 scr 	<= port_dffd_reg(6); -- Проецирует дополнительный экран SEG06 на место SEG02 при этом бит D3 CMR0 должен быть в "1" (8000-BFFF) 
 sco 	<= port_dffd_reg(3); -- Выбор положения окна проецирования сегментов:
@@ -1344,12 +1344,12 @@ cs_rtc_ds <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and
 port_xxfe_reg <= cpu_do_bus when cs_xxfe = '1' and (cpu_wr_n'event and cpu_wr_n = '1');
 
 -- порты Profi HDD
-hdd_profi_ebl_n	<='0' when (cpu_a_bus(7)='1' and cpu_a_bus(4 downto 0)="01011" and cpu_iorq_n='0') and ((cpm='1' and rom14='1') or (dos_act='1' and rom14='0')) and hdd_off = '0' else '1';	-- ROM14=0 BAS=0 ПЗУ SYS
-hdd_wwc_n 	<='0' when (cpu_wr_n='0' and cpu_a_bus(7 downto 0)="11001011" and cpu_iorq_n='0') and ((cpm='1' and rom14='1') or (dos_act='1' and rom14='0')) and hdd_off = '0' else '1'; -- Write High byte from Data bus to "Write register"
-hdd_wwe_n 	<='0' when (cpu_wr_n='0' and cpu_a_bus(7 downto 0)="11101011" and cpu_iorq_n='0') and ((cpm='1' and rom14='1') or (dos_act='1' and rom14='0')) and hdd_off = '0' else '1'; -- Read High byte from "Write register" to HDD bus
-hdd_rww_n 	<='0' when (cpu_wr_n='1' and cpu_a_bus(7 downto 0)="11001011" and cpu_iorq_n='0') and ((cpm='1' and rom14='1') or (dos_act='1' and rom14='0')) and hdd_off = '0' else '1'; -- Selector Low byte Data bus Buffer Direction: 1 - to HDD bus, 0 - to Data bus
-hdd_rwe_n 	<='0' when (cpu_wr_n='1' and cpu_a_bus(7 downto 0)="11101011" and cpu_iorq_n='0') and ((cpm='1' and rom14='1') or (dos_act='1' and rom14='0')) and hdd_off = '0' else '1'; -- Read High byte from "Read register" to Data bus
-hdd_cs3fx_n <='0' when (cpu_wr_n='0' and cpu_a_bus(7 downto 0)="10101011" and cpu_iorq_n='0') and ((cpm='1' and rom14='1') or (dos_act='1' and rom14='0')) and hdd_off = '0' else '1';
+hdd_profi_ebl_n	<='0' when (cpu_a_bus(7)='1' and cpu_a_bus(4 downto 0)="01011" and cpu_iorq_n='0') and ((cpm='1' and rom14='1') or (dos_act='1' and rom14='0')) else '1';	-- ROM14=0 BAS=0 ПЗУ SYS
+hdd_wwc_n 	<='0' when (cpu_wr_n='0' and cpu_a_bus(7 downto 0)="11001011" and cpu_iorq_n='0') and ((cpm='1' and rom14='1') or (dos_act='1' and rom14='0')) else '1'; -- Write High byte from Data bus to "Write register"
+hdd_wwe_n 	<='0' when (cpu_wr_n='0' and cpu_a_bus(7 downto 0)="11101011" and cpu_iorq_n='0') and ((cpm='1' and rom14='1') or (dos_act='1' and rom14='0')) else '1'; -- Read High byte from "Write register" to HDD bus
+hdd_rww_n 	<='0' when (cpu_wr_n='1' and cpu_a_bus(7 downto 0)="11001011" and cpu_iorq_n='0') and ((cpm='1' and rom14='1') or (dos_act='1' and rom14='0')) else '1'; -- Selector Low byte Data bus Buffer Direction: 1 - to HDD bus, 0 - to Data bus
+hdd_rwe_n 	<='0' when (cpu_wr_n='1' and cpu_a_bus(7 downto 0)="11101011" and cpu_iorq_n='0') and ((cpm='1' and rom14='1') or (dos_act='1' and rom14='0')) else '1'; -- Read High byte from "Read register" to Data bus
+hdd_cs3fx_n <='0' when (cpu_wr_n='0' and cpu_a_bus(7 downto 0)="10101011" and cpu_iorq_n='0') and ((cpm='1' and rom14='1') or (dos_act='1' and rom14='0')) else '1';
 
 -- порты Profi FDD
 RT_F2_1 <='0' when (cpu_a_bus(7 downto 5)="001" and cpu_a_bus(1 downto 0)="11" and cpu_iorq_n='0') and ((cpm='1' and rom14='1') or (dos_act='1' and rom14='0')) else '1'; --6D
@@ -1513,8 +1513,8 @@ begin
 			end if;
 			
 			-- TR-DOS FLAG
-			if (((cpu_m1_n = '0' and cpu_mreq_n = '0' and cpu_a_bus(15 downto 8) = X"3D" and (rom14 = '1' or unlock_128 = '1')) or (cpu_nmi_n = '0'  and DS80 = '0')) and port_dffd_reg(4) = '0') or (onrom = '1') then dos_act <= '1';
-			elsif ((cpu_m1_n = '0' and cpu_mreq_n = '0' and cpu_a_bus(15 downto 14) /= "00") or (port_dffd_reg(4) = '1')) then dos_act <= '0'; end if;
+			if (((cpu_m1_n = '0' and cpu_mreq_n = '0' and cpu_a_bus(15 downto 8) = X"3D" and (rom14 = '1' or unlock_128 = '1')) or (cpu_nmi_n = '0'  and DS80 = '0')) and port_218b_reg(3) = '0') or (onrom = '1') then dos_act <= '1';
+			elsif ((cpu_m1_n = '0' and cpu_mreq_n = '0' and cpu_a_bus(15 downto 14) /= "00") or (port_218b_reg(3) = '1')) then dos_act <= '0'; end if;
 				
 	end if;
 end process;

@@ -87,7 +87,7 @@ architecture RTL of memory is
 	signal is_rom 		: std_logic := '0';
 	signal is_ram 		: std_logic := '0';
 	
-	signal rom_page	: std_logic_vector(1 downto 0) := "00";
+--	signal rom_page	: std_logic_vector(1 downto 0) := "00";
 	signal ram_page 	: std_logic_vector(8 downto 0) := "000000000";
 	signal cpu_page0 	: std_logic_vector(8 downto 0) := "000000000";
 	signal cpu_page1 	: std_logic_vector(8 downto 0) := "000000000";
@@ -179,7 +179,7 @@ begin
 			
 		MA(20 downto 0) <= 
 			loader_ram_a(20 downto 0) when loader_act = '1' else -- loader ram
-			"100" & EXT_ROM_BANK(1 downto 0) & rom_page(1 downto 0) & A(13 downto 0) when is_rom = '1' else -- rom from sram high bank 
+--			"100" & EXT_ROM_BANK(1 downto 0) & rom_page(1 downto 0) & A(13 downto 0) when is_rom = '1' else -- rom from sram high bank 
 			ram_page(6 downto 0) & A(13 downto 0);
 	
 	end generate G_2PORT_VRAM;
@@ -270,7 +270,7 @@ begin
 	-- 01 - bank 1, TRDOS
 	-- 10 - bank 2, Basic-128
 	-- 11 - bank 3, Basic-48
-	rom_page <= (not(TRDOS)) & ROM_BANK;
+--	rom_page <= (not(TRDOS)) & ROM_BANK;
 					
 	N_OE <= '0' when (is_ram = '1' or is_rom = '1') and N_RD = '0' else '1';
 	

@@ -86,7 +86,7 @@ architecture RTL of serial_mouse is
 	signal txrdt : std_logic := '0';
 	
 	signal cnt_wait : unsigned(2 downto 0) := "000";
-	signal cnt_byte : unsigned(1 downto 0) := "11";
+	signal cnt_byte : unsigned(1 downto 0) := "00";
 	
 	signal p4 : std_logic := '1';
 	signal vv51_cs : std_logic := '1';
