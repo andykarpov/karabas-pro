@@ -54,9 +54,12 @@ port (
 	
 	TRDOS 		: in std_logic;
 	
-	VA				: in std_logic_vector(13 downto 0);
-	VID_PAGE 	: in std_logic := '0';
-	VID_DO 		: out std_logic_vector(7 downto 0);
+	VA					: in std_logic_vector(13 downto 0);
+	VID_PAGE 		: in std_logic := '0';
+	VID_DO 			: out std_logic_vector(7 downto 0);
+	VPage_spec		: in std_logic_vector(7 downto 0);
+	VPage_pr_pix	: in std_logic_vector(7 downto 0);
+	VPage_pr_attr	: in std_logic_vector(7 downto 0);
 	
 	-- 2port vram read attr / pixel
 	VID_RD2 		: in std_logic; 
@@ -66,7 +69,7 @@ port (
 	VID_RD_O 	: out std_logic;
 	
 	DS80			: in std_logic := '0';
-	CPM 			: in std_logic := '0';
+--	CPM 			: in std_logic := '0';
 	SCO			: in std_logic := '0';
 	SCR 			: in std_logic := '0';
 	WOROM 		: in std_logic := '0';
@@ -225,9 +228,12 @@ begin
 			"10" & Page0_reg (4 downto 2) & (not TRDOS) & MemConfig_reg(0) when MemConfig_reg(6) = '1' and MemConfig_reg(2) = '1' and is_rom = '1' and vbus_mode = '0' else -- rom from sram high bank new mapper normal mode
 			"100" & EXT_ROM_BANK & (not TRDOS) & ROM_BANK when MemConfig_reg(6) = '0' and is_rom = '1' and vbus_mode = '0' else -- rom from sram high bank old mapper mode
 			ram_page(6 downto 0) when vbus_mode = '0' else 
-			"00001" & VID_PAGE & '1' when vbus_mode = '1' and DS80 = '0' else -- spectrum screen
-			"00001" & VID_PAGE & '0' when vbus_mode = '1' and DS80 = '1' and vid_rd = '0' else -- profi bitmap 
-			"01110" & VID_PAGE & '0' when vbus_mode = '1' and DS80 = '1' and vid_rd = '1' else -- profi attributes
+			"00001" & VID_PAGE & '1' when MemConfig_reg(6) = '0' and vbus_mode = '1' and DS80 = '0' else -- spectrum screen
+			"00001" & VID_PAGE & '0' when MemConfig_reg(6) = '0' and vbus_mode = '1' and DS80 = '1' and vid_rd = '0' else -- profi bitmap 
+			"01110" & VID_PAGE & '0' when MemConfig_reg(6) = '0' and vbus_mode = '1' and DS80 = '1' and vid_rd = '1' else -- profi attributes
+			VPage_spec(6 downto 0) when MemConfig_reg(6) = '1' and vbus_mode = '1' and DS80 = '0' else -- spectrum screen new mapper mode
+			VPage_pr_pix(6 downto 0) when MemConfig_reg(6) = '1' and vbus_mode = '1' and DS80 = '1' and vid_rd = '0' else -- profi bitmap new mapper mode 
+			VPage_pr_attr(6 downto 0) when MemConfig_reg(6) = '1' and vbus_mode = '1' and DS80 = '1' and vid_rd = '1' else -- profi attributes new mapper mode
 			"0000000";
 		
 		MD(7 downto 0) <= 

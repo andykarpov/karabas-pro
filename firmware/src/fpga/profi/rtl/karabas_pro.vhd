@@ -139,26 +139,29 @@ signal port_dffd_reg : std_logic_vector(7 downto 0) := "00000000";
 signal port_xx7e_reg : std_logic_vector(7 downto 0) := "00000000";
 signal port_xx7e_a   : std_logic_vector(15 downto 8) := "00000000";
 signal port_xx7e_aprev   : std_logic_vector(15 downto 8) := "00000000";
-signal port_008b_reg	: std_logic_vector(7 downto 0) := "00000000";
+--signal port_008b_reg	: std_logic_vector(7 downto 0) := "00000000";
 --signal port_018b_reg	: std_logic_vector(7 downto 0) := "00000000";
-signal port_028b_reg	: std_logic_vector(7 downto 0) := "00000000";
+signal port_028b_reg	: std_logic_vector(7 downto 0) := "00000000";	--Config Port
+signal port_038b_reg	: std_logic_vector(7 downto 0) := "00000000";	--Vpage Spectrum
+signal port_048b_reg	: std_logic_vector(7 downto 0) := "00000000";	--Vpage Profi Pixel
+signal port_058b_reg	: std_logic_vector(7 downto 0) := "00000000";	--Vpage Profi Attr
 signal port_108b_reg	: std_logic_vector(7 downto 0) := "00000000";	--Page0
-signal port_118b_reg	: std_logic_vector(7 downto 0) := "00000101";	--Page1
-signal port_128b_reg	: std_logic_vector(7 downto 0) := "00000010";	--Page2
+signal port_118b_reg	: std_logic_vector(7 downto 0) := "00000000";	--Page1
+signal port_128b_reg	: std_logic_vector(7 downto 0) := "00000000";	--Page2
 signal port_138b_reg	: std_logic_vector(7 downto 0) := "00000000";	--Page3
 signal port_218b_reg	: std_logic_vector(7 downto 0) := "00000000";	--MemConfig
 
 -------------8B_PORT------------------
-signal rom0				: std_logic;
-signal rom1				: std_logic;
-signal rom2				: std_logic;
-signal rom3				: std_logic;
-signal rom4				: std_logic;
-signal rom5				: std_logic;
+--signal rom0				: std_logic;
+--signal rom1				: std_logic;
+--signal rom2				: std_logic;
+--signal rom3				: std_logic;
+--signal rom4				: std_logic;
+--signal rom5				: std_logic;
 signal onrom			: std_logic;
-signal unlock_128		: std_logic;
+--signal unlock_128		: std_logic;
 signal turbo_mode		: std_logic_vector(1 downto 0) := "00";
-signal lock_dffd		: std_logic;
+--signal lock_dffd		: std_logic;
 signal sound_off		: std_logic;
 --signal hdd_type		: std_logic;
 signal fdc_swap		: std_logic;
@@ -231,13 +234,13 @@ signal mc146818_rd		: std_logic;
 signal mc146818_a_bus	: std_logic_vector(5 downto 0);
 signal mc146818_do_bus	: std_logic_vector(7 downto 0);
 signal mc146818_busy		: std_logic;
-signal port_eff7_reg		: std_logic_vector(7 downto 0);
+--signal port_eff7_reg		: std_logic_vector(7 downto 0);
 
 -- Port selectors
 signal fd_port 		: std_logic;
 signal fd_sel 			: std_logic;
 signal cs_xxfe 		: std_logic := '0'; 
-signal cs_eff7 		: std_logic := '0';
+--signal cs_eff7 		: std_logic := '0';
 signal cs_7ffd 		: std_logic := '0';
 signal cs_dffd 		: std_logic := '0';
 signal cs_fffd 		: std_logic := '0';
@@ -253,6 +256,9 @@ signal cs_rtc_as 		: std_logic := '0';
 signal cs_008b			: std_logic := '0';
 --signal cs_018b			: std_logic := '0';
 signal cs_028b			: std_logic := '0';
+signal cs_038b			: std_logic := '0';
+signal cs_048b			: std_logic := '0';
+signal cs_058b			: std_logic := '0';
 signal cs_108b			: std_logic := '0';	--Page0
 signal cs_118b			: std_logic := '0';	--Page1
 signal cs_128b			: std_logic := '0';	--Page2
@@ -644,6 +650,9 @@ port map (
 	VA 				=> vid_a_bus,
 	VID_PAGE 		=> port_7ffd_reg(3), -- seg A0 - seg A2
 	VID_DO 			=> vid_do_bus,
+	VPage_spec		=> port_038b_reg,
+	VPage_pr_pix	=> port_048b_reg,
+	VPage_pr_attr	=> port_058b_reg,
 	
 	-- sram vram
 	VBUS_MODE_O 	=> vbus_mode, 	-- video bus mode: 0 - ram, 1 - vram
@@ -653,7 +662,7 @@ port map (
 	VID_RD2 			=> vid_rd2,
 	
 	DS80 				=> ds80,
-	CPM 				=> cpm,
+--	CPM 				=> cpm,
 	SCO 				=> sco,
 	SCR 				=> scr,
 	WOROM 			=> worom,
@@ -1264,16 +1273,16 @@ begin
 end process;
 
 -- Config PORT X"008B"
-cs_008b <='1' when cpu_a_bus(15 downto 0)=X"008B" and cpu_iorq_n='0' and cpu_m1_n = '1' and ((cpm='1' and rom14='1') or (dos_act='1' and rom14='0')) else '0';
+cs_008b <='1' when cpu_a_bus(15 downto 0)=X"008B" and cpu_iorq_n='0' and cpu_m1_n = '1' else '0';
 
-rom0 <= port_008b_reg(0);											-- 0 - ROM64Kb PAGE bit 0 Change
-rom1 <= port_008b_reg(1);											-- 1 - ROM64Kb PAGE bit 1 Change
-rom2 <= port_008b_reg(2);											-- 2 - ROM64Kb PAGE bit 2 Change
-rom3 <= port_008b_reg(3);											-- 3 - ROM64Kb PAGE bit 3 Change
-rom4 <= port_008b_reg(4); 											-- 4 - ROM64Kb PAGE bit 4 Change
-rom5 <= port_008b_reg(5);										 	-- 5 - ROM64Kb PAGE bit 5 Change
-onrom <= port_008b_reg(6);											-- 6 - Forced activation of the signal "DOS"
-unlock_128 <= port_008b_reg(7);									-- 7 - Unlock 128 ROM page for DOS
+--rom0 <= port_008b_reg(0);											-- 0 - ROM64Kb PAGE bit 0 Change
+--rom1 <= port_008b_reg(1);											-- 1 - ROM64Kb PAGE bit 1 Change
+--rom2 <= port_008b_reg(2);											-- 2 - ROM64Kb PAGE bit 2 Change
+--rom3 <= port_008b_reg(3);											-- 3 - ROM64Kb PAGE bit 3 Change
+--rom4 <= port_008b_reg(4); 											-- 4 - ROM64Kb PAGE bit 4 Change
+--rom5 <= port_008b_reg(5);										 	-- 5 - ROM64Kb PAGE bit 5 Change
+onrom <= port_218b_reg(4);												-- 4 - Forced activation of the signal "DOS"
+--unlock_128 <= port_008b_reg(7);									-- 7 - Unlock 128 ROM page for DOS
 
 -- Config PORT X"018B"
 --cs_018b <='1' when cpu_a_bus(15 downto 0)=X"018B" and cpu_iorq_n='0' and cpu_m1_n = '1' and ((cpm='1' and rom14='1') or (dos_act='1' and rom14='0')) else '0';
@@ -1287,27 +1296,31 @@ turbo_fdc_off <= not port_028b_reg(2) and soft_sw(5);		-- 2 	- TURBO_FDC_off
 fdc_swap <= port_028b_reg(3) or soft_sw(10);					-- 3 	- Floppy Disk Drive Selector Change
 sound_off <= port_028b_reg(4);									-- 4 	- Sound_off
 turbo_mode <= port_028b_reg(6 downto 5);						-- 5,6- Turbo Mode Selector 
-lock_dffd <= port_028b_reg(7);								 	-- 7 	- Lock port DFFD
+cpm <= port_028b_reg(7);								 			-- 7 	- CP/M
 
--- Config PORT X"108B"
+-- Page0 PORT X"108B"
 cs_108b <='1' when cpu_a_bus(15 downto 0)=X"108B" and cpu_iorq_n='0' and cpu_m1_n = '1' else '0';
--- Config PORT X"118B"
+-- Page1 PORT X"118B"
 cs_118b <='1' when cpu_a_bus(15 downto 0)=X"118B" and cpu_iorq_n='0' and cpu_m1_n = '1' else '0';
--- Config PORT X"128B"
+-- Page2 PORT X"128B"
 cs_128b <='1' when cpu_a_bus(15 downto 0)=X"128B" and cpu_iorq_n='0' and cpu_m1_n = '1' else '0';
--- Config PORT X"138B"
+-- Page3 PORT X"138B"
 cs_138b <='1' when cpu_a_bus(15 downto 0)=X"138B" and cpu_iorq_n='0' and cpu_m1_n = '1' else '0';
--- Config PORT X"218B"
+-- MemConfig PORT X"218B"
 cs_218b <='1' when cpu_a_bus(15 downto 0)=X"218B" and cpu_iorq_n='0' and cpu_m1_n = '1' else '0';
+-- VPage Spectrum PORT X"038B"
+cs_038b <='1' when cpu_a_bus(15 downto 0)=X"038B" and cpu_iorq_n='0' and cpu_m1_n = '1' else '0';
+-- VPage Spectrum PORT X"048B"
+cs_048b <='1' when cpu_a_bus(15 downto 0)=X"048B" and cpu_iorq_n='0' and cpu_m1_n = '1' else '0';
+-- VPage Spectrum PORT X"058B"
+cs_058b <='1' when cpu_a_bus(15 downto 0)=X"058B" and cpu_iorq_n='0' and cpu_m1_n = '1' else '0';
 
 SDIR <= fdc_swap;
 
---ext_rom_bank_pq <= ext_rom_bank when rom0 = '0' else "01";	-- ROMBANK ALT
-
 rom14 <= port_218b_reg(0); -- rom bank
-cpm 	<= port_dffd_reg(5); -- 1 - блокирует работу контроллера из ПЗУ TR-DOS и включает порты на доступ из ОЗУ (ROM14=0); При ROM14=1 - мод. доступ к расширен. периферии
+--cpm 	<= port_dffd_reg(5); -- 1 - блокирует работу контроллера из ПЗУ TR-DOS и включает порты на доступ из ОЗУ (ROM14=0); При ROM14=1 - мод. доступ к расширен. периферии
 worom <= port_218b_reg(3); -- 1 - отключает блокировку порта 7ffd и выключает ПЗУ, помещая на его место ОЗУ из seg 00
-ds80 	<= port_dffd_reg(7); -- 0 = seg05 spectrum bitmap, 1 = profi bitmap seg06 & seg 3a & seg 04 & seg 38
+ds80 	<= port_218b_reg(5); -- 0 = seg05 spectrum bitmap, 1 = profi bitmap seg06 & seg 3a & seg 04 & seg 38
 scr 	<= port_dffd_reg(6); -- Проецирует дополнительный экран SEG06 на место SEG02 при этом бит D3 CMR0 должен быть в "1" (8000-BFFF) 
 sco 	<= port_dffd_reg(3); -- Выбор положения окна проецирования сегментов:
 									-- 0 - окно номер 1 (#C000-#FFFF)
@@ -1317,9 +1330,9 @@ ram_ext <= port_7ffd_reg(7 downto 6) & port_dffd_reg(2 downto 0);
 
 cs_xxfe <= '1' when cpu_iorq_n = '0' and cpu_a_bus(0) = '0' else '0';
 cs_xx7e <= '1' when cs_xxfe = '1' and cpu_a_bus(7) = '0' else '0';
-cs_eff7 <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and cpu_a_bus = X"EFF7" else '0';
+--cs_eff7 <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and cpu_a_bus = X"EFF7" else '0';
 cs_fffd <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and cpu_a_bus = X"FFFD" and fd_port = '1' else '0';
-cs_dffd <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and cpu_a_bus = X"DFFD" and fd_port = '1' and lock_dffd = '0' else '0';
+cs_dffd <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and cpu_a_bus = X"DFFD" and fd_port = '1' else '0';
 cs_7ffd <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and cpu_a_bus = X"7FFD" and fd_port = '1' else '0';
 cs_xxfd <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and cpu_a_bus(15) = '0' and cpu_a_bus(1) = '0' else '0';
 
@@ -1373,10 +1386,10 @@ fdd_cs_n <= RT_F1 and P0;
 --portAS <= '1' when adress(9)='0' and adress(7)='1' and adress(5)='1' and adress(3 downto 0)=X"F" and iorq='0' and cpm='0' and rom14='1' else '0';
 --portDS <= '1' when adress(9)='0' and adress(7)='1' and adress(5)='0' and adress(3 downto 0)=X"F" and iorq='0' and cpm='0' and rom14='1' else '0';
 
-process (reset, areset, clk_bus, cpu_a_bus, dos_act, cs_xxfe, cs_eff7, cs_7ffd, cs_xxfd, port_7ffd_reg, cpu_mreq_n, cpu_m1_n, cpu_wr_n, cpu_do_bus, fd_port, cs_008b, kb_turbo, kb_turbo_old)
+process (reset, areset, clk_bus, cpu_a_bus, dos_act, cs_xxfe, cs_7ffd, cs_xxfd, port_7ffd_reg, cpu_mreq_n, cpu_m1_n, cpu_wr_n, cpu_do_bus, fd_port, cs_008b, kb_turbo, kb_turbo_old)
 begin
 	if reset = '1' then
-		port_eff7_reg <= (others => '0');
+--		port_eff7_reg <= (others => '0');
 		port_7ffd_reg <= (others => '0');
 		port_dffd_reg <= (others => '0');
 		port_xxC7_reg <= (others => '0');
@@ -1384,12 +1397,15 @@ begin
 		port_xxA7_reg <= (others => '0');
 		port_xxE7_reg <= (others => '0');
 		port_xx67_reg <= (others => '0');
-		port_008b_reg <= (others => '0');
+--		port_008b_reg <= (others => '0');
 --		port_018b_reg <= (others => '0');
 		port_028b_reg <= (others => '0');
+		port_038b_reg <= (others => '0');
+		port_048b_reg <= (others => '0');
+		port_058b_reg <= (others => '0');
 		port_108b_reg <= (others => '0');
-		port_118b_reg <= "00000101";
-		port_128b_reg <= "00000010";
+		port_118b_reg <= (others => '0');
+		port_128b_reg <= (others => '0');
 		port_138b_reg <= (others => '0');
 		port_218b_reg <= (others => '0');
 		dos_act <= '1';
@@ -1397,9 +1413,9 @@ begin
 	elsif clk_bus'event and clk_bus = '1' then
 
 			-- #EFF7
-			if cs_eff7 = '1' and cpu_wr_n = '0' then 
-				port_eff7_reg <= cpu_do_bus; 
-			end if;
+--			if cs_eff7 = '1' and cpu_wr_n = '0' then 
+--				port_eff7_reg <= cpu_do_bus; 
+--			end if;
 			
 			-- profi RTC #BF / #FF
 			if cs_rtc_as = '1' and cpu_wr_n = '0' then 
@@ -1410,11 +1426,15 @@ begin
 			if cs_dffd = '1' and cpu_wr_n = '0' then
 				if port_218b_reg(7) = '0' then
 					port_dffd_reg <= cpu_do_bus;
-					port_218b_reg(5 downto 3) <= cpu_do_bus(6)&cpu_do_bus(3)&cpu_do_bus(4);
+					port_218b_reg(3) <= cpu_do_bus(4);
+					port_218b_reg(5) <= cpu_do_bus(7);
+					port_028b_reg(7) <= cpu_do_bus(5);
 					port_138b_reg(7 downto 3) <= "00"&cpu_do_bus(2 downto 0);
 				else 
-					port_dffd_reg <= "00"&cpu_do_bus(5)&"00000";
-					port_218b_reg(5 downto 3) <= "000";
+					port_dffd_reg <= "00000000";
+					port_218b_reg(3) <= '0';
+					port_218b_reg(5) <= '0';
+					port_028b_reg(7) <= '0';
 					port_138b_reg(7 downto 3) <= "00000";
 				end if;
 			end if;
@@ -1425,10 +1445,16 @@ begin
 					port_7ffd_reg(5 downto 0) <= cpu_do_bus(5 downto 0);
 					port_218b_reg(0) <= cpu_do_bus(4);
 					port_138b_reg(2 downto 0) <= cpu_do_bus(2 downto 0);
+					port_038b_reg <= "000001" & cpu_do_bus(3) & '1';
+					port_048b_reg <= "000001" & cpu_do_bus(3) & '0';
+					port_058b_reg <= "001110" & cpu_do_bus(3) & '0';
 				else
 					port_7ffd_reg(7 downto 0) <= "00" & cpu_do_bus(5 downto 0);
 					port_218b_reg(0) <= cpu_do_bus(4);
 					port_138b_reg(7 downto 0) <= "00000" & cpu_do_bus(2 downto 0);
+					port_038b_reg <= "000001" & cpu_do_bus(3) & '1';
+					port_048b_reg <= "000001" & cpu_do_bus(3) & '0';
+					port_058b_reg <= "001110" & cpu_do_bus(3) & '0';
 				end if;
 			end if;
 			
@@ -1437,10 +1463,16 @@ begin
 					port_7ffd_reg(7 downto 6) <= cpu_do_bus(7 downto 6);
 					port_218b_reg(0) <= cpu_do_bus(4);
 					port_138b_reg(2 downto 0) <= cpu_do_bus(2 downto 0);
+					port_038b_reg <= "000001" & cpu_do_bus(3) & '1';
+					port_048b_reg <= "000001" & cpu_do_bus(3) & '0';
+					port_058b_reg <= "001110" & cpu_do_bus(3) & '0';
 				else
 					port_7ffd_reg(7 downto 6) <= "00";
 					port_218b_reg(0) <= cpu_do_bus(4);
 					port_138b_reg(7 downto 0) <= "00000" & cpu_do_bus(2 downto 0);
+					port_038b_reg <= "000001" & cpu_do_bus(3) & '1';
+					port_048b_reg <= "000001" & cpu_do_bus(3) & '0';
+					port_058b_reg <= "001110" & cpu_do_bus(3) & '0';
 				end if;
 			end if;
 
@@ -1470,9 +1502,9 @@ begin
 			end if;
 			
 			-- #008B
-			if cs_008b = '1' and cpu_wr_n='0' then
-				port_008b_reg <= cpu_do_bus;
-			end if;
+--			if cs_008b = '1' and cpu_wr_n='0' then
+--				port_008b_reg <= cpu_do_bus;
+--			end if;
 			
 			-- #018B
 --			if cs_018b = '1' and cpu_wr_n='0' then
@@ -1512,8 +1544,23 @@ begin
 				port_218b_reg <= cpu_do_bus;
 			end if;
 			
+			-- #038B MemConfig
+			if cs_038b = '1' and cpu_wr_n='0' then
+				port_038b_reg <= cpu_do_bus;
+			end if;
+			
+			-- #048B MemConfig
+			if cs_048b = '1' and cpu_wr_n='0' then
+				port_048b_reg <= cpu_do_bus;
+			end if;
+			
+			-- #058B MemConfig
+			if cs_058b = '1' and cpu_wr_n='0' then
+				port_058b_reg <= cpu_do_bus;
+			end if;
+			
 			-- TR-DOS FLAG
-			if (((cpu_m1_n = '0' and cpu_mreq_n = '0' and cpu_a_bus(15 downto 8) = X"3D" and (rom14 = '1' or unlock_128 = '1')) or (cpu_nmi_n = '0'  and DS80 = '0')) and port_218b_reg(3) = '0') or (onrom = '1') then dos_act <= '1';
+			if (((cpu_m1_n = '0' and cpu_mreq_n = '0' and cpu_a_bus(15 downto 8) = X"3D" and rom14 = '1') or (cpu_nmi_n = '0'  and DS80 = '0')) and port_218b_reg(3) = '0') or (onrom = '1') then dos_act <= '1';
 			elsif ((cpu_m1_n = '0' and cpu_mreq_n = '0' and cpu_a_bus(15 downto 14) /= "00") or (port_218b_reg(3) = '1')) then dos_act <= '0'; end if;
 				
 	end if;
@@ -1636,8 +1683,8 @@ port map(
 -- CPU0 Data bus
 
 process (selector, cpu_a_bus, gx0, serial_ms_do_bus, ram_do_bus, mc146818_do_bus, kb_do_bus, zc_do_bus, ssg_cn0_bus, ssg_cn1_bus, port_7ffd_reg, port_dffd_reg, zxuno_uart_do_bus,
-			zxuno_uart2_do_bus, cpld_do, vid_attr, port_eff7_reg, joy_bus, ms_z, ms_b, ms_x, ms_y, zxuno_addr_to_cpu, port_xxC7_reg, flash_rdy, flash_busy, flash_do_bus, port_008b_reg,
-			port_028b_reg, TAPE_IN, port_128b_reg, port_138b_reg, board_revision, port_218b_reg)
+			zxuno_uart2_do_bus, cpld_do, vid_attr, joy_bus, ms_z, ms_b, ms_x, ms_y, zxuno_addr_to_cpu, port_xxC7_reg, flash_rdy, flash_busy, flash_do_bus,
+			port_028b_reg, TAPE_IN, port_128b_reg, port_138b_reg, board_revision, port_218b_reg, port_038b_reg, port_048b_reg, port_058b_reg, port_108b_reg, port_118b_reg)
 begin
 	case selector is
 		when x"00" => cpu_di_bus <= ram_do_bus;
@@ -1660,12 +1707,17 @@ begin
 		when x"11" => cpu_di_bus <= "0000" & port_xxC7_reg(3) & port_xxC7_reg(2) & flash_rdy & flash_busy;
 		when x"12" => cpu_di_bus <= flash_do_bus;
 		when x"13" => cpu_di_bus <= port_028b_reg;
-		when x"14" => cpu_di_bus <= port_128b_reg;
-		when x"15" => cpu_di_bus <= port_138b_reg;
-		when x"16" => cpu_di_bus <= port_218b_reg;
-		when x"17" => cpu_di_bus <= board_revision;
-		when x"18" => cpu_di_bus <= vid_attr;
-		when x"19" => cpu_di_bus <= cpld_do;
+		when x"14" => cpu_di_bus <= port_038b_reg;
+		when x"15" => cpu_di_bus <= port_048b_reg;
+		when x"16" => cpu_di_bus <= port_058b_reg;
+		when x"17" => cpu_di_bus <= port_108b_reg;
+		when x"18" => cpu_di_bus <= port_118b_reg;
+		when x"19" => cpu_di_bus <= port_128b_reg;
+		when x"1A" => cpu_di_bus <= port_138b_reg;
+		when x"1B" => cpu_di_bus <= port_218b_reg;
+		when x"1C" => cpu_di_bus <= board_revision;
+		when x"1D" => cpu_di_bus <= vid_attr;
+		when x"1E" => cpu_di_bus <= cpld_do;
 		when others => cpu_di_bus <= (others => '1');
 	end case;
 end process;
@@ -1691,12 +1743,17 @@ selector <=
 	x"11" when (cs_xxC7 = '1' and cpu_rd_n = '0') else
 	x"12" when (cs_xxE7 = '1' and cpu_rd_n = '0') else
 	x"13" when (cs_028b = '1' and cpu_rd_n = '0') else										-- port #028B
-	x"14" when (cs_128b = '1' and cpu_rd_n = '0') else										-- port #128B
-	x"15" when (cs_138b = '1' and cpu_rd_n = '0') else										-- port #138B
-	x"16" when (cs_218b = '1' and cpu_rd_n = '0') else										-- port #218B
-	x"17" when (cs_008b = '1' and cpu_rd_n = '0') else										-- port #008B Board Revision
-	x"18" when (vid_pff_cs = '1' and cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_a_bus( 7 downto 0) = X"FF") and dos_act='0' and cpm = '0' and ds80 = '0' else -- Port FF select
-	x"19" when cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_m1_n = '1' else -- cpld 
+	x"14" when (cs_038b = '1' and cpu_rd_n = '0') else										-- port #038B
+	x"15" when (cs_048b = '1' and cpu_rd_n = '0') else										-- port #048B
+	x"16" when (cs_058b = '1' and cpu_rd_n = '0') else										-- port #058B
+	x"17" when (cs_108b = '1' and cpu_rd_n = '0') else										-- port #108B
+	x"18" when (cs_118b = '1' and cpu_rd_n = '0') else										-- port #118B
+	x"19" when (cs_128b = '1' and cpu_rd_n = '0') else										-- port #128B
+	x"1A" when (cs_138b = '1' and cpu_rd_n = '0') else										-- port #138B
+	x"1B" when (cs_218b = '1' and cpu_rd_n = '0') else										-- port #218B
+	x"1C" when (cs_008b = '1' and cpu_rd_n = '0') else										-- port #008B Board Revision
+	x"1D" when (vid_pff_cs = '1' and cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_a_bus( 7 downto 0) = X"FF") and dos_act='0' and cpm = '0' and ds80 = '0' else -- Port FF select
+	x"1E" when cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_m1_n = '1' else -- cpld 
 	(others => '1');
 	
 end rtl;
