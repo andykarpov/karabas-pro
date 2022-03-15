@@ -35,15 +35,17 @@
 #endif
 
 // mouse commands
-#define CMD_MOUSE_X 0x0A
-#define CMD_MOUSE_Y 0x0B
-#define CMD_MOUSE_Z 0x0C
+#define CMD_MOUSE 0x0A
+
+#define ADDR_MOUSE_X 0x0A
+#define ADDR_MOUSE_Y 0x0B
+#define ADDR_MOUSE_Z 0x0C
 
 /****************************************************************************/
 
 class ZXMouse
 {
-  using spi_cb = void (*)(uint8_t addr, uint8_t data); // alias function pointer
+  using spi_cb = void (*)(uint8_t cmd, uint8_t addr, uint8_t data); // alias function pointer
   using osd_cb = void (*)(uint8_t evt); // alias function pointer
 
 private:

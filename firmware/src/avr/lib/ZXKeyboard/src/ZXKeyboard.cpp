@@ -1045,7 +1045,7 @@ void ZXKeyboard::transmit()
   uint8_t bytes = ZX_MATRIX_FULL_SIZE/8; // count of bytes to send
   for (uint8_t i = 0; i < bytes; i++) {
     uint8_t data = getMatrixByte(i);
-    action(i + 1, data);
+    action(CMD_KBD, i + 1, data);
   }
 }
 

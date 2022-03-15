@@ -51,26 +51,27 @@ unsigned long tl, tl1, tl2, tb, tb1, tb2, tpopup = 0; // last time
 
 SPISettings settingsA(1000000, MSBFIRST, SPI_MODE0); // SPI transmission settings
 
-void spi_send(uint8_t addr, uint8_t data);
-void process_in_cmd(uint8_t cmd, uint8_t data);
+void spi_send(uint8_t cmd, uint8_t addr, uint8_t data);
+void process_in_cmd(uint8_t cmd, uint8_t addr, uint8_t data);
 void update_led(uint8_t led, bool state);
 void setup();
 void loop();
 
-void spi_send(uint8_t addr, uint8_t data)
+void spi_send(uint8_t cmd, uint8_t addr, uint8_t data)
 {
   SPI.beginTransaction(settingsA);
   digitalWrite(PIN_SS, LOW);
-  uint8_t cmd = SPI.transfer(addr); // command (1...6)
-  uint8_t res = SPI.transfer(data); // data byte
+  uint8_t rx_cmd = SPI.transfer(cmd);
+  uint8_t rx_addr = SPI.transfer(addr);
+  uint8_t rx_data = SPI.transfer(data);
   digitalWrite(PIN_SS, HIGH);
   SPI.endTransaction();
-  if (cmd > 0) {
-    process_in_cmd(cmd, res);
+  if (rx_cmd > 0) {
+    process_in_cmd(rx_cmd, rx_addr, rx_data);
   }
 }
 
-void process_in_cmd(uint8_t cmd, uint8_t data)
+void process_in_cmd(uint8_t cmd, uint8_t addr, uint8_t data)
 {
   if (cmd == CMD_INIT_REQ && !init_done) {
       init_done = true;
@@ -78,6 +79,7 @@ void process_in_cmd(uint8_t cmd, uint8_t data)
       uint8_t cfg = data & 0b00111111;
       zxkbd.setMaxTurbo(max_turbo);
       zxkbd.transmit();
+      zxrtc.sendAll();
       zxrtc.sendAll();
       zxkbd.doReset();
       zxosd.setFpgaCfg(cfg);
@@ -88,8 +90,8 @@ void process_in_cmd(uint8_t cmd, uint8_t data)
     zxrtc.sendAll();
   }
 
-  if (cmd >= CMD_BUILD_REQ0 && cmd <= CMD_BUILD_REQ7) {
-    zxosd.setFpgaBuildNum(cmd-CMD_BUILD_REQ0, data);
+  if (cmd == CMD_BUILD_REQ) {
+    zxosd.setFpgaBuildNum(addr, data);
   }
 
 #if ALLOW_LED_OVERRIDE
@@ -101,9 +103,8 @@ void process_in_cmd(uint8_t cmd, uint8_t data)
   }
 #endif
 
-  if (cmd >= CMD_RTC_WRITE && cmd < CMD_RTC_WRITE + 64) {
-    // write rtc register
-    zxrtc.setReg(cmd - CMD_RTC_WRITE, data);
+  if (cmd == CMD_RTC) {
+    zxrtc.setData(addr, data);
   }
 }
 
@@ -252,19 +253,19 @@ void setup()
 
   // waiting for init
   while (!init_done) {
-    spi_send(CMD_NONE, 0x00);
-    spi_send(CMD_INIT_REQ, 0x00);
+    spi_send(CMD_NONE, 0, 0x00);
+    spi_send(CMD_INIT_REQ, 0, 0x00);
   }
 
   // request build num from the fpga
-  spi_send(CMD_BUILD_REQ0, 0x00);
-  spi_send(CMD_BUILD_REQ1, 0x00);
-  spi_send(CMD_BUILD_REQ2, 0x00);
-  spi_send(CMD_BUILD_REQ3, 0x00);
-  spi_send(CMD_BUILD_REQ4, 0x00);
-  spi_send(CMD_BUILD_REQ5, 0x00);
-  spi_send(CMD_BUILD_REQ6, 0x00);
-  spi_send(CMD_BUILD_REQ7, 0x00);
+  spi_send(CMD_BUILD_REQ, 0, 0x00);
+  spi_send(CMD_BUILD_REQ, 1, 0x00);
+  spi_send(CMD_BUILD_REQ, 2, 0x00);
+  spi_send(CMD_BUILD_REQ, 3, 0x00);
+  spi_send(CMD_BUILD_REQ, 4, 0x00);
+  spi_send(CMD_BUILD_REQ, 5, 0x00);
+  spi_send(CMD_BUILD_REQ, 6, 0x00);
+  spi_send(CMD_BUILD_REQ, 7, 0x00);
 
   tpopup = millis();
   zxosd.clear();

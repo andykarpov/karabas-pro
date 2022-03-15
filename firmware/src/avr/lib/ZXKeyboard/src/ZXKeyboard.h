@@ -119,14 +119,16 @@
 #define ZX_K_OSD_POPUP 71
 
 // kbd commands
-#define CMD_KBD_BYTE1 0x01
-#define CMD_KBD_BYTE2 0x02
-#define CMD_KBD_BYTE3 0x03
-#define CMD_KBD_BYTE4 0x04
-#define CMD_KBD_BYTE5 0x05
-#define CMD_KBD_BYTE6 0x06
-#define CMD_KBD_BYTE7 0x07 // scancode
-#define CMD_KBD_BYTE8 0x08 // scancode
+#define CMD_KBD 0x01
+
+#define ADDR_KBD_BYTE1 0x01
+#define ADDR_KBD_BYTE2 0x02
+#define ADDR_KBD_BYTE3 0x03
+#define ADDR_KBD_BYTE4 0x04
+#define ADDR_KBD_BYTE5 0x05
+#define ADDR_KBD_BYTE6 0x06
+#define ADDR_KBD_BYTE7 0x07 // scancode
+#define ADDR_KBD_BYTE8 0x08 // scancode
 
 // eeprom addresses to store states
 #define EEPROM_TURBO_ADDRESS 0x00
@@ -153,7 +155,7 @@
 class ZXKeyboard
 {
 
-  using spi_cb = void (*)(uint8_t addr, uint8_t data); // alias function pointer
+  using spi_cb = void (*)(uint8_t cmd, uint8_t addr, uint8_t data); // alias function pointer
   using event_cb = void (*)(uint8_t event_type, uint16_t scancode);
 
 private:

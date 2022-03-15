@@ -30,7 +30,7 @@ entity avr is
 	 MS_DELTA_X : out signed(7 downto 0) := "00000000";
 	 MS_DELTA_Y : out signed(7 downto 0) := "00000000";
 	 
-	 RTC_A 		: in std_logic_vector(5 downto 0);
+	 RTC_A 		: in std_logic_vector(7 downto 0);
 	 RTC_DI 		: in std_logic_vector(7 downto 0);
 	 RTC_DO 		: out std_logic_vector(7 downto 0);
 	 RTC_CS 		: in std_logic := '0';
@@ -70,6 +70,17 @@ entity avr is
     end avr;
 architecture RTL of avr is
 
+	-- spi commands
+	constant CMD_KBD			: std_logic_vector(7 downto 0) := x"01";
+	constant CMD_MOUSE 		: std_logic_vector(7 downto 0) := x"0A";
+	constant CMD_JOY 			: std_logic_vector(7 downto 0) := x"0D";
+	constant CMD_LED 			: std_logic_vector(7 downto 0) := x"0E";
+	constant CMD_OSD 			: std_logic_vector(7 downto 0) := x"20";
+	constant CMD_BUILD		: std_logic_vector(7 downto 0) := x"F0";
+	constant CMD_RTC 			: std_logic_vector(7 downto 0) := x"FA";
+	constant CMD_INIT 		: std_logic_vector(7 downto 0) := x"FD";
+	constant CMD_NOPE			: std_logic_vector(7 downto 0) := x"FF";
+
 	 -- keyboard state
 	 signal kb_data_tmp 		: std_logic_vector(39 downto 0) := (others => '0');
 	 signal kb_data 			: std_logic_vector(40 downto 0) := (others => '0'); -- 40 keys + bit6
@@ -93,32 +104,34 @@ architecture RTL of avr is
 	 
 	 -- spi
 	 signal spi_do_valid 	: std_logic := '0';
-	 signal spi_di 			: std_logic_vector(15 downto 0);
-	 signal spi_do 			: std_logic_vector(15 downto 0);
+	 signal spi_di 			: std_logic_vector(23 downto 0);
+	 signal spi_do 			: std_logic_vector(23 downto 0);
 	 signal spi_di_req 		: std_logic;
 	 signal spi_miso 		 	: std_logic;
 	 
-	 -- rtc rx spi data
-	 signal rtc_cmd 			: std_logic_vector(7 downto 0);  -- spi cmd
-	 signal rtc_data 			: std_logic_vector(7 downto 0); -- spi data 
-	 
 	 -- rtc 2-port ram signals
 	 signal rtcw_di 			: std_logic_vector(7 downto 0);
-	 signal rtcw_a 			: std_logic_vector(5 downto 0);
+	 signal rtcw_a 			: std_logic_vector(7 downto 0);
 	 signal rtcw_wr 			: std_logic := '0';
 	 signal rtcr_do 			: std_logic_vector(7 downto 0);
-	
-	-- rtc fifo 
-	signal queue_di			: std_logic_vector(15 downto 0);
+
+	-- rtc data from atmega
+	 signal rtcr_a 			: std_logic_vector(7 downto 0);
+	 signal rtcr_d 			: std_logic_vector(7 downto 0);
+	 signal last_rtcr_a 		: std_logic_vector(7 downto 0);
+	 signal last_rtcr_d 		: std_logic_vector(7 downto 0);
+	 
+	-- spi fifo 
+	signal queue_di			: std_logic_vector(23 downto 0);
 	signal queue_wr_req		: std_logic := '0';
 	signal queue_wr_full		: std_logic;
 		
 	signal queue_rd_req		: std_logic := '0';
-	signal queue_do			: std_logic_vector(15 downto 0);
+	signal queue_do			: std_logic_vector(23 downto 0);
 	signal queue_rd_empty   : std_logic;
 	
-	signal queue_wr_size    : std_logic_vector(7 downto 0) := (others => '0');
-	signal queue_rd_size 	: std_logic_vector(7 downto 0) := (others => '0');
+	signal queue_wr_size    : std_logic_vector(8 downto 0) := (others => '0');
+	signal queue_rd_size 	: std_logic_vector(8 downto 0) := (others => '0');
 	
 	signal scancode_tmp		: std_logic_vector(7 downto 0) := (others => '0');
 	signal is_up 				: std_logic := '0';
@@ -149,7 +162,7 @@ begin
 	
 	U_SPI: entity work.spi_slave
 	generic map(
-			N             => 16 -- 2 bytes (cmd + data)       
+			N             => 24 -- 3 bytes (cmd + addr + data)       
 	 )
 	port map(
 		  clk_i          => CLK,
@@ -172,60 +185,72 @@ begin
 		  state_dbg_o    => open
 	);
 
-	spi_di <= queue_do when queue_rd_empty = '0' else x"FFFF";
-	queue_rd_req <= spi_di_req;	
+	spi_di <= queue_do when queue_rd_empty = '0' else x"FFFFFF";
+	queue_rd_req <= spi_di_req;
 	AVR_MISO	<= spi_miso when AVR_SS = '0' else 'Z';
-		  
+
 	process (CLK, spi_do_valid, spi_do)
 	begin
 		if (rising_edge(CLK)) then
 			if spi_do_valid = '1' then
 				fpga_init_req <= '0';
 				tx_build <= '0';
-				case spi_do(15 downto 8) is 
-					-- keyboard matrix
-					when X"01" => kb_data_tmp(7 downto 0) <= spi_do (7 downto 0);
-					when X"02" => kb_data_tmp(15 downto 8) <= spi_do (7 downto 0);
-					when X"03" => kb_data_tmp(23 downto 16) <= spi_do (7 downto 0);
-					when X"04" => kb_data_tmp(31 downto 24) <= spi_do (7 downto 0);
-					when X"05" => kb_data_tmp(39 downto 32) <= spi_do (7 downto 0);
-					-- misc signals
-					when X"06" => kb_data(40 downto 0) <= spi_do (0) & kb_data_tmp(39 downto 0); -- kbd 5th bit + the rest 
-									  -- misc signals
-									  RESET <= spi_do(1); -- reset signal
-									  TURBO(0) <= spi_do(2); -- turbo signal
-									  MAGICK <= spi_do(3); -- magick signal 
-									  is_up <= spi_do(4); -- keyboard key is up
-									  WAIT_CPU <= spi_do(5); -- cpu wait signal 
-									  SOFT_SW(1) <= spi_do(6); -- soft switch 1
-									  SOFT_SW(2) <= spi_do(7); -- soft switch 2
-					-- keyboard scancode mixed vector
-					when X"07" => 
-									  scancode_tmp <= spi_do(7 downto 0);
-					when X"08" => 
-									  KB_SCANCODE <= is_up & spi_do(0) & scancode_tmp;
-									  SOFT_SW(3) <= spi_do(1); -- soft switch 3
-									  SOFT_SW(4) <= spi_do(2); -- soft switch 4
-									  SOFT_SW(5) <= spi_do(3); -- soft switch 5
-									  KB_MODE <= spi_do(4); -- profi / standard kbd layout
-									  SOFT_SW(6) <= spi_do(5); -- soft switch 6
-									  SOFT_SW(7) <= spi_do(6); -- soft switch 7
-									  SOFT_SW(8) <= spi_do(7); -- soft switch 8
-					when X"09" => 
-									  SOFT_SW(9) <= spi_do(0);
-									  SOFT_SW(10) <= spi_do(1);
-									  JOY_TYPE <= spi_do(2);
-									  OSD_OVERLAY <= spi_do(3);
-									  LOADED <= '1'; -- loaded
-									  TURBO(1) <= spi_do(4);
-									  SCREEN_MODE(1 downto 0) <= spi_do(6 downto 5);
-									  OSD_POPUP <= spi_do(7);
+				case spi_do(23 downto 16) is 
+					-- keyboard
+					when CMD_KBD => 
+						case spi_do(15 downto 8) is 
+							when X"01" => kb_data_tmp(7 downto 0) <= spi_do (7 downto 0);
+							when X"02" => kb_data_tmp(15 downto 8) <= spi_do (7 downto 0);
+							when X"03" => kb_data_tmp(23 downto 16) <= spi_do (7 downto 0);
+							when X"04" => kb_data_tmp(31 downto 24) <= spi_do (7 downto 0);
+							when X"05" => kb_data_tmp(39 downto 32) <= spi_do (7 downto 0);
+							-- misc signals
+							when X"06" => kb_data(40 downto 0) <= spi_do (0) & kb_data_tmp(39 downto 0); -- kbd 5th bit + the rest 
+											  -- misc signals
+											  RESET <= spi_do(1); -- reset signal
+											  TURBO(0) <= spi_do(2); -- turbo signal
+											  MAGICK <= spi_do(3); -- magick signal 
+											  is_up <= spi_do(4); -- keyboard key is up
+											  WAIT_CPU <= spi_do(5); -- cpu wait signal 
+											  SOFT_SW(1) <= spi_do(6); -- soft switch 1
+											  SOFT_SW(2) <= spi_do(7); -- soft switch 2
+							-- keyboard scancode mixed vector
+							when X"07" => 
+											  scancode_tmp <= spi_do(7 downto 0);
+							when X"08" => 
+											  KB_SCANCODE <= is_up & spi_do(0) & scancode_tmp;
+											  SOFT_SW(3) <= spi_do(1); -- soft switch 3
+											  SOFT_SW(4) <= spi_do(2); -- soft switch 4
+											  SOFT_SW(5) <= spi_do(3); -- soft switch 5
+											  KB_MODE <= spi_do(4); -- profi / standard kbd layout
+											  SOFT_SW(6) <= spi_do(5); -- soft switch 6
+											  SOFT_SW(7) <= spi_do(6); -- soft switch 7
+											  SOFT_SW(8) <= spi_do(7); -- soft switch 8
+							when X"09" => 
+											  SOFT_SW(9) <= spi_do(0);
+											  SOFT_SW(10) <= spi_do(1);
+											  JOY_TYPE <= spi_do(2);
+											  OSD_OVERLAY <= spi_do(3);
+											  LOADED <= '1'; -- loaded
+											  TURBO(1) <= spi_do(4);
+											  SCREEN_MODE(1 downto 0) <= spi_do(6 downto 5);
+											  OSD_POPUP <= spi_do(7);
+							when others => null;
+						end case;
 					-- mouse data
-					when X"0A" => mouse_x(7 downto 0) <= signed(spi_do(7 downto 0));
-					when X"0B" => mouse_y(7 downto 0) <= signed(spi_do(7 downto 0));
-					when X"0C" => mouse_z(3 downto 0) <= signed(spi_do(3 downto 0)); buttons(2 downto 0) <= spi_do(6 downto 4); newPacket <= spi_do(7);					
+					when CMD_MOUSE => 
+						case spi_do(15 downto 8) is
+							-- X
+							when X"0A" => mouse_x(7 downto 0) <= signed(spi_do(7 downto 0));
+							-- Y
+							when X"0B" => mouse_y(7 downto 0) <= signed(spi_do(7 downto 0));
+							-- Z
+							when X"0C" => mouse_z(3 downto 0) <= signed(spi_do(3 downto 0)); buttons(2 downto 0) <= spi_do(6 downto 4); newPacket <= spi_do(7);	
+							when others => null;
+						end case;
 					-- joy data
-					when X"0D" => joy(0) <= spi_do(5); -- right 
+					when CMD_JOY => 
+									  joy(0) <= spi_do(5); -- right 
 									  joy(1) <= spi_do(4); -- left 
 									  joy(2) <= spi_do(3); -- down 
 									  joy(3) <= spi_do(2); -- up
@@ -234,27 +259,30 @@ begin
 									  joy(6) <= spi_do(6); -- A
 									  joy(7) <= spi_do(7); -- B
 					-- led write
-					when X"0E" => null;
-					-- osd commands
-					when X"0F"|X"10"|x"11"|x"12"|x"13" => 
-									  OSD_COMMAND <= spi_do(15 downto 0);
+					when CMD_LED => null;
+					-- osd commands					
+					when CMD_OSD => OSD_COMMAND <= spi_do(15 downto 0);
 							
 					-- build num request
-					when X"F0"|X"F1"|X"F2"|X"F3"|X"F4"|X"F5"|X"F6"|X"F7" =>
+					when CMD_BUILD => 
 						tx_build <= '1';
 						tx_build_pos <= spi_do(10 downto 8);
 						
-					when X"FD" => 
+					-- rtc 
+					when CMD_RTC =>						
+						rtcr_a <= spi_do(15 downto 8);
+						rtcr_d <= spi_do(7 downto 0);
+
+					-- init
+					when CMD_INIT => 
 						fpga_init_req <= '1';
 						avr_ready <= '1';
 						
-					when X"FF" =>
+					-- nope
+					when CMD_NOPE =>
 						avr_ready <= '1';
 					
-					-- rtc registers
-					when others => 
-							rtc_cmd <= spi_do(15 downto 8);
-							rtc_data <= spi_do(7 downto 0);
+					when others => null;
 				end case;
 			end if;
 		end if;
@@ -459,7 +487,7 @@ begin
 				-- response to init request
 				when init_ack => 
 					queue_wr_req <= '1';
-					queue_di <= x"FD" & max_turbo & CFG(5 downto 0);
+					queue_di <= CMD_INIT & x"00" & max_turbo & CFG(5 downto 0);
 					qstate <= idle;
 					
 				-- waiting for other events from avr
@@ -471,10 +499,10 @@ begin
 					elsif (tx_build = '1') then 
 						qstate <= build_req;
 					-- req to write RTC
-					elsif (CLKEN = '0' and RTC_WR_N = '0' AND RTC_CS = '1') then 
+					elsif (avr_ready = '1' and RTC_WR_N = '0' AND RTC_CS = '1') then 
 						qstate <= rtc_wr_req;
-					-- req to send LED state
-					elsif (queue_wr_full = '0' and queue_wr_size(7) = '0') then 
+					-- req to send LED state (only if fifo is less then half full)
+					elsif (queue_wr_full = '0' and queue_wr_size(8) = '0') then 
 						qstate <= led_req;
 					-- idle
 					else 
@@ -490,7 +518,7 @@ begin
 				-- read byte from ROM, send it via queue 
 				when build_data => 
 					queue_wr_req <= '1';	
-					queue_di <= "1111" & '0' & build_read_addr & build_byte; -- F0 - F7
+					queue_di <= CMD_BUILD & "00000" & build_read_addr & build_byte;
 					qstate <= build_ack;
 				
 				-- queue wr complete, going to idle state
@@ -498,12 +526,12 @@ begin
 					queue_wr_req <= '0';	
 					qstate <= idle;
 					
-				-- RTC write request
+				-- RTC write request (sending a bank, then address + data)
 				when rtc_wr_req => 
 					queue_wr_req <= '1';
-					queue_di <= "10" & RTC_A & RTC_DI;
+					queue_di <= CMD_RTC & RTC_A & RTC_DI;
 					qstate <= rtc_wr_ack;
-					
+				
 				-- RTC write request end
 				when rtc_wr_ack => 
 					queue_wr_req <= '0';
@@ -512,12 +540,15 @@ begin
 				-- LED write request
 				when led_req => 
 					queue_wr_req <= '1';
-					queue_di <= x"0E" & "0000" & LED2_OWR & LED1_OWR & LED2 & LED1;
+					queue_di <= CMD_LED & x"00" & "0000" & LED2_OWR & LED1_OWR & LED2 & LED1;
 					qstate <= led_ack;
 					
 				-- LED write request end
 				when led_ack =>
 					queue_wr_req <= '0';
+					qstate <= idle;
+					
+				when others => 
 					qstate <= idle;
 	
 			end case;
@@ -526,7 +557,7 @@ begin
 	end process;
 	
 	-- write RTC registers into ram from host / atmega
-	process (N_RESET, CLK, RTC_WR_N, RTC_CS, RTC_A, RTC_DI, rtc_cmd, rtc_data) 
+	process (N_RESET, CLK, RTC_WR_N, RTC_CS, RTC_A, RTC_DI, rtcr_a, last_rtcr_a, rtcr_d, last_rtcr_d) 
 	begin 
 		if N_RESET = '0' then 
 			rtcw_wr <= '0';
@@ -536,12 +567,12 @@ begin
 				-- rtc mem write by host
 				rtcw_wr <= '1';
 				rtcw_a <= RTC_A;
-				rtcw_di <= RTC_DI;								
-			elsif rtc_cmd(7 downto 6) = "01" then
-				-- rtc from avr
+				rtcw_di <= RTC_DI;
+			else 
+				-- rtc mem write by avr
 				rtcw_wr <= '1';
-				rtcw_a <= rtc_cmd(5 downto 0);
-				rtcw_di <= rtc_data;
+				rtcw_a <= rtcr_a;
+				rtcw_di <= rtcr_d;
 			end if;
 		end if;
 	end process;

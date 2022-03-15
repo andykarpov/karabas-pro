@@ -50,7 +50,7 @@
 
 class ZXJoystick
 {
-  using spi_cb = void (*)(uint8_t addr, uint8_t data); // alias function pointer
+  using spi_cb = void (*)(uint8_t cmd, uint8_t addr, uint8_t data); // alias function pointer
   using osd_cb = void (*)(uint8_t evt, uint8_t data); // alias function pointer
 
 private:

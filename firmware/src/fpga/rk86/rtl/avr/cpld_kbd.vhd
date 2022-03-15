@@ -44,7 +44,7 @@ architecture RTL of cpld_kbd is
 
 	 -- spi
 	 signal spi_do_valid : std_logic := '0';
-	 signal spi_do : std_logic_vector(15 downto 0);
+	 signal spi_do : std_logic_vector(23 downto 0);
 	 
 begin
 
@@ -65,7 +65,7 @@ begin
 
 	U_SPI: entity work.spi_slave
     generic map(
-        N              => 16 -- 2 bytes (cmd + data)       
+        N              => 24 -- 3 bytes (cmd + reg + data)       
     )
     port map(
         clk_i          => CLK,
@@ -75,7 +75,7 @@ begin
         spi_miso_o     => AVR_MISO,
 
         di_req_o       => open,
-        di_i           => x"FD" & CFG, -- INIT
+        di_i           => x"FD" & x"00" & CFG, -- INIT
         wren_i         => '1',
         do_valid_o     => spi_do_valid,
         do_o           => spi_do,
@@ -92,19 +92,26 @@ begin
 		if (rising_edge(CLK)) then
 
 			if spi_do_valid = '1' then
-				case spi_do(15 downto 8) is 
-					-- keyboard scancode and button state + reset signal
-					when X"06" => 
-									  scancode_ready <= '0';
-									  -- bit6 <= spi_do(0) 
-									  rst <= spi_do(1);
-									  --trb <= spi_do(2);
-									  -- magik <= spi_do(3)
-									  is_up <= spi_do(4);
-					when X"07" => rxsc(7 downto 0) <= spi_do(7 downto 0);
-					when X"08" => 
-										SCANCODE_READY <= '1';
-										SCANCODE <= "0000000" & spi_do(0) & rxsc(7 downto 0);
+			
+				case spi_do(23 downto 16) is 
+					-- keyboard
+					when x"01"	 => 
+						case spi_do(15 downto 8) is 
+							-- misc signals
+							when X"06" => 
+											  scancode_ready <= '0';
+											  -- misc signals
+											  rst <= spi_do(1); -- reset signal
+											  is_up <= spi_do(4); -- keyboard key is up
+							-- keyboard scancode mixed vector
+							when X"07" => 
+											  rxsc(7 downto 0) <= spi_do(7 downto 0);
+							when X"08" => 
+											  scancode_ready <= '1'; 	
+											  --SCANCODE <= "0000000" & spi_do(0) & rxsc(7 downto 0);
+											  SCANCODE <= "00000000" & rxsc(7 downto 0);
+							when others => null;
+						end case;
 					when others => null;
 				end case;	
 			end if;
@@ -125,71 +132,71 @@ begin
 			shifts <= (others => '1');
 		elsif CLK'event and CLK = '1' and scancode_ready = '1' then
 
-			case scancode(15 downto 0) is
-				when X"001A" =>	keymatrix(7)(2) <= is_up;	-- Z
-				when X"0022" =>	keymatrix(7)(0) <= is_up;	-- X
-				when X"0021" =>	keymatrix(4)(3) <= is_up;	-- C
-				when X"002A" =>	keymatrix(6)(6) <= is_up;	-- V
+			case scancode(7 downto 0) is
+				when X"5A" =>	keymatrix(7)(2) <= is_up;	-- Z
+				when X"58" =>	keymatrix(7)(0) <= is_up;	-- X
+				when X"43" =>	keymatrix(4)(3) <= is_up;	-- C
+				when X"56" =>	keymatrix(6)(6) <= is_up;	-- V
 
-				when X"001C" =>	keymatrix(4)(1) <= is_up;	-- A
-				when X"001B" =>	keymatrix(6)(3) <= is_up;	-- S
-				when X"0023" =>	keymatrix(4)(4) <= is_up;	-- D
-				when X"002B" =>	keymatrix(4)(6) <= is_up;	-- F
-				when X"0034" =>	keymatrix(4)(7) <= is_up;	-- G
+				when X"41" =>	keymatrix(4)(1) <= is_up;	-- A
+				when X"53" =>	keymatrix(6)(3) <= is_up;	-- S
+				when X"44" =>	keymatrix(4)(4) <= is_up;	-- D
+				when X"46" =>	keymatrix(4)(6) <= is_up;	-- F
+				when X"47" =>	keymatrix(4)(7) <= is_up;	-- G
 
-				when X"0015" =>	keymatrix(6)(1) <= is_up;	-- Q
-				when X"001D" =>	keymatrix(6)(7) <= is_up;	-- W
-				when X"0024" =>	keymatrix(4)(5) <= is_up;	-- E
-				when X"002D" =>	keymatrix(6)(2) <= is_up;	-- R
-				when X"002C" =>	keymatrix(6)(4) <= is_up;	-- T
+				when X"51" =>	keymatrix(6)(1) <= is_up;	-- Q
+				when X"57" =>	keymatrix(6)(7) <= is_up;	-- W
+				when X"45" =>	keymatrix(4)(5) <= is_up;	-- E
+				when X"52" =>	keymatrix(6)(2) <= is_up;	-- R
+				when X"54" =>	keymatrix(6)(4) <= is_up;	-- T
 
-				when X"0016" =>	keymatrix(2)(1) <= is_up;	-- 1
-				when X"001E" =>	keymatrix(2)(2) <= is_up;	-- 2
-				when X"0026" =>	keymatrix(2)(3) <= is_up;	-- 3
-				when X"0025" =>	keymatrix(2)(4) <= is_up;	-- 4
-				when X"002E" =>	keymatrix(2)(5) <= is_up;	-- 5
+				when X"31" =>	keymatrix(2)(1) <= is_up;	-- 1
+				when X"32" =>	keymatrix(2)(2) <= is_up;	-- 2
+				when X"33" =>	keymatrix(2)(3) <= is_up;	-- 3
+				when X"34" =>	keymatrix(2)(4) <= is_up;	-- 4
+				when X"35" =>	keymatrix(2)(5) <= is_up;	-- 5
 
-				when X"0045" =>	keymatrix(2)(0) <= is_up;	-- 0
-				when X"0046" =>	keymatrix(3)(1) <= is_up;	-- 9
-				when X"003E" =>	keymatrix(3)(0) <= is_up;	-- 8
-				when X"003D" =>	keymatrix(2)(7) <= is_up;	-- 7
-				when X"0036" =>	keymatrix(2)(6) <= is_up;	-- 6
+				when X"30" =>	keymatrix(2)(0) <= is_up;	-- 0
+				when X"39" =>	keymatrix(3)(1) <= is_up;	-- 9
+				when X"38" =>	keymatrix(3)(0) <= is_up;	-- 8
+				when X"37" =>	keymatrix(2)(7) <= is_up;	-- 7
+				when X"36" =>	keymatrix(2)(6) <= is_up;	-- 6
 
-				when X"004D" =>	keymatrix(6)(0) <= is_up;	-- P
-				when X"0044" =>	keymatrix(5)(7) <= is_up;	-- O
-				when X"0043" =>	keymatrix(5)(1) <= is_up;	-- I
-				when X"003C" =>	keymatrix(6)(5) <= is_up;	-- U
-				when X"0035" =>	keymatrix(7)(1) <= is_up;	-- Y
+				when X"50" =>	keymatrix(6)(0) <= is_up;	-- P
+				when X"4F" =>	keymatrix(5)(7) <= is_up;	-- O
+				when X"49" =>	keymatrix(5)(1) <= is_up;	-- I
+				when X"55" =>	keymatrix(6)(5) <= is_up;	-- U
+				when X"59" =>	keymatrix(7)(1) <= is_up;	-- Y
 
-				when X"005A" =>	keymatrix(1)(2) <= is_up;	-- ENTER (ВК)
-				when X"004B" =>	keymatrix(5)(4) <= is_up;	-- L
-				when X"0042" =>	keymatrix(5)(3) <= is_up;	-- K
-				when X"003B" =>	keymatrix(5)(2) <= is_up;	-- J
-				when X"0033" =>	keymatrix(5)(0) <= is_up;	-- H
+				when X"1E" =>	keymatrix(1)(2) <= is_up;	-- ENTER (ВК)
+				when X"4C" =>	keymatrix(5)(4) <= is_up;	-- L
+				when X"4B" =>	keymatrix(5)(3) <= is_up;	-- K
+				when X"4A" =>	keymatrix(5)(2) <= is_up;	-- J
+				when X"48" =>	keymatrix(5)(0) <= is_up;	-- H
 
-				when X"0029" =>	keymatrix(7)(7) <= is_up;	-- SPACE
-				when X"003A" =>	keymatrix(5)(5) <= is_up;	-- M
-				when X"0031" =>	keymatrix(5)(6) <= is_up;	-- N
-				when X"0032" =>	keymatrix(4)(2) <= is_up;	-- B
+				when X"1F" =>	keymatrix(7)(7) <= is_up;	-- SPACE
+				when X"4D" =>	keymatrix(5)(5) <= is_up;	-- M
+				when X"4E" =>	keymatrix(5)(6) <= is_up;	-- N
+				when X"42" =>	keymatrix(4)(2) <= is_up;	-- B
 
 				-- Cursor keys
-				when X"016B" =>	keymatrix(1)(4) <= is_up;	-- Left
-				when X"0172" =>	keymatrix(1)(7) <= is_up;	-- Down
-				when X"0175" =>	keymatrix(1)(5) <= is_up;	-- Up
-				when X"0174" =>	keymatrix(1)(6) <= is_up;	-- Right
+				when X"15" =>	keymatrix(1)(4) <= is_up;	-- Left
+				when X"18" =>	keymatrix(1)(7) <= is_up;	-- Down
+				when X"17" =>	keymatrix(1)(5) <= is_up;	-- Up
+				when X"16" =>	keymatrix(1)(6) <= is_up;	-- Right
 
 				-- Other special keys sent to the ULA as key combinations
-				when X"0066" =>	keymatrix(1)(3) <= is_up;	-- Backspace (ЗБ)
+				when X"1C" =>	keymatrix(1)(3) <= is_up;	-- Backspace (ЗБ)
 				--when X"39" =>	keymatrix(7)(2) <= is_up; -- Caps lock
-				when X"000D" =>	keymatrix(1)(0) <= is_up;	-- Tab (ТАБ)
-				when X"0049" =>	keymatrix(3)(6) <= is_up;	-- .
-				when X"004E" =>	keymatrix(3)(5) <= is_up;	-- -
-				when X"000E" =>	keymatrix(7)(6) <= is_up;	-- `
-				when X"0041" =>	keymatrix(3)(4) <= is_up;	-- ,
---								when X"33" =>	keymatrix(5)(1) <= '0';	-- ;
---								when X"34" =>	keymatrix(5)(0) <= '0';	-- "
---								when X"31" =>	keymatrix(0)(1) <= '0';	-- :
-				when X"0055" =>	keymatrix(3)(2) <= is_up;	-- =
+				when X"1D" =>	keymatrix(1)(0) <= is_up;	-- Tab (ТАБ)
+				when X"2A" =>	keymatrix(3)(6) <= is_up;	-- .
+				when X"3C" =>	keymatrix(3)(5) <= is_up;	-- -
+				when X"3A" =>	keymatrix(7)(6) <= is_up;	-- `
+				when X"3B" =>	keymatrix(3)(4) <= is_up;	-- ,
+--								when X"5B" =>	keymatrix(5)(1) <= '0';	-- ;
+--								when X"40" =>	keymatrix(5)(0) <= '0';	-- "
+--								when X"3E" =>	keymatrix(0)(1) <= '0';	-- :
+				when X"5F" =>	keymatrix(3)(2) <= is_up;	-- =
 --								when X"2f" =>	keymatrix(4)(2) <= '0';	-- (
 --								when X"30" =>	keymatrix(4)(1) <= '0';	-- )
 --								when X"38" =>	keymatrix(0)(3) <= '0';	-- ?
@@ -202,11 +209,11 @@ begin
 --								when X"62" =>	keymatrix(7)(4) <= '0';	-- [0]
 
 				-- Fx keys
-				when X"0005" =>	keymatrix(0)(3) <= is_up;	-- F1
-				when X"0006" =>	keymatrix(0)(4) <= is_up;	-- F2
-				when X"0004" =>	keymatrix(0)(5) <= is_up;	-- F3
-				when X"000C" =>	keymatrix(0)(6) <= is_up;	-- F4
-				when X"0003" =>	keymatrix(0)(7) <= is_up;	-- F5
+				when X"61" =>	keymatrix(0)(3) <= is_up;	-- F1
+				when X"62" =>	keymatrix(0)(4) <= is_up;	-- F2
+				when X"63" =>	keymatrix(0)(5) <= is_up;	-- F3
+				when X"64" =>	keymatrix(0)(6) <= is_up;	-- F4
+				when X"65" =>	keymatrix(0)(7) <= is_up;	-- F5
 --								when X"3f" =>	keymatrix(7)(1) <= '0';	-- F6
 --								when X"40" =>	keymatrix(7)(1) <= '0';	-- F7
 --								when X"41" =>	keymatrix(7)(1) <= '0';	-- F8
@@ -217,23 +224,23 @@ begin
  
 				-- Soft keys
 --								when X"46" =>	keymatrix(7)(2) <= '0';	-- PrtScr
-				when X"007E" =>	keymatrix(1)(1) <= is_up;	-- Scroll Lock (ПС)
+				when X"02" =>	keymatrix(1)(1) <= is_up;	-- Scroll Lock (ПС)
 --								when X"48" =>	keymatrix(7)(4) <= '0';	-- Pause
 --								when X"65" =>	keymatrix(7)(1) <= '0';	-- WinMenu
-				when X"0076" =>	keymatrix(0)(2) <= is_up;	-- Esc (АР2)
+				when X"1B" =>	keymatrix(0)(2) <= is_up;	-- Esc (АР2)
 --								when X"49" =>	keymatrix(7)(1) <= '0';	-- Insert
-				when X"016C" =>	keymatrix(0)(0) <= is_up;	-- Home (Курсор в начало экрана)
+				when X"11" =>	keymatrix(0)(0) <= is_up;	-- Home (Курсор в начало экрана)
 --								when X"4b" =>	keymatrix(7)(1) <= '0';	-- Page Up
-				when X"0171" =>	keymatrix(0)(1) <= is_up;	-- Delete (СТР)
+				when X"1A" =>	keymatrix(0)(1) <= is_up;	-- Delete (СТР)
 --								when X"4d" =>	keymatrix(7)(1) <= '0';	-- End
 --								when X"4e" =>	keymatrix(7)(1) <= '0';	-- Page Down
 
-				when X"0012" => shifts(2) <= is_up; -- left shift 
-				when X"0059" => shifts(2) <= is_up; -- right shift
-				when X"0014" => shifts(1) <= is_up; -- left ctrl
-				when X"0114" => shifts(1) <= is_up; -- rigt ctrl 
-				when X"0011" => shifts(0) <= is_up; -- left alt 
-				when X"0111" => shifts(0) <= is_up; -- right alt
+				when X"06" => shifts(2) <= is_up; -- left shift 
+				when X"07" => shifts(2) <= is_up; -- right shift
+				when X"08" => shifts(1) <= is_up; -- left ctrl
+				when X"09" => shifts(1) <= is_up; -- rigt ctrl 
+				when X"0A" => shifts(0) <= is_up; -- left alt 
+				when X"0B" => shifts(0) <= is_up; -- right alt
 
 				when others => null;
 			end case;

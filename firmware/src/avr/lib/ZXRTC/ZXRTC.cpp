@@ -101,9 +101,8 @@ void ZXRTC::fixInvalidTime() {
 }
 
 void ZXRTC::send(uint8_t reg, uint8_t data) {
-  action(CMD_RTC_READ + reg, data);
+  action(CMD_RTC, reg, data);
 }
-
 
 void ZXRTC::sendTime() {
   send(0, rtc_is_bcd ? bin2bcd(rtc_seconds) : rtc_seconds);
@@ -117,7 +116,7 @@ void ZXRTC::sendTime() {
 
 void ZXRTC::sendAll() {
   uint8_t data;
-  for (uint8_t reg = 0; reg < 64; reg++) {
+  for (int reg = 0; reg <= 255; reg++) {
     switch (reg) {
       case 0: send(reg, rtc_is_bcd ? bin2bcd(rtc_seconds) : rtc_seconds); break;
       case 1: send(reg, rtc_is_bcd ? bin2bcd(rtc_seconds_alarm) : rtc_seconds_alarm); break;
@@ -134,18 +133,19 @@ void ZXRTC::sendAll() {
       case 0xC: send(reg, 0x0); break;
       case 0xD: send(reg, 0x80); break;
       default: send(reg, EEPROM.read(EEPROM_RTC_OFFSET + reg));
+      //default: send(reg, reg); // test!!!
     }
   }
 }
 
-void ZXRTC::setReg(uint8_t reg, uint8_t data) {
-      // skip double write
-    if (rtc_last_write_reg == reg && rtc_last_write_data == data) return;
+void ZXRTC::setData(uint8_t addr, uint8_t data) {
+  // skip multiple writes for clock registers
+  if (rtc_last_write_reg == addr && rtc_last_write_data == data && addr <= 0xD) return;
 
-    rtc_last_write_reg = reg;
+    rtc_last_write_reg = addr;
     rtc_last_write_data = data;
 
-    switch (reg) {
+    switch (addr) {
       case 0: rtc_seconds = rtc_is_bcd ? bcd2bin(data) : data; rtc.setSeconds(rtc_seconds); break;
       case 1: rtc_seconds_alarm = rtc_is_bcd ? bcd2bin(data) : data; break;
       case 2: rtc_minutes = rtc_is_bcd ? bcd2bin(data) : data; rtc.setMinutes(rtc_minutes); break;
@@ -156,11 +156,11 @@ void ZXRTC::setReg(uint8_t reg, uint8_t data) {
       case 7: rtc_day = rtc_is_bcd ? bcd2bin(data) : data; rtc.setDay(rtc_day); break;
       case 8: rtc_month = rtc_is_bcd ? bcd2bin(data) : data; rtc.setMonth(rtc_month); break;
       case 9: rtc_year = 2000 + (rtc_is_bcd ? bcd2bin(data) : data); rtc.setYear(rtc_year); break;
-      case 0xA: bitClear(data, 7); EEPROM.write(EEPROM_RTC_OFFSET + reg, data); break;
-      case 0xB: rtc_is_bcd = !bitRead(data, 2); rtc_is_24h = bitRead(data, 1); EEPROM.write(EEPROM_RTC_OFFSET + reg, data); break;
+      case 0xA: bitClear(data, 7); EEPROM.update(EEPROM_RTC_OFFSET + addr, data); break;
+      case 0xB: rtc_is_bcd = !bitRead(data, 2); rtc_is_24h = bitRead(data, 1); EEPROM.update(EEPROM_RTC_OFFSET + addr, data); break;
       case 0xC: // C and D are read-only registers
       case 0xD: break;
-      default: EEPROM.write(EEPROM_RTC_OFFSET + reg, data);
+      default: EEPROM.update(EEPROM_RTC_OFFSET + addr, data);
     }
 }
 

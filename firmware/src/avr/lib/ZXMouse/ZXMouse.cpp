@@ -128,9 +128,9 @@ void ZXMouse::handle(bool menu)
 
 void ZXMouse::transmit()
 {
-  action(CMD_MOUSE_X, mouse_x);
-  action(CMD_MOUSE_Y, mouse_y);
-  action(CMD_MOUSE_Z, mouse_z);
+  action(CMD_MOUSE, ADDR_MOUSE_X, mouse_x);
+  action(CMD_MOUSE, ADDR_MOUSE_Y, mouse_y);
+  action(CMD_MOUSE, ADDR_MOUSE_Z, mouse_z);
 }
 
 void ZXMouse::init()
