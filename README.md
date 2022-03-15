@@ -1,58 +1,58 @@
-# Karabas-Pro
+# Карабас-Про
 
-**Yet another FPGA ZX Spectrum clone ;)**
+**Ще один клон ZX Spectrum на FPGA ;)**
 
-## Intro
+## Інтро
 
-ZX Spectrum compatible machine with a soft CPU, FDD and HDD (CF card) controllers, PS/2 keyboard/mouse, ESP8266 UART, RTC, VGA output and all logic inside the Altera FPGA **EP4CE6**.
+Карабас-Про є ZX Spectrum сумісною ЕОМ з програмним центральним процесором Z80 на базі ПЛІС Altera, інтерфейсами НГМД та НЖД (на базі Compact Flash), 
+на борту присутні також контроллери PS/2 клавіатури та миши, модуль ESP8266 з послідовним з'єднанням UART, контроллер реального часу, вихід VGA та аналоговий звук, джойстик тощо. 
 
-## The idea
+## Ідея
 
-The idea was to make a smaller Profi (Профи) ZX Spectrum clone, with real FDD and HDD controllers. The board size fits the dimensions of the real 3.5" floppy drive. 
+Ідея та основна мета цього проекту - зробити мініатюрний клон ZX Spectrum сумісного компьютеру "Профі", якій би мав на борту контроллери дисководів та жорстких дисків. 
+Розмір плати при цьому відповідає розмірам реального флопі-дисководу 3.5".
 
-## Firmwares
+## Прошивка
 
-**The main firmware is finished and currently it implements:**
+**Основна прошивка є закінченою та наразі реалізує:**
 
-1) ZX Spectrum classic and profi hi-res hi-color mode (with palette) (512x240)
-2) ZX Profi CMR ports for extended peripherial
-3) FDD controller that works both in CP/M and classic modes
-4) HDD controller (works in Profi CP/M mode and PQ-DOS mode)
-5) PS/2 keyboard (XT keyboard emulation)
-6) PS/2 mouse (kempston mouse and serial MS mouse emulation)
-7) VGA output (requires a monitor with 50Hz support)
-8) Turbosound (2 x AY-3-8912), Soundrive and SAA1099 (SAA will work only on EP4CE10 due to lack of free LEs in EP4CE6)
-9) Kempston joystick support
-10) SEGA joystick support
-11) RTC (profi), emulated read/write support
-12) SD card access via Z-Controller emulation
-13) Turbo 7 MHz (and Turbo 14 Mhz on EP4CE10)
-14) ZX UNO simple UART @115200 for ESP8266 module (a secondary ZX UNO UART available on uBus connector for EP4CE10)
-15) An additional ROM bank with **PQ-DOS BIOS**
-16) An additional ROM bank with **Flash Tool** by **Doctor Max** to upgrade the FGPA firmware and ROM banks without programmer
-17) An additional ROM bank with **FDImage Tool** by **Doctor Max** to extract TRD, SCL, PRO, TD0 and FDI images on real floppies
-18) OSD menu
-19) OSD full-screen overlay with easy-to-change options, RTC setup, etc.
+1) Відео-режим класичного ZX Spectrum та режим Профі 512x250 з палітрою 16 кольорів з 256
+2) Порт Профі CMR для керування розширеною періферією
+3) Контроллер НГМД, якій працює у режимах CP/M та класичного TR-DOS
+4) Контроллер НЖД на базі карт пам'яті Compact Flash
+5) Інтерфейс клавіатури PS/2 (емуляція PC XT клавіатури)
+6) Інтерфейс миши PS/2 (емуляція кемпстон та послідовної MS миши)
+7) Вихід VGA (потребує монітора з підтримкою кадрової 50 Гц)
+8) Турбосаунд (2 x AY-3-8912), Soundrive та SAA1099 (SAA працює лише при використанні EP4CE10)
+9) Підтримка механічних Atari-джойстиків в режимі емуляції Kempston
+10) Підтримка 3- та 6-кнопочних SEGA-джойстиків
+11) Контроллер реального часу за стандартом Профі, емуляція підтримки читання/запису
+12) Доступ до SD карт за протоколом Z-Controller
+13) Турбо режим 7 МГц без WAIT та 14 МГц з WAIT циклами
+14) Послідовний інтерфейс за стандартом ZX UNO зі швидкістю 115200 для комунікациї з ESP8266 модулем
+15) Додаткова ПЗУ з системою PQ-DOS BIOS
+16) Додаткова ПЗУ з утілітою **Flash Tool** від **Doctor Max** (надає можливість оновити ПЛІС та ПЗУ без програматорів)
+17) Додаткова ПЗУ з утілітою **FDImage Tool** від **Doctor Max** (надає можливість распаковки образів TRD, SCL, PRO, TD0 та FDI на гнучкі накопичувачі)
+18) OSD меню
+19) OSD повноекранний оверлей зі зручним інтерфейсом для швидкого налагодження апаратної частини 
 
-## More info
+## Додаткова інформація
 
-**ERRATA for PCB rev.A:** [See ERRATA Rev.A](https://github.com/andykarpov/karabas-pro/blob/master/ERRATA-REVA.md).
+**Перелік помилок до печатної плати rev.A:** [Дивитися](https://github.com/andykarpov/karabas-pro/blob/master/ERRATA-REVA.md).
 
-**ERRATA for PCB rev.B:** [See ERRATA Rev.B](https://github.com/andykarpov/karabas-pro/blob/master/ERRATA-REVB.md).
+**Перелік помилок до печатної плати rev.B:** [Дивитися](https://github.com/andykarpov/karabas-pro/blob/master/ERRATA-REVB.md).
 
-**ERRATA for PCB rev.С:** [See ERRATA Rev.С](https://github.com/andykarpov/karabas-pro/blob/master/ERRATA-REVC.md).
+**Перелік помилок до печатної плати rev.С:** [Дивитися](https://github.com/andykarpov/karabas-pro/blob/master/ERRATA-REVC.md).
 
-**Latest stable revision:** rev.DS'.
+**Остання стабільна ревізія проекту:** rev.Ї.
 
-**Latest development revision:** rev.E.
+**Перелік змін до печатної плати:** [Дивитися](https://github.com/andykarpov/karabas-pro/blob/master/CHANGELOG-PCB.md).
 
-**PCB changelog:** [PCB changelog](https://github.com/andykarpov/karabas-pro/blob/master/CHANGELOG-PCB.md).
+**Реліз прошивки Профі** [Завантажити](https://github.com/andykarpov/karabas-pro/tree/master/firmware/releases/profi).
 
-**Profi firmware** [Download a Profi firmware](https://github.com/andykarpov/karabas-pro/tree/master/firmware/releases/profi).
+**Донати** [Дивитися](https://github.com/andykarpov/karabas-pro/blob/master/DONATIONS.md).
 
-**Donations** [See DONATIONS.md](https://github.com/andykarpov/karabas-pro/blob/master/DONATIONS.md).
-
-### Pre-production renders:
+### Зображення плати:
 
 ![image](https://github.com/andykarpov/karabas-pro/raw/master/docs/photos/karabas-pro-revER-top.png)
 
