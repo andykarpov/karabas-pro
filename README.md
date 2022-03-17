@@ -44,7 +44,7 @@
 
 **Перелік помилок до печатної плати rev.С:** [Дивитися](https://github.com/andykarpov/karabas-pro/blob/master/ERRATA-REVC.md).
 
-**Остання стабільна ревізія проекту:** rev.Ї [Завантажити](https://github.com/andykarpov/karabas-pro/blob/master/pcb/gerbers/karabas-pro-gerbers-revEU.zip).
+**Остання стабільна ревізія проекту:** rev.Ї [Завантажити](https://github.com/andykarpov/karabas-pro/raw/master/pcb/gerbers/karabas-pro-gerbers-revEU.zip).
 
 **Перелік змін до печатної плати:** [Дивитися](https://github.com/andykarpov/karabas-pro/blob/master/CHANGELOG-PCB.md).
 
