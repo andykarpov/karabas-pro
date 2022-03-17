@@ -48,7 +48,7 @@
 
 **Перелік змін до печатної плати:** [Дивитися](https://github.com/andykarpov/karabas-pro/blob/master/CHANGELOG-PCB.md).
 
-**Реліз прошивки Профі** [Завантажити](https://github.com/andykarpov/karabas-pro/tree/master/firmware/releases/profi).
+**Реліз прошивки Профі** [Завантажити](https://github.com/andykarpov/karabas-pro/releases).
 
 **Донати** [Дивитися](https://github.com/andykarpov/karabas-pro/blob/master/DONATIONS.md).
 
