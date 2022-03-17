@@ -4,7 +4,7 @@
 
 I will be happy to receive any amount of EUR/USD/UAH. 
 
-[![](https://www.paypal.com/donate/?business=VLPSW86UVSDYA&no_recurring=0&currency_code=USD)](https://www.paypal.com/donate/?business=VLPSW86UVSDYA&no_recurring=0&currency_code=USD)
+[![](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](https://www.paypal.com/donate/?business=VLPSW86UVSDYA&no_recurring=0&currency_code=USD)
 
 ### FDImage tool by Doctor Max
 
