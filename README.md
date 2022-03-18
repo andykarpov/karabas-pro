@@ -38,15 +38,15 @@
 
 ## Додаткова інформація
 
-**Перелік помилок до печатної плати rev.A:** [Дивитися](https://github.com/andykarpov/karabas-pro/blob/master/ERRATA-REVA.md).
+**Перелік помилок до друкованої плати rev.A:** [Дивитися](https://github.com/andykarpov/karabas-pro/blob/master/ERRATA-REVA.md).
 
-**Перелік помилок до печатної плати rev.B:** [Дивитися](https://github.com/andykarpov/karabas-pro/blob/master/ERRATA-REVB.md).
+**Перелік помилок до друкованої плати rev.B:** [Дивитися](https://github.com/andykarpov/karabas-pro/blob/master/ERRATA-REVB.md).
 
-**Перелік помилок до печатної плати rev.С:** [Дивитися](https://github.com/andykarpov/karabas-pro/blob/master/ERRATA-REVC.md).
+**Перелік помилок до друкованої плати rev.С:** [Дивитися](https://github.com/andykarpov/karabas-pro/blob/master/ERRATA-REVC.md).
 
 **Остання стабільна ревізія проекту:** rev.Ї [Завантажити](https://github.com/andykarpov/karabas-pro/raw/master/pcb/gerbers/karabas-pro-gerbers-revEU.zip).
 
-**Перелік змін до печатної плати:** [Дивитися](https://github.com/andykarpov/karabas-pro/blob/master/CHANGELOG-PCB.md).
+**Перелік змін до друкованої плати:** [Дивитися](https://github.com/andykarpov/karabas-pro/blob/master/CHANGELOG-PCB.md).
 
 **Реліз прошивки Профі** [Завантажити](https://github.com/andykarpov/karabas-pro/releases).
 
