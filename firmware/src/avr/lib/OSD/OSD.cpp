@@ -21,12 +21,14 @@
 
 // Commands
 
-const uint8_t CMD_CLEAR = 0x0F;
-const uint8_t CMD_SET_POS_X = 0x10;
-const uint8_t CMD_SET_POS_Y = 0x11;
-const uint8_t CMD_CHAR = 0x12;
-const uint8_t CMD_ATTR = 0x13;
-const uint8_t CMD_NOOP = 0x14;
+const uint8_t CMD_OSD = 0x20;
+
+const uint8_t ADDR_CLEAR = 0x0F;
+const uint8_t ADDR_SET_POS_X = 0x10;
+const uint8_t ADDR_SET_POS_Y = 0x11;
+const uint8_t ADDR_CHAR = 0x12;
+const uint8_t ADDR_ATTR = 0x13;
+const uint8_t ADDR_NOOP = 0x14;
 
 const uint8_t SIZE_X = 32;
 const uint8_t SIZE_Y = 24;
@@ -124,11 +126,11 @@ void OSD::frame(uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2, uint8_t thicknes
 size_t OSD::write(uint8_t chr)
 {
   uint8_t color = fg_color << 4;  
-  action(CMD_SET_POS_X, current_x);
-  action(CMD_SET_POS_Y, current_y);
+  action(CMD_OSD, ADDR_SET_POS_X, current_x);
+  action(CMD_OSD, ADDR_SET_POS_Y, current_y);
 //  action(CMD_CHAR, chr-32);
-  action(CMD_CHAR, chr);
-  action(CMD_ATTR, bg_color + color);
+  action(CMD_OSD, ADDR_CHAR, chr);
+  action(CMD_OSD, ADDR_ATTR, bg_color + color);
   setPos(current_x+1, current_y);
   return 1; 
 }

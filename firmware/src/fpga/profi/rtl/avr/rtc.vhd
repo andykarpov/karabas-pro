@@ -43,9 +43,9 @@ ENTITY rtc IS
 	PORT
 	(
 		data		: IN STD_LOGIC_VECTOR (7 DOWNTO 0);
-		rdaddress		: IN STD_LOGIC_VECTOR (5 DOWNTO 0);
+		rdaddress		: IN STD_LOGIC_VECTOR (7 DOWNTO 0);
 		rdclock		: IN STD_LOGIC ;
-		wraddress		: IN STD_LOGIC_VECTOR (5 DOWNTO 0);
+		wraddress		: IN STD_LOGIC_VECTOR (7 DOWNTO 0);
 		wrclock		: IN STD_LOGIC  := '1';
 		wren		: IN STD_LOGIC  := '0';
 		q		: OUT STD_LOGIC_VECTOR (7 DOWNTO 0)
@@ -81,12 +81,12 @@ ARCHITECTURE SYN OF rtc IS
 		width_byteena_a		: NATURAL
 	);
 	PORT (
-			address_a	: IN STD_LOGIC_VECTOR (5 DOWNTO 0);
+			address_a	: IN STD_LOGIC_VECTOR (7 DOWNTO 0);
 			clock0	: IN STD_LOGIC ;
 			data_a	: IN STD_LOGIC_VECTOR (7 DOWNTO 0);
 			q_b	: OUT STD_LOGIC_VECTOR (7 DOWNTO 0);
 			wren_a	: IN STD_LOGIC ;
-			address_b	: IN STD_LOGIC_VECTOR (5 DOWNTO 0);
+			address_b	: IN STD_LOGIC_VECTOR (7 DOWNTO 0);
 			clock1	: IN STD_LOGIC 
 	);
 	END COMPONENT;
@@ -103,14 +103,14 @@ BEGIN
 		clock_enable_output_b => "BYPASS",
 		intended_device_family => "Cyclone IV E",
 		lpm_type => "altsyncram",
-		numwords_a => 64,
-		numwords_b => 64,
+		numwords_a => 256,
+		numwords_b => 256,
 		operation_mode => "DUAL_PORT",
 		outdata_aclr_b => "NONE",
 		outdata_reg_b => "CLOCK1",
 		power_up_uninitialized => "FALSE",
-		widthad_a => 6,
-		widthad_b => 6,
+		widthad_a => 8,
+		widthad_b => 8,
 		width_a => 8,
 		width_b => 8,
 		width_byteena_a => 1
@@ -162,7 +162,7 @@ END SYN;
 -- Retrieval info: PRIVATE: JTAG_ENABLED NUMERIC "0"
 -- Retrieval info: PRIVATE: JTAG_ID STRING "NONE"
 -- Retrieval info: PRIVATE: MAXIMUM_DEPTH NUMERIC "0"
--- Retrieval info: PRIVATE: MEMSIZE NUMERIC "512"
+-- Retrieval info: PRIVATE: MEMSIZE NUMERIC "2048"
 -- Retrieval info: PRIVATE: MEM_IN_BITS NUMERIC "0"
 -- Retrieval info: PRIVATE: MIFfilename STRING ""
 -- Retrieval info: PRIVATE: OPERATION_MODE NUMERIC "2"
@@ -199,26 +199,26 @@ END SYN;
 -- Retrieval info: CONSTANT: CLOCK_ENABLE_OUTPUT_B STRING "BYPASS"
 -- Retrieval info: CONSTANT: INTENDED_DEVICE_FAMILY STRING "Cyclone IV E"
 -- Retrieval info: CONSTANT: LPM_TYPE STRING "altsyncram"
--- Retrieval info: CONSTANT: NUMWORDS_A NUMERIC "64"
--- Retrieval info: CONSTANT: NUMWORDS_B NUMERIC "64"
+-- Retrieval info: CONSTANT: NUMWORDS_A NUMERIC "256"
+-- Retrieval info: CONSTANT: NUMWORDS_B NUMERIC "256"
 -- Retrieval info: CONSTANT: OPERATION_MODE STRING "DUAL_PORT"
 -- Retrieval info: CONSTANT: OUTDATA_ACLR_B STRING "NONE"
 -- Retrieval info: CONSTANT: OUTDATA_REG_B STRING "CLOCK1"
 -- Retrieval info: CONSTANT: POWER_UP_UNINITIALIZED STRING "FALSE"
--- Retrieval info: CONSTANT: WIDTHAD_A NUMERIC "6"
--- Retrieval info: CONSTANT: WIDTHAD_B NUMERIC "6"
+-- Retrieval info: CONSTANT: WIDTHAD_A NUMERIC "8"
+-- Retrieval info: CONSTANT: WIDTHAD_B NUMERIC "8"
 -- Retrieval info: CONSTANT: WIDTH_A NUMERIC "8"
 -- Retrieval info: CONSTANT: WIDTH_B NUMERIC "8"
 -- Retrieval info: CONSTANT: WIDTH_BYTEENA_A NUMERIC "1"
 -- Retrieval info: USED_PORT: data 0 0 8 0 INPUT NODEFVAL "data[7..0]"
 -- Retrieval info: USED_PORT: q 0 0 8 0 OUTPUT NODEFVAL "q[7..0]"
--- Retrieval info: USED_PORT: rdaddress 0 0 6 0 INPUT NODEFVAL "rdaddress[5..0]"
+-- Retrieval info: USED_PORT: rdaddress 0 0 8 0 INPUT NODEFVAL "rdaddress[7..0]"
 -- Retrieval info: USED_PORT: rdclock 0 0 0 0 INPUT NODEFVAL "rdclock"
--- Retrieval info: USED_PORT: wraddress 0 0 6 0 INPUT NODEFVAL "wraddress[5..0]"
+-- Retrieval info: USED_PORT: wraddress 0 0 8 0 INPUT NODEFVAL "wraddress[7..0]"
 -- Retrieval info: USED_PORT: wrclock 0 0 0 0 INPUT VCC "wrclock"
 -- Retrieval info: USED_PORT: wren 0 0 0 0 INPUT GND "wren"
--- Retrieval info: CONNECT: @address_a 0 0 6 0 wraddress 0 0 6 0
--- Retrieval info: CONNECT: @address_b 0 0 6 0 rdaddress 0 0 6 0
+-- Retrieval info: CONNECT: @address_a 0 0 8 0 wraddress 0 0 8 0
+-- Retrieval info: CONNECT: @address_b 0 0 8 0 rdaddress 0 0 8 0
 -- Retrieval info: CONNECT: @clock0 0 0 0 0 wrclock 0 0 0 0
 -- Retrieval info: CONNECT: @clock1 0 0 0 0 rdclock 0 0 0 0
 -- Retrieval info: CONNECT: @data_a 0 0 8 0 data 0 0 8 0

@@ -231,7 +231,7 @@ signal zc_miso			: std_logic;
 -- MC146818A
 signal mc146818_wr		: std_logic;
 signal mc146818_rd		: std_logic;
-signal mc146818_a_bus	: std_logic_vector(5 downto 0);
+signal mc146818_a_bus	: std_logic_vector(7 downto 0);
 signal mc146818_do_bus	: std_logic_vector(7 downto 0);
 signal mc146818_busy		: std_logic;
 --signal port_eff7_reg		: std_logic_vector(7 downto 0);
@@ -1419,7 +1419,7 @@ begin
 			
 			-- profi RTC #BF / #FF
 			if cs_rtc_as = '1' and cpu_wr_n = '0' then 
-				mc146818_a_bus <= cpu_do_bus(5 downto 0); 
+				mc146818_a_bus <= cpu_do_bus(7 downto 0); 
 			end if;
 
 			-- #DFFD

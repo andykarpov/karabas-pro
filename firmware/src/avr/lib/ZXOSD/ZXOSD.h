@@ -31,7 +31,7 @@
 class ZXOSD
 {
 
-  using spi_cb = void (*)(uint8_t addr, uint8_t data); // alias function pointer
+  using spi_cb = void (*)(uint8_t cmd, uint8_t addr, uint8_t data); // alias function pointer
 
 private:
   spi_cb action;

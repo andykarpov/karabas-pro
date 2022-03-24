@@ -6,7 +6,7 @@ JedecChain;
 	P ActionCode(Ign)
 		Device PartName(EPM3128A) MfrSpec(OpMask(0));
 	P ActionCode(Cfg)
-		Device PartName(EP4CE6) Path("") File("karabas_pro_rk86.jic") MfrSpec(OpMask(1) SEC_Device(EPCQ16) Child_OpMask(1 1));
+		Device PartName(EP4CE6E22) Path("/home/andy/Documents/Projects/Retrocomp/ZX-Spectrum/karabas-pro/firmware/src/fpga/rk86/syn/") File("karabas_pro_rk86.sof") MfrSpec(OpMask(1));
 
 ChainEnd;
 

@@ -44,14 +44,7 @@
 #define CMD_INIT_REQ 0xFD // init req
 
 // BUILD version commands
-#define CMD_BUILD_REQ0 0xF0
-#define CMD_BUILD_REQ1 0xF1
-#define CMD_BUILD_REQ2 0xF2
-#define CMD_BUILD_REQ3 0xF3
-#define CMD_BUILD_REQ4 0xF4
-#define CMD_BUILD_REQ5 0xF5
-#define CMD_BUILD_REQ6 0xF6
-#define CMD_BUILD_REQ7 0xF7
+#define CMD_BUILD_REQ 0xF0
 
 // NOP command
 #define CMD_NONE 0xFF

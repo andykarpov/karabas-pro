@@ -1,5 +1,11 @@
 ## Donations
 
+### The Author
+
+I will be happy to receive any amount of EUR/USD/UAH. 
+
+[![](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](https://www.paypal.com/donate/?business=VLPSW86UVSDYA&no_recurring=0&currency_code=USD)
+
 ### FDImage tool by Doctor Max
 
 Thanks to all bakers, with your help it was possible to release a nice new tool - **FDImage by Doctor Max!**
