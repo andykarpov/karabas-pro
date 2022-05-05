@@ -719,7 +719,8 @@ if( index == length )
 /* valid found values only */
 if( retdata > 0 )
   {
-  if( retdata <= PS2_KEY_CAPS )
+  //if( retdata <= PS2_KEY_CAPS )
+  if( retdata < PS2_KEY_CAPS )
     {   // process lock keys need second make to turn off
     if( PS2_keystatus & _BREAK )
       {

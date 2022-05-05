@@ -692,7 +692,10 @@ void ZXKeyboard::fill(uint16_t sc, unsigned long n)
 
     // CapsLock
     case PS2_KEY_CAPS:
-      doCaps();
+      matrix[ZX_K_CS] = !is_up;
+      matrix[ZX_K_SS] = !is_up;
+      processCapsedKey(code, is_up);
+      //doCaps();
       break;
 
     // PgUp -> M+BIT6 for Profi, CS+3 for ZX
