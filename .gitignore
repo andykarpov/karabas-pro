@@ -60,6 +60,7 @@ pcb/rev*/gerbers
 *-bot.pdf
 *-bom.pdf
 *.csv
+karabas-pro-*-backups/
 # Gtkwave
 *.ghw
 *.cf
