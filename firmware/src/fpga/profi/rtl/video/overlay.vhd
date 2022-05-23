@@ -56,6 +56,7 @@ architecture rtl of overlay is
     signal font_word: std_logic_vector(7 downto 0);
     signal font_reg : std_logic_vector(7 downto 0);	 
     signal pixel: std_logic;
+	 signal pixel_reg: std_logic;
     
     signal addr_read: std_logic_vector(9 downto 0);
     signal addr_write: std_logic_vector(9 downto 0);
@@ -98,14 +99,15 @@ begin
         q         => vram_do
     );
 
-	flash <= BLINK;
-	hcnt <= '0' & hcnt_i(9 downto 1) when DS80='1' else hcnt_i;
-	vcnt <= vcnt_i;
-	 
+    flash <= BLINK;
+    hcnt <= '0' & hcnt_i(9 downto 1) when DS80='1' else hcnt_i;
+    vcnt <= vcnt_i;
+
     char_x <= hcnt(3 downto 1) when OSD_POPUP = '1' else hcnt(2 downto 0);
     char_y <= vcnt(3 downto 1) when OSD_POPUP = '1' else VCNT(2 downto 0);
+
 	 paper2 <= '1' when hcnt >= 0 and hcnt < 256 and vcnt >= 0 and vcnt < 192 else '0'; 
-	 paper <= '1' when hcnt >= 8 and hcnt < 264 and vcnt >= 0 and vcnt < 192 else '0'; -- активная зона со сдвигом на одно знакоместо
+	 paper <= '1' when hcnt >= 8 and hcnt < 264 and vcnt >= 0 and vcnt < 192 else '0'; -- активная зона со сдвигом на одно знакоместо (8 px)
     video_on <= '1' when (OSD_OVERLAY = '1' or OSD_POPUP = '1') else '0';
 
 	 -- чтение символа из видеопамяти и строчки знакоместа из шрифта
@@ -124,7 +126,6 @@ begin
 							end if;
 						when "1111" => 
 							-- задаем адрес знакоместа из шрифта для чтения
-							rom_addr <= vram_do(15 downto 8) & char_y;
 							attr2 <= vram_do(7 downto 0);
 						when "0000" => 
 							-- назначаем attr для нового знакоместа 
@@ -140,7 +141,6 @@ begin
 							end if;
 						when "111" => 
 							-- задаем адрес знакоместа из шрифта для чтения
-							rom_addr <= vram_do(15 downto 8) & char_y;
 							attr2 <= vram_do(7 downto 0);
 						when "000" => 
 							-- назначаем attr для нового знакоместа 
@@ -152,11 +152,17 @@ begin
 		end if;
 	 end process;
 	 
+	 -- адрес фонта для чтения
+	 rom_addr <= vram_do(15 downto 8) & char_y when hcnt(3 downto 0) = "1111" and OSD_POPUP = '1' else 
+					 vram_do(15 downto 8) & char_y when char_x = "111" and OSD_POPUP = '0' else 
+					 rom_addr;
+	 
 	 -- читаем строку знакоместа 
 	 font_reg <= font_word;	 
 
     -- получение пикселя из строчки знакоместа шрифта
     bit_addr <= char_x(2 downto 0);
+
     pixel <= 
                 font_reg(7) when bit_addr = "000" else 
                 font_reg(6) when bit_addr = "001" else 
@@ -166,10 +172,19 @@ begin
                 font_reg(2) when bit_addr = "101" else
                 font_reg(1) when bit_addr = "110" else
                 font_reg(0) when bit_addr = "111";
+					 
+	 process(CLK, CLK2)
+	 begin 
+		if (rising_edge(CLK)) then
+			if (CLK2 = '0') then
+				pixel_reg <= pixel;
+			end if;
+		end if;
+	 end process;
 
     -- формирование RGB
     is_flash <= '1' when attr(3 downto 0) = "0001" else '0';
-    selector <= video_on & pixel & flash & is_flash;
+    selector <= video_on & pixel_reg & flash & is_flash;
     rgb_fg <= (attr(7) and attr(4)) & attr(7) & attr(7) & (attr(6) and attr(4)) & attr(6) & attr(6) & (attr(5) and attr(4)) & attr(5) & attr(5);
     rgb_bg <= (attr(3) and attr(0)) & attr(3) & attr(3) & (attr(2) and attr(0)) & attr(2) & attr(2) & (attr(1) and attr(0)) & attr(1) & attr(1);
     RGB_O <= 
