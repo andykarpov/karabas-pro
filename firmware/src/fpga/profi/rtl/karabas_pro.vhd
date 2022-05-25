@@ -706,6 +706,7 @@ U8: entity work.overlay
 port map (
 	CLK 				=> clk_bus,
 	CLK2 				=> clk_div2,
+	CLK4 				=> clk_div4,
 	DS80				=> ds80,
 	RGB_I 			=> vid_rgb,
 	RGB_O 			=> vid_rgb_osd,
@@ -714,6 +715,12 @@ port map (
 	PAPER_I 			=> vid_ispaper,
 	BLINK 			=> blink,
 
+	-- icons
+	STATUS_FD		=> not(fdd_cs_n) and (not(cpu_rd_n) or not(cpu_wr_n)),
+	STATUS_SD 		=> zc_spi_start and zc_wr_en,
+	STATUS_CF 		=> not(hdd_profi_ebl_n),
+	OSD_ICONS 		=> '1',
+	
 	-- osd overlay
 	OSD_OVERLAY		=> osd_overlay,
 	OSD_POPUP 		=> osd_popup,

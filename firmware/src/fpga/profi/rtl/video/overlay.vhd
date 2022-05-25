@@ -7,6 +7,7 @@ entity overlay is
 	port (
 		CLK		: in std_logic;
 		CLK2 		: in std_logic;
+		CLK4 		: in std_logic;
 		RGB_I 	: in std_logic_vector(8 downto 0);
 		RGB_O 	: out std_logic_vector(8 downto 0);
 		DS80		: in std_logic;
@@ -14,6 +15,11 @@ entity overlay is
 		VCNT_I	: in std_logic_vector(8 downto 0);
 		PAPER_I  : in std_logic;
 		BLINK 	: in std_logic;
+		
+		STATUS_SD : in std_logic := '0'; -- SD card r/w status
+		STATUS_CF : in std_logic := '0'; -- CF card r/w status
+		STATUS_FD : in std_logic := '0'; -- FDD r/w status
+		OSD_ICONS : in std_logic := '0'; -- enable OSD icons
 		
 		OSD_OVERLAY 	: in std_logic := '0'; -- full overlay osd
 		OSD_POPUP 		: in std_logic := '0'; -- popup osd
@@ -23,15 +29,15 @@ end entity;
 
 architecture rtl of overlay is
 
-	 component rom_font2
+	 component rom_font1
     port (
         address : in std_logic_vector(10 downto 0);
         clock   : in std_logic;
         q       : out std_logic_vector(7 downto 0)
     );
     end component;
-
-    component screen2
+	 
+    component screen1
     port (
         data    	: in std_logic_vector(15 downto 0);
         rdaddress : in std_logic_vector(9 downto 0);
@@ -44,6 +50,7 @@ architecture rtl of overlay is
     end component;
 
     signal video_on : std_logic;
+	 signal rgb: std_logic_vector(8 downto 0);
 
     signal attr, attr2: std_logic_vector(7 downto 0);
 
@@ -77,18 +84,41 @@ architecture rtl of overlay is
 	 
 	 signal hcnt : std_logic_vector(9 downto 0) := (others => '0');
 	 signal vcnt : std_logic_vector(8 downto 0) := (others => '0');
-	
+	 
+	 constant paper_start_h : natural := 0;
+	 constant paper_end_h : natural := 256;
+	 constant paper_start_v : natural := 0;
+	 constant paper_end_v : natural := 192;
 begin
 
-	-- знакогенератор
-	 U_FONT: rom_font2
+	 -- знакогенератор
+	 U_FONT: rom_font1
     port map (
         address => rom_addr,
         clock   => CLK2,
         q       => font_word
     );
 
-    U_VRAM: screen2 
+	 -- иконки
+	 U_ICONS: entity work.icons
+    port map (
+		CLK		=> CLK,
+		CLK2 		=> CLK2,
+		CLK4 		=> CLK4,
+		RGB_I 	=> RGB_I,
+		RGB_O 	=> rgb,
+		DS80		=> DS80,
+		HCNT		=> HCNT,
+		VCNT		=> VCNT,
+		
+		STATUS_SD => STATUS_SD,
+		STATUS_CF => STATUS_CF,
+		STATUS_FD => STATUS_FD,
+		OSD_ICONS => OSD_ICONS
+    );
+
+	 -- видеопамять OSD
+    U_VRAM: screen1 
     port map (
         data    => vram_di,
         rdaddress => addr_read,
@@ -99,17 +129,17 @@ begin
         q         => vram_do
     );
 
-    flash <= BLINK;
-    hcnt <= '0' & hcnt_i(9 downto 1) when DS80='1' else hcnt_i;
-    vcnt <= vcnt_i;
+	 flash <= BLINK;
+	 hcnt <= '0' & hcnt_i(9 downto 1) when DS80 = '1' else hcnt_i;
+	 vcnt <= vcnt_i;
 
     char_x <= hcnt(3 downto 1) when OSD_POPUP = '1' else hcnt(2 downto 0);
     char_y <= vcnt(3 downto 1) when OSD_POPUP = '1' else VCNT(2 downto 0);
-
-	 paper2 <= '1' when hcnt >= 0 and hcnt < 256 and vcnt >= 0 and vcnt < 192 else '0'; 
-	 paper <= '1' when hcnt >= 8 and hcnt < 264 and vcnt >= 0 and vcnt < 192 else '0'; -- активная зона со сдвигом на одно знакоместо (8 px)
+	 
+	 paper2 <= '1' when hcnt >= paper_start_h and hcnt < paper_end_h and vcnt >= paper_start_v and vcnt < paper_end_v else '0'; 
+	 paper <= '1' when hcnt >= paper_start_h + 8 and hcnt < paper_end_h + 8 and vcnt >= paper_start_v and vcnt < paper_end_v else '0'; -- активная зона со сдвигом на одно знакоместо (8 px)
     video_on <= '1' when (OSD_OVERLAY = '1' or OSD_POPUP = '1') else '0';
-
+	 
 	 -- чтение символа из видеопамяти и строчки знакоместа из шрифта
 	 -- задержка на одно знакоместо
 	 process (CLK, CLK2, vram_do)
@@ -156,7 +186,7 @@ begin
 	 rom_addr <= vram_do(15 downto 8) & char_y when hcnt(3 downto 0) = "1111" and OSD_POPUP = '1' else 
 					 vram_do(15 downto 8) & char_y when char_x = "111" and OSD_POPUP = '0' else 
 					 rom_addr;
-	 
+					 
 	 -- читаем строку знакоместа 
 	 font_reg <= font_word;	 
 
@@ -172,7 +202,7 @@ begin
                 font_reg(2) when bit_addr = "101" else
                 font_reg(1) when bit_addr = "110" else
                 font_reg(0) when bit_addr = "111";
-					 
+
 	 process(CLK, CLK2)
 	 begin 
 		if (rising_edge(CLK)) then
@@ -181,7 +211,7 @@ begin
 			end if;
 		end if;
 	 end process;
-
+	 
     -- формирование RGB
     is_flash <= '1' when attr(3 downto 0) = "0001" else '0';
     selector <= video_on & pixel_reg & flash & is_flash;
@@ -189,9 +219,9 @@ begin
     rgb_bg <= (attr(3) and attr(0)) & attr(3) & attr(3) & (attr(2) and attr(0)) & attr(2) & attr(2) & (attr(1) and attr(0)) & attr(1) & attr(1);
     RGB_O <= 
 				rgb_fg when paper = '1' and (selector="1111" or selector="1001" or selector="1100" or selector="1110") else 
-            rgb_bg(8 downto 7) & RGB_I(8) & rgb_bg(5 downto 4) & RGB_I(5) & rgb_bg(2 downto 1) & RGB_I(2) when paper = '1' and (selector="1011" or selector="1101" or selector="1000" or selector="1010") else 
-				"00" & RGB_I(8) & "00" & RGB_I(5) & "00" & RGB_I(2) when video_on = '1' else 
-				RGB_I;
+            rgb_bg(8 downto 7) & RGB(8) & rgb_bg(5 downto 4) & RGB(5) & rgb_bg(2 downto 1) & RGB(2) when paper = '1' and (selector="1011" or selector="1101" or selector="1000" or selector="1010") else 
+				"00" & RGB(8) & "00" & RGB(5) & "00" & RGB(2) when video_on = '1' else 
+				RGB;
 
 		-- заполнение видеопамяти AVR'кой по SPI
 		process(CLK, osd_command, last_osd_command)
