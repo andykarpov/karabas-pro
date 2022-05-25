@@ -376,25 +376,33 @@ void ZXKeyboard::fill(uint16_t sc, unsigned long n)
     case PS2_KEY_UP_ARROW:
       if (!is_shift) {
         cursor_up = !is_up;
-        delayedKeypress(code, ZX_K_CS, ZX_K_7, is_up);
+        matrix[ZX_K_CS] = !is_up;
+        matrix[ZX_K_7] = !is_up;
+        processCapsedKey(code, is_up);
       }
       break;
     case PS2_KEY_DN_ARROW:
       if (!is_shift) {
         cursor_down = !is_up;
-        delayedKeypress(code, ZX_K_CS, ZX_K_6, is_up);
+        matrix[ZX_K_CS] = !is_up;
+        matrix[ZX_K_6] = !is_up;
+        processCapsedKey(code, is_up);
       }
       break;
     case PS2_KEY_L_ARROW:
       if (!is_shift) {
         cursor_left = !is_up;
-        delayedKeypress(code, ZX_K_CS, ZX_K_5, is_up);
+        matrix[ZX_K_CS] = !is_up;
+        matrix[ZX_K_5] = !is_up;
+        processCapsedKey(code, is_up);
       }
       break;
     case PS2_KEY_R_ARROW:
       if (!is_shift) {
         cursor_right = !is_up;
-        delayedKeypress(code, ZX_K_CS, ZX_K_8, is_up);
+        matrix[ZX_K_CS] = !is_up;
+        matrix[ZX_K_8] = !is_up;
+        processCapsedKey(code, is_up);
       }
       break;
 
@@ -684,7 +692,10 @@ void ZXKeyboard::fill(uint16_t sc, unsigned long n)
 
     // CapsLock
     case PS2_KEY_CAPS:
-      doCaps();
+      matrix[ZX_K_CS] = !is_up;
+      matrix[ZX_K_SS] = !is_up;
+      processCapsedKey(code, is_up);
+      //doCaps();
       break;
 
     // PgUp -> M+BIT6 for Profi, CS+3 for ZX
