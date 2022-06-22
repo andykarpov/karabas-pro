@@ -25,6 +25,24 @@
 #include <ZXKeyboard.h>
 #include <ZXRTC.h>
 
+#define LANG_EN 0
+#define LANG_RU 1
+#define LANG_UA 2
+
+#ifndef LANG
+#define LANG LANG_EN
+#endif
+
+#if (LANG==LANG_RU)
+#include "lang_ru.h"
+#elif (LANG==LANG_UA)
+#include "lang_ua.h"
+#else
+#include "lang_en.h"
+#endif
+
+#define PGMT( pgm_ptr ) ( reinterpret_cast< const __FlashStringHelper * >( pgm_ptr ) )
+
 /****************************************************************************/
 
 
@@ -105,6 +123,7 @@ public:
 
   void printHeader();
   void printLogo(uint8_t x, uint8_t y);
+  void printRev();
   void printLine(uint8_t y);
   void printSpace();
   void clear();

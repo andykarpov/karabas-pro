@@ -1,0 +1,29 @@
+Karabas Pro cfg:
+
+B0: 0 - TDA1543, 1 - TDA1543A
+B1: free for new features
+B2: 0 - no tape in/out, 1 - enable tape in/out
+B3: 0
+B4: 0 - E,Ё, 1 - Ї mod (only in case of B5=1)
+B5: 0 - 2MB, 1 - 6MB
+B6: free for new features
+B7: free for new features
+
+B5-B2:
+- 0000: revA  = 0x00
+- 0001: revDS = 0x01
+- 1001: revE  = 0x09
+- 1101: revЇ  = 0x0D
+
+A/TD1543:    0x00 - 00000000
+A/TDA1543A:  0x01 - 00000001
+
+DS/TD1543:   0x04 - 00000100
+DS/TDA1543A: 0x05 - 00000101
+
+E/TD1543:    0x24 - 00100100
+E/TDA1543A:  0x25 - 00100101
+
+Ї/TD1543:    0x34 - 00110100
+Ї/TDA1543A:  0x35 - 00110101
+
