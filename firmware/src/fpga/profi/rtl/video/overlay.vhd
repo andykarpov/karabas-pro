@@ -131,7 +131,7 @@ begin
 
 	 flash <= BLINK;
 	 hcnt <= '0' & hcnt_i(9 downto 1) when DS80 = '1' else hcnt_i;
-	 vcnt <= vcnt_i;
+	 vcnt <= vcnt_i - 24 when DS80='1' else vcnt_i;
 
     char_x <= hcnt(3 downto 1) when OSD_POPUP = '1' else hcnt(2 downto 0);
     char_y <= vcnt(3 downto 1) when OSD_POPUP = '1' else VCNT(2 downto 0);
