@@ -27,7 +27,7 @@
 		<hex_offset>1114112</hex_offset>
 	</hex_block>
 	<hex_block>
-		<hex_filename>../../rom/ROMain_fatall_ramdisk_D.hex</hex_filename>
+		<hex_filename>../../rom/ROMain_ramdisk_D.hex</hex_filename>
 		<hex_addressing>relative</hex_addressing>
 		<hex_offset>1048576</hex_offset>
 	</hex_block>
