@@ -272,6 +272,7 @@ signal hdd_wwe_n			:std_logic; -- Read High byte from "Write register" to HDD bu
 signal hdd_rww_n			:std_logic; -- Selector Low byte Data bus Buffer Direction: 1 - to HDD bus, 0 - to Data bus
 signal hdd_rwe_n			:std_logic; -- Read High byte from "Read register" to Data bus
 signal hdd_cs3fx_n		:std_logic;
+signal hdd_active 		:std_logic;
 
 -- Profi FDD ports
 signal RT_F2_1			:std_logic;
@@ -722,6 +723,7 @@ U8: entity work.overlay
 port map (
 	CLK 				=> clk_bus,
 	CLK2 				=> clk_div2,
+	CLK4 				=> clk_div4,
 	DS80				=> ds80,
 	RGB_I 			=> vid_rgb,
 	RGB_O 			=> vid_rgb_osd,
@@ -730,6 +732,12 @@ port map (
 	PAPER_I 			=> vid_ispaper,
 	BLINK 			=> blink,
 
+	-- icons
+	STATUS_FD		=> not(fdd_cs_n) and (not(cpu_rd_n) or not(cpu_wr_n)),
+	STATUS_SD 		=> zc_spi_start and zc_wr_en,
+	STATUS_CF 		=> hdd_active,
+	OSD_ICONS 		=> '1',
+	
 	-- osd overlay
 	OSD_OVERLAY		=> osd_overlay,
 	OSD_POPUP 		=> osd_popup,
@@ -1357,12 +1365,13 @@ cs_rtc_ds <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and
 port_xxfe_reg <= cpu_do_bus when cs_xxfe = '1' and (cpu_wr_n'event and cpu_wr_n = '1');
 
 -- порты Profi HDD
-hdd_profi_ebl_n	<='0' when (cpu_a_bus(7)='1' and cpu_a_bus(4 downto 0)="01011" and cpu_iorq_n='0') and ((cpm='1' and rom14='1') or (dos_act='1' and rom14='0')) else '1';	-- ROM14=0 BAS=0 ПЗУ SYS
-hdd_wwc_n 	<='0' when (cpu_wr_n='0' and cpu_a_bus(7 downto 0)="11001011" and cpu_iorq_n='0') and ((cpm='1' and rom14='1') or (dos_act='1' and rom14='0')) else '1'; -- Write High byte from Data bus to "Write register"
-hdd_wwe_n 	<='0' when (cpu_wr_n='0' and cpu_a_bus(7 downto 0)="11101011" and cpu_iorq_n='0') and ((cpm='1' and rom14='1') or (dos_act='1' and rom14='0')) else '1'; -- Read High byte from "Write register" to HDD bus
-hdd_rww_n 	<='0' when (cpu_wr_n='1' and cpu_a_bus(7 downto 0)="11001011" and cpu_iorq_n='0') and ((cpm='1' and rom14='1') or (dos_act='1' and rom14='0')) else '1'; -- Selector Low byte Data bus Buffer Direction: 1 - to HDD bus, 0 - to Data bus
-hdd_rwe_n 	<='0' when (cpu_wr_n='1' and cpu_a_bus(7 downto 0)="11101011" and cpu_iorq_n='0') and ((cpm='1' and rom14='1') or (dos_act='1' and rom14='0')) else '1'; -- Read High byte from "Read register" to Data bus
-hdd_cs3fx_n <='0' when (cpu_wr_n='0' and cpu_a_bus(7 downto 0)="10101011" and cpu_iorq_n='0') and ((cpm='1' and rom14='1') or (dos_act='1' and rom14='0')) else '1';
+hdd_profi_ebl_n	<='0' when (cpu_a_bus(7)='1' and cpu_a_bus(4 downto 0)="01011" and cpu_iorq_n='0') and ((cpm='1' and rom14='1') or (dos_act='1' and rom14='0')) and hdd_off = '0' else '1';	-- ROM14=0 BAS=0 ПЗУ SYS
+hdd_wwc_n 	<='0' when (cpu_wr_n='0' and cpu_a_bus(7 downto 0)="11001011" and cpu_iorq_n='0') and ((cpm='1' and rom14='1') or (dos_act='1' and rom14='0')) and hdd_off = '0' else '1'; -- Write High byte from Data bus to "Write register"
+hdd_wwe_n 	<='0' when (cpu_wr_n='0' and cpu_a_bus(7 downto 0)="11101011" and cpu_iorq_n='0') and ((cpm='1' and rom14='1') or (dos_act='1' and rom14='0')) and hdd_off = '0' else '1'; -- Read High byte from "Write register" to HDD bus
+hdd_rww_n 	<='0' when (cpu_wr_n='1' and cpu_a_bus(7 downto 0)="11001011" and cpu_iorq_n='0') and ((cpm='1' and rom14='1') or (dos_act='1' and rom14='0')) and hdd_off = '0' else '1'; -- Selector Low byte Data bus Buffer Direction: 1 - to HDD bus, 0 - to Data bus
+hdd_rwe_n 	<='0' when (cpu_wr_n='1' and cpu_a_bus(7 downto 0)="11101011" and cpu_iorq_n='0') and ((cpm='1' and rom14='1') or (dos_act='1' and rom14='0')) and hdd_off = '0' else '1'; -- Read High byte from "Read register" to Data bus
+hdd_cs3fx_n <='0' when (cpu_wr_n='0' and cpu_a_bus(7 downto 0)="10101011" and cpu_iorq_n='0') and ((cpm='1' and rom14='1') or (dos_act='1' and rom14='0')) and hdd_off = '0' else '1';
+hdd_active <= not(hdd_wwc_n and hdd_wwe_n and hdd_rww_n and hdd_rwe_n);
 
 -- порты Profi FDD
 RT_F2_1 <='0' when (cpu_a_bus(7 downto 5)="001" and cpu_a_bus(1 downto 0)="11" and cpu_iorq_n='0') and ((cpm='1' and rom14='1') or (dos_act='1' and rom14='0')) else '1'; --6D

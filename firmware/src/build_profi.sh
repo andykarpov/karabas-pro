@@ -37,6 +37,8 @@ cp karabas_pro_ep4ce10_revDS_tda1543.jic ../../../../../releases/profi/ep4ce10/k
 cp karabas_pro_ep4ce10_revDS_tda1543a.jic ../../../../../releases/profi/ep4ce10/karabas_pro_ep4ce10_revDS_tda1543a.jic
 cp karabas_pro_ep4ce10_revE_tda1543.jic ../../../../../releases/profi/ep4ce10/karabas_pro_ep4ce10_revE_tda1543.jic
 cp karabas_pro_ep4ce10_revE_tda1543a.jic ../../../../../releases/profi/ep4ce10/karabas_pro_ep4ce10_revE_tda1543a.jic
+cp karabas_pro_ep4ce10_revEU_tda1543.jic ../../../../../releases/profi/ep4ce10/karabas_pro_ep4ce10_revEU_tda1543.jic
+cp karabas_pro_ep4ce10_revEU_tda1543a.jic ../../../../../releases/profi/ep4ce10/karabas_pro_ep4ce10_revEU_tda1543a.jic
 cp karabas_pro_ep4ce10.rbf ../../../../../releases/profi/ep4ce10/karabas_pro_ep4ce10.rbf
 cp karabas_pro_ep4ce10.sof ../../../../../releases/profi/ep4ce10/karabas_pro_ep4ce10.sof
 

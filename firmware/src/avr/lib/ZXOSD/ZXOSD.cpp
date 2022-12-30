@@ -235,59 +235,65 @@ void ZXOSD::printLogo(uint8_t x, uint8_t y)
   osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
 
   // karabas logo
-  osd.write(128); osd.write(129); 
-  osd.write(130); osd.write(131); 
-  osd.write(132); osd.write(133); 
-  osd.write(130); osd.write(131); 
-  osd.write(134); osd.write(135);
-  osd.write(130); osd.write(131); 
-  osd.write(136); osd.write(137); 
+  osd.write(0xb0); osd.write(0xb1); // k
+  osd.write(0xb2); osd.write(0xb3); // a
+  osd.write(0xb4); osd.write(0xb5); // r
+  osd.write(0xb2); osd.write(0xb3); // a
+  osd.write(0xb6); osd.write(0xb7); // b
+  osd.write(0xb2); osd.write(0xb3); // a
+  osd.write(0xb8); osd.write(0xb9); // s
 
   osd.setPos(x,y+1);
-  osd.write(144); osd.write(145); 
-  osd.write(146); osd.write(147); 
-  osd.write(148); osd.write(149); 
-  osd.write(146); osd.write(147); 
-  osd.write(150); osd.write(151);
-  osd.write(146); osd.write(147); 
-  osd.write(152); osd.write(153); 
+  osd.write(0xc0); osd.write(0xc1); // k
+  osd.write(0xc2); osd.write(0xc3); // a
+  osd.write(0xc4); osd.write(0xc5); // r
+  osd.write(0xc2); osd.write(0xc3); // a
+  osd.write(0xc6); osd.write(0xc7); // b
+  osd.write(0xc2); osd.write(0xc3); // a
+  osd.write(0xc8); osd.write(0xc9); // s
 
   osd.setPos(x+8, y+2);
-  osd.write(138); osd.write(139);
-  osd.write(132); osd.write(133); 
-  osd.write(140); osd.write(141); 
+  osd.write(0xba); osd.write(0xbb); // p
+  osd.write(0xb4); osd.write(0xb5); // r
+  osd.write(0xbc); osd.write(0xbd); // o
 
   osd.setPos(x+8, y+3);
-  osd.write(154); osd.write(155);
-  osd.write(148); osd.write(149); 
-  osd.write(156); osd.write(157); 
+  osd.write(0xca); osd.write(0xcb); // p
+  osd.write(0xc4); osd.write(0xc5); // r
+  osd.write(0xcc); osd.write(0xcd); // o
 
   osd.setPos(x+1, y+2);
   osd.setColor(OSD::COLOR_RED_I, OSD::COLOR_BLACK);
-  osd.write(22);
+  osd.write(0x16); // -
   osd.setColor(OSD::COLOR_YELLOW_I, OSD::COLOR_BLACK);
-  osd.write(22);
+  osd.write(0x16); // -
   osd.setColor(OSD::COLOR_GREEN_I, OSD::COLOR_BLACK);
-  osd.write(22);
+  osd.write(0x16); // -
   osd.setColor(OSD::COLOR_BLUE_I, OSD::COLOR_BLACK);
-  osd.write(22);
+  osd.write(0x16); // -
 
   osd.setColor(OSD::COLOR_GREY, OSD::COLOR_BLACK);
   osd.setPos(x,y+3);
   // board revision
-  osd.print(F("Rev."));
-  switch (fpga_cfg) {
-    case 0:
-    case 1:
-      osd.print(F("A-D"));
+  osd.print(PGMT(msg_rev));
+  printRev();
+}
+
+void ZXOSD::printRev()
+{
+  uint8_t fpga_rev = ((fpga_cfg & 0b00111100) >> 2);
+  switch (fpga_rev) {
+    case 0x0:
+      osd.print(PGMT(msg_rev_a));
       break;
-    case 4:
-    case 5:
-      osd.print(F("DS"));
+    case 0x1:
+      osd.print(PGMT(msg_rev_ds));
       break;
-    case 36:
-    case 37:
-      osd.print(F("E"));
+    case 0x9:
+      osd.print(PGMT(msg_rev_e));
+      break;
+    case 0xD:
+      osd.print(PGMT(msg_rev_eu));
       break;
   }
 }
@@ -296,12 +302,15 @@ void ZXOSD::printLine(uint8_t y)
 {
   osd.setPos(0,y);
   for (uint8_t i=0; i<32; i++) {
-    osd.write(196);
+    osd.write(0x5f);
   }
 }
 
 void ZXOSD::printSpace() {
-  osd.print(F("        "));
+  uint8_t i = 0;
+  for (i=0; i<8; i++) {
+    osd.print(PGMT(msg_space));
+  }
 }
 
 
@@ -309,24 +318,9 @@ void ZXOSD::printHeader()
 {
   printLogo(0,0);
 
-  // dac type
-/*  switch (fpga_cfg) {
-    case 0:
-    case 4:
-    case 36:
-      osd.print(F("TDA1543"));
-      break;
-    case 1:
-    case 5:
-    case 37:
-      osd.print(F("TDA1543A"));
-      break;
-  }
-*/
-
   osd.setColor(OSD::COLOR_GREY, OSD::COLOR_BLACK);
   osd.setPos(19,2);
-  osd.print(F("FPGA "));
+  osd.print(PGMT(msg_fpga));
   osd.write(fpga_build_num[0]);
   osd.write(fpga_build_num[1]);
   osd.write(fpga_build_num[2]);
@@ -338,7 +332,7 @@ void ZXOSD::printHeader()
 
   osd.setColor(OSD::COLOR_GREY, OSD::COLOR_BLACK);
   osd.setPos(20,3);
-  osd.print(F("AVR "));
+  osd.print(PGMT(msg_avr));
   osd.print(avr_build_num);
 
   osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
@@ -361,94 +355,94 @@ void ZXOSD::initOverlay()
   printHeader();
 
   // ROM Bank
-  osd.setPos(0,5); param(F("ROM Bank"));
+  osd.setPos(0,5); param(PGMT(msg_rom_bank));
   updateRombank();
-  osd.setPos(20,5); hint(F("Menu+F1-F4"));
+  osd.setPos(20,5); hint(PGMT(msg_menu_f1_f4));
 
   // Turbo FDC
-  osd.setPos(0,6); param(F("TurboFDC"));
+  osd.setPos(0,6); param(PGMT(msg_turbofdc));
   updateTurbofdc();
-  osd.setPos(20,6); hint(F("Menu+F5"));
+  osd.setPos(20,6); hint(PGMT(msg_menu_f5));
 
   // Covox
-  osd.setPos(0,7); param(F("Covox"));
+  osd.setPos(0,7); param(PGMT(msg_covox));
   updateCovox();
-  osd.setPos(20,7); hint(F("Menu+F6"));
+  osd.setPos(20,7); hint(PGMT(msg_menu_f6));
 
   // Stereo
-  osd.setPos(0,8); param(F("PSG mix"));
+  osd.setPos(0,8); param(PGMT(msg_psg_mix));
   updateStereo();
-  osd.setPos(20,8); hint(F("Menu+F7"));
+  osd.setPos(20,8); hint(PGMT(msg_menu_f7));
 
   // SSG type
-  osd.setPos(0,9); param(F("PSG type"));
+  osd.setPos(0,9); param(PGMT(msg_psg_type));
   updateSsg();
-  osd.setPos(20,9); hint(F("Menu+F8"));
+  osd.setPos(20,9); hint(PGMT(msg_menu_f8));
 
   // RGB/VGA
-  osd.setPos(0,10); param(F("Video"));
+  osd.setPos(0,10); param(PGMT(msg_video));
   updateVideo();
-  osd.setPos(20,10); hint(F("Menu+F9"));
+  osd.setPos(20,10); hint(PGMT(msg_menu_f9));
 
   // VSync
-  osd.setPos(0,11); param(F("VSync"));
+  osd.setPos(0,11); param(PGMT(msg_vsync));
   updateVsync();
-  osd.setPos(20,11); hint(F("Menu+F10"));
+  osd.setPos(20,11); hint(PGMT(msg_menu_f10));
 
   // Turbo
-  osd.setPos(0,12); param(F("Turbo"));
+  osd.setPos(0,12); param(PGMT(msg_turbo));
   updateTurbo();
-  osd.setPos(20,12); hint(F("Menu+F11"));
+  osd.setPos(20,12); hint(PGMT(msg_menu_f11));
 
   // FDC Swap
-  osd.setPos(0,13); param(F("Swap FDD"));
+  osd.setPos(0,13); param(PGMT(msg_swap_fdd));
   updateSwapAB();
-  osd.setPos(20,13); hint(F("Menu+Tab"));
+  osd.setPos(20,13); hint(PGMT(msg_menu_tab));
 
   // Joy type
-  osd.setPos(0,14); param(F("Joy type"));
+  osd.setPos(0,14); param(PGMT(msg_joy_type));
   updateJoystick();
-  osd.setPos(20,14); hint(F("Menu+J"));
+  osd.setPos(20,14); hint(PGMT(msg_menu_j));
 
   // Screen Mode
-  osd.setPos(0,15); param(F("Screen"));
+  osd.setPos(0,15); param(PGMT(msg_screen));
   updateScreenMode();
-  osd.setPos(20,15); hint(F("Menu+V"));
+  osd.setPos(20,15); hint(PGMT(msg_menu_v));
 
   // Keyboard
-  osd.setPos(0,16); param(F("Keyboard"));
+  osd.setPos(0,16); param(PGMT(msg_keyboard));
   updateKeyboardType();
-  osd.setPos(20,16); hint(F("PrtScr"));
+  osd.setPos(20,16); hint(PGMT(msg_prtscr));
 
   // Pause
-  osd.setPos(0,17); param(F("Pause"));
+  osd.setPos(0,17); param(PGMT(msg_pause));
   updatePause();
-  osd.setPos(20,17); hint(F("Pause"));
+  osd.setPos(20,17); hint(PGMT(msg_pause));
 
   // Scancode
-  osd.setPos(0,18); param(F("Scancode"));
+  osd.setPos(0,18); param(PGMT(msg_scancode));
   updateScancode(0);
 
   // Mouse
-  osd.setPos(0,19); param(F("Mouse"));
+  osd.setPos(0,19); param(PGMT(msg_mouse));
   updateMouse(0,0,0);
 
   // Joy
-  osd.setPos(0,20); param(F("Port #1F"));
+  osd.setPos(0,20); param(PGMT(msg_port_1f));
   updateJoyState(0);
 
-  osd.setPos(20,18); flash(F("S")); text(F("et up RTC"));
+  osd.setPos(20,18); flash(PGMT(msg_s)); text(PGMT(msg_etup_rtc));
 
-  osd.setPos(20,19); text(F("Color ")); flash(F("T")); text(F("est"));
+  osd.setPos(20,19); text(PGMT(msg_color)); flash(PGMT(msg_t)); text(PGMT(msg_est));
 
-  osd.setPos(20,20); flash(F("I")); text(F("nfo ")); flash(F("A")); text(F("bout"));
+  osd.setPos(20,20); flash(PGMT(msg_i)); text(PGMT(msg_nfo)); flash(PGMT(msg_a)); text(PGMT(msg_bout));
 
   printLine(21);
 
   // footer
-  osd.setPos(0,22); text(F("Press ")); hint(F("Ctrl+Alt+Del")); text(F(" to reboot"));
+  osd.setPos(0,22); text(PGMT(msg_press)); hint(PGMT(msg_ctrl_alt_del)); text(PGMT(msg_to_reboot));
 
-  osd.setPos(0,23); text(F("Press ")); hint(F("Menu+ESC")); text(F(" to toggle OSD"));
+  osd.setPos(0,23); text(PGMT(msg_press)); hint(PGMT(msg_menu_esc)); text(PGMT(msg_to_toggle_osd));
 }
 
 void ZXOSD::clear()
@@ -471,19 +465,19 @@ void ZXOSD::initPopup(uint8_t event_type)
   osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
   osd.setPos(0,5);
   switch(event_type) {
-    case ZXKeyboard::EVENT_OSD_ROMBANK:       osd.print(F("ROM BANK")); break;
-    case ZXKeyboard::EVENT_OSD_TURBOFDC:      osd.print(F("TURBO FDC")); break;
-    case ZXKeyboard::EVENT_OSD_COVOX:         osd.print(F("COVOX")); break;
-    case ZXKeyboard::EVENT_OSD_STEREO:        osd.print(F("PSG MIX")); break;
-    case ZXKeyboard::EVENT_OSD_SSG:           osd.print(F("PSG TYPE")); break;
-    case ZXKeyboard::EVENT_OSD_VIDEO:         osd.print(F("VIDEO")); break;
-    case ZXKeyboard::EVENT_OSD_VSYNC:         osd.print(F("VSYNC")); break;
-    case ZXKeyboard::EVENT_OSD_TURBO:         osd.print(F("TURBO")); break;
-    case ZXKeyboard::EVENT_OSD_SWAP_AB:       osd.print(F("SWAP FDD")); break;
-    case ZXKeyboard::EVENT_OSD_JOYSTICK:      osd.print(F("JOYSTICK")); break; 
-    case ZXKeyboard::EVENT_OSD_SCREEN_MODE:   osd.print(F("SCREEN")); break; 
-    case ZXKeyboard::EVENT_OSD_KEYBOARD_TYPE: osd.print(F("KEYBOARD")); break;
-    case ZXKeyboard::EVENT_OSD_PAUSE:         osd.print(F("PAUSE")); break; 
+    case ZXKeyboard::EVENT_OSD_ROMBANK:       osd.print(PGMT(msg_rom_bank)); break;
+    case ZXKeyboard::EVENT_OSD_TURBOFDC:      osd.print(PGMT(msg_turbofdc)); break;
+    case ZXKeyboard::EVENT_OSD_COVOX:         osd.print(PGMT(msg_covox)); break;
+    case ZXKeyboard::EVENT_OSD_STEREO:        osd.print(PGMT(msg_psg_mix)); break;
+    case ZXKeyboard::EVENT_OSD_SSG:           osd.print(PGMT(msg_psg_type)); break;
+    case ZXKeyboard::EVENT_OSD_VIDEO:         osd.print(PGMT(msg_video)); break;
+    case ZXKeyboard::EVENT_OSD_VSYNC:         osd.print(PGMT(msg_vsync)); break;
+    case ZXKeyboard::EVENT_OSD_TURBO:         osd.print(PGMT(msg_turbo)); break;
+    case ZXKeyboard::EVENT_OSD_SWAP_AB:       osd.print(PGMT(msg_swap_fdd)); break;
+    case ZXKeyboard::EVENT_OSD_JOYSTICK:      osd.print(PGMT(msg_joy_type)); break; 
+    case ZXKeyboard::EVENT_OSD_SCREEN_MODE:   osd.print(PGMT(msg_screen)); break; 
+    case ZXKeyboard::EVENT_OSD_KEYBOARD_TYPE: osd.print(PGMT(msg_keyboard)); break;
+    case ZXKeyboard::EVENT_OSD_PAUSE:         osd.print(PGMT(msg_pause)); break; 
   }
   printSpace();
 
@@ -518,41 +512,41 @@ void ZXOSD::initRtcOverlay()
   printHeader();
 
   osd.setPos(0,5);
-  text(F("RTC setup:"));
+  text(PGMT(msg_rtc_setup));
 
-  osd.setPos(0,7); param(F("Hours"));
+  osd.setPos(0,7); param(PGMT(msg_hours));
   updateRtcHour();
 
-  osd.setPos(0,8); param(F("Minutes"));
+  osd.setPos(0,8); param(PGMT(msg_minutes));
   updateRtcMinute();
 
-  osd.setPos(0,9); param(F("Seconds"));
+  osd.setPos(0,9); param(PGMT(msg_seconds));
   updateRtcSecond();
 
-  osd.setPos(0,11); param(F("Day"));
+  osd.setPos(0,11); param(PGMT(msg_day));
   updateRtcDay();
 
-  osd.setPos(0,12); param(F("Month"));
+  osd.setPos(0,12); param(PGMT(msg_month));
   updateRtcMonth();
 
-  osd.setPos(0,13); param(F("Year"));
+  osd.setPos(0,13); param(PGMT(msg_year));
   updateRtcYear();
 
-  osd.setPos(0,15); param(F("DOW"));
+  osd.setPos(0,15); param(PGMT(msg_dow));
   updateRtcDow();
 
   osd.setPos(0, 17);
-  text(F("Please use arrows "));
+  text(PGMT(msg_please_use_arrows));
   osd.setColor(OSD::COLOR_CYAN_I, OSD::COLOR_BLACK); osd.write(17);
-  text(F(" and "));
+  text(PGMT(msg_and));
   osd.setColor(OSD::COLOR_CYAN_I, OSD::COLOR_BLACK); osd.write(16);
   osd.setPos(0, 18);
-  text(F("to change values, "));
+  text(PGMT(msg_to_change_values));
   osd.setColor(OSD::COLOR_CYAN_I, OSD::COLOR_BLACK); osd.write(30);
-  text(F(" and "));
+  text(PGMT(msg_and));
   osd.setColor(OSD::COLOR_CYAN_I, OSD::COLOR_BLACK); osd.write(31);
   osd.setPos(0, 19);
-  text(F("to navigate by menu items"));
+  text(PGMT(msg_to_navigate));
 
   popupFooter();
 }
@@ -566,7 +560,7 @@ void ZXOSD::initTestOverlay()
   printHeader();
 
   osd.setPos(0,5);
-  text(F("Color test:"));
+  text(PGMT(msg_color_test));
 
   uint8_t color = 0;
   for (uint8_t x = 0; x<32; x++) {
@@ -609,60 +603,60 @@ void ZXOSD::initAboutOverlay()
   printHeader();
 
   osd.setPos(0,5);
-  text(F("About:"));
+  text(PGMT(msg_about));
 
   osd.setPos(0,7);
   osd.setColor(OSD::COLOR_MAGENTA_I, OSD::COLOR_BLACK);
-  osd.print(F("Karabas Pro developers are:"));
+  osd.print(PGMT(msg_karabas_developers_are));
 
   osd.setPos(0,9);
   osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
   osd.write(250);
-  osd.print(F(" andykarpov"));
-  hint(F(" FPGA, AVR, PCB"));
+  osd.print(PGMT(msg_dev_andykarpov));
+  hint(PGMT(msg_dev_andykarpov_skills));
 
   osd.setPos(0,10);
   osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
   osd.write(250);
-  osd.print(F(" solegstar "));
-  hint(F(" FPGA, PCB"));
+  osd.print(PGMT(msg_dev_solegstar));
+  hint(PGMT(msg_dev_solegstar_skills));
 
   osd.setPos(0,11);
   osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
   osd.write(250);
-  osd.print(F(" dr_max    "));
-  hint(F(" FlashTool & FDImage"));
+  osd.print(PGMT(msg_dev_drmax));
+  hint(PGMT(msg_dev_drmax_skills));
 
   osd.setPos(0,12);
   osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
   osd.write(250);
-  osd.print(F(" nihirash  "));
-  hint(F(" Internet software"));
+  osd.print(PGMT(msg_dev_nihirash));
+  hint(PGMT(msg_dev_nihirash_skills));
 
   osd.setPos(0,14);
   osd.setColor(OSD::COLOR_MAGENTA_I, OSD::COLOR_BLACK);
-  osd.print(F("Special thanks to:"));
+  osd.print(PGMT(msg_special_thanks_to));
 
   osd.setPos(0,16);
   osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
   osd.write(250);
-  osd.print(F(" kalantaj"));
+  osd.print(PGMT(msg_dev_kalantaj));
 
   osd.setPos(0,17);
   osd.write(250);
-  osd.print(F(" tank-uk"));
+  osd.print(PGMT(msg_dev_tankuk));
 
   osd.setPos(0,18);
   osd.write(250);
-  osd.print(F(" xdemox"));
+  osd.print(PGMT(msg_dev_xdemox));
 
   osd.setPos(0,19);
   osd.write(250);
-  osd.print(F(" dumpkin"));
+  osd.print(PGMT(msg_dev_dumpkin));
 
   osd.setPos(18,21);
   osd.setColor(OSD::COLOR_GREY, OSD::COLOR_BLACK);
-  osd.print(F("www.karabas.uk"));
+  osd.print(PGMT(msg_www_karabas_uk));
 
   popupFooter();
 
@@ -677,14 +671,14 @@ void ZXOSD::initInfoOverlay()
   printHeader();
 
   osd.setPos(0,5);
-  text(F("System Info:"));
+  text(PGMT(msg_system_info));
 
   // todo
 
   uint8_t y=14;
 
   osd.setPos(0,7);
-  text(F("FPGA build:"));
+  text(PGMT(msg_fpga_build));
   osd.setPos(y,7);
   osd.write(fpga_build_num[0]);
   osd.write(fpga_build_num[1]);
@@ -696,42 +690,26 @@ void ZXOSD::initInfoOverlay()
   osd.write(fpga_build_num[7]);
 
   osd.setPos(0,8);
-  text(F("AVR build:"));
+  text(PGMT(msg_avr_build));
   osd.setPos(y,8);
   osd.print(avr_build_num);
 
   osd.setPos(0,9);
-  text(F("PCB revision:"));
+  text(PGMT(msg_pcb_revision));
   osd.setPos(y,9);
-  switch (fpga_cfg) {
-    case 0:
-    case 1:
-      osd.print(F("A-D"));
-      break;
-    case 4:
-    case 5:
-      osd.print(F("DS"));
-      break;
-    case 36:
-    case 37:
-      osd.print(F("E"));
-      break;
-  }
+  printRev();
 
   // DAC Type
   osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
-  osd.setPos(0,10); osd.print(F("DAC Type:"));
-  osd.setPos(y,10); osd.print(F("TDA1543"));
-  switch (fpga_cfg) {
-    case 1:
-    case 5:
-    case 37:
-      osd.print(F("A"));
-      break;
+  osd.setPos(0,10); osd.print(PGMT(msg_dac_type));
+  osd.setPos(y,10); osd.print(PGMT(msg_tda1543));
+  uint8_t dac_type = bitRead(fpga_cfg, 0);
+  if (dac_type == 1) {
+      osd.print(PGMT(msg_a));
   }
 
   // Uptime
-  osd.setPos(0,11); text(F("Uptime:"));
+  osd.setPos(0,11); text(PGMT(msg_uptime));
   updateUptime();
   
   popupFooter();
@@ -745,9 +723,9 @@ void ZXOSD::popupFooter() {
 
   // footer
   osd.setPos(0,23); 
-  text(F("Press "));  
-  hint(F("ESC"));
-  text(F(" to return"));
+  text(PGMT(msg_press));  
+  hint(PGMT(msg_esc));
+  text(PGMT(msg_to_return));
 }
 
 void ZXOSD::handleRombank() {
@@ -1012,11 +990,12 @@ void ZXOSD::updateRombank()
   
   uint8_t romset = zxkbd.getRombank();
   switch (romset) {
-    case 0: osd.print(F("Default")); break;
-    case 1: osd.print(F("PQ-DOS")); osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK); osd.print(F(" ")); break;
-    case 2: osd.print(F("Flasher")); break;
-    case 3: osd.print(F("FDImage")); break;
+    case 0: osd.print(PGMT(msg_default)); break;
+    case 1: osd.print(PGMT(msg_pqdos)); break;
+    case 2: osd.print(PGMT(msg_flasher)); break;
+    case 3: osd.print(PGMT(msg_fdimage)); break;
   }
+  osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK); osd.print(PGMT(msg_space));
 }
 
 void ZXOSD::updateTurbofdc() {
@@ -1027,11 +1006,11 @@ void ZXOSD::updateTurbofdc() {
     osd.setPos(10,6);
   }
   if (zxkbd.getTurbofdc()) { 
-    osd.print(F("On")); 
-    osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK); osd.print(F(" "));
+    osd.print(PGMT(msg_on)); 
   } else { 
-    osd.print(F("Off")); 
+    osd.print(PGMT(msg_off)); 
   }
+  osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK); osd.print(PGMT(msg_space));
 }
 
 void ZXOSD::updateCovox() {
@@ -1043,11 +1022,11 @@ void ZXOSD::updateCovox() {
   }
 
   if (zxkbd.getCovox()) { 
-    osd.print(F("On"));
-    osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK); osd.print(F(" ")); 
+    osd.print(PGMT(msg_on));
   } else { 
-    osd.print(F("Off")); 
+    osd.print(PGMT(msg_off)); 
   }
+  osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK); osd.print(PGMT(msg_space));
 }
 
 void ZXOSD::updateStereo() {
@@ -1059,9 +1038,9 @@ void ZXOSD::updateStereo() {
   }
   uint8_t stereo = zxkbd.getStereo();
   switch (stereo) {
-    case 1: osd.print(F("ABC")); osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK); osd.print(F(" ")); break;
-    case 0: osd.print(F("ACB")); osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK); osd.print(F(" ")); break;
-    default: osd.print(F("Mono")); 
+    case 1: osd.print(PGMT(msg_abc)); osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK); osd.print(PGMT(msg_space)); break;
+    case 0: osd.print(PGMT(msg_acb)); osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK); osd.print(PGMT(msg_space)); break;
+    default: osd.print(PGMT(msg_mono)); 
   }
 }
 
@@ -1072,7 +1051,7 @@ void ZXOSD::updateSsg() {
     highlight(osd_main_state == state_main_ssg);
     osd.setPos(10,9);
   }
-  if (zxkbd.getSsg()) { osd.print(F("AY3-8912")); } else { osd.print(F("YM2149F")); osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK); osd.print(F(" ")); }
+  if (zxkbd.getSsg()) { osd.print(PGMT(msg_ay)); } else { osd.print(PGMT(msg_ym)); osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK); osd.print(PGMT(msg_space)); }
 }
 
 void ZXOSD::updateVideo() {
@@ -1082,7 +1061,7 @@ void ZXOSD::updateVideo() {
     highlight(osd_main_state == state_main_video);
     osd.setPos(10,10);
   }
-  if (zxkbd.getVideo()) { osd.print(F("RGB 15kHz")); } else { osd.print(F("VGA 30kHz")); }
+  if (zxkbd.getVideo()) { osd.print(PGMT(msg_rgb)); } else { osd.print(PGMT(msg_vga)); }
 }
 
 void ZXOSD::updateVsync() {
@@ -1092,7 +1071,7 @@ void ZXOSD::updateVsync() {
     highlight(osd_main_state == state_main_sync);
     osd.setPos(10,11);
   }
-  if (zxkbd.getVsync()) { osd.print(F("60 Hz")); } else { osd.print(F("50 Hz")); }
+  if (zxkbd.getVsync()) { osd.print(PGMT(msg_60hz)); } else { osd.print(PGMT(msg_50hz)); }
 }
 
 void ZXOSD::updateTurbo() {
@@ -1104,12 +1083,13 @@ void ZXOSD::updateTurbo() {
   }
   uint8_t turbo = zxkbd.getTurbo();
   switch (turbo) {
-    case 0: osd.print(F("Off")); osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK); osd.print(F(" ")); break;
-    case 1: osd.print(F("2x"));  osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK); osd.print(F(" ")); break;
-    case 2: osd.print(F("4x"));  osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK); osd.print(F(" ")); break;
-    case 3: osd.print(F("8x"));  osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK); osd.print(F(" ")); break;
-    default: osd.print(F("???")); 
+    case 0: osd.print(PGMT(msg_off)); break;
+    case 1: osd.print(PGMT(msg_2x));  break;
+    case 2: osd.print(PGMT(msg_4x));  break;
+    case 3: osd.print(PGMT(msg_8x));  break;
+    default: osd.print(PGMT(msg_unknown)); 
   }
+  osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK); osd.print(PGMT(msg_space));osd.print(PGMT(msg_space));
 }
 
 void ZXOSD::updateSwapAB() {
@@ -1120,11 +1100,11 @@ void ZXOSD::updateSwapAB() {
     osd.setPos(10,13);
   }
   if (zxkbd.getSwapAB()) { 
-    osd.print(F("On")); 
-    osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK); osd.print(F(" ")); 
+    osd.print(PGMT(msg_on)); 
   } else { 
-    osd.print(F("Off")); 
+    osd.print(PGMT(msg_off)); 
   }
+  osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK); osd.print(PGMT(msg_space));
 }
 
 void ZXOSD::updateJoystick() {
@@ -1136,10 +1116,10 @@ void ZXOSD::updateJoystick() {
   }
 
   if (zxkbd.getJoyType()) { 
-    osd.print(F("SEGA")); 
-    osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK); osd.print(F(" ")); 
+    osd.print(PGMT(msg_sega)); 
+    osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK); osd.print(PGMT(msg_space)); 
   } else { 
-    osd.print(F("Atari")); 
+    osd.print(PGMT(msg_atari)); 
   }
 }
 
@@ -1152,9 +1132,8 @@ void ZXOSD::updateScreenMode() {
   }
 
   switch (zxkbd.getScreenMode()) { 
-    case 0: osd.print(F("Pentagon")); break;
-    case 1: osd.print(F("Classic")); osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK); osd.print(F(" ")); break;
-    //default: osd.print(F("Unknown")); osd.print(zxkbd.getScreenMode());
+    case 0: osd.print(PGMT(msg_pentagon)); break;
+    case 1: osd.print(PGMT(msg_classic)); osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK); osd.print(PGMT(msg_space)); break;
   }
 }
 
@@ -1165,7 +1144,7 @@ void ZXOSD::updateKeyboardType() {
     highlight(osd_main_state == state_main_keyboard_type);
     osd.setPos(10,16);
   }
-  if (zxkbd.getKeyboardType()) { osd.print(F("Profi XT")); } else { osd.print(F("Spectrum")); }
+  if (zxkbd.getKeyboardType()) { osd.print(PGMT(msg_profi_xt)); } else { osd.print(PGMT(msg_spectrum)); }
 }
 
 void ZXOSD::updatePause() {
@@ -1176,14 +1155,15 @@ void ZXOSD::updatePause() {
     osd.setPos(10,17);
   }
 
-  if (zxkbd.getPause()) { osd.print(F("On")); osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK); osd.print(F(" ")); } else { osd.print(F("Off")); }
+  if (zxkbd.getPause()) { osd.print(PGMT(msg_on)); } else { osd.print(PGMT(msg_off)); }
+  osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK); osd.print(PGMT(msg_space));
 }
 
 void ZXOSD::updateRtcHour() {
   if (osd_state != state_rtc) return;
   highlight(osd_rtc_state == state_rtc_hour);
   osd.setPos(10,7);
-  if (zxrtc.getHour() < 10) osd.print(F("0"));
+  if (zxrtc.getHour() < 10) osd.print(PGMT(msg_0));
   osd.print(zxrtc.getHour(), DEC);
 }
 
@@ -1191,7 +1171,7 @@ void ZXOSD::updateRtcMinute() {
   if (osd_state != state_rtc) return;
   highlight(osd_rtc_state == state_rtc_minute);
   osd.setPos(10,8);
-  if (zxrtc.getMinute() < 10) osd.print(F("0"));
+  if (zxrtc.getMinute() < 10) osd.print(PGMT(msg_0));
   osd.print(zxrtc.getMinute(), DEC);
 }
 
@@ -1199,7 +1179,7 @@ void ZXOSD::updateRtcSecond() {
   if (osd_state != state_rtc) return;
   highlight(osd_rtc_state == state_rtc_second);
   osd.setPos(10,9);
-  if (zxrtc.getSecond() < 10) osd.print(F("0"));
+  if (zxrtc.getSecond() < 10) osd.print(PGMT(msg_0));
   osd.print(zxrtc.getSecond(), DEC);
 }
 
@@ -1207,7 +1187,7 @@ void ZXOSD::updateRtcDay() {
   if (osd_state != state_rtc) return;
   highlight(osd_rtc_state == state_rtc_day);
   osd.setPos(10,11);
-  if (zxrtc.getDay() < 10) osd.print(F("0"));
+  if (zxrtc.getDay() < 10) osd.print(PGMT(msg_0));
   osd.print(zxrtc.getDay(), DEC);
 }
 
@@ -1216,29 +1196,30 @@ void ZXOSD::updateRtcMonth() {
   highlight(osd_rtc_state == state_rtc_month);
   osd.setPos(10,12);
   switch (zxrtc.getMonth()) {
-    case 1:  osd.print(F("Jan")); break;
-    case 2:  osd.print(F("Feb")); break;
-    case 3:  osd.print(F("Mar")); break;
-    case 4:  osd.print(F("Apr")); break;
-    case 5:  osd.print(F("May")); break;
-    case 6:  osd.print(F("Jun")); break;
-    case 7:  osd.print(F("Jul")); break;
-    case 8:  osd.print(F("Aug")); break;
-    case 9:  osd.print(F("Sep")); break;
-    case 10: osd.print(F("Oct")); break;
-    case 11: osd.print(F("Nov")); break;
-    case 12: osd.print(F("Dec")); break;
-    default: osd.print(F("___")); 
+    case 1:  osd.print(PGMT(msg_month_jan)); break;
+    case 2:  osd.print(PGMT(msg_month_feb)); break;
+    case 3:  osd.print(PGMT(msg_month_mar)); break;
+    case 4:  osd.print(PGMT(msg_month_apr)); break;
+    case 5:  osd.print(PGMT(msg_month_may)); break;
+    case 6:  osd.print(PGMT(msg_month_jun)); break;
+    case 7:  osd.print(PGMT(msg_month_jul)); break;
+    case 8:  osd.print(PGMT(msg_month_aug)); break;
+    case 9:  osd.print(PGMT(msg_month_sep)); break;
+    case 10: osd.print(PGMT(msg_month_oct)); break;
+    case 11: osd.print(PGMT(msg_month_nov)); break;
+    case 12: osd.print(PGMT(msg_month_dec)); break;
+    default: osd.print(PGMT(msg_unknown)); 
   }
+  osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK); printSpace();
 }
 
 void ZXOSD::updateRtcYear() {
   if (osd_state != state_rtc) return;
   highlight(osd_rtc_state == state_rtc_year);
   osd.setPos(10,13);
-  if (zxrtc.getYear() < 1000) osd.print(F("0"));
-  if (zxrtc.getYear() < 100) osd.print(F("0"));
-  if (zxrtc.getYear() < 10) osd.print(F("0"));
+  if (zxrtc.getYear() < 1000) osd.print(PGMT(msg_0));
+  if (zxrtc.getYear() < 100) osd.print(PGMT(msg_0));
+  if (zxrtc.getYear() < 10) osd.print(PGMT(msg_0));
   osd.print(zxrtc.getYear(), DEC);
 }
 
@@ -1247,43 +1228,44 @@ void ZXOSD::updateRtcDow() {
   highlight(osd_rtc_state == state_rtc_dow);
   osd.setPos(10,15);
   switch (zxrtc.getWeek()) {
-    case 2: osd.print(F("Mon")); break;
-    case 3: osd.print(F("Tue")); break;
-    case 4: osd.print(F("Wed")); break;
-    case 5: osd.print(F("Thu")); break;
-    case 6: osd.print(F("Fri")); break;
-    case 7: osd.print(F("Sat")); break;
-    case 1: osd.print(F("Sun")); break;
-    default: osd.print(F("___")); 
+    case 2: osd.print(PGMT(msg_dow_mon)); break;
+    case 3: osd.print(PGMT(msg_dow_tue)); break;
+    case 4: osd.print(PGMT(msg_dow_wed)); break;
+    case 5: osd.print(PGMT(msg_dow_thu)); break;
+    case 6: osd.print(PGMT(msg_dow_fri)); break;
+    case 7: osd.print(PGMT(msg_dow_sat)); break;
+    case 1: osd.print(PGMT(msg_dow_sun)); break;
+    default: osd.print(PGMT(msg_unknown)); 
   }
+  osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK); printSpace();
 }
 
 void ZXOSD::updateTime() {
   osd.setColor(OSD::COLOR_CYAN_I, OSD::COLOR_BLACK);
   osd.setPos(24,0);
   if (zxrtc.getTimeIsValid()) {
-    if (zxrtc.getHour() < 10) osd.print("0"); 
-    osd.print(zxrtc.getHour(), DEC); osd.print(F(":"));
-    if (zxrtc.getMinute() < 10) osd.print("0"); 
-    osd.print(zxrtc.getMinute(), DEC); osd.print(F(":"));
-    if (zxrtc.getSecond() < 10) osd.print("0"); 
+    if (zxrtc.getHour() < 10) osd.print(PGMT(msg_0)); 
+    osd.print(zxrtc.getHour(), DEC); osd.print(PGMT(msg_colon));
+    if (zxrtc.getMinute() < 10) osd.print(PGMT(msg_0)); 
+    osd.print(zxrtc.getMinute(), DEC); osd.print(PGMT(msg_colon));
+    if (zxrtc.getSecond() < 10) osd.print(PGMT(msg_0)); 
     osd.print(zxrtc.getSecond(), DEC);
   } else {
     osd.setColor(OSD::COLOR_CYAN_I, OSD::COLOR_FLASH);
-    osd.print(F("--:--:--"));
+    osd.print(PGMT(msg_time_mask));
   }
 
   osd.setColor(OSD::COLOR_CYAN_I, OSD::COLOR_BLACK);
   osd.setPos(22,1);
   if (zxrtc.getDateIsValid()) {
-    if (zxrtc.getDay() < 10) osd.print("0"); 
-    osd.print(zxrtc.getDay(), DEC); osd.print(F("."));
+    if (zxrtc.getDay() < 10) osd.print(PGMT(msg_0)); 
+    osd.print(zxrtc.getDay(), DEC); osd.print(PGMT(msg_dot));
     if (zxrtc.getMonth() < 10) osd.print("0"); 
-    osd.print(zxrtc.getMonth(), DEC); osd.print(F("."));
+    osd.print(zxrtc.getMonth(), DEC); osd.print(PGMT(msg_dot));
     osd.print(zxrtc.getYear(), DEC);
   } else {
     osd.setColor(OSD::COLOR_CYAN_I, OSD::COLOR_FLASH);
-    osd.print(F("--.--.----"));
+    osd.print(PGMT(msg_date_mask));
   }
 
   if (osd_state == state_rtc) {
@@ -1317,19 +1299,20 @@ void ZXOSD::updateUptime() {
   if (days>0) // days will displayed only if value is greater than zero
   {
     osd.print(days);
-    osd.print(F(" day"));
     if (days > 1) {
-      osd.print(F("s"));
+      osd.print(PGMT(msg_many_days));
+    } else {
+      osd.print(PGMT(msg_one_day));
     }
-    osd.print(F(" & "));
+    osd.print(PGMT(msg_and));
   }
-  if (hours < 10) osd.print(0);
+  if (hours < 10) osd.print(PGMT(msg_0));
   osd.print(hours);
-  osd.print(":");
-  if (mins < 10) osd.print(0);
+  osd.print(PGMT(msg_colon));
+  if (mins < 10) osd.print(PGMT(msg_0));
   osd.print(mins);
-  osd.print(":");
-  if (diff < 10) osd.print(0);
+  osd.print(PGMT(msg_colon));
+  if (diff < 10) osd.print(PGMT(msg_0));
   osd.print(diff);
 }
 
@@ -1339,10 +1322,10 @@ void ZXOSD::updateScancode(uint16_t c) {
 
   osd.setColor(OSD::COLOR_RED_I, OSD::COLOR_BLACK);
   osd.setPos(10,18);
-  if ((c >> 8) < 0x10) osd.print(F("0")); 
+  if ((c >> 8) < 0x10) osd.print(PGMT(msg_0)); 
   osd.print(c >> 8, HEX);
-  osd.print(F(" "));
-  if ((c & 0xFF) < 0x10) osd.print(F("0")); 
+  osd.print(PGMT(msg_space));
+  if ((c & 0xFF) < 0x10) osd.print(PGMT(msg_0)); 
   osd.print(c & 0xFF, HEX);
 }
 
@@ -1352,13 +1335,13 @@ void ZXOSD::updateMouse(uint8_t mouse_x, uint8_t mouse_y, uint8_t mouse_z) {
 
   osd.setColor(OSD::COLOR_RED_I, OSD::COLOR_BLACK);
   osd.setPos(10,19);
-  if (mouse_x < 0x10) osd.print(F("0")); 
+  if (mouse_x < 0x10) osd.print(PGMT(msg_0)); 
   osd.print(mouse_x, HEX);
-  osd.print(F(" "));
-  if (mouse_y < 0x10) osd.print(F("0")); 
+  osd.print(PGMT(msg_space));
+  if (mouse_y < 0x10) osd.print(PGMT(msg_0)); 
   osd.print(mouse_y, HEX);
-  osd.print(F(" "));
-  if (mouse_z < 0x10) osd.print(F("0")); 
+  osd.print(PGMT(msg_space));
+  if (mouse_z < 0x10) osd.print(PGMT(msg_0)); 
   osd.print(mouse_z, HEX);  
 }
 
@@ -1368,7 +1351,7 @@ void ZXOSD::updateJoyState(uint8_t joy) {
 
   osd.setColor(OSD::COLOR_RED_I, OSD::COLOR_BLACK);
   osd.setPos(10,20);
-  if (joy < 0x10) osd.print(F("0")); 
+  if (joy < 0x10) osd.print(PGMT(msg_0)); 
   osd.print(joy, HEX);  
 }
 
@@ -1387,7 +1370,7 @@ void ZXOSD::hint(const __FlashStringHelper* msg) {
 void ZXOSD::param(const __FlashStringHelper* msg) {
   osd.setColor(OSD::COLOR_GREEN_I, OSD::COLOR_BLACK);
   osd.print(msg);
-  osd.print(F(":"));
+  osd.print(PGMT(msg_colon));
 }
 
 void ZXOSD::text(const __FlashStringHelper* msg) {

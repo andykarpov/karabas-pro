@@ -23,19 +23,47 @@ pio run
 cp .pio/build/ATmega328/firmware.hex ../../releases/profi/avr/karabas_pro_revA_usb.hex
 cp .pio/build/ATmega328/firmware.hex ../../releases/profi_plus3e/avr/karabas_pro_revA_usb.hex
 
-# hw buttons + disabled led override, without echo
+# hw buttons + disabled led override, without echo, EN
 pio run -t clean
-export PLATFORMIO_BUILD_FLAGS="-DUSE_HW_BUTTONS=1 -DMOUSE_POLL_TYPE=0 -DALLOW_LED_OVERRIDE=0 -DSEND_ECHO_ON_START=0 -DBUILD_VER=$BUILD_VER -Wall"
+export PLATFORMIO_BUILD_FLAGS="-DLANG=0 -DUSE_HW_BUTTONS=1 -DMOUSE_POLL_TYPE=0 -DALLOW_LED_OVERRIDE=0 -DSEND_ECHO_ON_START=0 -DBUILD_VER=$BUILD_VER -Wall"
 pio run
 cp .pio/build/ATmega328/firmware.hex ../../releases/profi/avr/karabas_pro_revD.hex
 cp .pio/build/ATmega328/firmware.hex ../../releases/profi_plus3e/avr/karabas_pro_revD.hex
 
-# hw buttons + disabled led override, with echo
+# hw buttons + disabled led override, without echo, RU
 pio run -t clean
-export PLATFORMIO_BUILD_FLAGS="-DUSE_HW_BUTTONS=1 -DMOUSE_POLL_TYPE=0 -DALLOW_LED_OVERRIDE=0 -DSEND_ECHO_ON_START=1 -DBUILD_VER=$BUILD_VER -Wall"
+export PLATFORMIO_BUILD_FLAGS="-DLANG=1 -DUSE_HW_BUTTONS=1 -DMOUSE_POLL_TYPE=0 -DALLOW_LED_OVERRIDE=0 -DSEND_ECHO_ON_START=0 -DBUILD_VER=$BUILD_VER -Wall"
+pio run
+cp .pio/build/ATmega328/firmware.hex ../../releases/profi/avr/karabas_pro_revD_ru.hex
+cp .pio/build/ATmega328/firmware.hex ../../releases/profi_plus3e/avr/karabas_pro_revD_ru.hex
+
+# hw buttons + disabled led override, without echo, UA
+pio run -t clean
+export PLATFORMIO_BUILD_FLAGS="-DLANG=2 -DUSE_HW_BUTTONS=1 -DMOUSE_POLL_TYPE=0 -DALLOW_LED_OVERRIDE=0 -DSEND_ECHO_ON_START=0 -DBUILD_VER=$BUILD_VER -Wall"
+pio run
+cp .pio/build/ATmega328/firmware.hex ../../releases/profi/avr/karabas_pro_revD_ua.hex
+cp .pio/build/ATmega328/firmware.hex ../../releases/profi_plus3e/avr/karabas_pro_revD_ua.hex
+
+# hw buttons + disabled led override, with echo, EN
+pio run -t clean
+export PLATFORMIO_BUILD_FLAGS="-DLANG=0 -DUSE_HW_BUTTONS=1 -DMOUSE_POLL_TYPE=0 -DALLOW_LED_OVERRIDE=0 -DSEND_ECHO_ON_START=1 -DBUILD_VER=$BUILD_VER -Wall"
 pio run
 cp .pio/build/ATmega328/firmware.hex ../../releases/profi/avr/karabas_pro_revD_usb.hex
 cp .pio/build/ATmega328/firmware.hex ../../releases/profi_plus3e/avr/karabas_pro_revD_usb.hex
+
+# hw buttons + disabled led override, with echo, RU
+pio run -t clean
+export PLATFORMIO_BUILD_FLAGS="-DLANG=1 -DUSE_HW_BUTTONS=1 -DMOUSE_POLL_TYPE=0 -DALLOW_LED_OVERRIDE=0 -DSEND_ECHO_ON_START=1 -DBUILD_VER=$BUILD_VER -Wall"
+pio run
+cp .pio/build/ATmega328/firmware.hex ../../releases/profi/avr/karabas_pro_revD_usb_ru.hex
+cp .pio/build/ATmega328/firmware.hex ../../releases/profi_plus3e/avr/karabas_pro_revD_usb_ru.hex
+
+# hw buttons + disabled led override, with echo, UA
+pio run -t clean
+export PLATFORMIO_BUILD_FLAGS="-DLANG=2 -DUSE_HW_BUTTONS=1 -DMOUSE_POLL_TYPE=0 -DALLOW_LED_OVERRIDE=0 -DSEND_ECHO_ON_START=1 -DBUILD_VER=$BUILD_VER -Wall"
+pio run
+cp .pio/build/ATmega328/firmware.hex ../../releases/profi/avr/karabas_pro_revD_usb_ua.hex
+cp .pio/build/ATmega328/firmware.hex ../../releases/profi_plus3e/avr/karabas_pro_revD_usb_ua.hex
 
 # hw buttons, without echo
 pio run -t clean
