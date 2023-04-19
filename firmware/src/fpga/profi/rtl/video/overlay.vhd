@@ -16,10 +16,10 @@ entity overlay is
 		PAPER_I  : in std_logic;
 		BLINK 	: in std_logic;
 		
---		STATUS_SD : in std_logic := '0'; -- SD card r/w status
---		STATUS_CF : in std_logic := '0'; -- CF card r/w status
---		STATUS_FD : in std_logic := '0'; -- FDD r/w status
---		OSD_ICONS : in std_logic := '0'; -- enable OSD icons
+		STATUS_SD : in std_logic := '0'; -- SD card r/w status
+		STATUS_CF : in std_logic := '0'; -- CF card r/w status
+		STATUS_FD : in std_logic := '0'; -- FDD r/w status
+		OSD_ICONS : in std_logic := '0'; -- enable OSD icons
 		
 		OSD_OVERLAY 	: in std_logic := '0'; -- full overlay osd
 		OSD_POPUP 		: in std_logic := '0'; -- popup osd
@@ -99,26 +99,26 @@ begin
         q       => font_word
     );
 
---	 -- иконки
---	 U_ICONS: entity work.icons
---    port map (
---		CLK		=> CLK,
---		CLK2 		=> CLK2,
---		CLK4 		=> CLK4,
---		RGB_I 	=> RGB_I,
---		RGB_O 	=> rgb,
---		DS80		=> DS80,
---		HCNT		=> HCNT,
---		VCNT		=> VCNT,
---		
---		STATUS_SD => STATUS_SD,
---		STATUS_CF => STATUS_CF,
---		STATUS_FD => STATUS_FD,
---		OSD_ICONS => OSD_ICONS
---    );
+	 -- иконки
+	 U_ICONS: entity work.icons
+    port map (
+		CLK		=> CLK,
+		CLK2 		=> CLK2,
+		CLK4 		=> CLK4,
+		RGB_I 	=> RGB_I,
+		RGB_O 	=> rgb,
+		DS80		=> DS80,
+		HCNT		=> HCNT,
+		VCNT		=> VCNT,
+		
+		STATUS_SD => STATUS_SD,
+		STATUS_CF => STATUS_CF,
+		STATUS_FD => STATUS_FD,
+		OSD_ICONS => OSD_ICONS
+    );
 	
 	-- icons bypass
-	rgb <= RGB_I;
+	--rgb <= RGB_I;
 
 	 -- видеопамять OSD
     U_VRAM: screen1 

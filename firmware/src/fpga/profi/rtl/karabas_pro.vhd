@@ -34,7 +34,7 @@ entity karabas_pro is
 		enable_zxuno_uart2 : boolean := false; -- uart 2 (enabled for ep4ce10)
 		enable_saa1099 	 : boolean := false; -- saa1099 (enabled for ep4ce10)
 		enable_osd_overlay : boolean := true;  -- osd overlay (enabled by default)
-		enable_2port_vram  : boolean := false -- 2port vram (enabled for ep4ce10)
+		enable_2port_vram  : boolean := false  -- 2port vram (enabled for ep4ce10)
 	);
 port (
 	-- Clock (50MHz)
@@ -609,7 +609,7 @@ port map (
 	N_M1 				=> cpu_m1_n,
 	
 	-- config from loader
-	RAM_6MB 			=> board_revision(5), -- 5th bit of the CFG is a revE flag with 6MB SRAM
+	RAM_6MB 			=> '0', --board_revision(5), -- 5th bit of the CFG is a revE flag with 6MB SRAM
 	
 	-- loader signals
 	loader_act 		=> loader_act,
@@ -717,10 +717,10 @@ port map (
 	BLINK 			=> blink,
 
 	-- icons
---	STATUS_FD		=> not(fdd_cs_n) and (not(cpu_rd_n) or not(cpu_wr_n)),
---	STATUS_SD 		=> zc_spi_start and zc_wr_en,
---	STATUS_CF 		=> hdd_active,
---	OSD_ICONS 		=> '1',
+	STATUS_FD		=> not(fdd_cs_n) and (not(cpu_rd_n) or not(cpu_wr_n)),
+	STATUS_SD 		=> zc_spi_start and zc_wr_en,
+	STATUS_CF 		=> hdd_active,
+	OSD_ICONS 		=> '1',
 	
 	-- osd overlay
 	OSD_OVERLAY		=> osd_overlay,
