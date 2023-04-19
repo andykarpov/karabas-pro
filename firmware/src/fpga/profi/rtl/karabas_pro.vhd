@@ -717,10 +717,10 @@ port map (
 	BLINK 			=> blink,
 
 	-- icons
-	STATUS_FD		=> not(fdd_cs_n) and (not(cpu_rd_n) or not(cpu_wr_n)),
-	STATUS_SD 		=> zc_spi_start and zc_wr_en,
-	STATUS_CF 		=> hdd_active,
-	OSD_ICONS 		=> '1',
+--	STATUS_FD		=> not(fdd_cs_n) and (not(cpu_rd_n) or not(cpu_wr_n)),
+--	STATUS_SD 		=> zc_spi_start and zc_wr_en,
+--	STATUS_CF 		=> hdd_active,
+--	OSD_ICONS 		=> '1',
 	
 	-- osd overlay
 	OSD_OVERLAY		=> osd_overlay,
