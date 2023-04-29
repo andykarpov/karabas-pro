@@ -20,7 +20,7 @@
 --
 -- @author Andy Karpov <andy.karpov@gmail.com>
 -- @author Oleh Starychenko <solegstar@gmail.com>
--- Ukraine, 2021
+-- Ukraine, 2021-2023
 -------------------------------------------------------------------------------------------------------------------
 
 library IEEE; 
@@ -31,10 +31,9 @@ use IEEE.numeric_std.all;
 entity karabas_pro is
 	generic (
 		enable_zxuno_uart  : boolean := true;  -- uart 1 (enabled by default)
-		enable_zxuno_uart2 : boolean := false; -- uart 2 (enabled for ep4ce10)
-		enable_saa1099 	 : boolean := false; -- saa1099 (enabled for ep4ce10)
-		enable_osd_overlay : boolean := true;  -- osd overlay (enabled by default)
-		enable_2port_vram  : boolean := false -- 2port vram (enabled for ep4ce10)
+		enable_zxuno_uart2 : boolean := false; -- uart 2 (enabled for ep4ce10 via qsf settings)
+		enable_saa1099 	 : boolean := false; -- saa1099 (enabled for ep4ce10 via qsf settings)
+		enable_osd_icons   : boolean := false  -- osd icons (enabled for ep4ce10 via qsf settings)
 	);
 port (
 	-- Clock (50MHz)
@@ -135,6 +134,7 @@ signal cpu_wait_n 	: std_logic := '1';
 -- Port
 signal port_xxfe_reg	: std_logic_vector(7 downto 0) := "00000000";
 signal port_7ffd_reg	: std_logic_vector(7 downto 0) := "00000000";
+signal port_1ffd_reg	: std_logic_vector(7 downto 0) := "00000000";
 signal port_dffd_reg : std_logic_vector(7 downto 0) := "00000000";
 signal port_xx7e_reg : std_logic_vector(7 downto 0) := "00000000";
 signal port_xx7e_a   : std_logic_vector(15 downto 8) := "00000000";
@@ -242,6 +242,7 @@ signal fd_sel 			: std_logic;
 signal cs_xxfe 		: std_logic := '0'; 
 --signal cs_eff7 		: std_logic := '0';
 signal cs_7ffd 		: std_logic := '0';
+signal cs_1ffd 		: std_logic := '0';
 signal cs_dffd 		: std_logic := '0';
 signal cs_fffd 		: std_logic := '0';
 signal cs_xxfd 		: std_logic := '0';
@@ -296,11 +297,6 @@ signal ssg_cn1_a		: std_logic_vector(7 downto 0);
 signal ssg_cn1_b		: std_logic_vector(7 downto 0);
 signal ssg_cn1_c		: std_logic_vector(7 downto 0);
 
--- AY UART signals
---signal ay_bdir 		: std_logic;
---signal ay_bc1			: std_logic;
---signal ay_port 		: std_logic := '0';
-
 -- Covox
 signal covox_a			: std_logic_vector(7 downto 0);
 signal covox_b			: std_logic_vector(7 downto 0);
@@ -338,13 +334,11 @@ signal ena_div2	: std_logic := '0';
 signal ena_div4	: std_logic := '0';
 signal ena_div8	: std_logic := '0';
 signal ena_div16	: std_logic := '0';
---signal ena_div32	: std_logic := '0';
 signal ena_cnt		: std_logic_vector(3 downto 0) := "0000";
 
 -- System
 signal reset			: std_logic;
 signal areset			: std_logic;
---signal locked			: std_logic;
 signal locked_tri 	: std_logic := '0';
 signal loader_act		: std_logic := '1';
 signal loader_reset 	: std_logic := '0';
@@ -591,8 +585,8 @@ port map (
 	RD_n				=> cpu_rd_n,
 	WR_n				=> cpu_wr_n,
 	RFSH_n			=> cpu_rfsh_n,
-	HALT_n			=> open,--cpu_halt_n,
-	BUSAK_n			=> open,--cpu_basak_n,
+	HALT_n			=> open,
+	BUSAK_n			=> open,
 	A					=> cpu_a_bus,
 	DIN					=> cpu_di_bus,
 	DOUT					=> cpu_do_bus
@@ -600,9 +594,6 @@ port map (
 	
 -- memory manager
 U6: entity work.memory 
-generic map (
-	enable_2port_vram => enable_2port_vram
-)
 port map ( 
 	CLK2X 			=> clk_bus,
 	CLKX 				=> clk_div2,
@@ -659,9 +650,6 @@ port map (
 	VBUS_MODE_O 	=> vbus_mode, 	-- video bus mode: 0 - ram, 1 - vram
 	VID_RD_O 		=> vid_rd, 		-- read attribute or pixel	
 
-	-- 2port vram
-	VID_RD2 			=> vid_rd2,
-	
 	DS80 				=> ds80,
 --	CPM 				=> cpm,
 	SCO 				=> sco,
@@ -679,9 +667,6 @@ port map (
 
 -- Video Spectrum/Pentagon
 U7: entity work.video
-generic map (
-	enable_2port_vram => enable_2port_vram
-)
 port map (
 	CLK 				=> clk_div2, 	-- 14 / 12
 	CLK2x 			=> clk_bus, 	-- 28 / 24
@@ -709,7 +694,6 @@ port map (
 	VSYNC 			=> vid_vsync,
 	VBUS_MODE 		=> vbus_mode,
 	VID_RD 			=> vid_rd,
-	VID_RD2 			=> vid_rd2,	
 	HCNT 				=> vid_hcnt,
 	VCNT 				=> vid_vcnt,
 	ISPAPER 			=> vid_ispaper,
@@ -720,6 +704,9 @@ port map (
 
 -- osd overlay
 U8: entity work.overlay
+generic map (
+	enable_osd_icons => enable_osd_icons
+)
 port map (
 	CLK 				=> clk_bus,
 	CLK2 				=> clk_div2,
@@ -816,8 +803,8 @@ port map (
 	I_IORQ_N			=> cpu_iorq_n,
 	I_M1_N			=> cpu_m1_n,
 	I_RESET_N		=> cpu_reset_n,
-	I_BDIR 			=> '1', --ay_bdir,
-	I_BC1 			=> '1', --ay_bc1,
+	I_BDIR 			=> '1', 
+	I_BC1 			=> '1', 
 	O_SEL				=> ssg_sel,
 	I_MODE 			=> soft_sw(8),
 	-- ssg0
@@ -1054,11 +1041,6 @@ PIN_141		<= uart2_tx;
 PIN_138 		<= uart2_cts;
 uart2_rx 		<= PIN_25;
 end generate G_UNO_UART2;
-
--- debug
---PIN_141 <= clk_bus;
---PIN_138 <= clk_cpu;
-
 end generate G_UNO_UART;
 
 -- board features
@@ -1120,7 +1102,6 @@ ena_div2 <= ena_cnt(0);
 ena_div4 <= ena_cnt(1) and ena_cnt(0);
 ena_div8 <= ena_cnt(2) and ena_cnt(1) and ena_cnt(0);
 ena_div16 <= ena_cnt(3) and ena_cnt(2) and ena_cnt(1) and ena_cnt(0);
---ena_div32 <= ena_cnt(5) and ena_cnt(4) and ena_cnt(3) and ena_cnt(2) and ena_cnt(1) and ena_cnt(0);
 	
 -------------------------------------------------------------------------------
 -- Global signals
@@ -1137,7 +1118,6 @@ begin
 	end if;
 end process;
 
---areset <= not locked; -- global reset
 reset <= areset or kb_reset or loader_reset or loader_act or board_reset; -- hot reset
 
 cpu_reset_n <= not(reset) and not(loader_reset); -- CPU reset
@@ -1145,15 +1125,8 @@ cpu_inta_n <= cpu_iorq_n or cpu_m1_n;	-- INTA
 cpu_nmi_n <= '0' when kb_magic = '1' and ((cpu_m1_n = '0' and cpu_mreq_n = '0' and cpu_a_bus(15 downto 14) /= "00") or DS80 = '1') else '1'; -- NMI
 cpu_wait_n <= '1';
 
--- max turbo = 14 MHz for 2 port vram
---G_MAX_TURBO_2PORT: if enable_2port_vram generate 
-	max_turbo <= "10";
---end generate G_MAX_TURBO_2PORT;
---
----- max turbo = 7 MHz for sram vram
---G_MAX_TURBO_SRAM: if not enable_2port_vram generate 
---	max_turbo <= "01";
---end generate G_MAX_TURBO_SRAM;
+-- max turbo = 14 MHz
+max_turbo <= "10";
 
 clk_cpu <= '0' when kb_wait = '1' or  (kb_screen_mode = "01" and memory_contention = '1' and DS80 = '0') or WAIT_IO = '0' else 
 	clk_bus when turbo_mode = "11" and turbo_mode <= max_turbo else 
@@ -1161,9 +1134,8 @@ clk_cpu <= '0' when kb_wait = '1' or  (kb_screen_mode = "01" and memory_contenti
 	clk_bus and ena_div4 when turbo_mode = "01" and turbo_mode <= max_turbo else 
 	clk_bus and ena_div8;
 
--- odnovibrator - po spadu nIORQ otschityvaet 400ns WAIT proca
--- dlja rabotosposobnosti periferii v turbe ili v rezhime 
--- rasshirennogo jekrana pri podkljuchenii tret'ego kvarca XMHz
+-- одновибратор - по спаду /IORQ отсчитывает 400нс вейта проца 
+-- для работы периферии в турбе или в режиме расширенного экрана 
 
 WAIT_IO <= WAIT_C(1);
 WAIT_C_STOP <=WAIT_C(1) and not WAIT_C(0);
@@ -1334,7 +1306,9 @@ sco 	<= port_dffd_reg(3); -- Выбор положения окна проеци
 									-- 0 - окно номер 1 (#C000-#FFFF)
 									-- 1 - окно номер 2 (#4000-#7FFF)
 
-ram_ext <= port_7ffd_reg(7 downto 6) & port_dffd_reg(2 downto 0);
+-- Extended memory for 1MB (default) or 6MB boards
+--ram_ext <= port_1ffd_reg(7) & port_1ffd_reg(4) & port_dffd_reg(2 downto 0); -- kay512+ profi 1024
+ram_ext <= port_7ffd_reg(6) & port_7ffd_reg(7) & port_dffd_reg(2 downto 0); -- pent 512 + profi 1024
 
 cs_xxfe <= '1' when cpu_iorq_n = '0' and cpu_a_bus(0) = '0' else '0';
 cs_xx7e <= '1' when cs_xxfe = '1' and cpu_a_bus(7) = '0' else '0';
@@ -1342,6 +1316,7 @@ cs_xx7e <= '1' when cs_xxfe = '1' and cpu_a_bus(7) = '0' else '0';
 cs_fffd <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and cpu_a_bus = X"FFFD" and fd_port = '1' else '0';
 cs_dffd <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and cpu_a_bus = X"DFFD" and fd_port = '1' else '0';
 cs_7ffd <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and cpu_a_bus = X"7FFD" and fd_port = '1' else '0';
+cs_1ffd <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and cpu_a_bus = X"1FFD" and fd_port = '1' else '0';
 cs_xxfd <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and cpu_a_bus(15) = '0' and cpu_a_bus(1) = '0' else '0';
 
 -- Регистры SPI-FLASH
@@ -1385,21 +1360,12 @@ RT_F1 <= RT_F1_1 and RT_F1_2;
 P0 <='0' when (cpu_a_bus(7)='1' and cpu_a_bus(4 downto 0)="00011" and cpu_iorq_n='0') and ((cpm='1' and rom14='1') or (dos_act='1' and rom14='0')) else '1';
 fdd_cs_n <= RT_F1 and P0;
 
-------------------VV55------------------------
---RT_F5 <='0' when adress(7)='0' and adress(1 downto 0)="11" and iorq='0' and CPM='1' and dos='1' else '1';		-- CPM=0 & BAS=1 ПЗУ 128 1F-7F
---P1_1 <='0' when adress(7)='1' and adress(4 downto 0)="00111" and iorq='0' and CPM='0' and rom14='1' else '1';	-- CPM=1 & ROM14=1 ПЗУ DOS/ SOS 87-E7
---P1_2 <='0' when adress(7)='1' and adress(4 downto 0)="00111" and iorq='0' and dos='0' and rom14='0' else '1';	-- ROM14=0 BAS=0 ПЗУ SYS 87-E7
---vv55_cs <= RT_F5 and P1_1 and P1_2;
-
----- Profi RTC
---portAS <= '1' when adress(9)='0' and adress(7)='1' and adress(5)='1' and adress(3 downto 0)=X"F" and iorq='0' and cpm='0' and rom14='1' else '0';
---portDS <= '1' when adress(9)='0' and adress(7)='1' and adress(5)='0' and adress(3 downto 0)=X"F" and iorq='0' and cpm='0' and rom14='1' else '0';
-
 process (reset, areset, clk_bus, cpu_a_bus, dos_act, cs_xxfe, cs_7ffd, cs_xxfd, port_7ffd_reg, cpu_mreq_n, cpu_m1_n, cpu_wr_n, cpu_do_bus, fd_port, cs_008b, kb_turbo, kb_turbo_old)
 begin
 	if reset = '1' then
 --		port_eff7_reg <= (others => '0');
 		port_7ffd_reg <= (others => '0');
+		port_1ffd_reg <= (others => '0');
 		port_dffd_reg <= (others => '0');
 		port_xxC7_reg <= (others => '0');
 		port_xx87_reg <= (others => '0');
@@ -1483,6 +1449,11 @@ begin
 					port_048b_reg <= "000001" & cpu_do_bus(3) & '0';
 					port_058b_reg <= "001110" & cpu_do_bus(3) & '0';
 				end if;
+			end if;
+			
+			-- #1FFD
+			if cs_1ffd = '1' and cpu_wr_n = '0' then -- #1FFD
+			  port_1ffd_reg <= cpu_do_bus;
 			end if;
 
 			-- #xxC7
@@ -1684,12 +1655,8 @@ port map(
 	MOSI    		=> zc_mosi
 );
 
---ay_port 		<= '1' when cpu_a_bus(1) = '0' and cpu_a_bus(15)='1' and cpu_iorq_n = '0' and fd_port = '1' else '0';
---ay_bdir 		<= '1' when ay_port = '1' and cpu_wr_n = '0' else '0';
---ay_bc1 		<= '1' when ay_port = '1' and cpu_a_bus(14) = '1' and cpu_m1_n = '1' else '0';
-
 -------------------------------------------------------------------------------
--- CPU0 Data bus
+-- CPU Data bus
 
 process (selector, cpu_a_bus, gx0, serial_ms_do_bus, ram_do_bus, mc146818_do_bus, kb_do_bus, zc_do_bus, ssg_cn0_bus, ssg_cn1_bus, port_7ffd_reg, port_dffd_reg, zxuno_uart_do_bus,
 			zxuno_uart2_do_bus, cpld_do, vid_attr, joy_bus, ms_z, ms_b, ms_x, ms_y, zxuno_addr_to_cpu, port_xxC7_reg, flash_rdy, flash_busy, flash_do_bus,
