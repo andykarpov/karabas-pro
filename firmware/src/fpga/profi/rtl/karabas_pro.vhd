@@ -1318,9 +1318,9 @@ cs_138b <='1' when cpu_a_bus(15 downto 0)=X"138B" and cpu_iorq_n='0' and cpu_m1_
 cs_218b <='1' when cpu_a_bus(15 downto 0)=X"218B" and cpu_iorq_n='0' and cpu_m1_n = '1' else '0';
 -- VPage Spectrum PORT X"038B"
 cs_038b <='1' when cpu_a_bus(15 downto 0)=X"038B" and cpu_iorq_n='0' and cpu_m1_n = '1' else '0';
--- VPage Spectrum PORT X"048B"
+-- VPage Pixels Profi Screen PORT X"048B"
 cs_048b <='1' when cpu_a_bus(15 downto 0)=X"048B" and cpu_iorq_n='0' and cpu_m1_n = '1' else '0';
--- VPage Spectrum PORT X"058B"
+-- VPage Attr`s Profi Screen PORT X"058B"
 cs_058b <='1' when cpu_a_bus(15 downto 0)=X"058B" and cpu_iorq_n='0' and cpu_m1_n = '1' else '0';
 
 SDIR <= fdc_swap;
@@ -1365,12 +1365,12 @@ cs_rtc_ds <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and
 port_xxfe_reg <= cpu_do_bus when cs_xxfe = '1' and (cpu_wr_n'event and cpu_wr_n = '1');
 
 -- порты Profi HDD
-hdd_profi_ebl_n	<='0' when (cpu_a_bus(7)='1' and cpu_a_bus(4 downto 0)="01011" and cpu_iorq_n='0') and ((cpm='1' and rom14='1') or (dos_act='1' and rom14='0')) and hdd_off = '0' else '1';	-- ROM14=0 BAS=0 ПЗУ SYS
-hdd_wwc_n 	<='0' when (cpu_wr_n='0' and cpu_a_bus(7 downto 0)="11001011" and cpu_iorq_n='0') and ((cpm='1' and rom14='1') or (dos_act='1' and rom14='0')) and hdd_off = '0' else '1'; -- Write High byte from Data bus to "Write register"
-hdd_wwe_n 	<='0' when (cpu_wr_n='0' and cpu_a_bus(7 downto 0)="11101011" and cpu_iorq_n='0') and ((cpm='1' and rom14='1') or (dos_act='1' and rom14='0')) and hdd_off = '0' else '1'; -- Read High byte from "Write register" to HDD bus
-hdd_rww_n 	<='0' when (cpu_wr_n='1' and cpu_a_bus(7 downto 0)="11001011" and cpu_iorq_n='0') and ((cpm='1' and rom14='1') or (dos_act='1' and rom14='0')) and hdd_off = '0' else '1'; -- Selector Low byte Data bus Buffer Direction: 1 - to HDD bus, 0 - to Data bus
-hdd_rwe_n 	<='0' when (cpu_wr_n='1' and cpu_a_bus(7 downto 0)="11101011" and cpu_iorq_n='0') and ((cpm='1' and rom14='1') or (dos_act='1' and rom14='0')) and hdd_off = '0' else '1'; -- Read High byte from "Read register" to Data bus
-hdd_cs3fx_n <='0' when (cpu_wr_n='0' and cpu_a_bus(7 downto 0)="10101011" and cpu_iorq_n='0') and ((cpm='1' and rom14='1') or (dos_act='1' and rom14='0')) and hdd_off = '0' else '1';
+hdd_profi_ebl_n	<='0' when (cpu_a_bus(7)='1' and cpu_a_bus(4 downto 0)="01011" and cpu_iorq_n='0') and ((cpm='1' and rom14='1') or (dos_act='1' and rom14='0')) else '1';	-- ROM14=0 BAS=0 ПЗУ SYS
+hdd_wwc_n 	<='0' when (cpu_wr_n='0' and cpu_a_bus(7 downto 0)="11001011" and cpu_iorq_n='0') and ((cpm='1' and rom14='1') or (dos_act='1' and rom14='0')) else '1'; -- Write High byte from Data bus to "Write register"
+hdd_wwe_n 	<='0' when (cpu_wr_n='0' and cpu_a_bus(7 downto 0)="11101011" and cpu_iorq_n='0') and ((cpm='1' and rom14='1') or (dos_act='1' and rom14='0')) else '1'; -- Read High byte from "Write register" to HDD bus
+hdd_rww_n 	<='0' when (cpu_wr_n='1' and cpu_a_bus(7 downto 0)="11001011" and cpu_iorq_n='0') and ((cpm='1' and rom14='1') or (dos_act='1' and rom14='0')) else '1'; -- Selector Low byte Data bus Buffer Direction: 1 - to HDD bus, 0 - to Data bus
+hdd_rwe_n 	<='0' when (cpu_wr_n='1' and cpu_a_bus(7 downto 0)="11101011" and cpu_iorq_n='0') and ((cpm='1' and rom14='1') or (dos_act='1' and rom14='0')) else '1'; -- Read High byte from "Read register" to Data bus
+hdd_cs3fx_n <='0' when (cpu_wr_n='0' and cpu_a_bus(7 downto 0)="10101011" and cpu_iorq_n='0') and ((cpm='1' and rom14='1') or (dos_act='1' and rom14='0')) else '1';
 hdd_active <= not(hdd_wwc_n and hdd_wwe_n and hdd_rww_n and hdd_rwe_n);
 
 -- порты Profi FDD
