@@ -32,7 +32,8 @@ entity karabas_pro is
 	generic (
 		enable_zxuno_uart  : boolean := true;  -- uart 1 (enabled by default)
 		enable_zxuno_uart2 : boolean := false; -- uart 2 (enabled for ep4ce10 via qsf settings)
-		enable_saa1099 	 : boolean := false -- saa1099 (enabled for ep4ce10 via qsf settings)
+		enable_saa1099 	 : boolean := false; -- saa1099 (enabled for ep4ce10 via qsf settings)
+		enable_osd_icons   : boolean := false  -- osd icons (enabled for ep4ce10 via qsf settings)
 	);
 port (
 	-- Clock (50MHz)
@@ -687,6 +688,9 @@ port map (
 
 -- osd overlay
 U8: entity work.overlay
+generic map (
+	enable_osd_icons => enable_osd_icons
+)
 port map (
 	CLK 				=> clk_bus,
 	CLK2 				=> clk_div2,
