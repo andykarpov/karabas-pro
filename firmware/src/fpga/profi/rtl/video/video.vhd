@@ -8,9 +8,6 @@ use IEEE.numeric_std.ALL;
 use IEEE.std_logic_unsigned.all;
 
 entity video is
-	generic (
-			enable_2port_vram  : boolean := true
-	);
 	port (
 		CLK2X 	: in std_logic; -- 28 MHz
 		CLK		: in std_logic; -- 14 MHz
@@ -51,10 +48,7 @@ entity video is
 		
 		-- sram vram
 		VBUS_MODE : in std_logic := '0'; -- 1 = video bus, 2 = cpu bus
-		VID_RD : in std_logic; -- 1 = read attribute, 0 = read pixel data
-
-		-- 2port vram
-		VID_RD2 	: out std_logic -- 1 = read attribute, 0 = read pixel
+		VID_RD : in std_logic -- 1 = read attribute, 0 = read pixel data
 	);
 end entity;
 
@@ -111,9 +105,6 @@ architecture rtl of video is
 begin
 
 	U_PENT: entity work.pentagon_video 
-	generic map (
-		enable_2port_vram => enable_2port_vram
-	)	
 	port map (
 		CLK => CLK, -- 14
 		CLK2x => CLK2x, -- 28
@@ -148,9 +139,6 @@ begin
 	);
 
 	U_PROFI: entity work.profi_video 
-	generic map (
-		enable_2port_vram => enable_2port_vram
-	)	
 	port map (
 		CLK => CLK, -- 14
 		CLK2x => CLK2x, -- 28
@@ -178,9 +166,7 @@ begin
 		ISPAPER => ispaper_profi,
 		
 		VBUS_MODE => VBUS_MODE,
-		VID_RD => VID_RD,		
-		
-		VID_RD2 => vidrd_profi
+		VID_RD => VID_RD
 	);
 
 	A <= vid_a_profi when ds80 = '1' else vid_a_spec;
@@ -196,8 +182,6 @@ begin
 	HCNT <= hcnt_profi when ds80 = '1' else hcnt_spec;
 	VCNT <= vcnt_profi when ds80 = '1' else vcnt_spec;
 	ISPAPER <= ispaper_profi when ds80 = '1' else ispaper_spec;
-	
-	VID_RD2 <= vidrd_profi when ds80 = '1' else '0';
 	
 	ATTR_O <= attr_o_profi when ds80 = '1' else attr_o_spec;
 	pFF_CS <= pFF_CS_profi when ds80 = '1' else pFF_CS_spec;
