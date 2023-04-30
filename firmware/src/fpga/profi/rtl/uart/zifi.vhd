@@ -7,6 +7,7 @@
 --------------------------------------------------------------------------------
 library IEEE; 
 use IEEE.std_logic_1164.all; 
+use IEEE.std_logic_unsigned.all;
 use IEEE.numeric_std.all; 
 
 entity zifi is
@@ -72,7 +73,7 @@ signal fifo_rx_do          : std_logic_vector(7 downto 0);
 signal fifo_rx_rd_req      : std_logic := '0';
 signal fifo_rx_wr_req      : std_logic := '0';
 signal fifo_rx_clr_req     : std_logic := '0';
-signal fifo_rx_used        : std_logic_vector(7 downto 0) := (others => '0');
+signal fifo_rx_used        : std_logic_vector(11 downto 0) := (others => '0');
 
 signal fifo_rx_free        : std_logic_vector(7 downto 0) := (others => '1');
 signal fifo_tx_free         : std_logic_vector(7 downto 0) := (others => '1');
@@ -105,7 +106,7 @@ port map(
     usedw => fifo_tx_used
 );
 
-FIFO_OUT: entity work.fifo
+FIFO_OUT: entity work.fifo2
 port map(
     clock => CLK,
     data  => fifo_rx_di,
@@ -187,7 +188,7 @@ begin
 			when idle => 
 				data_read <= '0';
 				-- if data byte received by uart receiver and fifo allowed to be pushed into it
-				if (data_received = '1' and fifo_rx_used /= "11111111") then 
+				if (data_received = '1' and fifo_rx_used /= "111111111111") then 
 					rxstate <= push_rx_fifo;
 				end if;
 
@@ -287,14 +288,15 @@ begin
     end if;
 end process;
 
-DO <= fifo_rx_used  when IORQ_N = '0' and RD_N = '0' and A = zifi_in_fifo_port  else 
+DO <= "11111111"  when IORQ_N = '0' and RD_N = '0' and A = zifi_in_fifo_port and fifo_rx_used > 255  else 
+		fifo_rx_used(7 downto 0)  when IORQ_N = '0' and RD_N = '0' and A = zifi_in_fifo_port  else 
       fifo_tx_free when IORQ_N = '0' and RD_N = '0' and A = zifi_out_fifo_port else 
       err_reg       when IORQ_N = '0' and RD_N = '0' and A = zifi_error_port    else 
       do_reg        when IORQ_N = '0' and RD_N = '0' and A = zifi_data_port     else 
       "11111111";
 
 fifo_tx_free <= std_logic_vector(unsigned(zifi_fifo_size) - unsigned(fifo_tx_used));
-fifo_rx_free <= std_logic_vector(unsigned(zifi_fifo_size) - unsigned(fifo_rx_used));
+--fifo_rx_free <= std_logic_vector(unsigned(zifi_fifo_size) - unsigned(fifo_rx_used));
         
 ZIFI_OE_N <= '0' when IORQ_N = '0' and RD_N = '0' and (A = zifi_in_fifo_port or A = zifi_out_fifo_port or A = zifi_error_port or A = zifi_data_port) else '1';
 
