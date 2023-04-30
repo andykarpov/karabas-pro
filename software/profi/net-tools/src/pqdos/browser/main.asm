@@ -1,4 +1,8 @@
+    IFDEF ZIFI
+    output "zimoonr.com"
+    ELSE
     output "moonr.com"
+    ENDIF
     org 100h
     jp start
     include "vdp/driver.asm"
