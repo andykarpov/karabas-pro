@@ -1036,7 +1036,7 @@ G_ZIFI: if enable_zifi_uart generate
 U_ZIFI: entity work.zifi 
 port map (
 	CLK    => clk_bus,
-	RESET  => reset,
+	RESET  => areset,
 	DS80   => DS80,
 
 	A      => cpu_a_bus,

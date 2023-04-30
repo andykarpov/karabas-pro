@@ -20,7 +20,7 @@ entity VGA_PAL is
 	(
 		inverse_ksi 		 : boolean := false;
 		inverse_ssi 		 : boolean := false;
-		inverse_f 			 : boolean := true
+		inverse_f 			 : boolean := false
 	);
 	port
 	(

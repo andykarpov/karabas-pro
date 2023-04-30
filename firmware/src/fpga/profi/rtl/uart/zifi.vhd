@@ -5,9 +5,9 @@
 -- @author Andy Karpov <andy.karpov@gmail.com>
 -- Ukraine, 2023
 --------------------------------------------------------------------------------
-library IEEE;
-use IEEE.std_logic_1164.all;
-use IEEE.numeric_std.all;
+library IEEE; 
+use IEEE.std_logic_1164.all; 
+use IEEE.numeric_std.all; 
 
 entity zifi is
 port(
@@ -86,6 +86,12 @@ signal wr_allow : std_logic := '1';
 signal rd_allow : std_logic := '1';
 signal new_command : std_logic := '0';
 
+type txmachine IS (idle, pull_tx_fifo, end_pull_tx_fifo, req_uart_tx, end_req_uart_tx);
+type rxmachine IS (idle, push_rx_fifo, end_push_rx_fifo, ack_uart_read);
+
+signal txstate : txmachine := idle; 
+signal rxstate : rxmachine := idle;
+
 begin
 
 FIFO_IN: entity work.fifo
@@ -138,30 +144,70 @@ begin
 			tx_begin_req <= '0';
 			fifo_rx_wr_req <= '0';
 			data_read <= '0';
+			txstate <= idle;
+			rxstate <= idle;
+			
     elsif rising_edge(CLK) then
-        -- uart tx 
-        if (tx_begin_req = '0' and txbusy = '0' and fifo_tx_used /= "00000000") then  --and fifo_tx_used /= "00000000"
-            fifo_tx_rd_req <= '1';
-        end if;
 
-        if (fifo_tx_rd_req = '1') then
+		  -- fifo tx -> uart tx 
+		  case txstate is
+	
+			when idle => 
+				-- if tx fifo is not empty and transmitter is not busy
+				if (fifo_tx_used /= "00000000" and txbusy = '0') then 
+					txstate <= pull_tx_fifo;
+				end if;
+
+			-- request to read byte from fifo
+			when pull_tx_fifo =>  
+				fifo_tx_rd_req <= '1';
+				txstate <= end_pull_tx_fifo;
+
+			-- end request to read byte from fifo
+			when end_pull_tx_fifo => 
 				fifo_tx_rd_req <= '0';
-				tx_begin_req <= '1';
-		  end if;
-		  
-        if (tx_begin_req = '1') then --  and txbusy = '1'
-            tx_begin_req <= '0';
-        end if;		  
+				txstate <= req_uart_tx;
 
-        -- uart rx
-        data_read <= '0';
-        if (data_received = '1') then
-            fifo_rx_wr_req <= '1';
-        end if; 
-        if (fifo_rx_wr_req = '1') then 
-            data_read <= '1';
-            fifo_rx_wr_req <= '0';
-        end if;
+			-- begin uart tx request
+			when req_uart_tx => 
+				tx_begin_req <= '1';
+				txstate <= end_req_uart_tx;
+
+		   -- end uart tx request
+			when end_req_uart_tx => 
+				tx_begin_req <= '0';
+				txstate <= idle;
+				
+			when others => null;
+		  end case;
+
+        -- uart rx -> fifo rx
+		  case rxstate is
+
+			when idle => 
+				data_read <= '0';
+				-- if data byte received by uart receiver and fifo allowed to be pushed into it
+				if (data_received = '1' and fifo_rx_used /= "11111111") then 
+					rxstate <= push_rx_fifo;
+				end if;
+
+			-- push byte into rx fifo request
+			when push_rx_fifo => 
+				fifo_rx_wr_req <= '1';
+				rxstate <= end_push_rx_fifo;
+
+			-- push byte into rx fifo end request
+			when end_push_rx_fifo => 
+				fifo_rx_wr_req <= '0';
+				rxstate <= ack_uart_read;
+
+			-- confirm to uart receiver that byte was read successfully
+			when ack_uart_read => 
+				data_read <= '1';
+				rxstate <= idle;
+			
+			when others => null;
+		  end case;
     end if;
 end process;
 
@@ -171,6 +217,10 @@ begin
         command_reg <= (others => '0');
         di_reg <= (others => '0');
 		  new_command <= '0';
+		  wr_allow <= '1';
+		  rd_allow <= '1';
+		  fifo_tx_wr_req <= '0';
+		  
     elsif (rising_edge(CLK)) then
         -- запись данных в порт данных инициирует fifo_tx  write request
         if IORQ_N = '0' and WR_N = '0' then 
@@ -225,7 +275,7 @@ begin
 												  err_reg <= "11111111"; 
 											 end if;
 											 new_command <= '0';
-					when others => err_reg <= "11111111";
+					when others => err_reg <= "11111111"; new_command <= '0';
 			  end case;
 		  end if;
         if fifo_tx_clr_req = '1' then 
