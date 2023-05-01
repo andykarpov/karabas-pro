@@ -1,23 +1,22 @@
-MemConfig (7:0) Port 218b
+MemConfig (7:0) Port 218b R/W
 Bit
 0	- ROM128	(Copy 4 bit of 7FFD port)
 1	- W0_WE		(Write Enable 1/ Write Protect 0 for Page0)
-2	- !W0_MAP	(0 - mapped/ 1 - Page0)
-					mapped:
-					Page0 port (4:2) & TRDOS & ROM128
-					Page0:
-					Page0 port (4:0)
+2	- !W0_MAP	(0 - mapped mode/ 1 - Page0 mode)
+				if mapped mode:	Page0 port (4:2) & TRDOS & ROM128
+				if Page0 mode:	Page0 port (4:0)
+				
 3	- W0_RAM	(Copy 4 bit of DFFD port (NOROM))
 4	- ONROM		(Manual selector TRDOS bit of ROM)
 5	- 80DS		(Spectrum screen - 0/ Profi Screen - 1)
 6	- MapMode	(Old Profi Mapper / New Profi Mapper)
 7	- Lock128	(Lock 128/All RAM)
 
-Page0 (7:0) Port 108b;
-Page1 (7:0)	Port 118b;
-Page2 (7:0)	Port 128b;
-Page3 (7:0) Port 138b;
+Page0 (7:0) Port 108b; R/W (0000-3FFF CPU Page)
+Page1 (7:0)	Port 118b; R/W (4000-7FFF CPU Page)
+Page2 (7:0)	Port 128b; R/W (8000-BFFF CPU Page)
+Page3 (7:0) Port 138b; R/W (C000-FFFF CPU Page)
 
-VPage_spec		(7:0) Port 038b; (Video Page of Spectrum Screen)
-VPage_pr_pix	(7:0) Port 048b; (Video Page of Pixels Profi Screen)
-VPage_pr_attr	(7:0) Port 058b; (Video Page of Attr`s Profi Screen)
+VPage_spec		(7:0) Port 038b; R/W (Video Page of Spectrum Screen)
+VPage_pr_pix	(7:0) Port 048b; R/W (Video Page of Pixels Profi Screen)
+VPage_pr_attr	(7:0) Port 058b; R/W (Video Page of Attr`s Profi Screen)
