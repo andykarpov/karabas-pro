@@ -61,7 +61,11 @@ about db "Initing Wifi module", 13, 0
 done db "Done", 13, 0
 
 proto db "http://"
-url   db "www.karabas.uk/weather/spectrum.scr", 13, 0
+    IFDEF PROFISCR
+url   db "www.karabas.uk/weather/weather.php?profi&download", 13, 0
+    ELSE
+url   db "www.karabas.uk/weather/weather.php?spectrum&download", 13, 0
+    ENDIF
 
 retAddr     defw 0
 
