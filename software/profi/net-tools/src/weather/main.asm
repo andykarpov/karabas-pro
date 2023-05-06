@@ -29,7 +29,8 @@ stack_pointer = #5aff
 
     call initWifi
 
-    push hl : ld hl, url : call putStringZ : pop hl
+refresh:
+    ;push hl : ld hl, url : call putStringZ : pop hl
 
     ld hl, proto : ld de, url : call httpGet
 
@@ -41,7 +42,6 @@ stack_pointer = #5aff
 
 downloop:
     ld bc, (bytes_avail) : ld hl, output_buffer : ldir ; repeat transger from HL to DE with incrementing HL and decrementing BC
-;    ld (data_pointer), hl
 
     push de
     call getPacket
@@ -51,10 +51,18 @@ downloop:
 closed_callback
 ;    ld hl, done : call putStringZ
     xor a : call changeBank
+
+    ; 5 minutes loop
+    ld a, 60
+end2:
+    ld b, 255
 end:
-    jp end
-;    ld de, (retAddr)
-;    push de
+    halt
+    djnz end
+    dec a
+    cp 0
+    jp nz, end2
+    jp refresh
 	ret	
 
 about db "Initing Wifi module", 13, 0
@@ -83,17 +91,13 @@ connectionOpen  db 0
     ENDIF
     include "utils.asm"
     include "http.asm"
-
     include "ring.asm"
-
     IFDEF UNO
     include "uno-uart.asm"
     ENDIF
-
     IFDEF ZIFI
     include "zifi-uart.asm"
     ENDIF
-
     include "wifi.asm"
 
 page_buffer equ $
