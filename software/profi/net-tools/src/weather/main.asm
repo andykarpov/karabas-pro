@@ -70,9 +70,9 @@ done db "Done", 13, 0
 
 proto db "http://"
     IFDEF PROFISCR
-url   db "www.karabas.uk/weather/weather.php?profi&download", 13, 0
+url   db "www.karabas.uk/api/zx/weather/profi", 13, 0
     ELSE
-url   db "www.karabas.uk/weather/weather.php?spectrum&download", 13, 0
+url   db "www.karabas.uk/api/zx/weather/spectrum", 13, 0
     ENDIF
 
 retAddr     defw 0
