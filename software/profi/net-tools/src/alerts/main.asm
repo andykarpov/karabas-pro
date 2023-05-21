@@ -29,29 +29,8 @@ stack_pointer = #5aff
 
     call initWifi
 
-    ; clear status / prev_status
-    ld a, 7 : call changeBank ; change bank to video page
-    xor a : ld (status_pointer), a
-    add 1 : ld (prev_status_pointer), a
-
-get_status:
-    ld a, 7 : call changeBank ; change bank to video page
-    ld a, 1 : ld (op_pointer), a ; 1 = status fetch operation
-    ld hl, stproto : ld de, sturl : call httpGet ; status api
-    ld de, (status_pointer) ; destination = status_pointer
-
-stdownloop:
-    ld bc, (bytes_avail) : ld hl, output_buffer : ldir ; repeat transfer from HL to DE with incrementing HL and decrementing BC
-    ; todo: check bytes_avail, if 1 - goto close_callback
-    push de : call getPacket : pop de
-    jp stdownloop
-
 get_data:
     ld a, 7 : call changeBank ; change bank to video page
-    ld a, 0 : ld (op_pointer), a ; 0 = data fetch operation
-    ld hl, status_pointer : ld a, (prev_status_pointer) : cp (hl) : jp z, closed_callback
-    ld a, (status_pointer) : ld (prev_status_pointer), a ; update previous status
-
     ld hl, proto : ld de, url : call httpGet ; picture api
     ld de, (data_pointer)
 
@@ -61,16 +40,15 @@ downloop:
     jp downloop
 
 closed_callback
-    ;xor a : call changeBank
-    ld a, (op_pointer) : cp 1 : jp z, get_data ; jump to fetch data in case of status fetch op
+    xor a : call changeBank
 
-    ld a, 3 ; 15 seconds delay
+    ld a, 7 ; 30 seconds delay
 end2:
     ld b, 0
 end:
     halt : djnz end
-    dec a : cp 0 : jp nz, end2    
-    jp get_status
+    dec a : cp 0 : jp nz, end2
+    jp get_data
 	ret	
 
 about db "Initing Wifi module", 13, 0
@@ -83,16 +61,9 @@ url   db "www.karabas.uk/api/zx/alerts/profi", 13, 0
 url   db "www.karabas.uk/api/zx/alerts/spectrum", 13, 0
     ENDIF
 
-stproto db "http://"
-sturl db "www.karabas.uk/api/zx/alerts/status", 13, 0
-
 retAddr     defw 0
 
 data_pointer    defw #c000 ; screen start
-
-status_pointer  defw #dfe0 ; current status
-prev_status_pointer  defw #dfe1 ; previous status
-op_pointer      defw #dfee ; current op state
 data_recv       defw 0
 connectionOpen  db 0
 
