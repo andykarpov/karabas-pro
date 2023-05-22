@@ -30,27 +30,38 @@ stack_pointer = #5aff
     call initWifi
 
 refresh:
-    ;push hl : ld hl, url : call putStringZ : pop hl
-
-    ld hl, proto : ld de, url : call httpGet
-
-    ld a, 7 : call changeBank
     IFDEF PROFISCR
-    xor a : call changeBankHiSpectrum
-    ENDIF
+    ld a, 6 : call changeBank ; RAM06
+    xor a : call changeBankHiProfi
+    ELSE
+    ld a, 7 : call changeBank ; change bank to video page
+    ENDIF    
+    ld hl, proto : ld de, url : call httpGet    
     ld de, (data_pointer)
 
 downloop:
-    ld bc, (bytes_avail) : ld hl, output_buffer : ldir ; repeat transger from HL to DE with incrementing HL and decrementing BC
+    ld bc, (bytes_avail) : ld hl, output_buffer ; : ldir ; HL -> DE, inc HL, dec BC
+dldir:
+    ldi
+    xor a : cp d : jp nz, contdl ; continue download while de != ffff
+    xor a : cp e : jp nz, contdl
 
-    push de
-    call getPacket
-    pop de
+    IFDEF PROFISCR ; change bank to attributes
+    ld a, 2 : call changeBank
+    ld a, 7 :call changeBankHiProfi
+    ld de, (data_pointer)
+    ENDIF
+
+contdl:
+    xor a : cp b : jp nz, dldir
+    xor a:  cp c : jp nz, dldir
+
+    push de : call getPacket : pop de
     jp downloop
 
 closed_callback
 ;    ld hl, done : call putStringZ
-    xor a : call changeBank
+    ;xor a : call changeBank
 
     ; 5 minutes loop
     ld a, 60

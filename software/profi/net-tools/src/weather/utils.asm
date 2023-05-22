@@ -11,16 +11,16 @@ checkHighMem:
 
 ; A - memory bank
 changeBank:
-    push af : ld bc, #7ffd : and #7 : or #18 : out (c), a: ld (bankm), a : pop af
+    push af : push bc : ld bc, #7ffd : and #7 : or #18 : out (c), a: ld (bankm), a : pop bc : pop af
     ret
 
     IFDEF PROFISCR
 changeBankHiProfi:
-    push af : ld bc, #dffd : and #7 : or #80 : out (c), a : pop af 
+    push af : push bc : ld bc, #dffd : and #7 : or #80 : out (c), a : pop bc : pop af 
     ret
 
 changeBankHiSpectrum:
-    push af : ld bc, #dffd : and #7 : out (c), a : pop af 
+    push af : push bc : ld bc, #dffd : and #7 : out (c), a : pop bc : pop af 
     ret
     ENDIF
 
