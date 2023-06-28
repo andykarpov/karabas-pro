@@ -278,4 +278,5 @@ set_global_assignment -name QIP_FILE ../../rtl/memory/altram1.qip
 set_global_assignment -name QIP_FILE ../../rtl/video/rom_font2.qip
 set_global_assignment -name VHDL_FILE ../../rtl/video/icons.vhd
 set_global_assignment -name QIP_FILE ../../rtl/uart/fifo2.qip
+
 set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top

@@ -196,7 +196,7 @@ set_location_assignment PIN_115 -to SD_MOSI
 set_parameter -name build_version 00000000
 
 set_parameter -name enable_saa1099 false
-set_parameter -name enable_zifi_uart true
+set_parameter -name enable_zifi_uart false
 set_parameter -name enable_osd_icons false
 
 set_global_assignment -name PRE_FLOW_SCRIPT_FILE "quartus_sh:generate_messages.tcl"
@@ -270,4 +270,5 @@ set_global_assignment -name TCL_SCRIPT_FILE generate_messages.tcl
 set_global_assignment -name QIP_FILE ../../rtl/video/rom_font2.qip
 set_global_assignment -name QIP_FILE ../../rtl/video/screen2.qip
 set_global_assignment -name VHDL_FILE ../../rtl/video/icons.vhd
+
 set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top

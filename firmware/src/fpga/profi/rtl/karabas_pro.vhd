@@ -30,9 +30,9 @@ use IEEE.numeric_std.all;
 
 entity karabas_pro is
 	generic (
-		enable_zxuno_uart  : boolean := false;  -- uart 1 (enabled by default)
+		enable_zxuno_uart  : boolean := true;  -- uart 1 (enabled by default)
 		enable_zxuno_uart2 : boolean := false; -- uart 2 (enabled for ep4ce10 via qsf settings)
-		enable_zifi_uart   : boolean := true; -- zifi
+		enable_zifi_uart   : boolean := false;  -- zifi (enabled for ep4ce10 via qsf settings)
 		enable_saa1099 	 : boolean := false; -- saa1099 (enabled for ep4ce10 via qsf settings)
 		enable_osd_icons   : boolean := false  -- osd icons (enabled for ep4ce10 via qsf settings)
 	);
@@ -411,10 +411,15 @@ signal zxuno_uart2_oe_n 		: std_logic;
 signal uart2_tx : std_logic;
 signal uart2_rx : std_logic;
 signal uart2_cts : std_logic;
+signal zxuno_uart_tx : std_logic;
+signal zxuno_uart_cts : std_logic;
 
 -- ZIFI UART 
 signal zifi_do_bus : std_logic_vector(7 downto 0);
 signal zifi_oe_n   : std_logic := '1';
+signal zifi_uart_tx : std_logic;
+signal zifi_uart_cts : std_logic;
+signal zifi_api_enabled : std_logic;
 
 -- cpld port
 signal cpld_do 		: std_logic_vector(7 downto 0);
@@ -1002,9 +1007,9 @@ port map(
 	din => cpu_do_bus,
 	dout => zxuno_uart_do_bus,
 	oe_n => zxuno_uart_oe_n,
-	uart_tx => UART_TX,
+	uart_tx => zxuno_uart_tx,
 	uart_rx => UART_RX,
-	uart_rts => UART_CTS
+	uart_rts => zxuno_uart_cts
 );	
 
 G_UNO_UART2: if enable_zxuno_uart2 generate
@@ -1046,12 +1051,17 @@ port map (
 	RD_N   => cpu_rd_n,
 	WR_N   => cpu_wr_n,
 	ZIFI_OE_N => zifi_oe_n,
+	
+	ENABLED => zifi_api_enabled,
 
 	UART_RX   => UART_RX,
-	UART_TX   => UART_TX,
-	UART_CTS  => UART_CTS	
+	UART_TX   => zifi_uart_tx,
+	UART_CTS  => zifi_uart_cts	
 );
 end generate G_ZIFI;
+
+UART_TX <= zifi_uart_tx when enable_zifi_uart and zifi_api_enabled = '1' else zxuno_uart_tx;
+UART_CTS <= zifi_uart_cts when enable_zifi_uart and zifi_api_enabled = '1' else zxuno_uart_cts;
 
 -- board features
 U23: entity work.board 

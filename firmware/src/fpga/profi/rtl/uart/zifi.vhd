@@ -24,6 +24,8 @@ port(
     WR_N        : in std_logic;
 
     ZIFI_OE_N   : out std_logic;
+	 
+	 ENABLED     : out std_logic;
 
     UART_RX     : in std_logic;
     UART_TX     : out std_logic;
@@ -59,7 +61,7 @@ signal command_reg          : std_logic_vector(7 downto 0);
 signal err_reg              : std_logic_vector(7 downto 0);
 signal di_reg               : std_logic_vector(7 downto 0);
 signal do_reg               : std_logic_vector(7 downto 0);
-signal api_enabled          : std_logic := '1';
+signal api_enabled          : std_logic := '0';
 
 signal fifo_tx_di           : std_logic_vector(7 downto 0);
 signal fifo_tx_do           : std_logic_vector(7 downto 0);
@@ -221,6 +223,7 @@ begin
 		  wr_allow <= '1';
 		  rd_allow <= '1';
 		  fifo_tx_wr_req <= '0';
+		  api_enabled <= '0';
 		  
     elsif (rising_edge(CLK)) then
         -- запись данных в порт данных инициирует fifo_tx  write request
@@ -289,15 +292,17 @@ begin
 end process;
 
 DO <= "11111111"  when IORQ_N = '0' and RD_N = '0' and A = zifi_in_fifo_port and fifo_rx_used > 255  else 
-		fifo_rx_used(7 downto 0)  when IORQ_N = '0' and RD_N = '0' and A = zifi_in_fifo_port  else 
-      fifo_tx_free when IORQ_N = '0' and RD_N = '0' and A = zifi_out_fifo_port else 
-      err_reg       when IORQ_N = '0' and RD_N = '0' and A = zifi_error_port    else 
-      do_reg        when IORQ_N = '0' and RD_N = '0' and A = zifi_data_port     else 
-      "11111111";
+	fifo_rx_used(7 downto 0)  when IORQ_N = '0' and RD_N = '0' and A = zifi_in_fifo_port  else 
+   fifo_tx_free when IORQ_N = '0' and RD_N = '0' and A = zifi_out_fifo_port else 
+   err_reg       when IORQ_N = '0' and RD_N = '0' and A = zifi_error_port    else 
+   do_reg        when IORQ_N = '0' and RD_N = '0' and A = zifi_data_port     else 
+   "11111111";
 
 fifo_tx_free <= std_logic_vector(unsigned(zifi_fifo_size) - unsigned(fifo_tx_used));
 --fifo_rx_free <= std_logic_vector(unsigned(zifi_fifo_size) - unsigned(fifo_rx_used));
         
 ZIFI_OE_N <= '0' when IORQ_N = '0' and RD_N = '0' and (A = zifi_in_fifo_port or A = zifi_out_fifo_port or A = zifi_error_port or A = zifi_data_port) else '1';
+
+ENABLED <= api_enabled;
 
 end rtl;
