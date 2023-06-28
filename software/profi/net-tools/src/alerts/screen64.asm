@@ -1,52 +1,44 @@
+; Public definitions:
+; clearScreen
+; showCursor
+; hideCursor
+; putC
+; gotoXY
+
+SCREEN_ROWS = 20
+
 clearScreen:
+	IFNDEF ZX48
     ld a, 7 : call changeBank
-	
-	ld c, #fe
-	ld a, 0
-	out (c), a
+	ENDIF
+
+	xor a 
+	out (#fe), a
+	IFNDEF ZX48
     ld hl, #c000
+	ld de, #c001
+	ELSE 
+	ld hl, #4000
+	ld de, #4001
+	ENDIF
     ld (hl), 0
-    ld de, #c001
     ld bc, #17FF
     ldir
+	IFNDEF ZX48
 	ld hl, #d800
+	ld de, #d801
+	ELSE
+	ld hl, #5800
+	ld de, #5801
+	ENDIF
+
     ld a, (attr_screen)
     ld (hl), a
-    ld de, #d801
     ld bc, #2FF
     ldir
+
 	ld bc, 0
 	call gotoXY
-    ret
-
-showCursor:
-	
-    ld a, (cursor_pos)
-drawLine: 
-    ld c, 0
-    ld b, a
-    call bc_to_attr
-    ld a, 7 : call changeBank
-
-	ld (hl), #C
-    ld de, hl
-    inc de
-    ld bc, 31
-    ldir
-    ret
-
-hideCursor:
-	ld a, 7 : call changeBank
-	
-    ld a, (cursor_pos)
-    ld b, a
-    ld c, 0
-    call bc_to_attr
-    ld (hl), #07
-    ld de, hl
-    inc de
-    ld bc, 31
-    ldir
     ret
 
 ; Print just one symbol
@@ -58,10 +50,12 @@ putC
 	cp ' '
 	ret c
 
+	IFNDEF ZX48
     push af
 	ld a, 7
     call changeBank
 	pop af
+	ENDIF
 
 	ld hl, single_symbol
 	ld (hl), a
@@ -262,7 +256,11 @@ calc_addr_scr
 	ld      e,a
 	ld      a,d
 	and     24
+	IFNDEF ZX48
 	or      #c0
+	ELSE
+	or		#40
+	ENDIF
 	ld      d,a
 	ret
 
@@ -275,7 +273,11 @@ bc_to_attr:
 	rrca
 	ld	l,a
 	and	31
+	IFNDEF ZX48
 	or	#d8
+	ELSE 
+	or  #58
+	ENDIF
 	ld	h,a
 	ld	a,l
 	and	252
@@ -335,16 +337,25 @@ scroll_up8_02
 	pop	hl
 	pop	bc
 	djnz	scroll_up8_02
-
+	IFNDEF ZX48
+	ld	de,#D800
+	ld	hl,#D820
+	ELSE
 	ld	de,#5800
 	ld	hl,#5820
+	ENDIF
 	ld	bc,736
 	ldir
 
 	ld	a,(de)
 
+	IFNDEF ZX48
+	ld	hl,#dae0
+	ld	de,#dae1
+	ELSE 
 	ld	hl,#5ae0
 	ld	de,#5ae1
+	ENDIF
 	ld	(hl),a
 	ld	bc,31
 	ldir
@@ -397,4 +408,3 @@ half_tile_screen_temp	defb	0
 
 single_symbol_print defb 1
 single_symbol 		defb 0
-cursor_pos	db 1

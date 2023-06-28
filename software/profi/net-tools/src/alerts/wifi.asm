@@ -25,6 +25,10 @@ okErrCmd:
     call uartWriteStringZ
 okErrCmdLp:
     call uartReadBlocking : call pushRing
+
+    IFDEF DEBUG
+    jp okErrOk
+    ENDIF
     
     ld hl, response_ok   : call searchRing : cp 1 : jr z, okErrOk
     ld hl, response_err  : call searchRing : cp 1 : jr z, okErrErr
@@ -45,6 +49,10 @@ okErrErr
 ; If connection was closed it calls 'closed_callback'
 getPacket
 	call uartReadBlocking : call pushRing
+
+    IFDEF DEBUG
+    jp closed_callback
+    ENDIF
 
 	ld hl, closed : call searchRing : cp 1 : jp z, closed_callback
 	ld hl, ipd : call searchRing : cp 1 : jr nz, getPacket
@@ -104,11 +112,18 @@ sbErr:
     pop af
     ld a, 0 
     ret
-
     
+cmd_plus    defb "+++", 0
+cmd_rst     defb "AT+RST",13, 10, 0
 cmd_at      defb "ATE0", 13, 10, 0                  ; Disable echo - less to parse
+cmd_mode    defb "AT+CWMODE_DEF=1",13,10,0	        ; Client mode
 cmd_cmux    defb "AT+CIPMUX=0",13,10,0              ; Single connection mode
+cmd_cwqap   defb "AT+CWQAP",13,10,0		            ; Disconnect from AP
 cmd_inf_off defb "AT+CIPDINFO=0",13,10,0            ; doesn't send me info about remote port and ip
+
+cmd_cwjap1  defb  "AT+CWJAP_CUR=", #22,0        ;Connect to AP. Send this -> SSID
+cmd_cwjap2  defb #22,',',#22,0                  ; -> This -> Password
+cmd_cwjap3  defb #22, 13, 10, 0                 ; -> And this
 
 cmd_open1   defb "AT+CIPSTART=", #22, "TCP", #22, ",", #22, 0
 cmd_open2   defb #22, ",", 0
@@ -125,6 +140,7 @@ response_err    defb 13,10,'ERROR',13,10,0      ; Failed operation
 response_fail   defb 13,10,'FAIL',13,10,0       ; Failed connection to WiFi. For us same as ERROR
 
 log_err defb 13,'Failed connect to WiFi!',13, 0
+log_ok  defb 13, 'WiFi connected!', 13, 0
 
 connectTo   db 13, 'Connecting to '
 
@@ -136,4 +152,3 @@ sbyte_buff     defb 0, 0
 
 send_prompt defb ">",0
 output_buffer defs 4096 ; buffer for downloading data
-

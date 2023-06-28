@@ -15,6 +15,15 @@ uartBegin:
     ld bc, ZXUNO_REG : in A, (c)
     ld bc, ZXUNO_ADDR : ld a, UART_DATA_REG : out (c), a
     ld bc, ZXUNO_REG : in A, (c)
+    ld b, #ff
+.loop
+    push bc
+    call uartRead
+    pop bc
+    djnz .loop
+
+    ld a, SCANDBLCTRL_REG : ld bc, ZXUNO_ADDR : out (c), a 
+    ld bc, ZXUNO_REG : in a, (c) : and #3f : or #80 : out (c), a
     ret
 
 ; Blocking read one byte
@@ -23,15 +32,6 @@ uartReadBlocking:
     push af : ld a, 1 : and b : jr nz, urb : pop af
     jp uartReadBlocking
 urb: 
-    pop af
-    ret
-
-
-readSilient:
-    call _uartRead
-    push af : ld a, 1 : and b : jr nz, .exit : pop af
-    jp readSilient
-.exit 
     pop af
     ret
 
@@ -81,27 +81,12 @@ noneData:
     pop bc : xor a
     ret
 
-
-uartRead:
-    call _uartRead
-    push af
-    ld a, 1 : and b : jr z, .exit
-    pop af
-    push af
-    call putC
-    pop af
-    ld b,1
-    ret
-.exit
-    pop af
-    ld b, 0
-    ret
 ; Read byte from UART
 ; A: byte
 ; B:
 ;     1 - Was read
 ;     0 - Nothing to read
-_uartRead:
+uartRead:
     ld a, (poked_byte) : and 1 : jr nz, retBuff
 
     ld a, (is_recv) : and 1 : jr nz, recvRet
@@ -114,7 +99,7 @@ _uartRead:
     ret
 
 retReadByte:
-    xor a : ld (is_recv), a
+    xor a : ld (poked_byte), a : ld (is_recv), a
 
     ld bc, ZXUNO_ADDR : ld a, UART_DATA_REG : out (c), a
     ld bc, ZXUNO_REG : in a, (c)
@@ -127,21 +112,16 @@ recvRet:
 
     ld bc, ZXUNO_REG : in a, (c)
     ld hl, is_recv : ld (hl), 0
+    ld hl, poked_byte : ld (hl), 0
+    
     ld b, 1
     ret
 
 retBuff
-    xor a : ld (poked_byte), a : ld a, (byte_buff)
+    ld a, 0 : ld (poked_byte), a : ld a, (byte_buff)
     ld b, 1
     ret
 
 poked_byte defb 0
 byte_buff defb 0
 is_recv defb 0
-
-setSpeed:
-    ld hl, set_speed_cmd
-    jp uartWriteStringZ
-    
-
-set_speed_cmd db "AT+UART_DEF=115200,8,1,0,2", 13, 10, 0

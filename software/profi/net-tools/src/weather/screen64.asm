@@ -5,6 +5,8 @@
 ; putC
 ; gotoXY
 
+SCREEN_ROWS = 20
+
 clearScreen:
 	IFNDEF ZX48
     ld a, 7 : call changeBank
@@ -12,15 +14,24 @@ clearScreen:
 
 	xor a 
 	out (#fe), a
-
+	IFNDEF ZX48
     ld hl, #c000
 	ld de, #c001
+	ELSE 
+	ld hl, #4000
+	ld de, #4001
+	ENDIF
     ld (hl), 0
     ld bc, #17FF
     ldir
-
+	IFNDEF ZX48
 	ld hl, #d800
 	ld de, #d801
+	ELSE
+	ld hl, #5800
+	ld de, #5801
+	ENDIF
+
     ld a, (attr_screen)
     ld (hl), a
     ld bc, #2FF
@@ -29,36 +40,6 @@ clearScreen:
 	ld bc, 0
 	call gotoXY
     ret
-
-showCursor:
-	ld a, 7 : call changeBank
-
-    ld a, (cursor_pos)
-    ld c, 0
-    ld b, a
-    call bc_to_attr
-    ld (hl), #C
-    ld de, hl
-    inc de
-    ld bc, 31
-    ldir
-    call showType
-    ret
-
-hideCursor:
-	ld a, 7 : call changeBank
-
-    ld a, (cursor_pos)
-    ld b, a
-    ld c, 0
-    call bc_to_attr
-    ld (hl), #07
-    ld de, hl
-    inc de
-    ld bc, 31
-    ldir
-    ret
-
 
 ; Print just one symbol
 ; A - symbol
@@ -69,10 +50,12 @@ putC
 	cp ' '
 	ret c
 
+	IFNDEF ZX48
     push af
 	ld a, 7
     call changeBank
 	pop af
+	ENDIF
 
 	ld hl, single_symbol
 	ld (hl), a

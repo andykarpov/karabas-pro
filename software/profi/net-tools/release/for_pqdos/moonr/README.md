@@ -6,7 +6,7 @@ Gopher browser for Karabas Pro with ESP-12 chip.
 
 Connect to AP via some software(for example NetMan).
 
-Copy `moonr.com` and `index.gph` to any directory(but to the same) of your CF card, load PQ-DOS and start `moonr.com`.
+Copy `zimoonr.com` (or `moonr.com` for old UNO UART) and `index.gph` to any directory(but to the same) of your CF card, load PQ-DOS and start `zimoonr.com`.
 
 THIS SOFTWARE NOT SUPPORT MICRODOS! It's important!
 
@@ -14,7 +14,7 @@ THIS SOFTWARE NOT SUPPORT MICRODOS! It's important!
 
 To compile project all you need is [sjasmplus](https://github.com/z00m128/sjasmplus).
 
-You may use or not use GNU Make. But for just build enought only sjasmplus: `sjasmplus main.asm`.
+You may use or not use GNU Make. But for just build enought only sjasmplus: `sjasmplus -DZIFI main.asm`.
 
 To getting working distro you'll need:
 

@@ -32,6 +32,7 @@ entity karabas_pro is
 	generic (
 		enable_zxuno_uart  : boolean := true;  -- uart 1 (enabled by default)
 		enable_zxuno_uart2 : boolean := false; -- uart 2 (enabled for ep4ce10 via qsf settings)
+		enable_zifi_uart   : boolean := false;  -- zifi (enabled for ep4ce10 via qsf settings)
 		enable_saa1099 	 : boolean := false; -- saa1099 (enabled for ep4ce10 via qsf settings)
 		enable_osd_icons   : boolean := false  -- osd icons (enabled for ep4ce10 via qsf settings)
 	);
@@ -410,6 +411,15 @@ signal zxuno_uart2_oe_n 		: std_logic;
 signal uart2_tx : std_logic;
 signal uart2_rx : std_logic;
 signal uart2_cts : std_logic;
+signal zxuno_uart_tx : std_logic;
+signal zxuno_uart_cts : std_logic;
+
+-- ZIFI UART 
+signal zifi_do_bus : std_logic_vector(7 downto 0);
+signal zifi_oe_n   : std_logic := '1';
+signal zifi_uart_tx : std_logic;
+signal zifi_uart_cts : std_logic;
+signal zifi_api_enabled : std_logic;
 
 -- cpld port
 signal cpld_do 		: std_logic_vector(7 downto 0);
@@ -997,9 +1007,9 @@ port map(
 	din => cpu_do_bus,
 	dout => zxuno_uart_do_bus,
 	oe_n => zxuno_uart_oe_n,
-	uart_tx => UART_TX,
+	uart_tx => zxuno_uart_tx,
 	uart_rx => UART_RX,
-	uart_rts => UART_CTS
+	uart_rts => zxuno_uart_cts
 );	
 
 G_UNO_UART2: if enable_zxuno_uart2 generate
@@ -1026,6 +1036,32 @@ PIN_138 		<= uart2_cts;
 uart2_rx 		<= PIN_25;
 end generate G_UNO_UART2;
 end generate G_UNO_UART;
+
+G_ZIFI: if enable_zifi_uart generate
+U_ZIFI: entity work.zifi 
+port map (
+	CLK    => clk_bus,
+	RESET  => areset,
+	DS80   => DS80,
+
+	A      => cpu_a_bus,
+	DI     => cpu_do_bus,
+	DO     => zifi_do_bus,
+	IORQ_N => cpu_iorq_n,
+	RD_N   => cpu_rd_n,
+	WR_N   => cpu_wr_n,
+	ZIFI_OE_N => zifi_oe_n,
+	
+	ENABLED => zifi_api_enabled,
+
+	UART_RX   => UART_RX,
+	UART_TX   => zifi_uart_tx,
+	UART_CTS  => zifi_uart_cts	
+);
+end generate G_ZIFI;
+
+UART_TX <= zifi_uart_tx when enable_zifi_uart and zifi_api_enabled = '1' else zxuno_uart_tx;
+UART_CTS <= zifi_uart_cts when enable_zifi_uart and zifi_api_enabled = '1' else zxuno_uart_cts;
 
 -- board features
 U23: entity work.board 
@@ -1578,8 +1614,9 @@ begin
 		when x"13" => cpu_di_bus <= port_008b_reg;
 		when x"14" => cpu_di_bus <= port_018b_reg;
 		when x"15" => cpu_di_bus <= port_028b_reg;
-		when x"16" => cpu_di_bus <= vid_attr;
-		when x"17" => cpu_di_bus <= cpld_do;
+		when x"16" => cpu_di_bus <= zifi_do_bus;
+		when x"17" => cpu_di_bus <= vid_attr;
+		when x"18" => cpu_di_bus <= cpld_do;
 		when others => cpu_di_bus <= (others => '1');
 	end case;
 end process;
@@ -1607,8 +1644,9 @@ selector <=
 	x"13" when (cs_008b = '1' and cpu_rd_n = '0') else										-- port #008B
 	x"14" when (cs_018b = '1' and cpu_rd_n = '0') else										-- port #018B
 	x"15" when (cs_028b = '1' and cpu_rd_n = '0') else										-- port #028B
-	x"16" when (vid_pff_cs = '1' and cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_a_bus( 7 downto 0) = X"FF") and dos_act='0' and cpm = '0' and ds80 = '0' else -- Port FF select
-	x"17" when cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_m1_n = '1' else -- cpld 
+	x"16" when zifi_oe_n = '0' else  -- zifi
+	x"17" when (vid_pff_cs = '1' and cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_a_bus( 7 downto 0) = X"FF") and dos_act='0' and cpm = '0' and ds80 = '0' else -- Port FF select
+	x"18" when cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_m1_n = '1' else -- cpld 
 	(others => '1');
 	
 end rtl;

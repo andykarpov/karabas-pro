@@ -21,6 +21,9 @@ uartBegin:
     call uartRead
     pop bc
     djnz .loop
+
+    ld a, SCANDBLCTRL_REG : ld bc, ZXUNO_ADDR : out (c), a 
+    ld bc, ZXUNO_REG : in a, (c) : and #3f : or #80 : out (c), a
     ret
 
 ; Blocking read one byte

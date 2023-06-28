@@ -204,7 +204,7 @@ set_global_assignment -name PRE_FLOW_SCRIPT_FILE "quartus_sh:generate_messages.t
 #set_global_assignment -name POST_FLOW_SCRIPT_FILE "quartus_sh:remove_ver.tcl"
 
 set_parameter -name enable_saa1099 true
-set_parameter -name enable_zxuno_uart2 true
+set_parameter -name enable_zifi_uart true
 set_parameter -name enable_osd_icons true
 
 set_global_assignment -name OPTIMIZE_HOLD_TIMING "ALL PATHS"
@@ -252,6 +252,9 @@ set_global_assignment -name VHDL_FILE ../../rtl/dac/tda1543.vhd
 set_global_assignment -name VERILOG_FILE ../../rtl/uart/zxunouart.v
 set_global_assignment -name VERILOG_FILE ../../rtl/uart/zxunoregs.v
 set_global_assignment -name VERILOG_FILE ../../rtl/uart/uart.v
+set_global_assignment -name VHDL_FILE ../../rtl/uart/zifi.vhd
+set_global_assignment -name VHDL_FILE ../../rtl/uart/fifo.vhd
+set_global_assignment -name VHDL_FILE ../../rtl/uart/fifo2.vhd
 set_global_assignment -name VHDL_FILE ../../rtl/storage/bus_port.vhd
 set_global_assignment -name QIP_FILE ../../rtl/storage/bus_mux.qip
 set_global_assignment -name VHDL_FILE ../../rtl/avr/avr.vhd

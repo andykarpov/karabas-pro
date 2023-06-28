@@ -1,10 +1,32 @@
 bankm	equ 23388
+    IFNDEF ZX48
+; This routine checks availability of extended(128K) memory.
+; Output: 
+; Flag: Z - High memory available 
+checkHighMem:
+    xor a : call changeBank: ld hl, #c000 : xor a :ld (hl), a ; Let's write in zero page zero value
+    inc a : call changeBank : ld a, 13 : ld (hl), a           ; In other page - any other value. Let's write luck 13
+    xor a : call changeBank : ld a, (hl) : and a              ; When we back to zero page - still there zero?!
+    ret
 
 ; A - memory bank
 changeBank:
-    ld bc, #7ffd : or #18 : out (c), a : ld (bankm), a
+    push af : push bc : ld bc, #7ffd : and #7 : or #18 : out (c), a: ld (bankm), a : pop bc : pop af
     ret
 
+    IFDEF PROFISCR
+changeBankHiProfi:
+    push af : push bc : ld bc, #dffd : and #7 : or #80 : out (c), a : pop bc : pop af 
+    ret
+
+changeBankHiSpectrum:
+    push af : push bc : ld bc, #dffd : and #7 : out (c), a : pop bc : pop af 
+    ret
+    ENDIF
+
+    ENDIF
+
+    IFNDEF SPECTRANET 
 ; Pushes to UART zero-terminated string
 ; HL - string poiner
 uartWriteStringZ:
@@ -14,7 +36,8 @@ uartWriteStringZ:
     
     inc hl
     jp uartWriteStringZ
-   
+    ENDIF
+    
 ; Print zero-terminated string
 ; HL - string pointer
 putStringZ:

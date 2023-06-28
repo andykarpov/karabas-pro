@@ -1,4 +1,8 @@
+    IFDEF ZIFI
+    output "ziwget.com"
+    ELSE
     OUTPUT "wget.com"
+    ENDIF
     org #100
 Start:
         ld hl, about
@@ -9,7 +13,7 @@ Start:
         call loadArgs
 
         ld hl, initUart      : call putStringZ : call uartBegin
-        ld hl, makingRequest : call putStringZ : ld hl, proto : call putStringZ 
+        ld hl, makingRequest : call putStringZ : ld hl, proto : call putStringZ
 
         ld hl, proto : call httpGet
 
@@ -23,7 +27,7 @@ downloop:
         call fwrite
 
         ld a, '.' : call putC
-        
+
         ld a, (fpointer), b, a : call fsync
         call getPacket
         jp downloop
@@ -31,15 +35,14 @@ downloop:
 loadArgs:
     ld a, (CLI_PARAMS_COUNT), b, a
     ld de, url
-    ld hl, CLI_PARAMS + 1 
-aLp:    
+    ld hl, CLI_PARAMS + 1
+aLp:
     dec b : jr z, aE
 
     ld a,(hl)
 
     cp CR
     jr z, aE
-    
 
     cp ' '
     jr z, narg
@@ -63,7 +66,7 @@ narg:
     ld de, fout
     jr aLp
 
-noArgs: 
+noArgs:
     ld hl, usage
     call putStringZ
     rst 0
@@ -72,7 +75,7 @@ closed_callback:
     ld a, (fpointer), b, a
     call fclose
     ld hl,done : call putStringZ
-	rst 0	
+	rst 0
 
 uartWriteStringZ:
     ld a, (hl)
@@ -80,7 +83,7 @@ uartWriteStringZ:
     push hl
     call uartWriteByte
     pop hl
-    inc hl 
+    inc hl
     jr uartWriteStringZ
 
 about:      db 'wGet v.0.3 (c) 2021 Nihirash', 13, 10, 0
@@ -95,7 +98,14 @@ fout        ds #7f
 fpointer    db 0
 
 conclosed db 13, 13, "Connection closed", 0
+    IFDEF ZIFI
+    include "zifi-uart.asm"
+    ENDIF
+
+    IFDEF UNO
     include "uno-uart.asm"
+    ENDIF
+
     include "wifi.asm"
     include "ring.asm"
     include "http.asm"
