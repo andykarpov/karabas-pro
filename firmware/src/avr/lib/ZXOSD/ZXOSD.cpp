@@ -66,8 +66,9 @@ void ZXOSD::handle()
             case state_main_sync: updateVideo(); updateVsync(); updateTurbo(); break;
             case state_main_turbo: updateVsync(); updateTurbo(); updateSwapAB(); break;
             case state_main_swap_ab: updateTurbo(); updateSwapAB(); updateJoystick(); break;
-            case state_main_joy_type: updateSwapAB(); updateJoystick(); updateScreenMode(); break;
-            case state_main_screen_mode: updateJoystick(); updateScreenMode(); updateKeyboardType(); break;
+            case state_main_joy_type: updateSwapAB(); updateJoystick(); updateJoystickMode(); break;
+            case state_main_joy_mode: updateJoystick(); updateJoystickMode(); updateScreenMode(); break;
+            case state_main_screen_mode: updateJoystickMode(); updateScreenMode(); updateKeyboardType(); break;
             case state_main_keyboard_type: updateScreenMode(); updateKeyboardType(); updatePause(); break;
             case state_main_pause: updateKeyboardType(); updatePause(); updateRombank(); break;
           }
@@ -166,6 +167,7 @@ void ZXOSD::handle()
           case state_main_turbo: handleTurbo(); break;
           case state_main_swap_ab: handleSwapAB(); break;
           case state_main_joy_type: handleJoyType(); break;
+          case state_main_joy_mode: handleJoyMode(); break;
           case state_main_screen_mode: handleScreenMode(); break;
           case state_main_keyboard_type: handleKeyboardType(); break;
           case state_main_pause: handlePause(); break;
@@ -404,45 +406,50 @@ void ZXOSD::initOverlay()
   updateJoystick();
   osd.setPos(20,14); hint(PGMT(msg_menu_j));
 
+  // Joy mode
+  osd.setPos(0,15); param(PGMT(msg_joy_mode));
+  updateJoystickMode();
+  osd.setPos(20,15); hint(PGMT(msg_menu_m));
+
   // Screen Mode
-  osd.setPos(0,15); param(PGMT(msg_screen));
+  osd.setPos(0,16); param(PGMT(msg_screen));
   updateScreenMode();
-  osd.setPos(20,15); hint(PGMT(msg_menu_v));
+  osd.setPos(20,16); hint(PGMT(msg_menu_v));
 
   // Keyboard
-  osd.setPos(0,16); param(PGMT(msg_keyboard));
+  osd.setPos(0,17); param(PGMT(msg_keyboard));
   updateKeyboardType();
-  osd.setPos(20,16); hint(PGMT(msg_prtscr));
+  osd.setPos(20,17); hint(PGMT(msg_prtscr));
 
   // Pause
-  osd.setPos(0,17); param(PGMT(msg_pause));
+  osd.setPos(0,18); param(PGMT(msg_pause));
   updatePause();
-  osd.setPos(20,17); hint(PGMT(msg_pause));
+  osd.setPos(20,18); hint(PGMT(msg_pause));
 
   // Scancode
-  osd.setPos(0,18); param(PGMT(msg_scancode));
+  osd.setPos(0,19); param(PGMT(msg_scancode));
   updateScancode(0);
 
   // Mouse
-  osd.setPos(0,19); param(PGMT(msg_mouse));
+  osd.setPos(0,20); param(PGMT(msg_mouse));
   updateMouse(0,0,0);
 
   // Joy
-  osd.setPos(0,20); param(PGMT(msg_port_1f));
+  osd.setPos(0,21); param(PGMT(msg_port_1f));
   updateJoyState(0);
 
-  osd.setPos(20,18); flash(PGMT(msg_s)); text(PGMT(msg_etup_rtc));
+  osd.setPos(20,19); flash(PGMT(msg_s)); text(PGMT(msg_etup_rtc));
 
-  osd.setPos(20,19); text(PGMT(msg_color)); flash(PGMT(msg_t)); text(PGMT(msg_est));
+  osd.setPos(20,20); text(PGMT(msg_color)); flash(PGMT(msg_t)); text(PGMT(msg_est));
 
-  osd.setPos(20,20); flash(PGMT(msg_i)); text(PGMT(msg_nfo)); flash(PGMT(msg_a)); text(PGMT(msg_bout));
+  osd.setPos(20,21); flash(PGMT(msg_i)); text(PGMT(msg_nfo)); flash(PGMT(msg_a)); text(PGMT(msg_bout));
 
-  printLine(21);
+  printLine(22);
 
   // footer
-  osd.setPos(0,22); text(PGMT(msg_press)); hint(PGMT(msg_ctrl_alt_del)); text(PGMT(msg_to_reboot));
+  osd.setPos(0,23); text(PGMT(msg_press)); hint(PGMT(msg_ctrl_alt_del)); text(PGMT(msg_to_reboot));
 
-  osd.setPos(0,23); text(PGMT(msg_press)); hint(PGMT(msg_menu_esc)); text(PGMT(msg_to_toggle_osd));
+  osd.setPos(0,24); text(PGMT(msg_press)); hint(PGMT(msg_menu_esc)); text(PGMT(msg_to_toggle_osd));
 }
 
 void ZXOSD::clear()
@@ -475,6 +482,7 @@ void ZXOSD::initPopup(uint8_t event_type)
     case ZXKeyboard::EVENT_OSD_TURBO:         osd.print(PGMT(msg_turbo)); break;
     case ZXKeyboard::EVENT_OSD_SWAP_AB:       osd.print(PGMT(msg_swap_fdd)); break;
     case ZXKeyboard::EVENT_OSD_JOYSTICK:      osd.print(PGMT(msg_joy_type)); break; 
+    case ZXKeyboard::EVENT_OSD_JOYSTICK_MODE: osd.print(PGMT(msg_joy_mode)); break;
     case ZXKeyboard::EVENT_OSD_SCREEN_MODE:   osd.print(PGMT(msg_screen)); break; 
     case ZXKeyboard::EVENT_OSD_KEYBOARD_TYPE: osd.print(PGMT(msg_keyboard)); break;
     case ZXKeyboard::EVENT_OSD_PAUSE:         osd.print(PGMT(msg_pause)); break; 
@@ -493,7 +501,8 @@ void ZXOSD::initPopup(uint8_t event_type)
     case ZXKeyboard::EVENT_OSD_VSYNC: updateVsync(); break;
     case ZXKeyboard::EVENT_OSD_TURBO: updateTurbo(); break;
     case ZXKeyboard::EVENT_OSD_SWAP_AB: updateSwapAB(); break;
-    case ZXKeyboard::EVENT_OSD_JOYSTICK: updateJoystick(); break; 
+    case ZXKeyboard::EVENT_OSD_JOYSTICK: updateJoystick(); break;
+    case ZXKeyboard::EVENT_OSD_JOYSTICK_MODE: updateJoystickMode(); break; 
     case ZXKeyboard::EVENT_OSD_SCREEN_MODE: updateScreenMode(); break; 
     case ZXKeyboard::EVENT_OSD_KEYBOARD_TYPE: updateKeyboardType(); break;
     case ZXKeyboard::EVENT_OSD_PAUSE: updatePause(); break; 
@@ -830,6 +839,24 @@ void ZXOSD::handleJoyType() {
   }
 }
 
+void ZXOSD::handleJoyMode() {
+  uint8_t joymode = zxkbd.getJoyMode();
+
+  if (zxkbd.getIsCursorLeft()) {
+    joymode = joymode-1;
+    if (joymode > 4) joymode = 4;
+    zxkbd.setJoyMode(joymode);
+    updateJoystickMode();
+  }
+  if (zxkbd.getIsCursorRight() || zxkbd.getIsEnter()) {
+    joymode = joymode+1;
+    if (joymode > 4) joymode = 0;
+    zxkbd.setJoyMode(joymode);
+    updateJoystickMode();
+  }
+
+}
+
 void ZXOSD::handleScreenMode() {
   uint8_t screen_mode = zxkbd.getScreenMode();
 
@@ -1123,12 +1150,29 @@ void ZXOSD::updateJoystick() {
   }
 }
 
+void ZXOSD::updateJoystickMode() {
+
+  if (!zxkbd.getIsOsdPopup()) {
+    if (osd_state != state_main) return;
+    highlight(osd_main_state == state_main_joy_mode);
+    osd.setPos(10,15);
+  }
+
+  switch (zxkbd.getJoyMode()) { 
+    case 0: osd.print(PGMT(msg_joy_kempston)); osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK); osd.print(PGMT(msg_space)); break;
+    case 1: osd.print(PGMT(msg_joy_sinclair1)); osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK); break;
+    case 2: osd.print(PGMT(msg_joy_sinclair2)); osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK); break;
+    case 3: osd.print(PGMT(msg_joy_cursor)); osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);  osd.print(PGMT(msg_space));  osd.print(PGMT(msg_space)); osd.print(PGMT(msg_space)); break;
+    case 4: osd.print(PGMT(msg_joy_qaop)); osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);  osd.print(PGMT(msg_space)); osd.print(PGMT(msg_space)); break;
+  }
+}
+
 void ZXOSD::updateScreenMode() {
 
   if (!zxkbd.getIsOsdPopup()) {
     if (osd_state != state_main) return;
     highlight(osd_main_state == state_main_screen_mode);
-    osd.setPos(10,15);
+    osd.setPos(10,16);
   }
 
   switch (zxkbd.getScreenMode()) { 
@@ -1137,12 +1181,14 @@ void ZXOSD::updateScreenMode() {
   }
 }
 
+
+
 void ZXOSD::updateKeyboardType() {
 
   if (!zxkbd.getIsOsdPopup()) {
     if (osd_state != state_main) return;
     highlight(osd_main_state == state_main_keyboard_type);
-    osd.setPos(10,16);
+    osd.setPos(10,17);
   }
   if (zxkbd.getKeyboardType()) { osd.print(PGMT(msg_profi_xt)); } else { osd.print(PGMT(msg_spectrum)); }
 }
@@ -1152,7 +1198,7 @@ void ZXOSD::updatePause() {
   if (!zxkbd.getIsOsdPopup()) {
     if (osd_state != state_main) return;
     highlight(osd_main_state == state_main_pause);
-    osd.setPos(10,17);
+    osd.setPos(10,18);
   }
 
   if (zxkbd.getPause()) { osd.print(PGMT(msg_on)); } else { osd.print(PGMT(msg_off)); }
@@ -1321,7 +1367,7 @@ void ZXOSD::updateScancode(uint16_t c) {
   if (osd_state != state_main) return;
 
   osd.setColor(OSD::COLOR_RED_I, OSD::COLOR_BLACK);
-  osd.setPos(10,18);
+  osd.setPos(10,19);
   if ((c >> 8) < 0x10) osd.print(PGMT(msg_0)); 
   osd.print(c >> 8, HEX);
   osd.print(PGMT(msg_space));
@@ -1334,7 +1380,7 @@ void ZXOSD::updateMouse(uint8_t mouse_x, uint8_t mouse_y, uint8_t mouse_z) {
   if (osd_state != state_main) return;
 
   osd.setColor(OSD::COLOR_RED_I, OSD::COLOR_BLACK);
-  osd.setPos(10,19);
+  osd.setPos(10,20);
   if (mouse_x < 0x10) osd.print(PGMT(msg_0)); 
   osd.print(mouse_x, HEX);
   osd.print(PGMT(msg_space));
@@ -1350,7 +1396,7 @@ void ZXOSD::updateJoyState(uint8_t joy) {
   if (osd_state != state_main) return;
 
   osd.setColor(OSD::COLOR_RED_I, OSD::COLOR_BLACK);
-  osd.setPos(10,20);
+  osd.setPos(10,21);
   if (joy < 0x10) osd.print(PGMT(msg_0)); 
   osd.print(joy, HEX);  
 }

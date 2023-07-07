@@ -31,7 +31,7 @@ const uint8_t ADDR_ATTR = 0x13;
 const uint8_t ADDR_NOOP = 0x14;
 
 const uint8_t SIZE_X = 32;
-const uint8_t SIZE_Y = 24;
+const uint8_t SIZE_Y = 25;
 
 /****************************************************************************/
 

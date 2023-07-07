@@ -82,6 +82,7 @@ private:
     state_main_turbo,
     state_main_swap_ab,
     state_main_joy_type,
+    state_main_joy_mode,
     state_main_screen_mode,
     state_main_keyboard_type,
     state_main_pause
@@ -147,6 +148,7 @@ public:
   void handleTurbo();
   void handleSwapAB();
   void handleJoyType();
+  void handleJoyMode();
   void handleScreenMode();
   void handleKeyboardType();
   void handlePause();
@@ -169,6 +171,7 @@ public:
   void updateTurbo();
   void updateSwapAB();
   void updateJoystick();
+  void updateJoystickMode();
   void updateScreenMode();
   void updateKeyboardType();
   void updatePause();
