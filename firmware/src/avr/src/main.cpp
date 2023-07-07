@@ -243,7 +243,7 @@ void on_joystick(uint8_t evt, uint8_t data)
       zxkbd.setKey(ZX_K_A, bitRead(data, 2)); // D
       zxkbd.setKey(ZX_K_O, bitRead(data, 1)); // L
       zxkbd.setKey(ZX_K_P, bitRead(data, 0)); // R
-      zxkbd.setKey(ZX_K_SP, bitRead(data, 4)); // F
+      zxkbd.setKey(ZX_K_M, bitRead(data, 4)); // F
     break;
   }
 
