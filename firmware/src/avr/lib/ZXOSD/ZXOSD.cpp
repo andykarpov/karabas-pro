@@ -1163,7 +1163,7 @@ void ZXOSD::updateJoystickMode() {
     case 1: osd.print(PGMT(msg_joy_sinclair1)); osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK); break;
     case 2: osd.print(PGMT(msg_joy_sinclair2)); osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK); break;
     case 3: osd.print(PGMT(msg_joy_cursor)); osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);  osd.print(PGMT(msg_space));  osd.print(PGMT(msg_space)); osd.print(PGMT(msg_space)); break;
-    case 4: osd.print(PGMT(msg_joy_qaop)); osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);  osd.print(PGMT(msg_space)); osd.print(PGMT(msg_space)); break;
+    case 4: osd.print(PGMT(msg_joy_qaop)); osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);  break;
   }
 }
 
