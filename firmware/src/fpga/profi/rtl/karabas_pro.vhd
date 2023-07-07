@@ -179,6 +179,7 @@ signal kb_turbo_old	: std_logic_vector(1 downto 0) := "00";
 signal kb_wait 		: std_logic := '0';
 signal kb_mode 		: std_logic := '1';
 signal joy_type 		: std_logic := '0';
+signal joy_mode 		: std_logic_vector(2 downto 0) := "000";
 signal kb_loaded 		: std_logic := '0';
 signal kb_screen_mode: std_logic_vector(1 downto 0) := "00";
 
@@ -894,6 +895,7 @@ port map (
 	 MAGICK 			=> kb_magic,
 	 WAIT_CPU 		=> kb_wait,
 	 JOY_TYPE 		=> joy_type,
+	 JOY_MODE 		=> joy_mode,
 	 OSD_OVERLAY 	=> osd_overlay,
 	 OSD_POPUP 		=> osd_popup,
 	 OSD_COMMAND	=> osd_command,
@@ -1627,7 +1629,7 @@ selector <=
 	x"02" when (cs_xxfe = '1' and cpu_rd_n = '0') else 									-- Keyboard, port #FE
 	x"03" when (cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_m1_n = '1' and cpu_a_bus(7 downto 0) = X"57" and is_flash_not_sd = '0') else 	-- Z-Controller
 	x"04" when (cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_m1_n = '1' and cpu_a_bus(7 downto 0) = X"77" and is_flash_not_sd = '0') else 	-- Z-Controller
-	x"05" when (cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_m1_n = '1' and cpu_a_bus( 7 downto 0) = X"1F" and dos_act = '0' and cpm = '0') else -- Joystick, port #1F
+	x"05" when (cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_m1_n = '1' and cpu_a_bus( 7 downto 0) = X"1F" and dos_act = '0' and cpm = '0' and joy_mode = "000") else -- Joystick, port #1F
 	x"06" when (cs_fffd = '1' and cpu_rd_n = '0' and ssg_sel = '0') else 			-- TurboSound
 	x"07" when (cs_fffd = '1' and cpu_rd_n = '0' and ssg_sel = '1') else
 	x"08" when (cs_dffd = '1' and cpu_rd_n = '0') else										-- port #DFFD
