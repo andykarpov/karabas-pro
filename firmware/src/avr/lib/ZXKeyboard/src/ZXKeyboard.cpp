@@ -264,6 +264,15 @@ void ZXKeyboard::setScreenMode(uint8_t val) {
   matrix[ZX_K_SCREEN_MODE1] = bitRead(val, 1);
 }
 
+void ZXKeyboard::setJoyMode(uint8_t val) {
+  val = constrain(val, 0, 4);
+  joy_mode = val;
+  EEPROM.update(EEPROM_JOY_MODE_ADDRESS, val);
+  matrix[ZX_K_JOY_MODE0] = bitRead(val, 0);
+  matrix[ZX_K_JOY_MODE1] = bitRead(val, 1);
+  matrix[ZX_K_JOY_MODE2] = bitRead(val, 2);
+}
+
 // transform PS/2 scancodes into internal matrix of pressed keys
 void ZXKeyboard::fill(uint16_t sc, unsigned long n)
 {
@@ -467,7 +476,20 @@ void ZXKeyboard::fill(uint16_t sc, unsigned long n)
     break;
     case PS2_KEY_K: matrix[ZX_K_K] = !is_up; break;
     case PS2_KEY_L: matrix[ZX_K_L] = !is_up; break;
-    case PS2_KEY_M: matrix[ZX_K_M] = !is_up; break;
+    case PS2_KEY_M: 
+      if (is_menu || is_win || (is_ctrl && is_alt)) {
+        if (!is_up) {
+          joy_mode++;
+          if (joy_mode > 4) {
+            joy_mode = 0;
+          }
+          setJoyMode(joy_mode);
+          event(EVENT_OSD_JOYSTICK_MODE, 0);
+        }
+      } else {
+        matrix[ZX_K_M] = !is_up; 
+      }
+    break;
     case PS2_KEY_N: matrix[ZX_K_N] = !is_up; break;
     case PS2_KEY_O: matrix[ZX_K_O] = !is_up; break;
     case PS2_KEY_P: matrix[ZX_K_P] = !is_up; break;
@@ -1175,6 +1197,12 @@ void ZXKeyboard::eepromRestoreValues()
     EEPROM.update(EEPROM_SCREEN_MODE_ADDRESS, 0);
   }
   screen_mode = constrain(screen_mode, 0, max_screen_mode);
+  joy_mode = EEPROM.read(EEPROM_JOY_MODE_ADDRESS);
+  if (joy_mode > 4) {
+    joy_mode = 0;
+    EEPROM.update(EEPROM_JOY_MODE_ADDRESS, 0);
+  }
+  joy_mode = constrain(joy_mode, 0, 4);
   
   // apply restored values
   matrix[ZX_K_TURBO] = bitRead(turbo, 0);
@@ -1193,6 +1221,9 @@ void ZXKeyboard::eepromRestoreValues()
   matrix[ZX_K_JOY_TYPE] = joy_type;
   matrix[ZX_K_SCREEN_MODE0] = bitRead(screen_mode, 0);
   matrix[ZX_K_SCREEN_MODE1] = bitRead(screen_mode, 1);
+  matrix[ZX_K_JOY_MODE0] = bitRead(joy_mode, 0);
+  matrix[ZX_K_JOY_MODE1] = bitRead(joy_mode, 1);
+  matrix[ZX_K_JOY_MODE2] = bitRead(joy_mode, 2);
 }
 
   bool ZXKeyboard::getIsOsdOverlay() {
@@ -1266,6 +1297,10 @@ void ZXKeyboard::eepromRestoreValues()
 
   uint8_t ZXKeyboard::getMaxScreenMode() {
     return max_screen_mode;
+  }
+
+  uint8_t ZXKeyboard::getJoyMode() {
+    return joy_mode;
   }
 
   bool ZXKeyboard::getPause() {

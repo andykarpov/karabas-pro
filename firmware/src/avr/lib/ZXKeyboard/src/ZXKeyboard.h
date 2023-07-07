@@ -26,7 +26,7 @@
 #define PIN_KBD_CLK 2 // pin 28 (CLKK)
 #define PIN_KBD_DAT 4 // pin 27 (DATK)
 
-#define ZX_MATRIX_FULL_SIZE 72 // 40 keys + service signals
+#define ZX_MATRIX_FULL_SIZE 75 // 40 keys + service signals
 #define ZX_MATRIX_SIZE 41 // only mechanical keys state + bit6
 
 #define ZX_K_CS  0
@@ -118,6 +118,10 @@
 
 #define ZX_K_OSD_POPUP 71
 
+#define ZX_K_JOY_MODE0 72
+#define ZX_K_JOY_MODE1 73
+#define ZX_K_JOY_MODE2 74
+
 // kbd commands
 #define CMD_KBD 0x01
 
@@ -129,6 +133,8 @@
 #define ADDR_KBD_BYTE6 0x06
 #define ADDR_KBD_BYTE7 0x07 // scancode
 #define ADDR_KBD_BYTE8 0x08 // scancode
+#define ADDR_KBD_BYTE9 0x09 
+#define ADDR_KBD_BYTE10 0x0A 
 
 // eeprom addresses to store states
 #define EEPROM_TURBO_ADDRESS 0x00
@@ -146,6 +152,7 @@
 #define EEPROM_MOUSE_SWAP_ADDRESS 0x0C
 #define EEPROM_JOY_TYPE_ADDRESS 0x0D
 #define EEPROM_SCREEN_MODE_ADDRESS 0x0E
+#define EEPROM_JOY_MODE_ADDRESS 0x0F
 
 #define EEPROM_VALUE_TRUE 10
 #define EEPROM_VALUE_FALSE 20
@@ -184,7 +191,8 @@ private:
   bool is_sw8 = false; // SW8 state
   bool is_sw9 = false; // SW9 state 
   bool is_sw10 = false; // SW10 state
-  bool joy_type = false; // joy type - 0 = kempston, 1 = sega
+  bool joy_type = false; // joy type - 0 = atari, 1 = sega
+  uint8_t joy_mode = 0; // joy mode - 0 = kempston, 1 - sinclair 1, 2 - sinclair 2, 3 - cursor, 4 - qaopm
   bool is_wait = false; // wait mode
   bool osd_overlay = false; // osd overlay enable
   bool osd_popup = false; // osd popup (small 2-row overlay)
@@ -243,6 +251,7 @@ public:
   static const uint8_t EVENT_OSD_TURBO = 14;
   static const uint8_t EVENT_OSD_SCREEN_MODE = 15;
   static const uint8_t EVENT_OSD_POPUP = 16;
+  static const uint8_t EVENT_OSD_JOYSTICK_MODE = 17;
 
   ZXKeyboard();
 
@@ -279,6 +288,7 @@ public:
   void setMouseSwap(bool value);
   bool getMouseSwap();
   void setScreenMode(uint8_t val);
+  void setJoyMode(uint8_t val);
 
   bool getIsOsdOverlay();
   bool getIsOsdPopup();
@@ -297,6 +307,7 @@ public:
   bool getPause();
   uint8_t getScreenMode();
   uint8_t getMaxScreenMode();
+  uint8_t getJoyMode();
 
   bool getIsCursorUp();
   bool getIsCursorDown();

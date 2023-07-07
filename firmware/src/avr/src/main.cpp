@@ -18,7 +18,7 @@ https://github.com/andykarpov/karabas-pro                       #               
 AVR firmware for Karabas-Pro
 
 @author Andy Karpov <andy.karpov@gmail.com>
-Ukraine, 2021
+Ukraine, 2021 - 2023
 */
 
 #include "Arduino.h"
@@ -134,6 +134,7 @@ void on_keyboard (uint8_t event_type, uint16_t scancode)
       case ZXKeyboard::EVENT_OSD_OVERLAY:  zxosd.initOverlay(); break;
       case ZXKeyboard::EVENT_OSD_SCANCODE: zxosd.updateScancode(scancode); break;
       case ZXKeyboard::EVENT_OSD_JOYSTICK: zxosd.updateJoystick(); break;
+      case ZXKeyboard::EVENT_OSD_JOYSTICK_MODE: zxosd.updateJoystickMode(); break;
       case ZXKeyboard::EVENT_OSD_SWAP_AB:  zxosd.updateSwapAB(); break;
       case ZXKeyboard::EVENT_OSD_ROMBANK:  zxosd.updateRombank(); break;
       case ZXKeyboard::EVENT_OSD_TURBOFDC: zxosd.updateTurbofdc(); break;
@@ -158,6 +159,7 @@ void on_keyboard (uint8_t event_type, uint16_t scancode)
       case ZXKeyboard::EVENT_OSD_VIDEO:
       case ZXKeyboard::EVENT_OSD_VSYNC:
       case ZXKeyboard::EVENT_OSD_JOYSTICK:
+      case ZXKeyboard::EVENT_OSD_JOYSTICK_MODE:
       case ZXKeyboard::EVENT_OSD_KEYBOARD_TYPE:
       case ZXKeyboard::EVENT_OSD_PAUSE:
       case ZXKeyboard::EVENT_OSD_TURBO:
@@ -212,6 +214,39 @@ void on_joystick(uint8_t evt, uint8_t data)
   if (zxkbd.getIsOsdOverlay()) {
     zxosd.updateJoyState(data);
   }
+
+  // update keyboard keys with joystick state
+  switch (zxkbd.getJoyMode()) {
+    case 1: // sinclair 1
+      zxkbd.setKey(ZX_K_1, bitRead(data, 1)); // L
+      zxkbd.setKey(ZX_K_2, bitRead(data, 0)); // R
+      zxkbd.setKey(ZX_K_3, bitRead(data, 2)); // D
+      zxkbd.setKey(ZX_K_4, bitRead(data, 3)); // U
+      zxkbd.setKey(ZX_K_5, bitRead(data, 4)); // F
+    break; 
+    case 2: // sinclair 2
+      zxkbd.setKey(ZX_K_6, bitRead(data, 1)); // L
+      zxkbd.setKey(ZX_K_7, bitRead(data, 0)); // R
+      zxkbd.setKey(ZX_K_8, bitRead(data, 2)); // D
+      zxkbd.setKey(ZX_K_9, bitRead(data, 3)); // U
+      zxkbd.setKey(ZX_K_0, bitRead(data, 4)); // F
+    break;
+    case 3: // cursor
+      zxkbd.setKey(ZX_K_5, bitRead(data, 1)); // L
+      zxkbd.setKey(ZX_K_6, bitRead(data, 2)); // D
+      zxkbd.setKey(ZX_K_7, bitRead(data, 3)); // U
+      zxkbd.setKey(ZX_K_8, bitRead(data, 0)); // R
+      zxkbd.setKey(ZX_K_0, bitRead(data, 4)); // F
+    break;
+    case 4: // qaop
+      zxkbd.setKey(ZX_K_Q, bitRead(data, 3)); // U
+      zxkbd.setKey(ZX_K_A, bitRead(data, 2)); // D
+      zxkbd.setKey(ZX_K_O, bitRead(data, 1)); // L
+      zxkbd.setKey(ZX_K_P, bitRead(data, 0)); // R
+      zxkbd.setKey(ZX_K_M, bitRead(data, 4)); // F
+    break;
+  }
+
 }
 
 // initial setup
@@ -286,8 +321,8 @@ void loop()
   zxosd.handle();
   zxkbd.transmit();
   zxrtc.handle();
-  zxmouse.handle(zxkbd.getIsMenu());
   zxjoy.handle(zxkbd.getJoyType());
+  zxmouse.handle(zxkbd.getIsMenu());
 
   // react on hardware buttons every 100ms
 #if USE_HW_BUTTONS

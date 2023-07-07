@@ -55,7 +55,8 @@ entity avr is
 	 TURBO		: out std_logic_vector(1 downto 0) := "00";
 	 MAGICK		: out std_logic := '0';
 	 WAIT_CPU 	: out std_logic := '0';
-	 JOY_TYPE 	: out std_logic := '0';
+	 JOY_TYPE 	: out std_logic := '0'; -- 0 - atari, 1 - sega
+	 JOY_MODE 	: out std_logic_vector := "000"; -- 000 - kempston, 001 - sinclair 1, 010 - sinclair 2, 011 - cursor, 100 - qaop
 	 OSD_OVERLAY: out std_logic := '0';
 	 OSD_POPUP 	: out std_logic := '0';
 	 OSD_COMMAND: out std_logic_vector(15 downto 0);
@@ -235,6 +236,9 @@ begin
 											  TURBO(1) <= spi_do(4);
 											  SCREEN_MODE(1 downto 0) <= spi_do(6 downto 5);
 											  OSD_POPUP <= spi_do(7);
+							when X"0A" => 
+											  JOY_MODE <= spi_do(2 downto 0);
+											  -- free bits: 7..3
 							when others => null;
 						end case;
 					-- mouse data
