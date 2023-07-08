@@ -84,6 +84,7 @@ private:
     state_main_joy_type,
     state_main_joy_mode,
     state_main_screen_mode,
+    state_main_divmmc,
     state_main_keyboard_type,
     state_main_pause
   };
@@ -150,6 +151,7 @@ public:
   void handleJoyType();
   void handleJoyMode();
   void handleScreenMode();
+  void handleDivmmc();
   void handleKeyboardType();
   void handlePause();
 
@@ -173,6 +175,7 @@ public:
   void updateJoystick();
   void updateJoystickMode();
   void updateScreenMode();
+  void updateDivmmc();
   void updateKeyboardType();
   void updatePause();
 

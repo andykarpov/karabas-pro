@@ -26,7 +26,7 @@
 #define PIN_KBD_CLK 2 // pin 28 (CLKK)
 #define PIN_KBD_DAT 4 // pin 27 (DATK)
 
-#define ZX_MATRIX_FULL_SIZE 75 // 40 keys + service signals
+#define ZX_MATRIX_FULL_SIZE 76 // 40 keys + service signals
 #define ZX_MATRIX_SIZE 41 // only mechanical keys state + bit6
 
 #define ZX_K_CS  0
@@ -122,6 +122,8 @@
 #define ZX_K_JOY_MODE1 73
 #define ZX_K_JOY_MODE2 74
 
+#define ZX_K_DIVMMC 75
+
 // kbd commands
 #define CMD_KBD 0x01
 
@@ -153,6 +155,7 @@
 #define EEPROM_JOY_TYPE_ADDRESS 0x0D
 #define EEPROM_SCREEN_MODE_ADDRESS 0x0E
 #define EEPROM_JOY_MODE_ADDRESS 0x0F
+#define EEPROM_DIVMMC_ADDRESS 0x10
 
 #define EEPROM_VALUE_TRUE 10
 #define EEPROM_VALUE_FALSE 20
@@ -193,6 +196,7 @@ private:
   bool is_sw10 = false; // SW10 state
   bool joy_type = false; // joy type - 0 = atari, 1 = sega
   uint8_t joy_mode = 0; // joy mode - 0 = kempston, 1 - sinclair 1, 2 - sinclair 2, 3 - cursor, 4 - qaopm
+  bool is_divmmc = false; 
   bool is_wait = false; // wait mode
   bool osd_overlay = false; // osd overlay enable
   bool osd_popup = false; // osd popup (small 2-row overlay)
@@ -252,6 +256,7 @@ public:
   static const uint8_t EVENT_OSD_SCREEN_MODE = 15;
   static const uint8_t EVENT_OSD_POPUP = 16;
   static const uint8_t EVENT_OSD_JOYSTICK_MODE = 17;
+  static const uint8_t EVENT_OSD_DIVMMC = 18;
 
   ZXKeyboard();
 
@@ -289,6 +294,9 @@ public:
   bool getMouseSwap();
   void setScreenMode(uint8_t val);
   void setJoyMode(uint8_t val);
+  void setDivmmc(bool value);
+  void toggleDivmmc();
+  bool getDivmmc();
 
   bool getIsOsdOverlay();
   bool getIsOsdPopup();
