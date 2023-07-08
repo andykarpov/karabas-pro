@@ -91,7 +91,7 @@ architecture rtl of overlay is
 	 constant paper_start_h : natural := 0;
 	 constant paper_end_h : natural := 256;
 	 constant paper_start_v : natural := 0;
-	 constant paper_end_v : natural := 200; -- 25 character lines
+	 constant paper_end_v : natural := 208; -- 26 character lines
 begin
 
 	 -- знакогенератор

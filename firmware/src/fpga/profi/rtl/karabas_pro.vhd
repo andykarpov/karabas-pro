@@ -230,6 +230,9 @@ signal zc_sclk			: std_logic;
 signal zc_mosi			: std_logic;
 signal zc_miso			: std_logic;
 
+-- DivMMC
+signal divmmc_en 		: std_logic := '0';
+
 -- MC146818A
 signal mc146818_wr		: std_logic;
 signal mc146818_rd		: std_logic;
@@ -901,6 +904,7 @@ port map (
 	 OSD_COMMAND	=> osd_command,
 	 MAX_TURBO 		=> max_turbo,
 	 SCREEN_MODE   => kb_screen_mode,
+	 DIVMMC_EN 		=> divmmc_en,
 	 
 	 LOADED 			=> kb_loaded,
 	 
