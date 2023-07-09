@@ -109,8 +109,8 @@ begin
    
 	---08.07.2023:OCH: DIVMMC signaling when we must map rom or ram of DIVMMC interface to Z80 adress space
 	---maybe it not necessary A(15 downto 13) ? Only check for A(13)?
-	is_romDIVMMC <= '1' when DIVMMC_EN = '1' and (AUTOMAP ='1' or REG_E3(7) = '1') and A(15 downto 13) = "000";
-	is_ramDIVMMC <= '1' when DIVMMC_EN = '1' and (AUTOMAP ='1' or REG_E3(7) = '1') and A(15 downto 13) = "001";
+	is_romDIVMMC <= '1' when DIVMMC_EN = '1' and (AUTOMAP ='1' or REG_E3(7) = '1') and A(15 downto 13) = "000" else '0';
+	is_ramDIVMMC <= '1' when DIVMMC_EN = '1' and (AUTOMAP ='1' or REG_E3(7) = '1') and A(15 downto 13) = "001" else '0';
 	--
 	vbus_req <= '0' when N_MREQ = '0' and ( N_WR = '0' or N_RD = '0' ) else '1';
 	vbus_rdy <= '0' when (CLKX = '0' or CLK_CPU = '0')  else '1';
@@ -174,7 +174,7 @@ begin
 		loader_ram_a(20 downto 14) when loader_act = '1' else -- loader ram
 --- 08.07.2023:OCH: set DIVMMC high adress
 		"1010000" when is_romDIVMMC = '1' and vbus_mode = '0' else -- DIVMMC rom
-		"11" & REG_E3(5 downto 1) when is_ramDIVMMC = '1'and vbus_mode = '0' else -- DIVMMC ram 512 kB from #X180000 SRAM
+		"11" & REG_E3(5 downto 1) when is_ramDIVMMC = '1' and vbus_mode = '0' else -- DIVMMC ram 512 kB from #X180000 SRAM
 ---
 		"100" & EXT_ROM_BANK(1 downto 0) & rom_page(1 downto 0) when is_rom = '1' and vbus_mode = '0' else -- rom from sram high bank 
 		ram_page(6 downto 0) when vbus_mode = '0' else 
