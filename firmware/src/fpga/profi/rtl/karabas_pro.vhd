@@ -232,6 +232,7 @@ signal zc_miso			: std_logic;
 
 --- 06.07.2023:OCH: signals for DivMMC logic
 -- DivMMC
+signal divmmc_en			: std_logic;
 signal automap			: std_logic;
 signal detect			: std_logic;
 signal port_e3_reg   : std_logic_vector(7 downto 0);
@@ -666,7 +667,7 @@ port map (
 	CONTENDED 		=> memory_contention,
 	
 	-- DIVMMC signals
-   DIVMMC		   => divmmc,
+   DIVMMC_EN		=> divmmc_en,
 	AUTOMAP			=> automap,
 	REG_E3		   => port_e3_reg
 );	
@@ -1628,9 +1629,9 @@ port map(
 );
 
 ------------------------ divmmc-----------------------------
-process (cpu_m1_n, cpu_mreq_n , detect, automap,reset,divmmc,clk_bus)
+process (cpu_m1_n, cpu_mreq_n , detect, automap,reset,divmmc_en,clk_bus)
 begin
-	if reset='1' and divmmc='0' then
+	if reset='1' and divmmc_en='0' then
 		detect<='0';
 		automap<=detect;
 		

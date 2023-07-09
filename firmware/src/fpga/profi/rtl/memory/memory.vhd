@@ -66,7 +66,7 @@ port (
 	CONTENDED   : out std_logic := '0';
 	
 	-- DIVMMC
-	DIVMMC		: in std_logic;
+	DIVMMC_EN	: in std_logic;
 	AUTOMAP		: in std_logic;
 	REG_E3		: in std_logic_vector(7 downto 0)
 );
@@ -109,8 +109,8 @@ begin
    
 	---08.07.2023:OCH: DIVMMC signaling when we must map rom or ram of DIVMMC interface to Z80 adress space
 	---maybe it not necessary A(15 downto 13) ? Only check for A(13)?
-	is_romDIVMMC <= '1' when DIVMMC = '1' and (AUTOMAP ='1' or REG_E3(7) = '1') and A(15 downto 13) = "000";
-	is_ramDIVMMC <= '1' when DIVMMC = '1' and (AUTOMAP ='1' or REG_E3(7) = '1') and A(15 downto 13) = "001";
+	is_romDIVMMC <= '1' when DIVMMC_EN = '1' and (AUTOMAP ='1' or REG_E3(7) = '1') and A(15 downto 13) = "000";
+	is_ramDIVMMC <= '1' when DIVMMC_EN = '1' and (AUTOMAP ='1' or REG_E3(7) = '1') and A(15 downto 13) = "001";
 	--
 	vbus_req <= '0' when N_MREQ = '0' and ( N_WR = '0' or N_RD = '0' ) else '1';
 	vbus_rdy <= '0' when (CLKX = '0' or CLK_CPU = '0')  else '1';
