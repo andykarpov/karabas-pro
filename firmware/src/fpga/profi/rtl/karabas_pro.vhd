@@ -234,8 +234,14 @@ signal zc_miso			: std_logic;
 -- DivMMC
 --signal divmmc_en		: std_logic;
 signal automap			: std_logic;
-signal detect			: std_logic;
+--signal detect			: std_logic;
 signal port_e3_reg   : std_logic_vector(7 downto 0);
+
+signal mapterm 		: std_logic;
+signal map3DXX 		: std_logic; 
+signal map1F00 		: std_logic;
+signal mapcond 		: std_logic;
+
 
 -- MC146818A
 signal mc146818_wr		: std_logic;
@@ -1159,7 +1165,11 @@ reset <= areset or kb_reset or loader_reset or loader_act or board_reset; -- hot
 
 cpu_reset_n <= not(reset) and not(loader_reset); -- CPU reset
 cpu_inta_n <= cpu_iorq_n or cpu_m1_n;	-- INTA
-cpu_nmi_n <= '0' when kb_magic = '1' and ((cpu_m1_n = '0' and cpu_mreq_n = '0' and cpu_a_bus(15 downto 14) /= "00") or DS80 = '1') else '1'; -- NMI
+
+-- 11.07.2013:OCH: implementation of nmi signal for DIVMMC
+-- cpu_nmi_n <= '0' when kb_magic = '1' and ((cpu_m1_n = '0' and cpu_mreq_n = '0' and cpu_a_bus(15 downto 14) /= "00") or DS80 = '1') else '1'; -- NMI
+cpu_nmi_n <= mapcond when kb_magic = '1' else '1'; -- NMI
+
 cpu_wait_n <= '1';
 
 -- max turbo = 14 MHz
@@ -1630,26 +1640,51 @@ port map(
 );
 
 ------------------------ divmmc-----------------------------
-process (cpu_m1_n, cpu_mreq_n , detect, automap,reset,clk_bus)
-begin
-	if reset='1' then
-		detect<='0';
-		automap<=detect;
-		
-	elsif (clk_bus'event and clk_bus = '1') then 
-		if (cpu_m1_n = '0' and cpu_mreq_n = '0' and (cpu_a_bus = X"0000" or cpu_a_bus = X"0008" or cpu_a_bus = X"0038" or cpu_a_bus = X"0066" or cpu_a_bus = X"04C6" or cpu_a_bus = X"0562" or cpu_a_bus(15 downto 8) = X"3D")) then
-			detect <= '1';
-		elsif (cpu_m1_n = '0' and cpu_mreq_n = '0' and cpu_a_bus(15 downto 3) = "0001111111111") then
-			detect <= '0';	-- 0x1FF8-0x1FFF
-		end if;
-		
-		if (cpu_m1_n = '0' and cpu_iorq_n = '1' and cpu_a_bus(15 downto 8) = X"3D") then
-			automap <= '1';	-- 3Dxx
-		elsif (cpu_mreq_n = '0' and cpu_rfsh_n = '0') then
-			automap <= detect; 
-		end if;
-	end if;
-end process;
+-- Engineer:   Mario Prato
+-- 11.07.2013:OCH: adapted by me
+-- i take this implementation to correctly and easy make nmi 
+
+ mapterm <= '1' when  cpu_a_bus(15 downto 0) = x"0000"   or 
+                      cpu_a_bus(15 downto 0) = x"0008"   or 
+                      cpu_a_bus(15 downto 0) = x"0038"   or 
+                      cpu_a_bus(15 downto 0) = x"0066"   or 
+                      cpu_a_bus(15 downto 0) = x"04c6"   or 
+                      cpu_a_bus(15 downto 0) = x"0562"   else '0';
+
+ map3DXX   <= '1' when cpu_a_bus(15 downto 8) = "00111101"   else '0';             -- mappa 3D00 - 3DFF
+ map1F00 <= '0' when cpu_a_bus(15 downto 3) =   "0001111111111"  else '1';		     -- 1ff8 - 1fff
+
+ process(cpu_mreq_n, cpu_m1_n, mapcond, mapterm, map3DXX, map1F00, automap)
+  begin
+   if falling_edge(cpu_mreq_n) then
+		   if cpu_m1_n = '0' then
+				 mapcond <= mapterm or map3DXX or (mapcond and map1F00);
+				 automap <= mapcond or map3DXX;
+		  end if;
+	end if;	  
+ end process; 
+
+
+--process (cpu_m1_n, cpu_mreq_n , detect, automap,reset,clk_bus)
+--begin
+--	if reset='1' then
+--		detect<='0';
+--		automap<=detect;
+--		
+--	elsif (clk_bus'event and clk_bus = '1') then 
+--		if (cpu_m1_n = '0' and cpu_mreq_n = '0' and (cpu_a_bus = X"0000" or cpu_a_bus = X"0008" or cpu_a_bus = X"0038" or cpu_a_bus = X"0066" or cpu_a_bus = X"04C6" or cpu_a_bus = X"0562" or cpu_a_bus(15 downto 8) = X"3D")) then
+--			detect <= '1';
+--		elsif (cpu_m1_n = '0' and cpu_mreq_n = '0' and cpu_a_bus(15 downto 3) = "0001111111111") then
+--			detect <= '0';	-- 0x1FF8-0x1FFF
+--		end if;
+--		
+--		if (cpu_m1_n = '0' and cpu_iorq_n = '1' and cpu_a_bus(15 downto 8) = X"3D") then
+--			automap <= '1';	-- 3Dxx
+--		elsif (cpu_mreq_n = '0' and cpu_rfsh_n = '0') then
+--			automap <= detect; 
+--		end if;
+--	end if;
+--end process;
 
 -------------------------------------------------------------------------------
 -- CPU Data bus

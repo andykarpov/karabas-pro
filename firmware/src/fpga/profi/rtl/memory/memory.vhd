@@ -36,9 +36,9 @@ port (
 	N_MRD 		: out std_logic;
 	N_MWR 		: out std_logic;
 	
-	N_CE1 		: out std_logic := '0';
-	N_CE2 		: out std_logic := '1';
-	N_CE3 		: out std_logic := '1';
+	N_CE1 		: out std_logic;
+	N_CE2 		: out std_logic;
+	N_CE3 		: out std_logic;
 	
 	RAM_BANK		: in std_logic_vector(2 downto 0);
 	RAM_EXT 		: in std_logic_vector(4 downto 0);
@@ -127,7 +127,7 @@ begin
 	-- селектор чипов
 	-- 3 чипа = 6МБ, из которых 2МБ под ПЗУ, остальные 4МБ под ОЗУ
 	-- 1 чип = 2МБ, из которых 1МБ под ПЗУ, 1 МБ под ОЗУ
-	process(RAM_6MB, loader_act, is_rom, vbus_mode, is_ram, is_rom)
+	process(RAM_6MB, loader_act, is_rom, vbus_mode, is_ram, ram_page)
 	begin 
 		-- в режиме 2МБ всегда активен только первый чип
 		if (RAM_6MB = '0') then 
