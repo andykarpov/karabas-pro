@@ -104,7 +104,7 @@ architecture RTL of memory is
 	-- DIVMMC
 	signal is_romDIVMMC : std_logic;
 	signal is_ramDIVMMC : std_logic;
-	signal tmp_divmmc_en : std_logic := '1';
+	--signal tmp_divmmc_en : std_logic := '1';
 
 begin
    
@@ -115,7 +115,7 @@ begin
 	VID_RD_O <= vid_rd;
 	
 	N_MRD <= '1' when loader_act = '1' else 
-			'0' when (is_rom = '1' and N_RD = '0') or (is_romDIVMMC = '1' and N_RD = '0') or (is_ramDIVMMC = '1' and N_RD = '0') or
+			'0' when (is_rom = '1' and N_RD = '0') or
 						(vbus_mode = '1' and vbus_rdy = '0') or 
 						(vbus_mode = '0' and N_RD = '0' and N_MREQ = '0') 
 			else '1';
@@ -224,8 +224,8 @@ begin
 	-- 10 - bank 2, Basic-128
 	-- 11 - bank 3, Basic-48
 	--OCH: temporary when DIVMMC active - use only B48 rom page
-	rom_page <= (not(TRDOS)) & ROM_BANK when tmp_divmmc_en = '0' else "11";
-					
+	--rom_page <= (not(TRDOS)) & ROM_BANK when DIVMMC_EN = '0' else "11";
+	rom_page <= "11";				
 	N_OE <= '0' when (is_ram = '1' or is_rom = '1') and N_RD = '0' else '1';
 		
 	mux <= A(15 downto 14);

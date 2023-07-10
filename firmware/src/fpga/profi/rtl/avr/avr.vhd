@@ -62,7 +62,7 @@ entity avr is
 	 OSD_COMMAND: out std_logic_vector(15 downto 0);
 	 MAX_TURBO  : in std_logic_vector(1 downto 0) := "11";
 	 SCREEN_MODE : out std_logic_vector(1 downto 0) := "00"; -- 00 - pentagon, 01 - 128 classic, 10, 11 - reserved yet
-	 DIVMMC_EN  : out std_logic := '0';
+	 DIVMMC_EN  : out std_logic;
 	 
 	 LOADED 		: buffer std_logic := '0';
 	 	 
@@ -238,7 +238,7 @@ begin
 											  OSD_POPUP <= spi_do(7);
 							when X"0A" => 
 											  JOY_MODE <= spi_do(2 downto 0);
-											  DIVMMC_EN <= spi_di(3);
+											  DIVMMC_EN <= spi_do(3);
 											  LOADED <= '1'; -- loaded
 											  -- free bits: 7..4
 							when others => null;
