@@ -232,7 +232,7 @@ signal zc_miso			: std_logic;
 
 --- 06.07.2023:OCH: signals for DivMMC logic
 -- DivMMC
-signal divmmc_en			: std_logic;
+--signal divmmc_en		: std_logic :='1';
 signal automap			: std_logic;
 signal detect			: std_logic;
 signal port_e3_reg   : std_logic_vector(7 downto 0);
@@ -659,7 +659,7 @@ port map (
 	WOROM 			=> worom,
 
 	-- rom
-	ROM_BANK 		=> rom14,
+	ROM_BANK 		=> rom14,      -- 0 B128, 1 B48
 	EXT_ROM_BANK   => ext_rom_bank_pq,
 	
 	-- contended memory signals
@@ -667,7 +667,7 @@ port map (
 	CONTENDED 		=> memory_contention,
 	
 	-- DIVMMC signals
-   DIVMMC_EN		=> divmmc_en,
+   --DIVMMC_EN		=> divmmc_en,
 	AUTOMAP			=> automap,
 	REG_E3		   => port_e3_reg
 );	
@@ -913,7 +913,7 @@ port map (
 	 OSD_COMMAND	=> osd_command,
 	 MAX_TURBO 		=> max_turbo,
 	 SCREEN_MODE   => kb_screen_mode,
-	 DIVMMC_EN 		=> divmmc_en,
+	 --DIVMMC_EN 		=> divmmc_en,
 	 
 	 LOADED 			=> kb_loaded,
 	 
@@ -1495,7 +1495,8 @@ begin
 			end if;
 			
 			-- TR-DOS FLAG
-			if (((cpu_m1_n = '0' and cpu_mreq_n = '0' and cpu_a_bus(15 downto 8) = X"3D" and (rom14 = '1' or unlock_128 = '1')) or (cpu_nmi_n = '0'  and DS80 = '0')) and port_dffd_reg(4) = '0') or (onrom = '1') then dos_act <= '1';
+			if (((cpu_m1_n = '0' and cpu_mreq_n = '0' and cpu_a_bus(15 downto 8) = X"3D" and (rom14 = '1' or unlock_128 = '1')) or 
+			(cpu_nmi_n = '0'  and DS80 = '0')) and port_dffd_reg(4) = '0') or (onrom = '1') then dos_act <= '1';
 			elsif ((cpu_m1_n = '0' and cpu_mreq_n = '0' and cpu_a_bus(15 downto 14) /= "00") or (port_dffd_reg(4) = '1')) then dos_act <= '0'; end if;
 				
 	end if;
@@ -1629,9 +1630,9 @@ port map(
 );
 
 ------------------------ divmmc-----------------------------
-process (cpu_m1_n, cpu_mreq_n , detect, automap,reset,divmmc_en,clk_bus)
+process (cpu_m1_n, cpu_mreq_n , detect, automap,reset,clk_bus)
 begin
-	if reset='1' and divmmc_en='0' then
+	if reset='1' then-- and divmmc_en='0' then
 		detect<='0';
 		automap<=detect;
 		
@@ -1641,8 +1642,11 @@ begin
 		elsif (cpu_m1_n = '0' and cpu_mreq_n = '0' and cpu_a_bus(15 downto 3) = "0001111111111") then
 			detect <= '0';	-- 0x1FF8-0x1FFF
 		end if;
-		if (cpu_mreq_n = '0' and cpu_wr_n = '1' and cpu_rd_n = '1') or (cpu_m1_n = '0' and cpu_mreq_n = '0' and cpu_a_bus(15 downto 8) = X"3D") then
-			automap <= detect;	-- 3Dxx
+		
+		if (cpu_m1_n = '0' and cpu_iorq_n = '1' and cpu_a_bus(15 downto 8) = X"3D") then
+			automap <= '1';	-- 3Dxx
+		elsif (cpu_mreq_n = '0' and ((cpu_wr_n = '1' and cpu_rd_n = '1') or cpu_rfsh_n = '0')) then
+			automap <= detect; 
 		end if;
 	end if;
 end process;

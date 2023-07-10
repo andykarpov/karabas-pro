@@ -66,7 +66,7 @@ port (
 	CONTENDED   : out std_logic := '0';
 	
 	-- DIVMMC
-	DIVMMC_EN	: in std_logic;
+	--DIVMMC_EN	: in std_logic;
 	AUTOMAP		: in std_logic;
 	REG_E3		: in std_logic_vector(7 downto 0)
 );
@@ -104,14 +104,10 @@ architecture RTL of memory is
 	-- DIVMMC
 	signal is_romDIVMMC : std_logic;
 	signal is_ramDIVMMC : std_logic;
+	signal tmp_divmmc_en : std_logic := '1';
 
 begin
    
-	---08.07.2023:OCH: DIVMMC signaling when we must map rom or ram of DIVMMC interface to Z80 adress space
-	---maybe it not necessary A(15 downto 13) ? Only check for A(13)?
-	is_romDIVMMC <= '1' when DIVMMC_EN = '1' and (AUTOMAP ='1' or REG_E3(7) = '1') and A(15 downto 13) = "000" else '0';
-	is_ramDIVMMC <= '1' when DIVMMC_EN = '1' and (AUTOMAP ='1' or REG_E3(7) = '1') and A(15 downto 13) = "001" else '0';
-	--
 	vbus_req <= '0' when N_MREQ = '0' and ( N_WR = '0' or N_RD = '0' ) else '1';
 	vbus_rdy <= '0' when (CLKX = '0' or CLK_CPU = '0')  else '1';
 
@@ -119,13 +115,13 @@ begin
 	VID_RD_O <= vid_rd;
 	
 	N_MRD <= '1' when loader_act = '1' else 
-			'0' when (is_rom = '1' and N_RD = '0') or
+			'0' when (is_rom = '1' and N_RD = '0') or (is_romDIVMMC = '1' and N_RD = '0') or (is_ramDIVMMC = '1' and N_RD = '0') or
 						(vbus_mode = '1' and vbus_rdy = '0') or 
 						(vbus_mode = '0' and N_RD = '0' and N_MREQ = '0') 
 			else '1';
 
 	N_MWR <= not loader_ram_wr when loader_act = '1' else 
-				'0' when vbus_mode = '0' and is_ram = '1' and N_WR = '0' and CLK_CPU = '0' 
+				'0' when vbus_mode = '0' and (is_ram = '1' or is_ramDIVMMC = '1') and N_WR = '0' and CLK_CPU = '0' 
 				else '1';
 				
 	-- селектор чипов
@@ -166,8 +162,7 @@ begin
 		loader_ram_a(13 downto 0) when loader_act = '1' else -- loader ram
 --- 08.07.2023:OCH: set DIVMMC low adress
 		REG_E3(0) & A(12 downto 0) when vbus_mode = '0' and is_ramDIVMMC = '1' else -- DIVMMC ram
----
-		A(13 downto 0) when vbus_mode = '0' else -- spectrum ram 
+		A(13 downto 0) when vbus_mode = '0' or is_romDIVMMC = '1' else -- spectrum ram or DIVMMC rom
 		VA; -- video ram (read by video controller)
 
 	MA(20 downto 14) <= 
@@ -185,7 +180,9 @@ begin
 	
 	MD(7 downto 0) <= 
 		loader_ram_do when loader_act = '1' else -- loader DO
-		D(7 downto 0) when vbus_mode = '0' and ((is_ram = '1' or (N_IORQ = '0' and N_M1 = '1')) and N_WR = '0') else 
+		-- OCH memory data fill when write to ram of DIVMMC
+		-- D(7 downto 0) when vbus_mode = '0' and ((is_ram = '1' or (N_IORQ = '0' and N_M1 = '1')) and N_WR = '0') else 
+		D(7 downto 0) when vbus_mode = '0' and ((is_ram = '1' or is_ramDIVMMC = '1' or (N_IORQ = '0' and N_M1 = '1')) and N_WR = '0') else  -- OCH: why (N_IORQ = '0' and N_M1 = '1') this used in memory controller? and in write mode
 		(others => 'Z');
 		
 	-- fill memory buf
@@ -211,17 +208,23 @@ begin
 			end if;		
 		end if;		
 	end process;
---- 09.07.2023:OCH: DIVMMC rom and ram recognition added
---	is_rom <= '1' when N_MREQ = '0' and A(15 downto 14)  = "00" and WOROM = '0' else '0';
---	is_ram <= '1' when N_MREQ = '0' and is_rom = '0' else '0';
-	is_rom <= '1' when N_MREQ = '0' and A(15 downto 14)  = "00" and (WOROM = '0' or is_romDIVMMC = '1') else '0';
-	is_ram <= '1' when N_MREQ = '0' and (is_rom = '0' or is_ramDIVMMC = '1') else '0';	
+
+		---08.07.2023:OCH: DIVMMC signaling when we must map rom or ram of DIVMMC interface to Z80 adress space
+	---maybe it not necessary A(15 downto 13) ? Only check for A(13)?
+--	is_romDIVMMC <= '1' when DIVMMC_EN = '1' and (AUTOMAP ='1' or REG_E3(7) = '1') and A(15 downto 13) = "000" else '0';
+--	is_ramDIVMMC <= '1' when DIVMMC_EN = '1' and (AUTOMAP ='1' or REG_E3(7) = '1') and A(15 downto 13) = "001" else '0';
+	is_romDIVMMC <= '1' when N_MREQ = '0' and (AUTOMAP ='1' or REG_E3(7) = '1') and A(15 downto 13) = "000" else '0';
+	is_ramDIVMMC <= '1' when N_MREQ = '0' and (AUTOMAP ='1' or REG_E3(7) = '1') and A(15 downto 13) = "001" else '0';
+	
+	is_rom <= '1' when N_MREQ = '0' and A(15 downto 14)  = "00"  and WOROM = '0' else '0';
+	is_ram <= '1' when N_MREQ = '0' and is_rom = '0' else '0';	
 	
 	-- 00 - bank 0, CPM
 	-- 01 - bank 1, TRDOS
 	-- 10 - bank 2, Basic-128
 	-- 11 - bank 3, Basic-48
-	rom_page <= (not(TRDOS)) & ROM_BANK;
+	--OCH: temporary when DIVMMC active - use only B48 rom page
+	rom_page <= (not(TRDOS)) & ROM_BANK when tmp_divmmc_en = '0' else "11";
 					
 	N_OE <= '0' when (is_ram = '1' or is_rom = '1') and N_RD = '0' else '1';
 		
