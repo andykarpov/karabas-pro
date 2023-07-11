@@ -26,7 +26,7 @@
 #define PIN_KBD_CLK 2 // pin 28 (CLKK)
 #define PIN_KBD_DAT 4 // pin 27 (DATK)
 
-#define ZX_MATRIX_FULL_SIZE 76 // 40 keys + service signals
+#define ZX_MATRIX_FULL_SIZE 80 // 40 keys + service signals
 #define ZX_MATRIX_SIZE 41 // only mechanical keys state + bit6
 
 #define ZX_K_CS  0
@@ -123,6 +123,11 @@
 #define ZX_K_JOY_MODE2 74
 
 #define ZX_K_DIVMMC 75
+
+#define ZX_K_RESERVED1 76
+#define ZX_K_RESERVED2 77
+#define ZX_K_RESERVED3 78
+#define ZX_K_RESERVED4 79
 
 // kbd commands
 #define CMD_KBD 0x01

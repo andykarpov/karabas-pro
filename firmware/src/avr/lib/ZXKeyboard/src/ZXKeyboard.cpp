@@ -1118,13 +1118,13 @@ void ZXKeyboard::doFullReset()
   clear(ZX_MATRIX_SIZE);
   matrix[ZX_K_RESET] = 1;
   transmit();
-  matrix[ZX_K_S] = 1;
+  matrix[ZX_K_SP] = 1;
   transmit();
   delay(500);
   matrix[ZX_K_RESET] = 0;
   transmit();
   delay(500);
-  matrix[ZX_K_S] = 0;
+  matrix[ZX_K_SP] = 0;
 }
 
 void ZXKeyboard::doMagic()
