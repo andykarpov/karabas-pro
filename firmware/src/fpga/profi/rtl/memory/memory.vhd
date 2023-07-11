@@ -162,7 +162,7 @@ begin
 		loader_ram_a(13 downto 0) when loader_act = '1' else -- loader ram
 --- 08.07.2023:OCH: set DIVMMC low adress
 		REG_E3(0) & A(12 downto 0) when vbus_mode = '0' and is_ramDIVMMC = '1' else -- DIVMMC ram
-		A(13 downto 0) when vbus_mode = '0' or is_romDIVMMC = '1' else -- spectrum ram or DIVMMC rom
+		A(13 downto 0) when vbus_mode = '0' else -- spectrum ram or DIVMMC rom
 		VA; -- video ram (read by video controller)
 
 	MA(20 downto 14) <= 
