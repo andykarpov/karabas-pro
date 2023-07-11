@@ -230,9 +230,8 @@ signal zc_sclk			: std_logic;
 signal zc_mosi			: std_logic;
 signal zc_miso			: std_logic;
 
---- 06.07.2023:OCH: signals for DivMMC logic
--- DivMMC
---signal divmmc_en		: std_logic;
+--- DivMMC 06.07.2023:OCH: signals for DivMMC logic
+signal divmmc_en		: std_logic;
 signal automap			: std_logic;
 --signal detect			: std_logic;
 signal port_e3_reg   : std_logic_vector(7 downto 0);
@@ -673,7 +672,7 @@ port map (
 	CONTENDED 		=> memory_contention,
 	
 	-- DIVMMC signals
-   --DIVMMC_EN		=> divmmc_en,
+   DIVMMC_EN		=> divmmc_en,
 	AUTOMAP			=> automap,
 	REG_E3		   => port_e3_reg
 );	
@@ -1168,7 +1167,7 @@ cpu_inta_n <= cpu_iorq_n or cpu_m1_n;	-- INTA
 
 -- 11.07.2013:OCH: implementation of nmi signal for DIVMMC
 -- cpu_nmi_n <= '0' when kb_magic = '1' and ((cpu_m1_n = '0' and cpu_mreq_n = '0' and cpu_a_bus(15 downto 14) /= "00") or DS80 = '1') else '1'; -- NMI
-cpu_nmi_n <= mapcond when kb_magic = '1' else '1'; -- NMI
+cpu_nmi_n <= mapcond when kb_magic = '1' and divmmc_en = '1' else '1'; -- NMI
 
 cpu_wait_n <= '1';
 
@@ -1428,7 +1427,7 @@ begin
 			-- #xxE3
 --- 08.07.2023:OCH: Due to confict with port (E3) of fddcontroller in cpm mode
 --- block DIVMMC port E3 when in cpm
-			if (cpu_iorq_n = '0' and cpu_wr_n = '0' and cpu_a_bus(7 downto 0) = X"E3" and cpm = '0') then	
+			if (cpu_iorq_n = '0' and cpu_wr_n = '0' and cpu_a_bus(7 downto 0) = X"E3" and cpm = '0' and divmmc_en = '1') then	
 				port_e3_reg <=cpu_do_bus(7) & (port_e3_reg(6) or cpu_do_bus(6)) & cpu_do_bus(5 downto 0);
 			end if;		
 			
@@ -1658,12 +1657,13 @@ port map(
   begin
    if falling_edge(cpu_mreq_n) then
 		   if cpu_m1_n = '0' then
-				 mapcond <= mapterm or map3DXX or (mapcond and map1F00);
-				 automap <= mapcond or map3DXX;
+				 mapcond <= (mapterm or map3DXX or (mapcond and map1F00)) and divmmc_en;
+				 automap <= (mapcond or map3DXX) and divmmc_en;
 		  end if;
 	end if;	  
  end process; 
 
+ divmmc_en <= soft_sw(6);
 
 --process (cpu_m1_n, cpu_mreq_n , detect, automap,reset,clk_bus)
 --begin
