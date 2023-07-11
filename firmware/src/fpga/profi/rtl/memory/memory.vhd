@@ -66,7 +66,7 @@ port (
 	CONTENDED   : out std_logic := '0';
 	
 	-- DIVMMC
-	DIVMMC_EN	: in std_logic;
+	IDIVMMC_EN	: in std_logic;
 	AUTOMAP		: in std_logic;
 	REG_E3		: in std_logic_vector(7 downto 0)
 );
@@ -223,9 +223,9 @@ begin
 	-- 01 - bank 1, TRDOS
 	-- 10 - bank 2, Basic-128
 	-- 11 - bank 3, Basic-48
-	--OCH: temporary when DIVMMC active - use only B48 rom page
-	rom_page <= (not(TRDOS)) & ROM_BANK when DIVMMC_EN = '0' else "11";
-	--rom_page <= "11";				
+
+	rom_page <= (not(TRDOS)) & ROM_BANK when IDIVMMC_EN = '0' else "11";
+			
 	N_OE <= '0' when (is_ram = '1' or is_rom = '1') and N_RD = '0' else '1';
 		
 	mux <= A(15 downto 14);

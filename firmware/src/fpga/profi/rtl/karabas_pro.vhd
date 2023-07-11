@@ -672,7 +672,7 @@ port map (
 	CONTENDED 		=> memory_contention,
 	
 	-- DIVMMC signals
-   DIVMMC_EN		=> divmmc_en,
+   IDIVMMC_EN		=> divmmc_en,
 	AUTOMAP			=> automap,
 	REG_E3		   => port_e3_reg
 );	
@@ -918,7 +918,7 @@ port map (
 	 OSD_COMMAND	=> osd_command,
 	 MAX_TURBO 		=> max_turbo,
 	 SCREEN_MODE   => kb_screen_mode,
-	 --DIVMMC_EN 		=> divmmc_en,
+	 ODIVMMC_EN 	=> divmmc_en,
 	 
 	 LOADED 			=> kb_loaded,
 	 
@@ -1662,8 +1662,6 @@ port map(
 		  end if;
 	end if;	  
  end process; 
-
- divmmc_en <= soft_sw(6);
 
 --process (cpu_m1_n, cpu_mreq_n , detect, automap,reset,clk_bus)
 --begin
