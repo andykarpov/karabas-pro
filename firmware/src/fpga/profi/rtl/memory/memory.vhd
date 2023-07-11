@@ -66,7 +66,7 @@ port (
 	CONTENDED   : out std_logic := '0';
 	
 	-- DIVMMC
-	IDIVMMC_EN	: in std_logic;
+	DIVMMC_EN	: in std_logic;
 	AUTOMAP		: in std_logic;
 	REG_E3		: in std_logic_vector(7 downto 0)
 );
@@ -180,8 +180,6 @@ begin
 	
 	MD(7 downto 0) <= 
 		loader_ram_do when loader_act = '1' else -- loader DO
-		-- OCH memory data fill when write to ram of DIVMMC
-		-- D(7 downto 0) when vbus_mode = '0' and ((is_ram = '1' or (N_IORQ = '0' and N_M1 = '1')) and N_WR = '0') else 
 		D(7 downto 0) when vbus_mode = '0' and ((is_ram = '1' or is_ramDIVMMC = '1' or (N_IORQ = '0' and N_M1 = '1')) and N_WR = '0') else  -- OCH: why (N_IORQ = '0' and N_M1 = '1') this used in memory controller? and in write mode
 		(others => 'Z');
 		
@@ -211,8 +209,6 @@ begin
 
 		---08.07.2023:OCH: DIVMMC signaling when we must map rom or ram of DIVMMC interface to Z80 adress space
 	---maybe it not necessary A(15 downto 13) ? Only check for A(13)?
---	is_romDIVMMC <= '1' when DIVMMC_EN = '1' and (AUTOMAP ='1' or REG_E3(7) = '1') and A(15 downto 13) = "000" else '0';
---	is_ramDIVMMC <= '1' when DIVMMC_EN = '1' and (AUTOMAP ='1' or REG_E3(7) = '1') and A(15 downto 13) = "001" else '0';
 	is_romDIVMMC <= '1' when N_MREQ = '0' and (AUTOMAP ='1' or REG_E3(7) = '1') and A(15 downto 13) = "000" else '0';
 	is_ramDIVMMC <= '1' when N_MREQ = '0' and (AUTOMAP ='1' or REG_E3(7) = '1') and A(15 downto 13) = "001" else '0';
 	
@@ -224,7 +220,7 @@ begin
 	-- 10 - bank 2, Basic-128
 	-- 11 - bank 3, Basic-48
 
-	rom_page <= (not(TRDOS)) & ROM_BANK when IDIVMMC_EN = '0' else "11";
+	rom_page <= (not(TRDOS)) & ROM_BANK when DIVMMC_EN = '0' else "11";
 			
 	N_OE <= '0' when (is_ram = '1' or is_rom = '1') and N_RD = '0' else '1';
 		
