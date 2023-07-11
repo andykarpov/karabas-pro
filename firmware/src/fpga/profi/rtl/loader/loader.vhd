@@ -22,7 +22,8 @@ entity loader is
 generic (
 	FLASH_ADDR_START	: std_logic_vector(23 downto 0) := "000100000000000000000000"; -- 0x100000; -- 24bit address / ROM image start at
 	RAM_ADDR_START		: std_logic_vector(20 downto 0) := "100000000000000000000"; -- 21 bit address / RAM address to copy ROM image to
-	SIZE_TO_READ		: integer := 262144; -- count of bytes to read (4x 64KB rom) / count of bytes to read
+	--																		101000000000000000000 (X140000)- DIVMMC address in Sram
+	SIZE_TO_READ		: integer := 262144 + 8192; -- count of bytes to read (4x 64KB rom) + DIVMMC rom = 8192 b / count of bytes to read
 	CFG_ADDR 			: std_logic_vector(23 downto 0) := "000111110000000000000000"; -- 0x1F0000; -- 24bit address / config byte address
 	
 	SPI_CMD_READ  		: std_logic_vector(7 downto 0) := X"03"; -- W25Q16 read command

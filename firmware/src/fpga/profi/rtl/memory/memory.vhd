@@ -36,9 +36,9 @@ port (
 	N_MRD 		: out std_logic;
 	N_MWR 		: out std_logic;
 	
-	N_CE1 		: out std_logic := '0';
-	N_CE2 		: out std_logic := '1';
-	N_CE3 		: out std_logic := '1';
+	N_CE1 		: out std_logic;
+	N_CE2 		: out std_logic;
+	N_CE3 		: out std_logic;
 	
 	RAM_BANK		: in std_logic_vector(2 downto 0);
 	RAM_EXT 		: in std_logic_vector(4 downto 0);
@@ -63,7 +63,12 @@ port (
 	EXT_ROM_BANK : in std_logic_vector(1 downto 0) := "00";
 	
 	COUNT_BLOCK : in std_logic := '0'; -- paper = '0' and (not (chr_col_cnt(2) and hor_cnt(0)));
-	CONTENDED   : out std_logic := '0'
+	CONTENDED   : out std_logic := '0';
+	
+	-- DIVMMC
+	DIVMMC_EN	: in std_logic;
+	AUTOMAP		: in std_logic;
+	REG_E3		: in std_logic_vector(7 downto 0)
 );
 end memory;
 
@@ -95,9 +100,14 @@ architecture RTL of memory is
 	
 	signal block_reg : std_logic := '0';
 	signal page_cont : std_logic := '0';
+	
+	-- DIVMMC
+	signal is_romDIVMMC : std_logic;
+	signal is_ramDIVMMC : std_logic;
+	--signal tmp_divmmc_en : std_logic := '1';
 
 begin
-
+   
 	vbus_req <= '0' when N_MREQ = '0' and ( N_WR = '0' or N_RD = '0' ) else '1';
 	vbus_rdy <= '0' when (CLKX = '0' or CLK_CPU = '0')  else '1';
 
@@ -111,13 +121,13 @@ begin
 			else '1';
 
 	N_MWR <= not loader_ram_wr when loader_act = '1' else 
-				'0' when vbus_mode = '0' and is_ram = '1' and N_WR = '0' and CLK_CPU = '0' 
+				'0' when vbus_mode = '0' and (is_ram = '1' or is_ramDIVMMC = '1') and N_WR = '0' and CLK_CPU = '0' 
 				else '1';
 				
 	-- селектор чипов
 	-- 3 чипа = 6МБ, из которых 2МБ под ПЗУ, остальные 4МБ под ОЗУ
 	-- 1 чип = 2МБ, из которых 1МБ под ПЗУ, 1 МБ под ОЗУ
-	process(RAM_6MB, loader_act, is_rom, vbus_mode, is_ram, is_rom)
+	process(RAM_6MB, loader_act, is_rom, vbus_mode, is_ram, ram_page)
 	begin 
 		-- в режиме 2МБ всегда активен только первый чип
 		if (RAM_6MB = '0') then 
@@ -125,7 +135,8 @@ begin
 			N_CE2 <= '1';
 			N_CE3 <= '1';
 		-- 6МБ в режиме работы загрузчика или когда идет обращение к ПЗУ - всегда активен третий чип
-		elsif (loader_act = '1' or (is_rom = '1' and vbus_mode = '0')) then
+		-- 09.07.2023:OCH: DIVMMC work with chip #3
+		elsif (loader_act = '1' or ((is_rom = '1' or is_romDIVMMC = '1' or is_ramDIVMMC = '1') and vbus_mode = '0')) then
 			N_CE1 <= '1';
 			N_CE2 <= '1';
 			N_CE3 <= '0';
@@ -149,11 +160,17 @@ begin
 	
 	MA(13 downto 0) <= 
 		loader_ram_a(13 downto 0) when loader_act = '1' else -- loader ram
-		A(13 downto 0) when vbus_mode = '0' else -- spectrum ram 
+--- 08.07.2023:OCH: set DIVMMC low adress
+		REG_E3(0) & A(12 downto 0) when vbus_mode = '0' and is_ramDIVMMC = '1' else -- DIVMMC ram
+		A(13 downto 0) when vbus_mode = '0' else -- spectrum ram or DIVMMC rom
 		VA; -- video ram (read by video controller)
 
 	MA(20 downto 14) <= 
 		loader_ram_a(20 downto 14) when loader_act = '1' else -- loader ram
+--- 08.07.2023:OCH: set DIVMMC high adress
+		"1010000" when is_romDIVMMC = '1' and vbus_mode = '0' else -- DIVMMC rom
+		"11" & REG_E3(5 downto 1) when is_ramDIVMMC = '1' and vbus_mode = '0' else -- DIVMMC ram 512 kB from #X180000 SRAM
+---
 		"100" & EXT_ROM_BANK(1 downto 0) & rom_page(1 downto 0) when is_rom = '1' and vbus_mode = '0' else -- rom from sram high bank 
 		ram_page(6 downto 0) when vbus_mode = '0' else 
 		"00001" & VID_PAGE & '1' when vbus_mode = '1' and DS80 = '0' else -- spectrum screen
@@ -163,7 +180,7 @@ begin
 	
 	MD(7 downto 0) <= 
 		loader_ram_do when loader_act = '1' else -- loader DO
-		D(7 downto 0) when vbus_mode = '0' and ((is_ram = '1' or (N_IORQ = '0' and N_M1 = '1')) and N_WR = '0') else 
+		D(7 downto 0) when vbus_mode = '0' and ((is_ram = '1' or is_ramDIVMMC = '1' or (N_IORQ = '0' and N_M1 = '1')) and N_WR = '0') else  -- OCH: why (N_IORQ = '0' and N_M1 = '1') this used in memory controller? and in write mode
 		(others => 'Z');
 		
 	-- fill memory buf
@@ -190,15 +207,21 @@ begin
 		end if;		
 	end process;
 
-	is_rom <= '1' when N_MREQ = '0' and A(15 downto 14)  = "00" and WOROM = '0' else '0';
-	is_ram <= '1' when N_MREQ = '0' and is_rom = '0' else '0';
-		
+		---08.07.2023:OCH: DIVMMC signaling when we must map rom or ram of DIVMMC interface to Z80 adress space
+	---maybe it not necessary A(15 downto 13) ? Only check for A(13)?
+	is_romDIVMMC <= '1' when N_MREQ = '0' and (AUTOMAP ='1' or REG_E3(7) = '1') and A(15 downto 13) = "000" else '0';
+	is_ramDIVMMC <= '1' when N_MREQ = '0' and (AUTOMAP ='1' or REG_E3(7) = '1') and A(15 downto 13) = "001" else '0';
+	
+	is_rom <= '1' when N_MREQ = '0' and A(15 downto 14)  = "00"  and WOROM = '0' else '0';
+	is_ram <= '1' when N_MREQ = '0' and is_rom = '0' else '0';	
+	
 	-- 00 - bank 0, CPM
 	-- 01 - bank 1, TRDOS
 	-- 10 - bank 2, Basic-128
 	-- 11 - bank 3, Basic-48
-	rom_page <= (not(TRDOS)) & ROM_BANK;
-					
+
+	rom_page <= (not(TRDOS)) & ROM_BANK when DIVMMC_EN = '0' else "11";
+			
 	N_OE <= '0' when (is_ram = '1' or is_rom = '1') and N_RD = '0' else '1';
 		
 	mux <= A(15 downto 14);
@@ -206,7 +229,7 @@ begin
 	process (mux, RAM_EXT, RAM_BANK, SCR, SCO, RAM_6MB)
 	begin
 		case mux is
-			when "00" => ram_page <= "000000000";                 -- Seg0 ROM 0000-3FFF or Seg0 RAM 0000-3FFF	
+			when "00" => ram_page <= "000000000";                 -- Seg0 ROM 0000-3FFF or Seg0 RAM 0000-3FFF				
 			when "01" => if SCO='0' then 
 								ram_page <= "000000101";
 							 else 

@@ -230,6 +230,17 @@ signal zc_sclk			: std_logic;
 signal zc_mosi			: std_logic;
 signal zc_miso			: std_logic;
 
+--- DivMMC
+signal divmmc_en		: std_logic;
+signal automap			: std_logic;
+--signal detect			: std_logic;
+signal port_e3_reg   : std_logic_vector(7 downto 0);
+signal mapterm 		: std_logic;
+signal map3DXX 		: std_logic; 
+signal map1F00 		: std_logic;
+signal mapcond 		: std_logic;
+
+
 -- MC146818A
 signal mc146818_wr		: std_logic;
 signal mc146818_rd		: std_logic;
@@ -652,12 +663,17 @@ port map (
 	WOROM 			=> worom,
 
 	-- rom
-	ROM_BANK 		=> rom14,
+	ROM_BANK 		=> rom14,      -- 0 B128, 1 B48
 	EXT_ROM_BANK   => ext_rom_bank_pq,
 	
 	-- contended memory signals
 	COUNT_BLOCK		=> count_block,
-	CONTENDED 		=> memory_contention
+	CONTENDED 		=> memory_contention,
+	
+	-- DIVMMC signals
+   DIVMMC_EN		=> divmmc_en,
+	AUTOMAP			=> automap,
+	REG_E3		   => port_e3_reg
 );	
 
 -- Video Spectrum/Pentagon
@@ -901,10 +917,11 @@ port map (
 	 OSD_COMMAND	=> osd_command,
 	 MAX_TURBO 		=> max_turbo,
 	 SCREEN_MODE   => kb_screen_mode,
+	 DIVMMC_EN 		=> divmmc_en,
 	 
 	 LOADED 			=> kb_loaded,
 	 
-	 JOY 				=> joy_bus
+	 JOY 				=> joy_bus	 
 );
 	
 -- TDA1543
@@ -1146,7 +1163,11 @@ reset <= areset or kb_reset or loader_reset or loader_act or board_reset; -- hot
 
 cpu_reset_n <= not(reset) and not(loader_reset); -- CPU reset
 cpu_inta_n <= cpu_iorq_n or cpu_m1_n;	-- INTA
-cpu_nmi_n <= '0' when kb_magic = '1' and ((cpu_m1_n = '0' and cpu_mreq_n = '0' and cpu_a_bus(15 downto 14) /= "00") or DS80 = '1') else '1'; -- NMI
+
+-- 11.07.2013:OCH: implementation of nmi signal for DIVMMC
+cpu_nmi_n <= mapcond when kb_magic = '1' and divmmc_en = '1' else 
+	'0' when divmmc_en = '0' and kb_magic = '1' and ((cpu_m1_n = '0' and cpu_mreq_n = '0' and cpu_a_bus(15 downto 14) /= "00") or DS80 = '1') else 
+	'1';
 cpu_wait_n <= '1';
 
 -- max turbo = 14 MHz
@@ -1396,8 +1417,19 @@ begin
 		port_028b_reg <= (others => '0');
 		dos_act <= '1';
 		kb_turbo_old <= "00";
+--- 06.07.2023:OCH: DIVMMC port added to ZController
+		port_e3_reg(5 downto 0) <= (others => '0');
+		port_e3_reg(7) <= '0';
+		
 	elsif clk_bus'event and clk_bus = '1' then
-
+--- 06.07.2023:OCH: DIVMMC port E3 added to ZController
+			-- #xxE3
+--- 08.07.2023:OCH: Due to confict with port (E3) of fddcontroller in cpm mode
+--- block DIVMMC port E3 when in cpm
+			if (cpu_iorq_n = '0' and cpu_wr_n = '0' and cpu_a_bus(7 downto 0) = X"E3" and cpm = '0' and divmmc_en = '1') then	
+				port_e3_reg <=cpu_do_bus(7) & (port_e3_reg(6) or cpu_do_bus(6)) & cpu_do_bus(5 downto 0);
+			end if;		
+			
 			-- #EFF7
 			if cs_eff7 = '1' and cpu_wr_n = '0' then 
 				port_eff7_reg <= cpu_do_bus; 
@@ -1471,7 +1503,8 @@ begin
 			end if;
 			
 			-- TR-DOS FLAG
-			if (((cpu_m1_n = '0' and cpu_mreq_n = '0' and cpu_a_bus(15 downto 8) = X"3D" and (rom14 = '1' or unlock_128 = '1')) or (cpu_nmi_n = '0'  and DS80 = '0')) and port_dffd_reg(4) = '0') or (onrom = '1') then dos_act <= '1';
+			if (((cpu_m1_n = '0' and cpu_mreq_n = '0' and cpu_a_bus(15 downto 8) = X"3D" and (rom14 = '1' or unlock_128 = '1')) or 
+			(cpu_nmi_n = '0'  and DS80 = '0')) and port_dffd_reg(4) = '0') or (onrom = '1') then dos_act <= '1';
 			elsif ((cpu_m1_n = '0' and cpu_mreq_n = '0' and cpu_a_bus(15 downto 14) /= "00") or (port_dffd_reg(4) = '1')) then dos_act <= '0'; end if;
 				
 	end if;
@@ -1553,23 +1586,36 @@ TAPE_OUT <= port_xxfe_reg(3) when tape_in_out_enable = '1' else '0' when port_xx
 -- SAA1099
 saa_wr_n <= '0' when (cpu_iorq_n = '0' and cpu_wr_n = '0' and cpu_a_bus(7 downto 0) = X"FF" and dos_act = '0') else '1';
 
--------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
 -- Port I/O
 
 mc146818_wr <= '1' when (cs_rtc_ds = '1' and cpu_iorq_n = '0' and cpu_wr_n = '0' and cpu_m1_n = '1') else '0';
 
--- Z-controller spi
-zc_spi_start <= '1' when cpu_a_bus(7 downto 0)=X"57" and cpu_iorq_n='0' and cpu_m1_n='1' and loader_act='0' and is_flash_not_sd='0' else '0';
-zc_wr_en <= '1' when cpu_a_bus(7 downto 0)=X"57" and cpu_iorq_n='0' and cpu_m1_n='1' and cpu_wr_n='0' and loader_act='0' and is_flash_not_sd='0' else '0';
-port77_wr <= '1' when cpu_a_bus(7 downto 0)=X"77" and cpu_iorq_n='0' and cpu_m1_n='1' and cpu_wr_n='0' and loader_act='0' and is_flash_not_sd='0' else '0';
+
+--- 06.07.2023:OCH: DIVMMC ports added to ZController
+-- Z-controller + DIVMMC spi 
+zc_spi_start <= '1' when (cpu_a_bus(7 downto 0) = X"57" or (cpu_a_bus(7 downto 0) = X"EB" and cpm = '0')) and cpu_iorq_n='0' and cpu_m1_n='1' and loader_act='0' and is_flash_not_sd='0' else '0';
+zc_wr_en <= '1' when (cpu_a_bus(7 downto 0) = X"57" or (cpu_a_bus(7 downto 0) = X"EB" and cpm = '0')) and cpu_iorq_n='0' and cpu_m1_n='1' and cpu_wr_n='0' and loader_act='0' and is_flash_not_sd='0' else '0';
+port77_wr <= '1' when (cpu_a_bus(7 downto 0) = X"77" or cpu_a_bus(7 downto 0) = X"E7") and cpu_iorq_n='0' and cpu_m1_n='1' and cpu_wr_n='0' and loader_act='0' and is_flash_not_sd='0' else '0';
 
 process (port77_wr, loader_act, reset, clk_bus)
 	begin
 		if loader_act='1' or reset='1' then
 			zc_cs_n <= '1';
 		elsif clk_bus'event and clk_bus='1' then
+--- 06.07.2023:OCH: DIVMMC uses 0 bit to control zc_cs_n, instead of 1 bit ZController. 
+--- Lets check port number and select correct bit
+--			if port77_wr='1' then
+--				zc_cs_n <= cpu_do_bus(1);
+--			end if;
 			if port77_wr='1' then
-				zc_cs_n <= cpu_do_bus(1);
+--- 08.07.2023:OCH: E7 port confict with E7 port of SPI Flash parallel interface so block
+--- DIVMMC E7 port when flash loader software active   
+				if cpu_a_bus(7 downto 0) = X"E7" and ext_rom_bank(1 downto 0) /= "10" then
+					zc_cs_n <= cpu_do_bus(0);
+				else
+					zc_cs_n <= cpu_do_bus(1);
+				end if;
 			end if;
 		end if;
 end process;
@@ -1585,6 +1631,58 @@ port map(
 	SCK     		=> zc_sclk,
 	MOSI    		=> zc_mosi
 );
+
+------------------------ divmmc-----------------------------
+-- Engineer:   Mario Prato
+-- 11.07.2013:OCH: adapted by me
+-- i take this implementation to correctly and easy make nmi 
+
+process (reset, divmmc_en, cpu_a_bus)
+begin
+	if reset = '1' or divmmc_en = '0' then 
+		mapterm <= '0';
+		map3DXX <= '0';
+		map1F00 <= '1';
+	else
+		 if cpu_a_bus(15 downto 0) = x"0000"   or 
+									 cpu_a_bus(15 downto 0) = x"0008"   or 
+									 cpu_a_bus(15 downto 0) = x"0038"   or 
+									 cpu_a_bus(15 downto 0) = x"0066"   or 
+									 cpu_a_bus(15 downto 0) = x"04c6"   or 
+									 cpu_a_bus(15 downto 0) = x"0562" then 
+			mapterm <= '1';
+		else 
+			mapterm <= '0';
+		end if;	
+
+		-- mappa 3D00 - 3DFF
+		if cpu_a_bus(15 downto 8) = "00111101" then 
+			map3DXX <= '1'; 
+		else 
+			map3DXX <= '0';
+		end if; 
+
+		-- 1ff8 - 1fff
+		if cpu_a_bus(15 downto 3) =   "0001111111111" then 
+			map1F00 <= '0';
+		else 
+			map1F00 <= '1';
+		end if; 
+	end if;
+end process;
+
+process(reset, divmmc_en, cpu_mreq_n, cpu_m1_n, mapcond, mapterm, map3DXX, map1F00, automap)
+begin
+	if reset = '1' or divmmc_en = '0' then 
+		mapcond <= '0';
+		automap <= '0';
+   elsif falling_edge(cpu_mreq_n) then
+		   if cpu_m1_n = '0' then
+				 mapcond <= (mapterm or map3DXX or (mapcond and map1F00)) and divmmc_en;
+				 automap <= (mapcond or map3DXX) and divmmc_en;
+		  end if;
+	end if;	  
+end process; 
 
 -------------------------------------------------------------------------------
 -- CPU Data bus
@@ -1627,7 +1725,7 @@ selector <=
 	x"00" when (ram_oe_n = '0') else -- ram / rom
 	x"01" when (cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_m1_n = '1' and cs_rtc_ds = '1') else -- RTC MC146818A
 	x"02" when (cs_xxfe = '1' and cpu_rd_n = '0') else 									-- Keyboard, port #FE
-	x"03" when (cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_m1_n = '1' and cpu_a_bus(7 downto 0) = X"57" and is_flash_not_sd = '0') else 	-- Z-Controller
+ 	x"03" when (cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_m1_n = '1' and (cpu_a_bus(7 downto 0) = X"57" or (cpu_a_bus(7 downto 0) = X"EB" and cpm = '0')) and is_flash_not_sd = '0') else 	-- Z-Controller + DivMMC
 	x"04" when (cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_m1_n = '1' and cpu_a_bus(7 downto 0) = X"77" and is_flash_not_sd = '0') else 	-- Z-Controller
 	x"05" when (cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_m1_n = '1' and cpu_a_bus( 7 downto 0) = X"1F" and dos_act = '0' and cpm = '0' and joy_mode = "000") else -- Joystick, port #1F
 	x"06" when (cs_fffd = '1' and cpu_rd_n = '0' and ssg_sel = '0') else 			-- TurboSound

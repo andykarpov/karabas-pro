@@ -26,7 +26,7 @@
 /****************************************************************************/
 
 #define RTC_ADDRESS 0xA0
-#define EEPROM_RTC_OFFSET 0x10
+#define EEPROM_RTC_OFFSET 0x20
 
 // RTC INIT command
 #define CMD_RTC_INIT_REQ 0xFC

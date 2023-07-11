@@ -273,6 +273,17 @@ void ZXKeyboard::setJoyMode(uint8_t val) {
   matrix[ZX_K_JOY_MODE2] = bitRead(val, 2);
 }
 
+void ZXKeyboard::setDivmmc(bool value) {
+  is_divmmc = value;
+  eepromStoreBool(EEPROM_DIVMMC_ADDRESS, is_divmmc);
+  matrix[ZX_K_DIVMMC] = is_divmmc;
+}
+
+void ZXKeyboard::toggleDivmmc() {
+  is_divmmc = !is_divmmc;
+  setDivmmc(is_divmmc);
+}
+
 // transform PS/2 scancodes into internal matrix of pressed keys
 void ZXKeyboard::fill(uint16_t sc, unsigned long n)
 {
@@ -458,7 +469,16 @@ void ZXKeyboard::fill(uint16_t sc, unsigned long n)
     case PS2_KEY_A: matrix[ZX_K_A] = !is_up; break;
     case PS2_KEY_B: matrix[ZX_K_B] = !is_up; break;
     case PS2_KEY_C: matrix[ZX_K_C] = !is_up; break;
-    case PS2_KEY_D: matrix[ZX_K_D] = !is_up; break;
+    case PS2_KEY_D: 
+      if (is_menu || is_win || (is_ctrl && is_alt)) {
+        if (!is_up) {
+          toggleDivmmc();
+          event(EVENT_OSD_DIVMMC, 0);
+        }
+      } else {
+        matrix[ZX_K_D] = !is_up; 
+      }
+    break;
     case PS2_KEY_E: matrix[ZX_K_E] = !is_up; break;
     case PS2_KEY_F: matrix[ZX_K_F] = !is_up; break;
     case PS2_KEY_G: matrix[ZX_K_G] = !is_up; break;
@@ -1098,13 +1118,13 @@ void ZXKeyboard::doFullReset()
   clear(ZX_MATRIX_SIZE);
   matrix[ZX_K_RESET] = 1;
   transmit();
-  matrix[ZX_K_S] = 1;
+  matrix[ZX_K_SP] = 1;
   transmit();
   delay(500);
   matrix[ZX_K_RESET] = 0;
   transmit();
   delay(500);
-  matrix[ZX_K_S] = 0;
+  matrix[ZX_K_SP] = 0;
 }
 
 void ZXKeyboard::doMagic()
@@ -1203,6 +1223,7 @@ void ZXKeyboard::eepromRestoreValues()
     EEPROM.update(EEPROM_JOY_MODE_ADDRESS, 0);
   }
   joy_mode = constrain(joy_mode, 0, 4);
+  is_divmmc = eepromRestoreBool(EEPROM_DIVMMC_ADDRESS, is_divmmc);
   
   // apply restored values
   matrix[ZX_K_TURBO] = bitRead(turbo, 0);
@@ -1224,6 +1245,7 @@ void ZXKeyboard::eepromRestoreValues()
   matrix[ZX_K_JOY_MODE0] = bitRead(joy_mode, 0);
   matrix[ZX_K_JOY_MODE1] = bitRead(joy_mode, 1);
   matrix[ZX_K_JOY_MODE2] = bitRead(joy_mode, 2);
+  matrix[ZX_K_DIVMMC] = is_divmmc;
 }
 
   bool ZXKeyboard::getIsOsdOverlay() {
@@ -1301,6 +1323,10 @@ void ZXKeyboard::eepromRestoreValues()
 
   uint8_t ZXKeyboard::getJoyMode() {
     return joy_mode;
+  }
+
+  bool ZXKeyboard::getDivmmc() {
+    return is_divmmc;
   }
 
   bool ZXKeyboard::getPause() {
