@@ -1,0 +1,263 @@
+; Rewrited for Karabas-Pro (Profi 5.0x) ZX Spectrum clone
+; by kasper (OCH) 18.07.2023
+;
+; TBBlue / ZX Spectrum Next project
+; Copyright (c) 2015 - Fabio Belavenuto & Victor Trucco
+;
+; All rights reserved
+;
+; Redistribution and use in source and synthezised forms, with or without
+; modification, are permitted provided that the following conditions are met:
+;
+; Redistributions of source code must retain the above copyright notice,
+; this list of conditions and the following disclaimer.
+;
+; Redistributions in synthesized form must reproduce the above copyright
+; notice, this list of conditions and the following disclaimer in the
+; documentation and/or other materials provided with the distribution.
+;
+; Neither the name of the author nor the names of other contributors may
+; be used to endorse or promote products derived from this software without
+; specific prior written permission.
+;
+; THIS CODE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+; AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
+; THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+; PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE
+; LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+; CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+; SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+; INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+; CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+; ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+; POSSIBILITY OF SUCH DAMAGE.
+;
+; You are responsible for any legal issues arising from your use of this code.
+;
+;-------------------------------------------------------------------------------
+;
+; RTC.SYS for ESXDOS
+;
+; Thanks to VELESOFT for the help.
+;
+; Max size for this compiled ASM is 256 bytes!!!
+;
+; OUTPUT
+; reg BC is Date 
+;		year - 1980 (7 bits) + month (4 bits) + day (5 bits)
+;
+; reg DE is Time
+;	hours (5 bits) + minutes (6 bits) + seconds/2 (5 bits)
+;
+;
+; ds1307 serial I2C RTC 
+;  	11010001 = 0xD0 = read
+;	11010000 = 0xD1 = write
+;
+; SCL port at 0x103B
+; SDA port at 0x113B
+; 
+; Karabas-Pro RTC ports 
+; AS RTC #FF (#BF) - addres, DS RTC #DF (#9F) - data
+; active only if bit 5 (CPM) of port #DFFD = 1 and bit 4 (ROM14) of port #7FFD = 1
+;
+	DEVICE ZXSPECTRUM48
+	ORG 0x2700
+	output "rtc.sys"
+  
+START:
+	; save AF and HL
+	; BC and DE will contain our date and time
+	push af
+	push hl
+
+	;17.07.2023:OCH: enter to extended periferals mode for accsess DS1307 on Karabas-
+	ld bc, #DFFD
+	in a,(C)
+	ld (SDFFD),a
+	;17.07.2023:OCH: set CPM bit to 1
+	set 5,a
+	out (C),a
+
+	;point to the first reg in table
+	LD HL,SEC
+	
+	;there are 11 regs to read
+	LD e, 11
+	LD d,0 ; address in RTC memory 
+
+loop_read:
+	ld bc, #00BF ; RTC address
+	ld a,d
+	out(C),a
+
+	ld bc, #009f
+	in a,(C)
+
+	ld (hl), a ; save RTC data
+	;point to next reg
+	inc l	
+	inc d; increment adress of RTC
+	;dec number of regs
+	dec e
+	jr z, end_read
+	
+	jr loop_read
+
+end_read:	
+	;-------------------------------------------------
+	;prepare the bytes to ESXDOS
+	; reg DE is Time
+	;	hours (5 bits) + minutes (6 bits) + seconds/2 (5 bits)
+	;prepare SECONDS
+	LD HL,SEC
+	;ld a,(HL)
+	CALL LOAD_PREPARE_AND_MULT
+	srl a ;seconds / 2
+	ld e,a ; save the SECONDS first 5 bits in E
+	
+	;prepare MINUTES
+	inc HL
+	inc HL
+	;ld a,(HL)
+	CALL LOAD_PREPARE_AND_MULT
+	; 3 MSB bits fom minutes in D
+	ld d,a
+	srl d
+	srl d
+	srl d
+
+	; 3 LBS from minutes
+	sla a
+	sla a
+	sla a
+	sla a
+	sla a
+	or e ; combine with SECONDS
+	ld e,a ; save the 3 LSB minute bits in E
+	
+	;prepare HOURS
+	inc HL
+	inc HL
+	;ld a,(HL)
+	CALL LOAD_PREPARE_AND_MULT
+	; 5 LBS from hours in D
+	sla a
+	sla a
+	sla a 
+	or d
+	ld d,a
+
+	push de ; save reg DE (hour min sec)
+
+	;-------------------------------------------
+	LD HL, DATE
+	;ld a,(HL)
+	CALL LOAD_PREPARE_AND_MULT
+;	 reg BC is Date 
+;		year - 1980 (7 bits) + month (4 bits) + day (5 bits)
+
+	ld c,a ; save day in c
+	
+	;prepare MONTH
+	inc HL
+	;ld a,(HL)
+	CALL LOAD_PREPARE_AND_MULT
+
+	; MSB bit from month in d
+	ld d,a
+	srl d
+	srl d
+	srl d
+	
+	; 3 LBS from month
+	sla a
+	sla a
+	sla a
+	sla a
+	sla a
+	or c ; combine with day
+	LD C,A ;store
+	
+	;prepare YEAR
+	inc HL
+	ld a,(HL)
+	CALL PREPARE_AND_MULT
+
+	;now we have the year in A. format 00-99 (2000 to 2099) 
+	add a,20 ;(current year - 1980)
+	sla a ;get 7 LSB
+	or d ; and combine with MONTH
+	LD B,A; STORE the result in B
+	pop de
+	
+	push bc
+	ld bc,#DFFD
+	ld a,(SDFFD)
+	out (C),A
+	pop bc
+
+	;recover HL and AF
+	pop hl
+	pop af
+	
+; return without error
+; the Carry flag is clearead
+	or a ;clear the carry
+
+;return with error
+; the carry flag is set
+;	scf
+
+	ret
+LOAD_PREPARE_AND_MULT:
+	ld a,(HL)
+	and 0x7F 	; clear the bit 7 
+PREPARE_AND_MULT:
+	push af
+	ld a,(REGB)
+	and #04 	; checking bit 2 (DM) of reg #0b(11) MC146818a (emulated by fpga from DS1307or analog)
+	jr z,BCD 	; if DM = 0 -> BCD conversion used
+	pop af
+	ret
+BCD:
+	pop af
+	SRA a
+	SRA a
+	SRA a
+	SRA a
+	CALL X10
+	ld b,a
+	ld a,(HL)
+	and 0x0F
+	add a,b
+	ret
+X10
+	ld b,a
+	add a,a
+	add a,a
+	add a,a
+	add a,b
+	add a,b
+	ret
+
+SDFFD	defb 0
+		defb 0
+
+;this structure represent how time and data stored in RTC memory
+SEC		defb 0
+		defb 0		
+MIN		defb 0
+		defb 0	
+HOU		defb 0
+		defb 0	
+DAY		defb 0
+DATE	defb 0
+MON		defb 0
+YEA		defb 0
+REGA 	defb 0
+REGB    defb 0  ; need check for BCD format bit 2 = 0 - > BCD format used 
+ENDP:
+	SAVESNA "rtc.sna", START
+
+	
