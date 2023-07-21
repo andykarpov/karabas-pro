@@ -123,8 +123,8 @@
 #define ZX_K_JOY_MODE2 74
 
 #define ZX_K_DIVMMC 75
+#define ZX_K_NEMOIDE 76
 
-#define ZX_K_RESERVED1 76
 #define ZX_K_RESERVED2 77
 #define ZX_K_RESERVED3 78
 #define ZX_K_RESERVED4 79
@@ -161,6 +161,7 @@
 #define EEPROM_SCREEN_MODE_ADDRESS 0x0E
 #define EEPROM_JOY_MODE_ADDRESS 0x0F
 #define EEPROM_DIVMMC_ADDRESS 0x10
+#define EEPROM_NEMOIDE_ADDRESS 0x11
 
 #define EEPROM_VALUE_TRUE 10
 #define EEPROM_VALUE_FALSE 20
@@ -202,6 +203,7 @@ private:
   bool joy_type = false; // joy type - 0 = atari, 1 = sega
   uint8_t joy_mode = 0; // joy mode - 0 = kempston, 1 - sinclair 1, 2 - sinclair 2, 3 - cursor, 4 - qaopm
   bool is_divmmc = false; 
+  bool is_nemoide = false;
   bool is_wait = false; // wait mode
   bool osd_overlay = false; // osd overlay enable
   bool osd_popup = false; // osd popup (small 2-row overlay)
@@ -262,6 +264,7 @@ public:
   static const uint8_t EVENT_OSD_POPUP = 16;
   static const uint8_t EVENT_OSD_JOYSTICK_MODE = 17;
   static const uint8_t EVENT_OSD_DIVMMC = 18;
+  static const uint8_t EVENT_OSD_NEMOIDE = 19;
 
   ZXKeyboard();
 
@@ -302,6 +305,9 @@ public:
   void setDivmmc(bool value);
   void toggleDivmmc();
   bool getDivmmc();
+  void setNemoIDE(bool value);
+  void toggleNemoIDE();
+  bool getNemoIDE();
 
   bool getIsOsdOverlay();
   bool getIsOsdPopup();

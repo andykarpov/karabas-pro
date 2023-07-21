@@ -284,6 +284,18 @@ void ZXKeyboard::toggleDivmmc() {
   setDivmmc(is_divmmc);
 }
 
+void ZXKeyboard::setNemoIDE(bool value) {
+  is_nemoide = value;
+  eepromStoreBool(EEPROM_NEMOIDE_ADDRESS, is_nemoide);
+  matrix[ZX_K_NEMOIDE] = is_nemoide;
+}
+
+void ZXKeyboard::toggleNemoIDE() {
+  is_nemoide = !is_nemoide;
+  setNemoIDE(is_nemoide);
+}
+
+
 // transform PS/2 scancodes into internal matrix of pressed keys
 void ZXKeyboard::fill(uint16_t sc, unsigned long n)
 {
@@ -336,20 +348,24 @@ void ZXKeyboard::fill(uint16_t sc, unsigned long n)
 
     // Alt (L) -> SS+Enter for Profi, SS+CS for ZX
     case PS2_KEY_L_ALT:
-      matrix[ZX_K_SS] = !is_up;
-      matrix[profi_mode ? ZX_K_ENT : ZX_K_CS] = !is_up;
-      if (!profi_mode) {
-        processCapsedKey(code, is_up);
+      if (!is_ctrl) {
+        matrix[ZX_K_SS] = !is_up;
+        matrix[profi_mode ? ZX_K_ENT : ZX_K_CS] = !is_up;
+        if (!profi_mode) {
+          processCapsedKey(code, is_up);
+        }
       }
       is_alt = !is_up;
       break;
 
     // Alt (R) -> SS + Space for Profi, SS+CS for ZX
     case PS2_KEY_R_ALT:
-      matrix[ZX_K_SS] = !is_up;
-      matrix[profi_mode ? ZX_K_SP : ZX_K_CS] = !is_up;
-      if (!profi_mode) {
-        processCapsedKey(code, is_up);
+      if (!is_ctrl) {
+        matrix[ZX_K_SS] = !is_up;
+        matrix[profi_mode ? ZX_K_SP : ZX_K_CS] = !is_up;
+        if (!profi_mode) {
+          processCapsedKey(code, is_up);
+        }
       }
       is_alt = !is_up;
       break;
@@ -510,7 +526,16 @@ void ZXKeyboard::fill(uint16_t sc, unsigned long n)
         matrix[ZX_K_M] = !is_up; 
       }
     break;
-    case PS2_KEY_N: matrix[ZX_K_N] = !is_up; break;
+    case PS2_KEY_N: 
+      if (is_menu || is_win || (is_ctrl && is_alt)) {
+        if (!is_up) {
+          toggleNemoIDE();
+          event(EVENT_OSD_NEMOIDE, 0);
+        }
+      } else {
+        matrix[ZX_K_N] = !is_up; 
+      }
+      break;
     case PS2_KEY_O: matrix[ZX_K_O] = !is_up; break;
     case PS2_KEY_P: matrix[ZX_K_P] = !is_up; break;
     case PS2_KEY_Q: matrix[ZX_K_Q] = !is_up; break;
@@ -1224,6 +1249,7 @@ void ZXKeyboard::eepromRestoreValues()
   }
   joy_mode = constrain(joy_mode, 0, 4);
   is_divmmc = eepromRestoreBool(EEPROM_DIVMMC_ADDRESS, is_divmmc);
+  is_nemoide = eepromRestoreBool(EEPROM_NEMOIDE_ADDRESS, is_nemoide);
   
   // apply restored values
   matrix[ZX_K_TURBO] = bitRead(turbo, 0);
@@ -1246,6 +1272,7 @@ void ZXKeyboard::eepromRestoreValues()
   matrix[ZX_K_JOY_MODE1] = bitRead(joy_mode, 1);
   matrix[ZX_K_JOY_MODE2] = bitRead(joy_mode, 2);
   matrix[ZX_K_DIVMMC] = is_divmmc;
+  matrix[ZX_K_NEMOIDE] = is_nemoide;
 }
 
   bool ZXKeyboard::getIsOsdOverlay() {
@@ -1327,6 +1354,10 @@ void ZXKeyboard::eepromRestoreValues()
 
   bool ZXKeyboard::getDivmmc() {
     return is_divmmc;
+  }
+
+  bool ZXKeyboard::getNemoIDE() {
+    return is_nemoide;
   }
 
   bool ZXKeyboard::getPause() {

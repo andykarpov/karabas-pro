@@ -65,7 +65,6 @@ private:
   enum osd_state_e {
     state_main = 0,
     state_rtc,
-    state_test,
     state_about,
     state_info
   };
@@ -85,6 +84,7 @@ private:
     state_main_joy_mode,
     state_main_screen_mode,
     state_main_divmmc,
+    state_main_nemoide,
     state_main_keyboard_type,
     state_main_pause
   };
@@ -133,7 +133,6 @@ public:
   void initOverlay();
   void initPopup(uint8_t event_type);
   void initRtcOverlay();
-  void initTestOverlay();
   void initAboutOverlay();
   void initInfoOverlay();
 
@@ -152,6 +151,7 @@ public:
   void handleJoyMode();
   void handleScreenMode();
   void handleDivmmc();
+  void handleNemoIDE();
   void handleKeyboardType();
   void handlePause();
 
@@ -176,6 +176,7 @@ public:
   void updateJoystickMode();
   void updateScreenMode();
   void updateDivmmc();
+  void updateNemoIDE();
   void updateKeyboardType();
   void updatePause();
 
