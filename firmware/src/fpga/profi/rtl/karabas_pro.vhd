@@ -280,6 +280,8 @@ signal hdd_rwe_n			:std_logic; -- Read High byte from "Read register" to Data bu
 signal hdd_cs3fx_n		:std_logic;
 signal hdd_active 		:std_logic;
 
+signal nemoide_en 		: std_logic;
+
 -- Profi FDD ports
 signal RT_F2_1			:std_logic;
 signal RT_F2_2			:std_logic;
@@ -918,6 +920,7 @@ port map (
 	 MAX_TURBO 		=> max_turbo,
 	 SCREEN_MODE   => kb_screen_mode,
 	 DIVMMC_EN 		=> divmmc_en,
+	 NEMOIDE_EN 	=> nemoide_en,
 	 
 	 LOADED 			=> kb_loaded,
 	 
