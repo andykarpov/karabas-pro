@@ -91,7 +91,7 @@ const static char msg_dow_fri[] PROGMEM = {"Fri"};
 const static char msg_dow_sat[] PROGMEM = {"Sat"};
 const static char msg_dow_sun[] PROGMEM = {"Sun"};
 
-const static char msg_rtc_setup[] PROGMEM = {"RTC Setup:"};
+const static char msg_rtc_setup[] PROGMEM = {"RTC Setup"};
 const static char msg_hours[] PROGMEM = {"Hours"};
 const static char msg_minutes[] PROGMEM = {"Minutes"};
 const static char msg_seconds[] PROGMEM = {"Seconds"};
@@ -104,17 +104,17 @@ const static char msg_and[] PROGMEM = {" and "};
 const static char msg_to_change_values[] PROGMEM = {"to change values, "};
 const static char msg_to_navigate[] PROGMEM = {"to navigate by menu items"};
 
-const static char msg_about[] PROGMEM = {"About:"};
-const static char msg_karabas_developers_are[] PROGMEM = {"Karabas Pro developers are:"};
-const static char msg_special_thanks_to[] PROGMEM = {"Special thanks to:"};
+const static char msg_about[] PROGMEM = {"About"};
+const static char msg_karabas_developers_are[] PROGMEM = {"Karabas Pro developers are"};
+const static char msg_special_thanks_to[] PROGMEM = {"Special thanks to"};
 
-const static char msg_system_info[] PROGMEM = {"System info:"};
-const static char msg_debug_info[] PROGMEM = {"Debug info:"};
-const static char msg_fpga_build[] PROGMEM = {"FPGA build:"};
-const static char msg_avr_build[] PROGMEM = {"AVR build:"};
-const static char msg_pcb_revision[] PROGMEM = {"PCB revision:"};
-const static char msg_dac_type[] PROGMEM = {"DAC type:"};
-const static char msg_uptime[] PROGMEM = {"Uptime:"};
+const static char msg_system_info[] PROGMEM = {"System info"};
+const static char msg_debug_info[] PROGMEM = {"Debug info"};
+const static char msg_fpga_build[] PROGMEM = {"FPGA build"};
+const static char msg_avr_build[] PROGMEM = {"AVR build"};
+const static char msg_pcb_revision[] PROGMEM = {"PCB revision"};
+const static char msg_dac_type[] PROGMEM = {"DAC type"};
+const static char msg_uptime[] PROGMEM = {"Uptime"};
 
 const static char msg_default[] PROGMEM = {"Default"};
 const static char msg_pqdos[] PROGMEM = {"PQ-DOS"};

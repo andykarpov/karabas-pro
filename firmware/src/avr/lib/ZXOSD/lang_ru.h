@@ -91,7 +91,7 @@ const static char msg_dow_fri[] PROGMEM = {"Пятница"};
 const static char msg_dow_sat[] PROGMEM = {"Суббота"};
 const static char msg_dow_sun[] PROGMEM = {"Воскресенье"};
 
-const static char msg_rtc_setup[] PROGMEM = {"Настройка часов:"};
+const static char msg_rtc_setup[] PROGMEM = {"Настройка часов"};
 const static char msg_hours[] PROGMEM = {"Часы"};
 const static char msg_minutes[] PROGMEM = {"Минуты"};
 const static char msg_seconds[] PROGMEM = {"Секунды"};
@@ -104,17 +104,17 @@ const static char msg_and[] PROGMEM = {" и "};
 const static char msg_to_change_values[] PROGMEM = {"для смены значений, "};
 const static char msg_to_navigate[] PROGMEM = {"для навигации по меню"};
 
-const static char msg_about[] PROGMEM = {"О проекте:"};
-const static char msg_karabas_developers_are[] PROGMEM = {"Разработчики Karabas Pro:"};
-const static char msg_special_thanks_to[] PROGMEM = {"Особая благодарность:"};
+const static char msg_about[] PROGMEM = {"О проекте"};
+const static char msg_karabas_developers_are[] PROGMEM = {"Разработчики Karabas Pro"};
+const static char msg_special_thanks_to[] PROGMEM = {"Особая благодарность"};
 
-const static char msg_system_info[] PROGMEM = {"Системная информация:"};
-const static char msg_debug_info[] PROGMEM = {"Отладка:"};
-const static char msg_fpga_build[] PROGMEM = {"Сборка ПЛИС:"};
-const static char msg_avr_build[] PROGMEM = {"Сборка АВР:"};
-const static char msg_pcb_revision[] PROGMEM = {"Ревизия платы:"};
-const static char msg_dac_type[] PROGMEM = {"Тип ЦАП:"};
-const static char msg_uptime[] PROGMEM = {"Аптайм:"};
+const static char msg_system_info[] PROGMEM = {"Системная информация"};
+const static char msg_debug_info[] PROGMEM = {"Отладка"};
+const static char msg_fpga_build[] PROGMEM = {"Сборка ПЛИС"};
+const static char msg_avr_build[] PROGMEM = {"Сборка АВР"};
+const static char msg_pcb_revision[] PROGMEM = {"Ревизия платы"};
+const static char msg_dac_type[] PROGMEM = {"Тип ЦАП"};
+const static char msg_uptime[] PROGMEM = {"Аптайм"};
 
 const static char msg_default[] PROGMEM = {"Дефолт"};
 const static char msg_pqdos[] PROGMEM = {"PQ-DOS"};

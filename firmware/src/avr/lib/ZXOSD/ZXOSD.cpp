@@ -428,14 +428,17 @@ void ZXOSD::initOverlay()
   updatePause();
   osd.setPos(20,20); hint(PGMT(msg_pause));
 
-  osd.setPos(0,21); flash(PGMT(msg_s)); text(PGMT(msg_etup_rtc)); text(PGMT(msg_space));
+  //printLine(21);
+
+  // Setup RTC / Info / About
+  osd.setPos(0,22); flash(PGMT(msg_s)); text(PGMT(msg_etup_rtc)); text(PGMT(msg_space));
                     flash(PGMT(msg_i)); text(PGMT(msg_nfo)); flash(PGMT(msg_a)); text(PGMT(msg_bout));
 
-  printLine(22);
+  printLine(23);
 
   // footer
-  osd.setPos(0,23); text(PGMT(msg_press)); hint(PGMT(msg_ctrl_alt_del)); text(PGMT(msg_to_reboot));
-  osd.setPos(0,24); text(PGMT(msg_press)); hint(PGMT(msg_menu_esc)); text(PGMT(msg_to_toggle_osd));
+  osd.setPos(0,24); text(PGMT(msg_press)); hint(PGMT(msg_ctrl_alt_del)); text(PGMT(msg_to_reboot));
+  osd.setPos(0,25); text(PGMT(msg_press)); hint(PGMT(msg_menu_esc)); text(PGMT(msg_to_toggle_osd));
 }
 
 void ZXOSD::clear()
@@ -562,7 +565,7 @@ void ZXOSD::initAboutOverlay()
   text(PGMT(msg_about));
 
   osd.setPos(0,7);
-  osd.setColor(OSD::COLOR_MAGENTA_I, OSD::COLOR_BLACK);
+  osd.setColor(OSD::COLOR_BLUE_I, OSD::COLOR_BLACK);
   osd.print(PGMT(msg_karabas_developers_are));
 
   osd.setPos(0,9);
@@ -590,7 +593,7 @@ void ZXOSD::initAboutOverlay()
   hint(PGMT(msg_dev_nihirash_skills));
 
   osd.setPos(0,14);
-  osd.setColor(OSD::COLOR_MAGENTA_I, OSD::COLOR_BLACK);
+  osd.setColor(OSD::COLOR_BLUE_I, OSD::COLOR_BLACK);
   osd.print(PGMT(msg_special_thanks_to));
 
   osd.setPos(0,16);
@@ -677,15 +680,15 @@ void ZXOSD::initInfoOverlay()
 
 
     // Scancode
-  osd.setPos(0,15); param(PGMT(msg_scancode));
+  osd.setPos(0,15); text(PGMT(msg_scancode));
   updateScancode(0);
 
   // Mouse
-  osd.setPos(0,16); param(PGMT(msg_mouse));
+  osd.setPos(0,16); text(PGMT(msg_mouse));
   updateMouse(0,0,0);
 
   // Joy
-  osd.setPos(0,17); param(PGMT(msg_port_1f));
+  osd.setPos(0,17); text(PGMT(msg_port_1f));
   updateJoyState(0);
 
   
@@ -1297,7 +1300,7 @@ void ZXOSD::updateRtcDow() {
 }
 
 void ZXOSD::updateTime() {
-  osd.setColor(OSD::COLOR_CYAN_I, OSD::COLOR_BLACK);
+  osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
   osd.setPos(24,0);
   if (zxrtc.getTimeIsValid()) {
     if (zxrtc.getHour() < 10) osd.print(PGMT(msg_0)); 
@@ -1307,11 +1310,11 @@ void ZXOSD::updateTime() {
     if (zxrtc.getSecond() < 10) osd.print(PGMT(msg_0)); 
     osd.print(zxrtc.getSecond(), DEC);
   } else {
-    osd.setColor(OSD::COLOR_CYAN_I, OSD::COLOR_FLASH);
+    osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_FLASH);
     osd.print(PGMT(msg_time_mask));
   }
 
-  osd.setColor(OSD::COLOR_CYAN_I, OSD::COLOR_BLACK);
+  osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
   osd.setPos(22,1);
   if (zxrtc.getDateIsValid()) {
     if (zxrtc.getDay() < 10) osd.print(PGMT(msg_0)); 
@@ -1320,7 +1323,7 @@ void ZXOSD::updateTime() {
     osd.print(zxrtc.getMonth(), DEC); osd.print(PGMT(msg_dot));
     osd.print(zxrtc.getYear(), DEC);
   } else {
-    osd.setColor(OSD::COLOR_CYAN_I, OSD::COLOR_FLASH);
+    osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_FLASH);
     osd.print(PGMT(msg_date_mask));
   }
 
@@ -1413,9 +1416,9 @@ void ZXOSD::updateJoyState(uint8_t joy) {
 
 void ZXOSD::highlight(bool val) {
   if (val) 
-    osd.setColor(OSD::COLOR_BLACK, OSD::COLOR_MAGENTA_I);  
+    osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLUE);
   else 
-    osd.setColor(OSD::COLOR_MAGENTA_I, OSD::COLOR_BLACK);
+    osd.setColor(OSD::COLOR_BLUE_I, OSD::COLOR_BLACK);
 }
 
 void ZXOSD::hint(const __FlashStringHelper* msg) {
@@ -1424,9 +1427,9 @@ void ZXOSD::hint(const __FlashStringHelper* msg) {
 }
 
 void ZXOSD::param(const __FlashStringHelper* msg) {
-  osd.setColor(OSD::COLOR_GREEN_I, OSD::COLOR_BLACK);
+  osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
   osd.print(msg);
-  osd.print(PGMT(msg_colon));
+  osd.print(PGMT(msg_space));
 }
 
 void ZXOSD::text(const __FlashStringHelper* msg) {
