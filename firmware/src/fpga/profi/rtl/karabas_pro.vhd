@@ -994,7 +994,6 @@ port map (
 	BUS_RDH 				=> RDH,
 	BUS_nemo_cs0		=> nemo_cs0,
 	BUS_nemo_cs1		=> nemo_cs1
-	
 );
 
 -- Serial mouse emulation
