@@ -1450,7 +1450,7 @@ nemo_cs0<= cpu_a_bus(3) when nemo_ebl_n='0' else '1';
 nemo_cs1<= cpu_a_bus(4) when nemo_ebl_n='0' else '1';
 nemo_ior<= ior when nemo_ebl_n='0' else '1';
 
-toCPLD_NEMO_EBL <= nemo_ebl_n;
+toCPLD_NEMO_EBL <= not nemo_ebl_n;
 
 
 -- порты Profi FDD
