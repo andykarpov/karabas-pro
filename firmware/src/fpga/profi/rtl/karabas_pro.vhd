@@ -1231,7 +1231,7 @@ led1_overwrite <= '1';
 process (clk_bus, hdd_wwe_n, hdd_rww_n, SD_NCS)
 begin
 	if rising_edge(clk_bus) then
-		if (hdd_wwe_n = '0') or (hdd_rww_n = '0') or (SD_NCS = '0') then
+		if (IOW = '0') or (IOR ='0') or (hdd_wwe_n = '0') or (hdd_rww_n = '0') or (SD_NCS = '0') then
 			led1 <= '1';
 		else 
 			led1 <= '0';
@@ -1415,7 +1415,7 @@ hdd_wwe_n 	<='0' when (cpu_wr_n='0' and cpu_a_bus(7 downto 0)="11101011" and cpu
 hdd_rww_n 	<='0' when (cpu_wr_n='1' and cpu_a_bus(7 downto 0)="11001011" and cpu_iorq_n='0') and ((cpm='1' and rom14='1') or (dos_act='1' and rom14='0')) and hdd_off = '0' else '1'; -- Selector Low byte Data bus Buffer Direction: 1 - to HDD bus, 0 - to Data bus
 hdd_rwe_n 	<='0' when (cpu_wr_n='1' and cpu_a_bus(7 downto 0)="11101011" and cpu_iorq_n='0') and ((cpm='1' and rom14='1') or (dos_act='1' and rom14='0')) and hdd_off = '0' else '1'; -- Read High byte from "Read register" to Data bus
 hdd_cs3fx_n <='0' when (cpu_wr_n='0' and cpu_a_bus(7 downto 0)="10101011" and cpu_iorq_n='0') and ((cpm='1' and rom14='1') or (dos_act='1' and rom14='0')) and hdd_off = '0' else '1';
-hdd_active <= not(hdd_wwc_n and hdd_wwe_n and hdd_rww_n and hdd_rwe_n);
+hdd_active <= not(hdd_wwc_n and hdd_wwe_n and hdd_rww_n and hdd_rwe_n) or not(WRH and IOW and IOR and RDH);
 
 -- порты Nemo HDD
 
@@ -1451,7 +1451,7 @@ nemo_cs1<= cpu_a_bus(4) when nemo_ebl_n='0' else '1';
 nemo_ior<= ior when nemo_ebl_n='0' else '1';
 
 
-toCPLD_NEMO_EBL = nemo_ebl_n;
+toCPLD_NEMO_EBL <= nemo_ebl_n;
 
 -- порты Profi FDD
 RT_F2_1 <='0' when (cpu_a_bus(7 downto 5)="001" and cpu_a_bus(1 downto 0)="11" and cpu_iorq_n='0') and ((cpm='1' and rom14='1') or (dos_act='1' and rom14='0')) else '1'; --6D
