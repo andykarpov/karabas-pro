@@ -1450,6 +1450,9 @@ nemo_cs0<= cpu_a_bus(3) when nemo_ebl_n='0' else '1';
 nemo_cs1<= cpu_a_bus(4) when nemo_ebl_n='0' else '1';
 nemo_ior<= ior when nemo_ebl_n='0' else '1';
 
+
+toCPLD_NEMO_EBL = nemo_ebl_n;
+
 -- порты Profi FDD
 RT_F2_1 <='0' when (cpu_a_bus(7 downto 5)="001" and cpu_a_bus(1 downto 0)="11" and cpu_iorq_n='0') and ((cpm='1' and rom14='1') or (dos_act='1' and rom14='0')) else '1'; --6D
 RT_F2_2 <='0' when cpu_a_bus(7 downto 5)="101" and cpu_a_bus(1 downto 0)="11" and cpu_iorq_n='0' and cpm='1' and dos_act='0' and rom14='0' else '1'; --75
