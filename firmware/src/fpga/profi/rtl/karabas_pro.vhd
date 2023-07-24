@@ -1441,7 +1441,7 @@ cs_nemo_ports <= '1' when (cpu_a_bus(7 downto 0) = x"F0" or
 									cpu_a_bus(7 downto 0) = x"C8" or 
 									cpu_a_bus(7 downto 0) = x"11") and cpu_iorq_n = '0' and cpm = '0' else '0'; 
 
-nemo_ebl_n <= '0' when cs_nemo_ports = '1' and cpu_m1_n='1' else '1';
+nemo_ebl_n <= '0' when cs_nemo_ports = '1' and cpu_m1_n='1' and nemoide_en = '1' else '1';
 IOW <='0' when cpu_a_bus(2 downto 0)="000" and cpu_m1_n='1' and cpu_iorq_n='0' and cpm='0' and cpu_wr_n='0' else '1';
 WRH <='0' when cpu_a_bus(2 downto 0)="001" and cpu_m1_n='1' and cpu_iorq_n='0' and cpm='0' and cpu_wr_n='0' else '1';
 IOR <='0' when cpu_a_bus(2 downto 0)="000" and cpu_m1_n='1' and cpu_iorq_n='0' and cpm='0' and cpu_rd_n='0' else '1';
@@ -1780,6 +1780,7 @@ begin
 		when x"16" => cpu_di_bus <= zifi_do_bus;
 		when x"17" => cpu_di_bus <= vid_attr;
 		when x"18" => cpu_di_bus <= cpld_do;
+		when x"19" => cpu_di_bus <= cpld_do; -- nemo
 		when others => cpu_di_bus <= (others => '1');
 	end case;
 end process;
@@ -1788,6 +1789,7 @@ selector <=
 	x"00" when (ram_oe_n = '0') else -- ram / rom
 	x"01" when (cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_m1_n = '1' and cs_rtc_ds = '1') else -- RTC MC146818A
 	x"02" when (cs_xxfe = '1' and cpu_rd_n = '0') else 									-- Keyboard, port #FE
+	x"19" when (nemo_ebl_n = '0' and cpu_rd_n = '0') else									-- nemo
  	x"03" when (cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_m1_n = '1' and (cpu_a_bus(7 downto 0) = X"57" or (cpu_a_bus(7 downto 0) = X"EB" and cpm = '0')) and is_flash_not_sd = '0') else 	-- Z-Controller + DivMMC
 	x"04" when (cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_m1_n = '1' and cpu_a_bus(7 downto 0) = X"77" and is_flash_not_sd = '0') else 	-- Z-Controller
 	x"05" when (cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_m1_n = '1' and cpu_a_bus( 7 downto 0) = X"1F" and dos_act = '0' and cpm = '0' and joy_mode = "000") else -- Joystick, port #1F
