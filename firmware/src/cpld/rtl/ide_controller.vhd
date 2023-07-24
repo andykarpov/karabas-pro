@@ -3,6 +3,25 @@ use IEEE.std_logic_1164.all;
 use IEEE.std_logic_unsigned.all;
 use IEEE.numeric_std.all;
 
+-- OCH: info taken from solegstar's profi extender
+-- hdd			  Profi		  Nemo
+   ----------- ----------- ---------
+-- hdd_a0      adress(8)   adress(5)
+-- hdd_a1      adress(9)   adress(6)
+-- hdd_a2      adress(10)  adress(7)
+-- hdd_wr      wr          iow
+-- hdd_rd      rd          nemo_ior
+-- hdd_cs0     cs1fx       nemo_cs0
+-- hdd_cs1     cs3fx       nemo_cs1
+-- hdd_rh_oe   rwe         rdh
+-- hdd_rh_c    cs1fx       ior
+-- hdd_wh_oe   wwe         iow
+-- hdd_wh_c    wwc         wrh
+-- hdd_rwl_t   rww         ior
+-- hdd_iorqge  '0'         nemo_ebl
+   ----------- ----------- ---------
+
+
 entity ide_controller is 
 port (
 	CLK 			: in std_logic;
@@ -28,7 +47,9 @@ port (
 	IDE_CS1_N 	: out std_logic;
 	IDE_RD_N 	: out std_logic;
 	IDE_WR_N 	: out std_logic;
-	IDE_RESET_N : out std_logic
+	IDE_RESET_N : out std_logic;
+	
+	fromFPGA_NEMO_EBL : in std_logic
 	
 );
 end ide_controller;

@@ -139,7 +139,9 @@ begin
 		IDE_CS1_N => HDD_NCS1,
 		IDE_RD_N => HDD_NRD,
 		IDE_WR_N => HDD_NWR,
-		IDE_RESET_N => HDD_NRESET
+		IDE_RESET_N => HDD_NRESET,
+		--- OCH:Nemo HDD port active
+		fromFPGA_NEMO_EBL => fromFPGA_NEMO_EBL
 	);
 	
 	U2: entity work.fdd_controller
