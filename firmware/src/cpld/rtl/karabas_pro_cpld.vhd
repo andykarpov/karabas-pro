@@ -141,7 +141,10 @@ begin
 		IDE_WR_N => HDD_NWR,
 		IDE_RESET_N => HDD_NRESET,
 		--- OCH:Nemo HDD port active
-		fromFPGA_NEMO_EBL => fromFPGA_NEMO_EBL
+		fromFPGA_NEMO_EBL => fromFPGA_NEMO_EBL,
+		--- OCH: cs0 cs1 inserted instead of cpu_a_bus(5) and cpu_a_bus(6) signals from bus in nemo mode
+		BUS_nemo_cs1 => bus_a(1),
+		BUS_nemo_cs0 => bus_a(0)
 	);
 	
 	U2: entity work.fdd_controller

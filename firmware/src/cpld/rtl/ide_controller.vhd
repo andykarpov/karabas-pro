@@ -18,7 +18,7 @@ use IEEE.numeric_std.all;
 -- hdd_wh_oe   wwe         iow
 -- hdd_wh_c    wwc         wrh
 -- hdd_rwl_t   rww         ior
--- hdd_iorqge  '0'         nemo_ebl
+-- hdd_iorqge  '0'         nemo_ebl -- used in another way OCH:
    ----------- ----------- ---------
 
 
@@ -49,8 +49,10 @@ port (
 	IDE_WR_N 	: out std_logic;
 	IDE_RESET_N : out std_logic;
 	
-	fromFPGA_NEMO_EBL : in std_logic
+	fromFPGA_NEMO_EBL : in std_logic;
 	
+	BUS_nemo_cs1: in std_logic;
+	BUS_nemo_cs0: in std_logic
 );
 end ide_controller;
 
@@ -70,9 +72,9 @@ begin
 
 -----------------HDD------------------
 	-- Profi
-cs1fx <= rww and wwe; -- Write High byte from HDD bus to "Read register"
+cs1fx <= rww and wwe when fromFPGA_NEMO_EBL = '0' else rww; -- Write High byte from HDD bus to "Read register" - profi ; in nemo mode rww=IOR  -- OK
 cs_hdd_wr <= cs3fx and wwe and wwc;
-cs_hdd_rd <= rww and rwe;
+cs_hdd_rd <= rww and rwe; -- IOR and RDH (0 active) OK
 
 process (CLK,BUS_A,BUS_WR_N,BUS_RD_N,cs1fx,cs3fx,NRESET,profi_ebl)
 begin
@@ -84,18 +86,28 @@ begin
     IDE_A <= "000";
     cnt <= "00000000";
   elsif CLK'event and CLK='0' then
-    if profi_ebl = '0' and cnt (7) = '0' then
+    if profi_ebl = '0' and cnt (7) = '0' then -- in nemo mode profi_ebl = nemo_ebl
       IDE_A <= BUS_A(2 downto 0);
       if (cnt > 2 and cnt < 72) then
-        IDE_CS0_N <=cs1fx;
-        IDE_CS1_N <=cs3fx;
+			if fromFPGA_NEMO_EBL = '0' then --profi
+			  IDE_CS0_N <=cs1fx;
+			  IDE_CS1_N <=cs3fx;
+			else								 --nemo
+			  IDE_CS0_N <=BUS_nemo_cs0; 
+			  IDE_CS1_N <=BUS_nemo_cs1;
+			end if; 
       else
         IDE_CS0_N <='1';
         IDE_CS1_N <='1';
       end if;
       if (cnt > 8 and cnt < 31) then
-          IDE_WR_N <=BUS_WR_N;
-          IDE_RD_N <=BUS_RD_N;
+			if fromFPGA_NEMO_EBL = '0' then  --profi
+				IDE_WR_N <=BUS_WR_N;
+				IDE_RD_N <=BUS_RD_N;
+			else								 --nemo
+				IDE_WR_N <=wwe; -- IOW 
+				IDE_RD_N <=rww; -- IOR
+			end if;
       else
           IDE_WR_N <='1';
           IDE_RD_N <='1';      
@@ -128,8 +140,8 @@ begin
 	if NRESET = '0' then
 		IDE_D(7 downto 0) <= "11111111";	
 	elsif CLK'event and CLK='1' then
-		if rww='1' and cs_hdd_wr='0' then
-			IDE_D(7 downto 0) <= BUS_DI;
+		if (rww='1' and cs_hdd_wr='0' and fromFPGA_NEMO_EBL='0') or (rww='1' and fromFPGA_NEMO_EBL= '1') then
+			IDE_D(7 downto 0) <= BUS_DI; -- rww=IOR fromFPGA_NEMO_EBL=1 in nemo mode low byte writen to HDD when --OK
 		else 
 			IDE_D(7 downto 0) <= "ZZZZZZZZ";
 		end if;
@@ -138,24 +150,24 @@ end process;
 
 process (cs1fx, IDE_D)
 begin
-		if cs1fx'event and cs1fx='1' then
+		if cs1fx'event and cs1fx='1' then -- cs1fx <= rww and wwe when fromFPGA_NEMO_EBL = '0' else IOR -- OK
 			wd_reg_out (15 downto 8) <= IDE_D(15 downto 8);
 		end if;
 end process;
 
 process (wwc, BUS_DI)
 begin
-		if wwc'event and wwc='1' then
+		if wwc'event and wwc='1' then   -- wwc=WRH write high byte to latch from z80 -- OK
 			wd_reg_in (15 downto 8) <= BUS_DI;
 		end if;
 end process;
 
-IDE_D (15 downto 8) <= wd_reg_in (15 downto 8) when wwe='0' else "ZZZZZZZZ";
+IDE_D (15 downto 8) <= wd_reg_in (15 downto 8) when wwe='0' else "ZZZZZZZZ"; -- wwe=IOW write to high byte HDD from latch -- OK
 
-BUS_DO <= IDE_D(7 downto 0) when rww='0' else
-			wd_reg_out (15 downto 8) when rwe='0' else "11111111";
+BUS_DO <= IDE_D(7 downto 0) when rww='0' else -- rww=IOR - read low byte from HDD -- OK
+			wd_reg_out (15 downto 8) when rwe='0' else "11111111"; -- rwe=RDH - read high byte from HDD -- OK
 	
-OE_N <= cs_hdd_rd;
+OE_N <= cs_hdd_rd; --OCH OK
 
 IDE_RESET_N <= NRESET;
 
