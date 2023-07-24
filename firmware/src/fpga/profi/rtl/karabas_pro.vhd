@@ -77,6 +77,9 @@ port (
 	SA				: out std_logic_vector(1 downto 0);
 	SD				: inout std_logic_vector(15 downto 0) := "ZZZZZZZZZZZZZZZZ";
 	
+	-- Nemo HDD EBL for CPLD
+	toCPLD_NEMO_EBL: out std_logic; -- OCH
+	
 	-- I2S Sound TDA1543
 	SND_BS		: out std_logic;
 	SND_WS 		: out std_logic;
@@ -280,6 +283,7 @@ signal hdd_rwe_n			:std_logic; -- Read High byte from "Read register" to Data bu
 signal hdd_cs3fx_n		:std_logic;
 signal hdd_active 		:std_logic;
 
+-- Nemo HDD ports
 signal nemoide_en 		: std_logic;
 
 -- Profi FDD ports
