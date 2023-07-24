@@ -35,7 +35,17 @@ entity bus_port is
 	BUS_CS3FX 	: in std_logic;
 	BUS_FDC_STEP: in std_logic;
 	BUS_CSFF 	: in std_logic;
-	BUS_FDC_NCS : in std_logic		
+	BUS_FDC_NCS : in std_logic;	
+	
+	-- zx bus signals for Nemo HDD 
+	BUS_A7				: in std_logic;
+	BUS_nemo_ebl_n		: in std_logic;
+	BUS_IOW				: in std_logic;
+	BUS_WRH 				: in std_logic;
+	BUS_IOR 				: in std_logic;
+	BUS_RDH 				: in std_logic;
+	BUS_nemo_cs0		: in std_logic;
+	BUS_nemo_cs1		: in std_logic
 	);
     end bus_port;
 architecture RTL of bus_port is

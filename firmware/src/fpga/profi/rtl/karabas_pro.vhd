@@ -983,8 +983,18 @@ port map (
 	BUS_CS3FX		=> hdd_cs3fx_n,
 	BUS_FDC_STEP	=>	FDC_STEP and turbo_fdc_off,
 	BUS_CSFF			=> fdd_cs_pff_n,
-	BUS_FDC_NCS		=> fdd_cs_n
-
+	BUS_FDC_NCS		=> fdd_cs_n,
+	
+	-- Nemo HDD bus signals
+	BUS_A7				=> cpu_a_bus(7),
+	BUS_nemo_ebl_n		=> nemo_ebl_n,
+	BUS_IOW				=> IOW,
+	BUS_WRH 				=> WRH,
+	BUS_IOR 				=> IOR,
+	BUS_RDH 				=> RDH,
+	BUS_nemo_cs0		=> nemo_cs0,
+	BUS_nemo_cs1		=> nemo_cs1
+	
 );
 
 -- Serial mouse emulation
@@ -1428,7 +1438,7 @@ cs_nemo_ports <= '1' when (cpu_a_bus(7 downto 0) = x"F0" or
 									cpu_a_bus(7 downto 0) = x"C8" or 
 									cpu_a_bus(7 downto 0) = x"11") and cpu_iorq_n = '0' and cpm = '0' else '0'; 
 
-nemo_ebl_n <= '1' when cs_nemo_ports = '1' and cpu_m1_n='1' else '0';
+nemo_ebl_n <= '0' when cs_nemo_ports = '1' and cpu_m1_n='1' else '1';
 IOW <='0' when cpu_a_bus(2 downto 0)="000" and cpu_m1_n='1' and cpu_iorq_n='0' and cpm='0' and cpu_wr_n='0' else '1';
 WRH <='0' when cpu_a_bus(2 downto 0)="001" and cpu_m1_n='1' and cpu_iorq_n='0' and cpm='0' and cpu_wr_n='0' else '1';
 IOR <='0' when cpu_a_bus(2 downto 0)="000" and cpu_m1_n='1' and cpu_iorq_n='0' and cpm='0' and cpu_rd_n='0' else '1';
