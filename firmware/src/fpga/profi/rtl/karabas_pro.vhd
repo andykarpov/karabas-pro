@@ -285,6 +285,16 @@ signal hdd_active 		:std_logic;
 
 -- Nemo HDD ports
 signal nemoide_en 		: std_logic;
+signal cs_nemo_ports		: std_logic;
+
+signal nemo_ebl_n			: std_logic;
+signal IOW					: std_logic;
+signal WRH 					: std_logic;
+signal IOR 					: std_logic;
+signal RDH 					: std_logic;
+signal nemo_cs0			: std_logic;
+signal nemo_cs1			: std_logic;
+signal nemo_ior			: std_logic;
 
 -- Profi FDD ports
 signal RT_F2_1			:std_logic;
@@ -1393,6 +1403,39 @@ hdd_rww_n 	<='0' when (cpu_wr_n='1' and cpu_a_bus(7 downto 0)="11001011" and cpu
 hdd_rwe_n 	<='0' when (cpu_wr_n='1' and cpu_a_bus(7 downto 0)="11101011" and cpu_iorq_n='0') and ((cpm='1' and rom14='1') or (dos_act='1' and rom14='0')) and hdd_off = '0' else '1'; -- Read High byte from "Read register" to Data bus
 hdd_cs3fx_n <='0' when (cpu_wr_n='0' and cpu_a_bus(7 downto 0)="10101011" and cpu_iorq_n='0') and ((cpm='1' and rom14='1') or (dos_act='1' and rom14='0')) and hdd_off = '0' else '1';
 hdd_active <= not(hdd_wwc_n and hdd_wwe_n and hdd_rww_n and hdd_rwe_n);
+
+-- порты Nemo HDD
+
+--0XF0			;РЕГИСТР СОСТОЯНИЯ/РЕГИСТР КОМАНД
+--0XD0			;CHS-НОМЕР ГОЛОВЫ И УСТР/LBA АДРЕС 24-27
+--0XB0			;CHS-ЦИЛИНДР 8-15/LBA АДРЕС 16-23
+--0X90			;CHS-ЦИЛИНДР 0-7/LBA АДРЕС 8-15
+--0X70			;CHS-НОМЕР СЕКТОРА/LBA АДРЕС 0-7
+--0X50			;СЧЕТЧИК СЕКТОРОВ
+--0X30			;ПОРТ ОШИБОК/СВОЙСТВ
+--0X10			;ПОРТ ДАННЫХ
+--0XC8			;РЕГИСТР СОСТОЯНИЯ/УПРАВЛЕНИЯ
+--0X11			;СТАРШИЕ 8 БИТ
+
+cs_nemo_ports <= '1' when (cpu_a_bus(7 downto 0) = x"F0" or 
+									cpu_a_bus(7 downto 0) = x"D0" or 
+									cpu_a_bus(7 downto 0) = x"B0" or 
+									cpu_a_bus(7 downto 0) = x"90" or 
+									cpu_a_bus(7 downto 0) = x"70" or 
+									cpu_a_bus(7 downto 0) = x"50" or 
+									cpu_a_bus(7 downto 0) = x"30" or 
+									cpu_a_bus(7 downto 0) = x"10" or 
+									cpu_a_bus(7 downto 0) = x"C8" or 
+									cpu_a_bus(7 downto 0) = x"11") and cpu_iorq_n = '0' and cpm = '0' else '0'; 
+
+nemo_ebl_n <= '1' when cs_nemo_ports = '1' and cpu_m1_n='1' else '0';
+IOW <='0' when cpu_a_bus(2 downto 0)="000" and cpu_m1_n='1' and cpu_iorq_n='0' and cpm='0' and cpu_wr_n='0' else '1';
+WRH <='0' when cpu_a_bus(2 downto 0)="001" and cpu_m1_n='1' and cpu_iorq_n='0' and cpm='0' and cpu_wr_n='0' else '1';
+IOR <='0' when cpu_a_bus(2 downto 0)="000" and cpu_m1_n='1' and cpu_iorq_n='0' and cpm='0' and cpu_rd_n='0' else '1';
+RDH <='0' when cpu_a_bus(2 downto 0)="001" and cpu_m1_n='1' and cpu_iorq_n='0' and cpm='0' and cpu_rd_n='0' else '1';
+nemo_cs0<= cpu_a_bus(3) when nemo_ebl_n='0' else '1';
+nemo_cs1<= cpu_a_bus(4) when nemo_ebl_n='0' else '1';
+nemo_ior<= ior when nemo_ebl_n='0' else '1';
 
 -- порты Profi FDD
 RT_F2_1 <='0' when (cpu_a_bus(7 downto 5)="001" and cpu_a_bus(1 downto 0)="11" and cpu_iorq_n='0') and ((cpm='1' and rom14='1') or (dos_act='1' and rom14='0')) else '1'; --6D
