@@ -73,7 +73,7 @@ port (
 	NRESET 		: out std_logic;
 	CPLD_CLK 	: out std_logic;
 	CPLD_CLK2 	: out std_logic;
-	SDIR 			: out std_logic;
+	--SDIR 			: out std_logic;
 	SA				: out std_logic_vector(1 downto 0);
 	SD				: inout std_logic_vector(15 downto 0) := "ZZZZZZZZZZZZZZZZ";
 	
