@@ -1339,7 +1339,7 @@ sound_off <= port_028b_reg(4);									-- 4 	- Sound_off
 turbo_mode <= port_028b_reg(6 downto 5);						-- 5,6- Turbo Mode Selector 
 lock_dffd <= port_028b_reg(7);								 	-- 7 	- Lock port DFFD
 
-SDIR <= fdc_swap;
+--SDIR <= fdc_swap;
 
 ext_rom_bank_pq <= ext_rom_bank when rom0 = '0' else "01";	-- ROMBANK ALT
 

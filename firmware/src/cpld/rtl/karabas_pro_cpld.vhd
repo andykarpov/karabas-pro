@@ -37,7 +37,7 @@ port (
 	-- FPGA interface signals
 	NRESET : in std_logic;
 	SA: in std_logic_vector(1 downto 0);
-	SDIR: in std_logic;
+	--SDIR: in std_logic; -- OCH
 	SD: inout std_logic_vector(15 downto 0);
 
 	-- BDI signals
@@ -71,7 +71,10 @@ port (
 	HDD_NCS1: out std_logic;
 	HDD_NWR: out std_logic;
 	HDD_NRD: out std_logic;
-	HDD_NRESET: out std_logic
+	HDD_NRESET: out std_logic;
+	
+	-- OCH: if 1 - Nemo HDD port is accessed from FPGA
+	fromFPGA_NEMO_EBL: in std_logic
 );
 end karabas_pro_cpld;
 
@@ -153,7 +156,7 @@ begin
 		csff => bus_a(13),
 		FDC_NCS => bus_a(14),
 		FDC_STEP => bus_a(7),
-		FDD_CHNG => SDIR,
+		--FDD_CHNG => SDIR, -- OCH
 		OE_N => fdd_oe_n,
 		
 		FDC_NWR => FDC_NWR,
