@@ -685,6 +685,8 @@ port map (
 	-- contended memory signals
 	COUNT_BLOCK		=> count_block,
 	CONTENDED 		=> memory_contention,
+	-- OCH: added to not contend in turbo mode
+	TURBO_MODE 		=> turbo_mode,
 	
 	-- DIVMMC signals
    DIVMMC_EN		=> divmmc_en,
@@ -1202,8 +1204,10 @@ max_turbo <= "10";
 --OCH: automap = '0' and cs_nemo_ports = '0' - not contend DIVMMC and NEMO ports in CLASSIC screen mode
 clk_cpu <= '0' when kb_wait = '1' or  (kb_screen_mode = "01" and memory_contention = '1' and automap = '0' and cs_nemo_ports = '0' and DS80 = '0') or WAIT_IO = '0' else 
 	clk_bus when turbo_mode = "11" and turbo_mode <= max_turbo else 
-	clk_bus and ena_div2 when turbo_mode = "10" and turbo_mode <= max_turbo else 
-	clk_bus and ena_div4 when turbo_mode = "01" and turbo_mode <= max_turbo else 
+	-- OCH: disable turbo in trdos to be sure what all programming delays are original
+	-- in DIVMMC turbo can be enabled 
+	clk_bus and ena_div2 when turbo_mode = "10" and turbo_mode <= max_turbo and (dos_act='0' or automap = '1') else 
+	clk_bus and ena_div4 when turbo_mode = "01" and turbo_mode <= max_turbo and (dos_act='0' or automap = '1') else 
 	clk_bus and ena_div8;
 
 -- одновибратор - по спаду /IORQ отсчитывает 400нс вейта проца 

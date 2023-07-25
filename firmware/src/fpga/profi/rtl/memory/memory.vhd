@@ -68,7 +68,9 @@ port (
 	-- DIVMMC
 	DIVMMC_EN	: in std_logic;
 	AUTOMAP		: in std_logic;
-	REG_E3		: in std_logic_vector(7 downto 0)
+	REG_E3		: in std_logic_vector(7 downto 0);
+	
+	TURBO_MODE	: in std_logic_vector(1 downto 0)
 );
 end memory;
 
@@ -273,7 +275,8 @@ begin
 	process (clk2x)
 	begin 
 		if rising_edge(clk2x) then 
-			if (page_cont = '1' and block_reg = '1' and count_block = '1' and DS80 = '0') then 
+		-- OCH: contend only when 3,5 MHz CLK 
+			if (page_cont = '1' and block_reg = '1' and count_block = '1' and DS80 = '0' and TURBO_MODE = "00") then 
 				contended <= '1';
 			else 
 				contended <= '0';
