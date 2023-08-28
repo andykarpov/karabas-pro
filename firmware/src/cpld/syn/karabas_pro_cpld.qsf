@@ -139,4 +139,4 @@ set_global_assignment -name FITTER_EFFORT "STANDARD FIT"
 
 set_global_assignment -name TIMEQUEST_MULTICORNER_ANALYSIS OFF
 
-set_location_assignment PIN_2 -to fromFPGA_NEMO_EBL
+set_location_assignment PIN_2 -to SDIR

@@ -73,12 +73,9 @@ port (
 	NRESET 		: out std_logic;
 	CPLD_CLK 	: out std_logic;
 	CPLD_CLK2 	: out std_logic;
-	--SDIR 			: out std_logic;
+	SDIR 			: out std_logic;	-- OCH: Nemo HDD EBL for CPLD
 	SA				: out std_logic_vector(1 downto 0);
 	SD				: inout std_logic_vector(15 downto 0) := "ZZZZZZZZZZZZZZZZ";
-	
-	-- Nemo HDD EBL for CPLD
-	toCPLD_NEMO_EBL: out std_logic; -- OCH
 	
 	-- I2S Sound TDA1543
 	SND_BS		: out std_logic;
@@ -989,7 +986,7 @@ port map (
 	
 	-- Nemo HDD bus signals
 	BUS_A7				=> cpu_a_bus(7),
-	BUS_nemo_ebl_n		=> nemo_ebl_n,
+	BUS_nemo_ebl_n		=> nemo_ebl_n, -- OCH: also nemo_ebl_n is passed to CPLD via SDIR pin to select NEMOIDE HDD
 	BUS_IOW				=> IOW,
 	BUS_WRH 				=> WRH,
 	BUS_IOR 				=> IOR,
@@ -1363,6 +1360,8 @@ sound_off <= port_028b_reg(4);									-- 4 	- Sound_off
 turbo_mode <= port_028b_reg(6 downto 5);						-- 5,6- Turbo Mode Selector 
 lock_dffd <= port_028b_reg(7);								 	-- 7 	- Lock port DFFD
 
+-- OCH: fdd currently disabled, should be implemented with xFF (TRDOS) port bit swapping
+-- the SDIR pin now used to select NEMOIDE HDD
 --SDIR <= fdc_swap;
 
 ext_rom_bank_pq <= ext_rom_bank when rom0 = '0' else "01";	-- ROMBANK ALT
@@ -1454,9 +1453,8 @@ RDH <='0' when cpu_a_bus(2 downto 0)="001" and cpu_m1_n='1' and cpu_iorq_n='0' a
 nemo_cs0<= cpu_a_bus(3) when nemo_ebl_n='0' else '1';
 nemo_cs1<= cpu_a_bus(4) when nemo_ebl_n='0' else '1';
 nemo_ior<= ior when nemo_ebl_n='0' else '1';
-
-toCPLD_NEMO_EBL <= not nemo_ebl_n;
-
+-- OCH:
+SDIR <= not nemo_ebl_n;
 
 -- порты Profi FDD
 RT_F2_1 <='0' when (cpu_a_bus(7 downto 5)="001" and cpu_a_bus(1 downto 0)="11" and cpu_iorq_n='0') and ((cpm='1' and rom14='1') or (dos_act='1' and rom14='0')) else '1'; --6D

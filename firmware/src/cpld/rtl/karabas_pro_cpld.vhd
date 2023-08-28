@@ -37,7 +37,8 @@ port (
 	-- FPGA interface signals
 	NRESET : in std_logic;
 	SA: in std_logic_vector(1 downto 0);
-	--SDIR: in std_logic; -- OCH
+	-- OCH: if SDIR == 1 - Nemo HDD port is accessed from FPGA
+	SDIR: in std_logic; -- OCH
 	SD: inout std_logic_vector(15 downto 0);
 
 	-- BDI signals
@@ -71,10 +72,7 @@ port (
 	HDD_NCS1: out std_logic;
 	HDD_NWR: out std_logic;
 	HDD_NRD: out std_logic;
-	HDD_NRESET: out std_logic;
-	
-	-- OCH: if 1 - Nemo HDD port is accessed from FPGA
-	fromFPGA_NEMO_EBL: in std_logic
+	HDD_NRESET: out std_logic
 );
 end karabas_pro_cpld;
 
@@ -140,8 +138,8 @@ begin
 		IDE_RD_N => HDD_NRD,
 		IDE_WR_N => HDD_NWR,
 		IDE_RESET_N => HDD_NRESET,
-		--- OCH:Nemo HDD port active
-		fromFPGA_NEMO_EBL => fromFPGA_NEMO_EBL,
+		--- OCH:Nemo HDD port active when SDIR == 1
+		fromFPGA_NEMO_EBL => SDIR,
 		--- OCH: cs0 cs1 inserted instead of cpu_a_bus(5) and cpu_a_bus(6) signals from bus in nemo mode
 		BUS_nemo_cs1 => bus_a(1),
 		BUS_nemo_cs0 => bus_a(0)
@@ -161,7 +159,8 @@ begin
 		csff => bus_a(13),
 		FDC_NCS => bus_a(14),
 		FDC_STEP => bus_a(7),
-		--FDD_CHNG => SDIR, -- OCH
+		-- OCH: the SDIR pin now used to select NEMOIDE HDD
+		--FDD_CHNG => SDIR, 
 		OE_N => fdd_oe_n,
 		
 		FDC_NWR => FDC_NWR,
