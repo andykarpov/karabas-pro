@@ -94,7 +94,6 @@ set_location_assignment PIN_8 -to SD[1]
 set_location_assignment PIN_7 -to SD[0]
 set_location_assignment PIN_6 -to SA[1]
 set_location_assignment PIN_5 -to SA[0]
-set_location_assignment PIN_2 -to SDIR
 set_location_assignment PIN_1 -to NRESET
 set_location_assignment PIN_87 -to CLK
 set_location_assignment PIN_58 -to FDC_NRESET
@@ -139,3 +138,5 @@ set_global_assignment -name OPTIMIZE_MULTI_CORNER_TIMING OFF
 set_global_assignment -name FITTER_EFFORT "STANDARD FIT"
 
 set_global_assignment -name TIMEQUEST_MULTICORNER_ANALYSIS OFF
+
+set_location_assignment PIN_2 -to SDIR

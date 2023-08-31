@@ -73,7 +73,7 @@ port (
 	NRESET 		: out std_logic;
 	CPLD_CLK 	: out std_logic;
 	CPLD_CLK2 	: out std_logic;
-	SDIR 			: out std_logic;
+	SDIR 			: out std_logic;	-- OCH: Nemo HDD EBL for CPLD
 	SA				: out std_logic_vector(1 downto 0);
 	SD				: inout std_logic_vector(15 downto 0) := "ZZZZZZZZZZZZZZZZ";
 	
@@ -279,6 +279,19 @@ signal hdd_rww_n			:std_logic; -- Selector Low byte Data bus Buffer Direction: 1
 signal hdd_rwe_n			:std_logic; -- Read High byte from "Read register" to Data bus
 signal hdd_cs3fx_n		:std_logic;
 signal hdd_active 		:std_logic;
+
+-- Nemo HDD ports
+signal nemoide_en 		: std_logic;
+signal cs_nemo_ports		: std_logic;
+
+signal nemo_ebl_n			: std_logic;
+signal IOW					: std_logic;
+signal WRH 					: std_logic;
+signal IOR 					: std_logic;
+signal RDH 					: std_logic;
+signal nemo_cs0			: std_logic;
+signal nemo_cs1			: std_logic;
+signal nemo_ior			: std_logic;
 
 -- Profi FDD ports
 signal RT_F2_1			:std_logic;
@@ -669,6 +682,8 @@ port map (
 	-- contended memory signals
 	COUNT_BLOCK		=> count_block,
 	CONTENDED 		=> memory_contention,
+	-- OCH: added to not contend in turbo mode
+	TURBO_MODE 		=> turbo_mode,
 	
 	-- DIVMMC signals
    DIVMMC_EN		=> divmmc_en,
@@ -918,6 +933,7 @@ port map (
 	 MAX_TURBO 		=> max_turbo,
 	 SCREEN_MODE   => kb_screen_mode,
 	 DIVMMC_EN 		=> divmmc_en,
+	 NEMOIDE_EN 	=> nemoide_en,
 	 
 	 LOADED 			=> kb_loaded,
 	 
@@ -966,8 +982,17 @@ port map (
 	BUS_CS3FX		=> hdd_cs3fx_n,
 	BUS_FDC_STEP	=>	FDC_STEP and turbo_fdc_off,
 	BUS_CSFF			=> fdd_cs_pff_n,
-	BUS_FDC_NCS		=> fdd_cs_n
-
+	BUS_FDC_NCS		=> fdd_cs_n,
+	
+	-- Nemo HDD bus signals
+	BUS_A7				=> cpu_a_bus(7),
+	BUS_nemo_ebl_n		=> nemo_ebl_n, -- OCH: also nemo_ebl_n is passed to CPLD via SDIR pin to select NEMOIDE HDD
+	BUS_IOW				=> IOW,
+	BUS_WRH 				=> WRH,
+	BUS_IOR 				=> IOR,
+	BUS_RDH 				=> RDH,
+	BUS_nemo_cs0		=> nemo_cs0,
+	BUS_nemo_cs1		=> nemo_cs1
 );
 
 -- Serial mouse emulation
@@ -1173,10 +1198,13 @@ cpu_wait_n <= '1';
 -- max turbo = 14 MHz
 max_turbo <= "10";
 
-clk_cpu <= '0' when kb_wait = '1' or  (kb_screen_mode = "01" and memory_contention = '1' and automap = '0' and DS80 = '0') or WAIT_IO = '0' else 
+--OCH: automap = '0' and cs_nemo_ports = '0' - not contend DIVMMC and NEMO ports in CLASSIC screen mode
+clk_cpu <= '0' when kb_wait = '1' or  (kb_screen_mode = "01" and memory_contention = '1' and automap = '0' and cs_nemo_ports = '0' and DS80 = '0') or WAIT_IO = '0' else 
 	clk_bus when turbo_mode = "11" and turbo_mode <= max_turbo else 
-	clk_bus and ena_div2 when turbo_mode = "10" and turbo_mode <= max_turbo else 
-	clk_bus and ena_div4 when turbo_mode = "01" and turbo_mode <= max_turbo else 
+	-- OCH: disable turbo in trdos to be sure what all programming delays are original
+	-- in DIVMMC turbo can be enabled 
+	clk_bus and ena_div2 when turbo_mode = "10" and turbo_mode <= max_turbo and (dos_act='0' or automap = '1') else 
+	clk_bus and ena_div4 when turbo_mode = "01" and turbo_mode <= max_turbo and (dos_act='0' or automap = '1') else 
 	clk_bus and ena_div8;
 
 -- одновибратор - по спаду /IORQ отсчитывает 400нс вейта проца 
@@ -1205,7 +1233,7 @@ led1_overwrite <= '1';
 process (clk_bus, hdd_wwe_n, hdd_rww_n, SD_NCS)
 begin
 	if rising_edge(clk_bus) then
-		if (hdd_wwe_n = '0') or (hdd_rww_n = '0') or (SD_NCS = '0') then
+		if (IOW = '0') or (IOR ='0') or (hdd_wwe_n = '0') or (hdd_rww_n = '0') or (SD_NCS = '0') then
 			led1 <= '1';
 		else 
 			led1 <= '0';
@@ -1332,7 +1360,9 @@ sound_off <= port_028b_reg(4);									-- 4 	- Sound_off
 turbo_mode <= port_028b_reg(6 downto 5);						-- 5,6- Turbo Mode Selector 
 lock_dffd <= port_028b_reg(7);								 	-- 7 	- Lock port DFFD
 
-SDIR <= fdc_swap;
+-- OCH: fdd currently disabled, should be implemented with xFF (TRDOS) port bit swapping
+-- the SDIR pin now used to select NEMOIDE HDD
+--SDIR <= fdc_swap;
 
 ext_rom_bank_pq <= ext_rom_bank when rom0 = '0' else "01";	-- ROMBANK ALT
 
@@ -1349,15 +1379,19 @@ sco 	<= port_dffd_reg(3); -- Выбор положения окна проеци
 --ram_ext <= port_1ffd_reg(7) & port_1ffd_reg(4) & port_dffd_reg(2 downto 0); -- kay512+ profi 1024
 ram_ext <= port_7ffd_reg(6) & port_7ffd_reg(7) & port_dffd_reg(2 downto 0); -- pent 512 + profi 1024
 
-cs_xxfe <= '1' when cpu_iorq_n = '0' and cpu_a_bus(0) = '0' else '0';
+-- OCH: change decoding of #FE port when Nemo enabled  
+cs_xxfe <= '1' when (cpu_iorq_n = '0' and cpu_a_bus(0) = '0' and nemoide_en = '0') or 
+						  (cpu_iorq_n = '0' and cpu_a_bus(6 downto 0) = "1111110" and nemoide_en = '1') else '0';
 cs_xx7e <= '1' when cs_xxfe = '1' and cpu_a_bus(7) = '0' else '0';
 cs_eff7 <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and cpu_a_bus = X"EFF7" else '0';
 cs_fffd <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and cpu_a_bus = X"FFFD" and fd_port = '1' else '0';
 cs_dffd <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and cpu_a_bus = X"DFFD" and fd_port = '1' and lock_dffd = '0' else '0';
 cs_7ffd <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and cpu_a_bus = X"7FFD" and fd_port = '1' else '0';
 cs_1ffd <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and cpu_a_bus = X"1FFD" and fd_port = '1' else '0';
-cs_xxfd <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and cpu_a_bus(15) = '0' and cpu_a_bus(1) = '0' else '0';
-
+-- OCH: change decoding of #FD port when Nemo enabled
+cs_xxfd <= '1' when (cpu_iorq_n = '0' and cpu_m1_n = '1' and cpu_a_bus(15) = '0' and cpu_a_bus(1) = '0' and nemoide_en = '0') or
+						  (cpu_iorq_n = '0' and cpu_m1_n = '1' and cpu_a_bus(15) = '0' and cpu_a_bus(7 downto 0) = x"FD" and nemoide_en = '1') else '0';
+						  
 -- Регистры SPI-FLASH
 cs_xxC7 <= '1' when cpu_iorq_n = '0' and cpu_a_bus (7 downto 0) = X"C7" and cpm='1' and rom14='1' and ds80='1' else '0';
 cs_xx87 <= '1' when cpu_iorq_n = '0' and cpu_a_bus (7 downto 0) = X"87" and cpm='1' and rom14='1' and ds80='1' and fw_update_mode='1' else '0';
@@ -1385,7 +1419,42 @@ hdd_wwe_n 	<='0' when (cpu_wr_n='0' and cpu_a_bus(7 downto 0)="11101011" and cpu
 hdd_rww_n 	<='0' when (cpu_wr_n='1' and cpu_a_bus(7 downto 0)="11001011" and cpu_iorq_n='0') and ((cpm='1' and rom14='1') or (dos_act='1' and rom14='0')) and hdd_off = '0' else '1'; -- Selector Low byte Data bus Buffer Direction: 1 - to HDD bus, 0 - to Data bus
 hdd_rwe_n 	<='0' when (cpu_wr_n='1' and cpu_a_bus(7 downto 0)="11101011" and cpu_iorq_n='0') and ((cpm='1' and rom14='1') or (dos_act='1' and rom14='0')) and hdd_off = '0' else '1'; -- Read High byte from "Read register" to Data bus
 hdd_cs3fx_n <='0' when (cpu_wr_n='0' and cpu_a_bus(7 downto 0)="10101011" and cpu_iorq_n='0') and ((cpm='1' and rom14='1') or (dos_act='1' and rom14='0')) and hdd_off = '0' else '1';
-hdd_active <= not(hdd_wwc_n and hdd_wwe_n and hdd_rww_n and hdd_rwe_n);
+hdd_active <= not(hdd_wwc_n and hdd_wwe_n and hdd_rww_n and hdd_rwe_n) or not(WRH and IOW and IOR and RDH);
+
+-- порты Nemo HDD
+
+--0XF0			;РЕГИСТР СОСТОЯНИЯ/РЕГИСТР КОМАНД
+--0XD0			;CHS-НОМЕР ГОЛОВЫ И УСТР/LBA АДРЕС 24-27
+--0XB0			;CHS-ЦИЛИНДР 8-15/LBA АДРЕС 16-23
+--0X90			;CHS-ЦИЛИНДР 0-7/LBA АДРЕС 8-15
+--0X70			;CHS-НОМЕР СЕКТОРА/LBA АДРЕС 0-7
+--0X50			;СЧЕТЧИК СЕКТОРОВ
+--0X30			;ПОРТ ОШИБОК/СВОЙСТВ
+--0X10			;ПОРТ ДАННЫХ
+--0XC8			;РЕГИСТР СОСТОЯНИЯ/УПРАВЛЕНИЯ
+--0X11			;СТАРШИЕ 8 БИТ
+
+cs_nemo_ports <= '1' when (cpu_a_bus(7 downto 0) = x"F0" or 
+									cpu_a_bus(7 downto 0) = x"D0" or 
+									cpu_a_bus(7 downto 0) = x"B0" or 
+									cpu_a_bus(7 downto 0) = x"90" or 
+									cpu_a_bus(7 downto 0) = x"70" or 
+									cpu_a_bus(7 downto 0) = x"50" or 
+									cpu_a_bus(7 downto 0) = x"30" or 
+									cpu_a_bus(7 downto 0) = x"10" or 
+									cpu_a_bus(7 downto 0) = x"C8" or 
+									cpu_a_bus(7 downto 0) = x"11") and cpu_iorq_n = '0' and cpm = '0' else '0'; 
+
+nemo_ebl_n <= '0' when cs_nemo_ports = '1' and cpu_m1_n='1' and nemoide_en = '1' else '1';
+IOW <='0' when cpu_a_bus(2 downto 0)="000" and cpu_m1_n='1' and cpu_iorq_n='0' and cpm='0' and cpu_wr_n='0' else '1';
+WRH <='0' when cpu_a_bus(2 downto 0)="001" and cpu_m1_n='1' and cpu_iorq_n='0' and cpm='0' and cpu_wr_n='0' else '1';
+IOR <='0' when cpu_a_bus(2 downto 0)="000" and cpu_m1_n='1' and cpu_iorq_n='0' and cpm='0' and cpu_rd_n='0' else '1';
+RDH <='0' when cpu_a_bus(2 downto 0)="001" and cpu_m1_n='1' and cpu_iorq_n='0' and cpm='0' and cpu_rd_n='0' else '1';
+nemo_cs0<= cpu_a_bus(3) when nemo_ebl_n='0' else '1';
+nemo_cs1<= cpu_a_bus(4) when nemo_ebl_n='0' else '1';
+nemo_ior<= ior when nemo_ebl_n='0' else '1';
+-- OCH:
+SDIR <= not nemo_ebl_n;
 
 -- порты Profi FDD
 RT_F2_1 <='0' when (cpu_a_bus(7 downto 5)="001" and cpu_a_bus(1 downto 0)="11" and cpu_iorq_n='0') and ((cpm='1' and rom14='1') or (dos_act='1' and rom14='0')) else '1'; --6D
@@ -1717,6 +1786,7 @@ begin
 		when x"16" => cpu_di_bus <= zifi_do_bus;
 		when x"17" => cpu_di_bus <= vid_attr;
 		when x"18" => cpu_di_bus <= cpld_do;
+		when x"19" => cpu_di_bus <= cpld_do; -- nemo
 		when others => cpu_di_bus <= (others => '1');
 	end case;
 end process;
@@ -1725,6 +1795,7 @@ selector <=
 	x"00" when (ram_oe_n = '0') else -- ram / rom
 	x"01" when (cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_m1_n = '1' and cs_rtc_ds = '1') else -- RTC MC146818A
 	x"02" when (cs_xxfe = '1' and cpu_rd_n = '0') else 									-- Keyboard, port #FE
+	x"19" when (nemo_ebl_n = '0' and cpu_rd_n = '0') else									-- nemo
  	x"03" when (cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_m1_n = '1' and (cpu_a_bus(7 downto 0) = X"57" or (cpu_a_bus(7 downto 0) = X"EB" and cpm = '0')) and is_flash_not_sd = '0') else 	-- Z-Controller + DivMMC
 	x"04" when (cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_m1_n = '1' and cpu_a_bus(7 downto 0) = X"77" and is_flash_not_sd = '0') else 	-- Z-Controller
 	x"05" when (cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_m1_n = '1' and cpu_a_bus( 7 downto 0) = X"1F" and dos_act = '0' and cpm = '0' and joy_mode = "000") else -- Joystick, port #1F

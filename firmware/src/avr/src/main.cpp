@@ -148,6 +148,7 @@ void on_keyboard (uint8_t event_type, uint16_t scancode)
       case ZXKeyboard::EVENT_OSD_TURBO:  zxosd.updateTurbo(); break;
       case ZXKeyboard::EVENT_OSD_SCREEN_MODE: zxosd.updateScreenMode(); break;
       case ZXKeyboard::EVENT_OSD_DIVMMC: zxosd.updateDivmmc(); break;
+      case ZXKeyboard::EVENT_OSD_NEMOIDE: zxosd.updateNemoIDE(); break;
     }
   } else {
     switch (event_type) {
@@ -166,6 +167,7 @@ void on_keyboard (uint8_t event_type, uint16_t scancode)
       case ZXKeyboard::EVENT_OSD_TURBO:
       case ZXKeyboard::EVENT_OSD_SCREEN_MODE: 
       case ZXKeyboard::EVENT_OSD_DIVMMC:
+      case ZXKeyboard::EVENT_OSD_NEMOIDE:
         tpopup = millis();
         if (!zxkbd.getIsOsdPopup()) {
           zxosd.clear();
