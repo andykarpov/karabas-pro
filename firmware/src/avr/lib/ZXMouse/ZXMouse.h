@@ -28,7 +28,7 @@
 
 #define MOUSE_POLL_INTERVAL 10 // ms
 #define MOUSE_SWAP_INTERVAL 1000 // ms
-#define MOUSE_INIT_TRIES 2
+#define MOUSE_INIT_TRIES 3
 
 #ifndef MOUSE_POLL_TYPE
 #define MOUSE_POLL_TYPE 0 // 1 = poll, 0 = stream

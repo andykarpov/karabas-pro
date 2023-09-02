@@ -281,10 +281,16 @@ void setup()
   pinMode(PIN_BTN1, INPUT_PULLUP);
   pinMode(PIN_BTN2, INPUT_PULLUP);
 
+  pinMode(PIN_KBD_CLK, INPUT_PULLUP);
+  pinMode(PIN_KBD_DAT, INPUT_PULLUP);
+  
+  pinMode(PIN_MOUSE_CLK, INPUT_PULLUP);
+  pinMode(PIN_MOUSE_DAT, INPUT_PULLUP);
+
   zxkbd.begin(spi_send, on_keyboard, SEND_ECHO_ON_START);
-  zxrtc.begin(spi_send, on_time);
   zxmouse.begin(spi_send, on_mouse);
   zxmouse.setMouseSwap(zxkbd.getMouseSwap());
+  zxrtc.begin(spi_send, on_time);
   zxjoy.begin(spi_send, on_joystick);
   zxosd.begin(spi_send);
   const char* ver = STRINGIFY(BUILD_VER);
@@ -324,9 +330,9 @@ void loop()
   zxkbd.handle();
   zxosd.handle();
   zxkbd.transmit();
+  zxmouse.handle(zxkbd.getIsMenu());
   zxrtc.handle();
   zxjoy.handle(zxkbd.getJoyType());
-  zxmouse.handle(zxkbd.getIsMenu());
 
   // react on hardware buttons every 100ms
 #if USE_HW_BUTTONS
