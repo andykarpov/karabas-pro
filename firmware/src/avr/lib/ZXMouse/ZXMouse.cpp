@@ -61,8 +61,8 @@ void ZXMouse::handle(bool menu)
 {
   unsigned long n = millis();
 
-  // try to re-init mouse every 100us if not present, up to N tries
-  if (mouse_tries > 0 && !mouse_present && n - tm > 100) {
+  // try to re-init mouse every 200us if not present, up to N tries
+  if (mouse_tries > 0 && !mouse_present && n - tm > 200) {
     mouse_tries--;
     init();
     tm = n;

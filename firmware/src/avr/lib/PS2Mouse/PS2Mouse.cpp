@@ -62,7 +62,7 @@ bool PS2Mouse::initialize(void) {
 bool PS2Mouse::streamInitialize(void) {
   high(_clockPin);
   high(_dataPin);
-  reset();
+  if (!reset()) return false;
   setResolution(RESOLUTION_8_COUNTS_PER_MM);
   setScaling(SCALING_1_TO_1);
   setSampleRate(40);
