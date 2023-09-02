@@ -139,13 +139,13 @@ const static char msg_one_day[] PROGMEM = {" день"};
 const static char msg_many_days[] PROGMEM = {" дней"};
 
 const static char msg_dev_andykarpov[] PROGMEM = {" эндикарпов"};
-const static char msg_dev_andykarpov_skills[] PROGMEM = {" ПЛИС, АВР, плата"};
+const static char msg_dev_andykarpov_skills[] PROGMEM = {""};
 const static char msg_dev_solegstar[] PROGMEM = {" солегстар "};
-const static char msg_dev_solegstar_skills[] PROGMEM = {" ПЛИС, плата"};
+const static char msg_dev_solegstar_skills[] PROGMEM = {""};
 const static char msg_dev_drmax[] PROGMEM = {" др. макс  "};
-const static char msg_dev_drmax_skills[] PROGMEM = {" ФлешТул и ФДИмаге"};
+const static char msg_dev_drmax_skills[] PROGMEM = {""};
 const static char msg_dev_nihirash[] PROGMEM = {" нихираш   "};
-const static char msg_dev_nihirash_skills[] PROGMEM = {" Интернет софт"};
+const static char msg_dev_nihirash_skills[] PROGMEM = {""};
 const static char msg_dev_kalantaj[] PROGMEM = {" калантадж"};
 const static char msg_dev_tankuk[] PROGMEM = {" танкуша"};
 const static char msg_dev_xdemox[] PROGMEM = {" хдемох"};
