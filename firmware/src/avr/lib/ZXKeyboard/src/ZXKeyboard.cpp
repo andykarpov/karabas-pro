@@ -348,7 +348,7 @@ void ZXKeyboard::fill(uint16_t sc, unsigned long n)
 
     // Alt (L) -> SS+Enter for Profi, SS+CS for ZX
     case PS2_KEY_L_ALT:
-      if (!is_ctrl) {
+      if (!is_ctrl || is_up) {
         matrix[ZX_K_SS] = !is_up;
         matrix[profi_mode ? ZX_K_ENT : ZX_K_CS] = !is_up;
         if (!profi_mode) {
@@ -360,7 +360,7 @@ void ZXKeyboard::fill(uint16_t sc, unsigned long n)
 
     // Alt (R) -> SS + Space for Profi, SS+CS for ZX
     case PS2_KEY_R_ALT:
-      if (!is_ctrl) {
+      if (!is_ctrl || is_up) {
         matrix[ZX_K_SS] = !is_up;
         matrix[profi_mode ? ZX_K_SP : ZX_K_CS] = !is_up;
         if (!profi_mode) {
