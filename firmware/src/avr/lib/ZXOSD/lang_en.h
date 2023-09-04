@@ -101,8 +101,8 @@ const static char msg_year[] PROGMEM = {"Year"};
 const static char msg_dow[] PROGMEM = {"DOW"};
 const static char msg_please_use_arrows[] PROGMEM = {"Please use arrows "};
 const static char msg_and[] PROGMEM = {" and "};
-const static char msg_to_change_values[] PROGMEM = {"to change values, "};
-const static char msg_to_navigate[] PROGMEM = {"to navigate by menu items"};
+const static char msg_to_change_values[] PROGMEM = {", "}; //{"to change values, "};
+const static char msg_to_navigate[] PROGMEM = {""}; //{"to navigate by menu items"};
 
 const static char msg_about[] PROGMEM = {"About"};
 const static char msg_karabas_developers_are[] PROGMEM = {"Karabas Pro developers are"};

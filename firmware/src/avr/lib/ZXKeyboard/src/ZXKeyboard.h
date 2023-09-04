@@ -235,6 +235,7 @@ private:
   void processDelayedKeypress();
   void sendMacros(uint8_t code, uint8_t zxkey);
   uint8_t getMatrixByte(uint8_t pos);
+  void sendCS();
 
   bool eepromRestoreBool(int addr, bool default_value);
   void eepromStoreBool(int addr, bool value);

@@ -413,6 +413,7 @@ void ZXKeyboard::fill(uint16_t sc, unsigned long n)
       if (!is_shift) {
         cursor_up = !is_up;
         matrix[ZX_K_CS] = !is_up;
+        if (!is_up) { sendCS(); }
         matrix[ZX_K_7] = !is_up;
         processCapsedKey(code, is_up);
       }
@@ -421,6 +422,7 @@ void ZXKeyboard::fill(uint16_t sc, unsigned long n)
       if (!is_shift) {
         cursor_down = !is_up;
         matrix[ZX_K_CS] = !is_up;
+        if (!is_up) { sendCS(); }
         matrix[ZX_K_6] = !is_up;
         processCapsedKey(code, is_up);
       }
@@ -429,6 +431,7 @@ void ZXKeyboard::fill(uint16_t sc, unsigned long n)
       if (!is_shift) {
         cursor_left = !is_up;
         matrix[ZX_K_CS] = !is_up;
+        if (!is_up) { sendCS(); }
         matrix[ZX_K_5] = !is_up;
         processCapsedKey(code, is_up);
       }
@@ -437,6 +440,7 @@ void ZXKeyboard::fill(uint16_t sc, unsigned long n)
       if (!is_shift) {
         cursor_right = !is_up;
         matrix[ZX_K_CS] = !is_up;
+        if (!is_up) { sendCS(); }
         matrix[ZX_K_8] = !is_up;
         processCapsedKey(code, is_up);
       }
@@ -998,6 +1002,18 @@ void ZXKeyboard::fill(uint16_t sc, unsigned long n)
     capsed_keys_size = 0;
     doFullReset();
   }
+}
+
+void ZXKeyboard::sendCS() {
+  // send 2 bytes of the keyboard matrix with CS pressed
+#if SEND_ECHO_ON_START
+#else
+  uint8_t cs_data = getMatrixByte(0);
+  uint8_t end_data = getMatrixByte(5);
+  action(CMD_KBD, 1, cs_data);
+  action(CMD_KBD, 6, end_data);
+  delay(20);
+#endif
 }
 
 void ZXKeyboard::delayedKeypress(uint8_t code, uint8_t zxkey1, uint8_t zxkey2, bool up) {
