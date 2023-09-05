@@ -1204,9 +1204,9 @@ max_turbo <= "10";
 clk_cpu <= '0' when kb_wait = '1' or  (kb_screen_mode = "01" and memory_contention = '1' and automap = '0' and cs_nemo_ports = '0' and DS80 = '0') or WAIT_IO = '0' else 
 	clk_bus when turbo_mode = "11" and turbo_mode <= max_turbo else 
 	-- OCH: disable turbo in trdos to be sure what all programming delays are original
-	-- in DIVMMC turbo can be enabled 
-	clk_bus and ena_div2 when turbo_mode = "10" and turbo_mode <= max_turbo and (dos_act='0' or automap = '1') else 
-	clk_bus and ena_div4 when turbo_mode = "01" and turbo_mode <= max_turbo and (dos_act='0' or automap = '1') else 
+	-- 06.09.2023:OCH: fixed turbo mode by adding all condition when it can be enabled, i'm not sure about ds80 = 1 but let it be
+	clk_bus and ena_div2 when turbo_mode = "10" and turbo_mode <= max_turbo and (dos_act='0' or DIVMMC_EN = '1' or cpm = '1' or onrom = '1' or ds80 = '1') else 
+	clk_bus and ena_div4 when turbo_mode = "01" and turbo_mode <= max_turbo and (dos_act='0' or DIVMMC_EN = '1' or cpm = '1' or onrom = '1' or ds80 = '1') else 
 	clk_bus and ena_div8;
 
 -- одновибратор - по спаду /IORQ отсчитывает 400нс вейта проца 
