@@ -20,6 +20,8 @@ entity bus_port is
 	CPLD_CLK 	: out std_logic;
 	CPLD_CLK2	: out std_logic;
 	NRESET 		: out std_logic;
+	-- OCH: fix fdd swap 
+	FDC_SWAP		: in std_logic;
 
 	-- zx bus signals to rx/tx from/to the CPLD controller
 	BUS_A 		: in std_logic_vector(4 downto 0);
@@ -54,7 +56,7 @@ signal cnt			: std_logic_vector(1 downto 0) := "00";
 signal prev_clk_cpu : std_logic := '0';
 signal bus_a_reg	: std_logic_vector(15 downto 0);
 signal bus_d_reg	: std_logic_vector(7 downto 0);
-
+signal fdd_id : std_logic_vector(1 downto 0);
 begin
 	
 	CPLD_CLK <= CLK;
@@ -62,7 +64,10 @@ begin
 	NRESET <= not reset;
 	SA <= cnt;	
 	BUS_DO <= SD(15 downto 8);
-
+	-- OCH: fix fdd swap 
+	fdd_id <= "00" when bus_di(1 downto 0) = "01" else
+				 "01" when bus_di(1 downto 0) = "00" else
+				  bus_di(1 downto 0);
 	process (CLK, BUS_HDD_CS_N, BUS_FDC_NCS, BUS_CSFF, BUS_CS3FX, BUS_RWE, BUS_RWW, BUS_WWE, BUS_WWC, BUS_FDC_STEP, BUS_RD_N, BUS_WR_N, bus_a, bus_di)
 	begin 
 		if CLK'event and CLK = '1' then
@@ -73,7 +78,12 @@ begin
 					bus_a_reg <= BUS_HDD_CS_N & BUS_FDC_NCS & BUS_CSFF & BUS_CS3FX & BUS_RWE & BUS_RWW & 
 									 BUS_WWE & BUS_WWC & BUS_FDC_STEP & BUS_RD_N & BUS_WR_N & bus_a;
 			end if;
-			bus_d_reg <= bus_di;
+			-- OCH: fix fdd swap 
+			if BUS_CSFF = '0' and FDC_SWAP = '1' then
+				bus_d_reg <= bus_di(7 downto 2) & fdd_id;
+			else
+				bus_d_reg <= bus_di;
+			end if;
 		end if;
 	end process;
 

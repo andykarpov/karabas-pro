@@ -968,6 +968,8 @@ port map (
 	CPLD_CLK 		=> CPLD_CLK,
 	CPLD_CLK2 		=> CPLD_CLK2,
 	NRESET 			=> NRESET,
+	-- OCH: fix fdd swap
+	FDC_SWAP			=> fdc_swap,
 
 	BUS_A 			=> cpu_a_bus(10 downto 8) & cpu_a_bus(6 downto 5),
 	BUS_DI 			=> cpu_do_bus,
