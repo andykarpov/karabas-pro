@@ -36,9 +36,9 @@ port (
 	N_MRD 		: out std_logic;
 	N_MWR 		: out std_logic;
 	
-	N_CE1 		: out std_logic;
-	N_CE2 		: out std_logic;
-	N_CE3 		: out std_logic;
+	N_CE1 		: out std_logic := '0';
+	N_CE2 		: out std_logic := '1';
+	N_CE3 		: out std_logic := '1';
 	
 	RAM_BANK		: in std_logic_vector(2 downto 0);
 	RAM_EXT 		: in std_logic_vector(4 downto 0);
@@ -211,8 +211,8 @@ begin
 
 		---08.07.2023:OCH: DIVMMC signaling when we must map rom or ram of DIVMMC interface to Z80 adress space
 	---maybe it not necessary A(15 downto 13) ? Only check for A(13)?
-	is_romDIVMMC <= '1' when N_MREQ = '0' and (AUTOMAP ='1' or REG_E3(7) = '1') and A(15 downto 13) = "000" else '0';
-	is_ramDIVMMC <= '1' when N_MREQ = '0' and (AUTOMAP ='1' or REG_E3(7) = '1') and A(15 downto 13) = "001" else '0';
+	is_romDIVMMC <= '1' when DIVMMC_EN = '1' and N_MREQ = '0' and (AUTOMAP ='1' or REG_E3(7) = '1') and A(15 downto 13) = "000" else '0';
+	is_ramDIVMMC <= '1' when DIVMMC_EN = '1' and N_MREQ = '0' and (AUTOMAP ='1' or REG_E3(7) = '1') and A(15 downto 13) = "001" else '0';
 	
 	is_rom <= '1' when N_MREQ = '0' and A(15 downto 14)  = "00"  and WOROM = '0' else '0';
 	is_ram <= '1' when N_MREQ = '0' and is_rom = '0' else '0';	
