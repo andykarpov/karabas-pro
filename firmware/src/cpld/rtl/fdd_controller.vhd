@@ -156,14 +156,15 @@ begin
 			end if;
 		end if;
 	end process;
-
---	FDC_DS0 <= '1' when pff(1 downto 0) = "00" else '0';
---	FDC_DS1 <= '1' when pff(1 downto 0) = "01" else '0';
+-- OCH: uncommented because fdd swap implemented on fpga side
+FDC_DS0 <= '1' when pff(1 downto 0) = "00" else '0';
+FDC_DS1 <= '1' when pff(1 downto 0) = "01" else '0';
 --- OCH: swap of FDD drives is temporary disabled (will implemented on FPGA side)
 --	FDC_DS0 <= not (pff(0) xor FDD_CHNG) and not pff(1);
 --	FDC_DS1 <= (pff(0) xor FDD_CHNG) and not pff(1);
-FDC_DS0 <= not pff(0) and not pff(1);
-FDC_DS1 <= pff(0) and not pff(1);
+--- OCH: fdd swap implemented on fpga side (only 2 drives supported in karabas pro without hardware improvements) 
+-- FDC_DS0 <= not pff(0) and not pff(1);
+-- FDC_DS1 <= pff(0) and not pff(1);
 
 	----------------port ff to WG93------------------------------
 	process(CLK,pff,BUS_DI,BUS_WR_N,csff,NRESET)
