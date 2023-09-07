@@ -4,7 +4,7 @@
 
 ## Intro
 
-ZX Spectrum compatible machine with a soft CPU, FDD and HDD (CF card) controllers, PS/2 keyboard/mouse, ESP8266 UART, RTC, VGA output and all logic inside the Altera FPGA **EP4CE6**.
+ZX Spectrum compatible machine with a soft CPU, FDD and HDD (CF card) controllers, PS/2 keyboard/mouse, ESP8266 UART, RTC, VGA output and all logic inside the Altera FPGA **EP4CE10**.
 
 ## The idea
 
@@ -25,9 +25,9 @@ The idea was to make a smaller Profi (Профи) ZX Spectrum clone, with real F
 9) Kempston joystick support
 10) SEGA joystick support
 11) RTC (profi), emulated read/write support
-12) SD card access via Z-Controller emulation
+12) SD card access via Z-Controller emulation as well as DivMMC
 13) Turbo 7 MHz (nowait) and Turbo 14 Mhz (with wait cycles)
-14) ZX UNO simple UART @115200 for ESP8266 module (a secondary ZX UNO UART available on uBus connector for EP4CE10)
+14) ZX UNO simple UART @115200 for ESP8266 module, ZiFi API support (a secondary ZX UNO UART available on uBus connector for EP4CE10)
 15) An additional ROM bank with **PQ-DOS BIOS**
 16) An additional ROM bank with **Flash Tool** by **Doctor Max** to upgrade the FGPA firmware and ROM banks without programmer
 17) An additional ROM bank with **FDImage Tool** by **Doctor Max** to extract TRD, SCL, PRO, TD0 and FDI images on real floppies
