@@ -279,6 +279,7 @@ public:
   void clear(int clear_size);
   void transmit();
 
+  void doSpecial(uint8_t key1, uint8_t key2);
   void doReset();
   void doFullReset();
   void doMagic();
