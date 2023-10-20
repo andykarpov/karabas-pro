@@ -69,6 +69,7 @@ const static char msg_50hz[] PROGMEM = {"50 Hz"};
 const static char msg_60hz[] PROGMEM = {"60 Hz"};
 const static char msg_pentagon[] PROGMEM = {"Pentagon"};
 const static char msg_classic[] PROGMEM = {"Classic"};
+const static char msg_128[] PROGMEM = {"128"};
 const static char msg_profi_xt[] PROGMEM = {"Profi XT"};
 const static char msg_spectrum[] PROGMEM = {"Spectrum"};
 const static char msg_month_jan[] PROGMEM = {"Jan"};
