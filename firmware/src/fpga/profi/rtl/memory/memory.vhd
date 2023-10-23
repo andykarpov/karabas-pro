@@ -12,7 +12,7 @@ port (
 	CLK2X 		: in std_logic;
 	CLKX	   	: in std_logic;
 	CLK_CPU 		: in std_logic;
-
+	
 	A           : in std_logic_vector(15 downto 0); -- address bus
 	D 				: in std_logic_vector(7 downto 0);
 	N_MREQ		: in std_logic;
@@ -164,13 +164,15 @@ begin
 		loader_ram_a(13 downto 0) when loader_act = '1' else -- loader ram
 --- 08.07.2023:OCH: set DIVMMC low adress
 		REG_E3(0) & A(12 downto 0) when vbus_mode = '0' and is_ramDIVMMC = '1' else -- DIVMMC ram
+		'1' & A(12 downto 0) when vbus_mode = '0' and is_romDIVMMC = '1' and REG_E3(6) = '1' else -- DIVMMC rom mapped from page 3 of divmmc ram
 		A(13 downto 0) when vbus_mode = '0' else -- spectrum ram or DIVMMC rom
 		VA; -- video ram (read by video controller)
 
 	MA(20 downto 14) <= 
 		loader_ram_a(20 downto 14) when loader_act = '1' else -- loader ram
 --- 08.07.2023:OCH: set DIVMMC high adress
-		"1010000" when is_romDIVMMC = '1' and vbus_mode = '0' else -- DIVMMC rom
+		"1010000" when is_romDIVMMC = '1' and vbus_mode = '0'  and REG_E3(6) = '0' else -- DIVMMC rom
+		"1100001" when is_romDIVMMC = '1' and vbus_mode = '0'  and REG_E3(6) = '1' else -- DIVMMC rom mapped from page 3 of divmmc ram
 		"11" & REG_E3(5 downto 1) when is_ramDIVMMC = '1' and vbus_mode = '0' else -- DIVMMC ram 512 kB from #X180000 SRAM
 ---
 		"100" & EXT_ROM_BANK(1 downto 0) & rom_page(1 downto 0) when is_rom = '1' and vbus_mode = '0' else -- rom from sram high bank 
@@ -181,7 +183,7 @@ begin
 		"0000000";
 	
 	MD(7 downto 0) <= 
-		loader_ram_do when loader_act = '1' else -- loader DO
+		loader_ram_do when loader_act = '1' else -- loader DO  
 		D(7 downto 0) when vbus_mode = '0' and ((is_ram = '1' or is_ramDIVMMC = '1' or (N_IORQ = '0' and N_M1 = '1')) and N_WR = '0') else  -- OCH: why (N_IORQ = '0' and N_M1 = '1') this used in memory controller? and in write mode
 		(others => 'Z');
 		
@@ -210,7 +212,6 @@ begin
 	end process;
 
 		---08.07.2023:OCH: DIVMMC signaling when we must map rom or ram of DIVMMC interface to Z80 adress space
-	---maybe it not necessary A(15 downto 13) ? Only check for A(13)?
 	is_romDIVMMC <= '1' when DIVMMC_EN = '1' and N_MREQ = '0' and (AUTOMAP ='1' or REG_E3(7) = '1') and A(15 downto 13) = "000" else '0';
 	is_ramDIVMMC <= '1' when DIVMMC_EN = '1' and N_MREQ = '0' and (AUTOMAP ='1' or REG_E3(7) = '1') and A(15 downto 13) = "001" else '0';
 	
@@ -222,7 +223,7 @@ begin
 	-- 10 - bank 2, Basic-128
 	-- 11 - bank 3, Basic-48
 
-	rom_page <= (not(TRDOS)) & ROM_BANK when DIVMMC_EN = '0' else "11";
+	rom_page <= (not(TRDOS)) & ROM_BANK when DIVMMC_EN = '0' else "1" & ROM_BANK;
 			
 	N_OE <= '0' when (is_ram = '1' or is_rom = '1') and N_RD = '0' else '1';
 		
@@ -270,7 +271,8 @@ begin
 		end if;
 	end process;
 	
-	page_cont <= '1' when (A(0) = '0' and N_IORQ = '0') or mux="01" else '0';
+	---20.10.2023:OCH: add 'or (mux="11" and RAM_BANK(0) ='1')' to consider contend 1,3,5,7 pages for screen mode '10'
+	page_cont <= '1' when (A(0) = '0' and N_IORQ = '0') or mux="01" or (mux="11" and RAM_BANK(0) ='1') else '0';
 	
 	process (clk2x)
 	begin 

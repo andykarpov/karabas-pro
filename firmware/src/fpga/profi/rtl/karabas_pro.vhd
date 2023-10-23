@@ -239,7 +239,7 @@ signal mapterm 		: std_logic;
 signal map3DXX 		: std_logic; 
 signal map1F00 		: std_logic;
 signal mapcond 		: std_logic;
-
+signal tmp_port_e3_reg_b6 : std_logic;
 
 -- MC146818A
 signal mc146818_wr		: std_logic;
@@ -601,7 +601,7 @@ U5: entity work.T80a
 port map (
 	RESET_n			=> cpu_reset_n,
 	CLK_n			=> not clk_cpu,
-	CEN			=> '1',
+	--CEN			=> '1',
 	WAIT_n			=> cpu_wait_n,
 	INT_n				=> cpu_int_n and serial_ms_int,
 	NMI_n				=> cpu_nmi_n,
@@ -771,7 +771,9 @@ port map (
 	RGB_O(5 downto 3)	=> VGA_G,
 	RGB_O(2 downto 0)	=> VGA_B,
 	VSYNC_VGA		=> VGA_VS,
-	HSYNC_VGA		=> VGA_HS
+	HSYNC_VGA		=> VGA_HS,
+	---20.10.2023:OCH: Classic 128 mode "10"
+	SCREEN_MODE 	=> kb_screen_mode
 );
 
 -- SPI flash parallel interface
@@ -1201,17 +1203,17 @@ cpu_wait_n <= '1';
 max_turbo <= "10";
 
 --OCH: automap = '0' and cs_nemo_ports = '0' - not contend DIVMMC and NEMO ports in CLASSIC screen mode
-clk_cpu <= '0' when kb_wait = '1' or  (kb_screen_mode = "01" and memory_contention = '1' and automap = '0' and cs_nemo_ports = '0' and DS80 = '0') or WAIT_IO = '0' else 
-	clk_bus when turbo_mode = "11" and turbo_mode <= max_turbo else 
-	-- OCH: disable turbo in trdos to be sure what all programming delays are original
-	-- 06.09.2023:OCH: fixed turbo mode by adding all condition when it can be enabled, i'm not sure about ds80 = 1 but let it be
-	clk_bus and ena_div2 when turbo_mode = "10" and turbo_mode <= max_turbo and (dos_act='0' or DIVMMC_EN = '1' or cpm = '1' or onrom = '1' or ds80 = '1') else 
-	clk_bus and ena_div4 when turbo_mode = "01" and turbo_mode <= max_turbo and (dos_act='0' or DIVMMC_EN = '1' or cpm = '1' or onrom = '1' or ds80 = '1') else 
-	clk_bus and ena_div8;
+clk_cpu <= '0' when kb_wait = '1' or  ((kb_screen_mode = "01" or kb_screen_mode = "10") and memory_contention = '1' and automap = '0' and cs_nemo_ports = '0' and DS80 = '0') or WAIT_IO = '0' else 
+		clk_bus when turbo_mode = "11" and turbo_mode <= max_turbo else 
+		-- OCH: disable turbo in trdos to be sure what all programming delays are original
+		-- 06.09.2023:OCH: fixed turbo mode by adding all condition when it can be enabled, i'm not sure about ds80 = 1 but let it be
+		clk_bus and ena_div2 when turbo_mode = "10" and turbo_mode <= max_turbo and (dos_act='0' or DIVMMC_EN = '1' or cpm = '1' or onrom = '1' or ds80 = '1') else 
+		clk_bus and ena_div4 when turbo_mode = "01" and turbo_mode <= max_turbo and (dos_act='0' or DIVMMC_EN = '1' or cpm = '1' or onrom = '1' or ds80 = '1') else 
+		clk_bus and ena_div8;
+
 
 -- одновибратор - по спаду /IORQ отсчитывает 400нс вейта проца 
 -- для работы периферии в турбе или в режиме расширенного экрана 
-
 WAIT_IO <= WAIT_C(1);
 WAIT_C_STOP <=WAIT_C(1) and not WAIT_C(0);
 WAIT_EN <= reset or not turbo_mode(1);
@@ -1362,6 +1364,7 @@ sound_off <= port_028b_reg(4);									-- 4 	- Sound_off
 turbo_mode <= port_028b_reg(6 downto 5);						-- 5,6- Turbo Mode Selector 
 lock_dffd <= port_028b_reg(7);								 	-- 7 	- Lock port DFFD
 
+
 -- OCH: fdd currently disabled, should be implemented with xFF (TRDOS) port bit swapping
 -- the SDIR pin now used to select NEMOIDE HDD
 --SDIR <= fdc_swap;
@@ -1470,6 +1473,20 @@ RT_F1 <= RT_F1_1 and RT_F1_2;
 P0 <='0' when (cpu_a_bus(7)='1' and cpu_a_bus(4 downto 0)="00011" and cpu_iorq_n='0') and ((cpm='1' and rom14='1') or (dos_act='1' and rom14='0')) else '1';
 fdd_cs_n <= RT_F1 and P0;
 
+--- 09/15/2023:OCH: port_e3_reg(6) is moved separately, because unlike bits 7, 5-0 it uses a different asynchronous reset signal
+--- to avoid turning off the power to reset bit 6 - it can now be reset with the reset + kb_magic combination on the motherboard karabas_pro
+--- this is necessary for the convenience of using the mapram divmmc mode (in this mode you can display the *.rom image instead of Basic48)
+process (reset, kb_magic, port_e3_reg(6), clk_bus, cpu_iorq_n, cpu_wr_n, cpu_a_bus(7 downto 0), cpm, divmmc_en)
+begin
+	if reset = '1' and kb_magic = '1' then
+		port_e3_reg(6) <= '0';
+	elsif clk_bus'event and clk_bus = '1' then
+		if (cpu_iorq_n = '0' and cpu_wr_n = '0' and cpu_a_bus(7 downto 0) = X"E3" and cpm = '0' and divmmc_en = '1') then	
+			port_e3_reg(6) <= port_e3_reg(6) or cpu_do_bus(6);
+		end if;
+	end if;
+end process;
+
 -- Ports
 process (reset, areset, clk_bus, cpu_a_bus, dos_act, cs_xxfe, cs_eff7, cs_7ffd, cs_xxfd, port_7ffd_reg, port_1ffd_reg, cpu_mreq_n, cpu_m1_n, cpu_wr_n, cpu_do_bus, fd_port, cs_008b, kb_turbo, kb_turbo_old)
 begin
@@ -1491,14 +1508,15 @@ begin
 --- 06.07.2023:OCH: DIVMMC port added to ZController
 		port_e3_reg(5 downto 0) <= (others => '0');
 		port_e3_reg(7) <= '0';
-		
+		--port_e3_reg(6) <= tmp_port_e3_reg_b6 and not kb_magic;
 	elsif clk_bus'event and clk_bus = '1' then
 --- 06.07.2023:OCH: DIVMMC port E3 added to ZController
 			-- #xxE3
 --- 08.07.2023:OCH: Due to confict with port (E3) of fddcontroller in cpm mode
 --- block DIVMMC port E3 when in cpm
 			if (cpu_iorq_n = '0' and cpu_wr_n = '0' and cpu_a_bus(7 downto 0) = X"E3" and cpm = '0' and divmmc_en = '1') then	
-				port_e3_reg <=cpu_do_bus(7) & (port_e3_reg(6) or cpu_do_bus(6)) & cpu_do_bus(5 downto 0);
+				port_e3_reg(7) <=cpu_do_bus(7);
+				port_e3_reg(5 downto 0) <= cpu_do_bus(5 downto 0);
 			end if;		
 			
 			-- #EFF7
@@ -1574,8 +1592,8 @@ begin
 			end if;
 			
 			-- TR-DOS FLAG
-			if (((cpu_m1_n = '0' and cpu_mreq_n = '0' and cpu_a_bus(15 downto 8) = X"3D" and (rom14 = '1' or unlock_128 = '1')) or 
-			(cpu_nmi_n = '0'  and DS80 = '0')) and port_dffd_reg(4) = '0') or (onrom = '1') then dos_act <= '1';
+			if (((cpu_m1_n = '0' and cpu_mreq_n = '0' and cpu_a_bus(15 downto 8) = X"3D"  and (rom14 = '1' or unlock_128 = '1') and DIVMMC_EN = '0') or 
+			(cpu_nmi_n = '0'  and DS80 = '0')) and port_dffd_reg(4) = '0' and DIVMMC_EN = '0') or (onrom = '1') then dos_act <= '1'; --- 12.10.2023:OCH: dos_act can be active only if DIVMMC disabled
 			elsif ((cpu_m1_n = '0' and cpu_mreq_n = '0' and cpu_a_bus(15 downto 14) /= "00") or (port_dffd_reg(4) = '1')) then dos_act <= '0'; end if;
 				
 	end if;

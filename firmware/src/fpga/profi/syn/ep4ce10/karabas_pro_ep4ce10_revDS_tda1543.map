@@ -1,0 +1,17 @@
+BLOCK		START ADDRESS		END ADDRESS
+
+Page_0		0x00000000		0x00059D8A
+ROMain_ramdisk_D.hex		0x00100000		0x0010FFFF
+bios_pqdos.hex		0x00110000		0x0011FFFF
+karabas-pro-flashtool_v2_71.hex		0x00120000		0x0012FFFF
+fdimage.hex		0x00130000		0x0013FFFF
+esxdos089.hex		0x00140000		0x00141FFF
+cfg_revDS_tda1543.hex		0x001F0000		0x001F0000
+
+
+
+Notes:
+
+- Data checksum for this conversion is 0x18F32415
+
+- All the addresses in this file are byte addresses

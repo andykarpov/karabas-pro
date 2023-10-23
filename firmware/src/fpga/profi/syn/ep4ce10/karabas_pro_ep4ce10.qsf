@@ -222,6 +222,8 @@ set_location_assignment PIN_86 -to BUZZER
 
 
 
+
+
 set_global_assignment -name VHDL_FILE ../../rtl/karabas_pro.vhd
 set_global_assignment -name QIP_FILE ../../rtl/pll/altpll0.qip
 set_global_assignment -name QIP_FILE ../../rtl/pll/altpll1.qip
@@ -234,6 +236,7 @@ set_global_assignment -name VHDL_FILE ../../rtl/spi/spi_master.vhd
 set_global_assignment -name VHDL_FILE ../../rtl/sd/zc_spi.vhd
 set_global_assignment -name VHDL_FILE ../../rtl/memory/memory.vhd
 set_global_assignment -name VHDL_FILE ../../rtl/memory/altram1.vhd
+set_global_assignment -name VHDL_FILE ../../rtl/t80se/T80_Pack.vhd
 set_global_assignment -name VHDL_FILE ../../rtl/t80se/T80a.vhd
 set_global_assignment -name VHDL_FILE ../../rtl/t80se/T80.vhd
 set_global_assignment -name VHDL_FILE ../../rtl/t80se/T80_Reg.vhd
@@ -280,4 +283,6 @@ set_global_assignment -name QIP_FILE ../../rtl/uart/fifo2.qip
 
 set_global_assignment -name CDF_FILE Chain1.cdf
 set_location_assignment PIN_111 -to SDIR
+
+set_global_assignment -name EDA_SIMULATION_TOOL "<None>"
 set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
