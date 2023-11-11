@@ -600,7 +600,7 @@ port map(
 U5: entity work.T80a
 port map (
 	RESET_n			=> cpu_reset_n,
-	CLK_n			=> not clk_cpu,
+	CLK_n			=> clk_cpu,
 	--CEN			=> '1',
 	WAIT_n			=> cpu_wait_n,
 	INT_n				=> cpu_int_n and serial_ms_int,

@@ -271,19 +271,21 @@ begin
 		end if;
 	end process;
 	
-	---20.10.2023:OCH: add 'or (mux="11" and RAM_BANK(0) ='1')' to consider contend 1,3,5,7 pages for screen mode '10'
-	page_cont <= '1' when (A(0) = '0' and N_IORQ = '0') or mux="01" or (mux="11" and RAM_BANK(0) ='1') else '0';
+	page_cont <= '1' when mux="01" or (mux="11" and RAM_BANK(0) ='1') else '0';
+	--can_contend <= '1' when TURBO_MODE = "00" else '0';
 	
 	process (clk2x)
 	begin 
-		if rising_edge(clk2x) then 
-		-- OCH: contend only when 3,5 MHz CLK 
-			if (page_cont = '1' and block_reg = '1' and count_block = '1' and DS80 = '0' and TURBO_MODE = "00") then 
-				contended <= '1';
+	if rising_edge(clk2x) then 
+			if (page_cont = '1' and block_reg = '1' and count_block = '1' and DS80 = '0') or 
+			   (A(0) = '0' and N_IORQ = '0' and block_reg = '1' and count_block = '1' and DS80 = '0') or
+			   (N_MREQ = '1' and mux="01" and count_block = '1'  and block_reg = '1' and DS80 = '0')
+			then 
+				contended <= '1';--can_contend;
 			else 
 				contended <= '0';
 			end if;
-		end if;
+	end if;
 	end process;
 			
 end RTL;
