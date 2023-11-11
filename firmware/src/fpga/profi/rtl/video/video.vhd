@@ -40,6 +40,7 @@ entity video is
 		
 		SCREEN_MODE : in std_logic_vector(1 downto 0);
 		COUNT_BLOCK : out std_logic;
+		COUNT_BLOCKio : out std_logic;
 		
 		HCNT : out std_logic_vector(9 downto 0);
 		VCNT : out std_logic_vector(8 downto 0);

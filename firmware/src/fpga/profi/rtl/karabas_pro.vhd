@@ -30,7 +30,7 @@ use IEEE.numeric_std.all;
 
 entity karabas_pro is
 	generic (
-		enable_zxuno_uart  : boolean := true;  -- uart 1 (enabled by default)
+		enable_zxuno_uart  : boolean := false;  -- uart 1 (enabled by default)
 		enable_zxuno_uart2 : boolean := false; -- uart 2 (enabled for ep4ce10 via qsf settings)
 		enable_zifi_uart   : boolean := false;  -- zifi (enabled for ep4ce10 via qsf settings)
 		enable_saa1099 	 : boolean := false; -- saa1099 (enabled for ep4ce10 via qsf settings)
@@ -481,6 +481,7 @@ signal tape_in_monitor : std_logic := '0';
 
 -- memory contention
 signal count_block 		: std_logic := '0';
+signal count_blockio 		: std_logic := '0';
 signal memory_contention : std_logic := '0';
 
 -- debug 
@@ -725,7 +726,8 @@ port map (
 	ISPAPER 			=> vid_ispaper,
 	BLINK 			=> blink,
 	SCREEN_MODE    => kb_screen_mode,
-	COUNT_BLOCK 	=> count_block
+	COUNT_BLOCK 	=> count_block,
+	COUNT_BLOCKio 	=> count_blockio
 );
 
 -- osd overlay
@@ -1204,11 +1206,8 @@ max_turbo <= "10";
 
 --OCH: automap = '0' and cs_nemo_ports = '0' - not contend DIVMMC and NEMO ports in CLASSIC screen mode
 clk_cpu <= '0' when kb_wait = '1' or  ((kb_screen_mode = "01" or kb_screen_mode = "10") and memory_contention = '1' and automap = '0' and cs_nemo_ports = '0' and DS80 = '0') or WAIT_IO = '0' else 
-		clk_bus when turbo_mode = "11" and turbo_mode <= max_turbo else 
-		-- OCH: disable turbo in trdos to be sure what all programming delays are original
-		-- 06.09.2023:OCH: fixed turbo mode by adding all condition when it can be enabled, i'm not sure about ds80 = 1 but let it be
-		clk_bus and ena_div2 when turbo_mode = "10" and turbo_mode <= max_turbo and (dos_act='0' or DIVMMC_EN = '1' or cpm = '1' or onrom = '1' or ds80 = '1') else 
-		clk_bus and ena_div4 when turbo_mode = "01" and turbo_mode <= max_turbo and (dos_act='0' or DIVMMC_EN = '1' or cpm = '1' or onrom = '1' or ds80 = '1') else 
+		clk_bus and ena_div2 when turbo_mode = "10" and (dos_act='0' or DIVMMC_EN = '1' or cpm = '1' or onrom = '1' or ds80 = '1') else 
+		clk_bus and ena_div4 when turbo_mode = "01" and (dos_act='0' or DIVMMC_EN = '1' or cpm = '1' or onrom = '1' or ds80 = '1') else 
 		clk_bus and ena_div8;
 
 

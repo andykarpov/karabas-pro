@@ -69,6 +69,8 @@ architecture rtl of pentagon_video is
 	signal VIDEO_I 	: std_logic;	
 		
 	signal int_sig : std_logic;
+	signal COUNT_BLOCK128 : std_logic;
+	signal COUNT_BLOCK48 : std_logic;
 		
 begin
 
@@ -100,7 +102,6 @@ begin
 								ver_cnt <= ver_cnt + 1;
 							end if;
 						end if;
-						---20.10.2023:OCH: 311 rows for Classic 128 screen mode "10"
 						if ver_cnt = 37 and MODE60 = '0' and SCREEN_MODE = "10" and chr_row_cnt = 5 then  
 							chr_row_cnt <= chr_row_cnt + 2; -- skip one row
 						else
@@ -168,8 +169,17 @@ begin
 							end if;
 						end if;
 					-- CLASSIC int
-					elsif (SCREEN_MODE = "01" or SCREEN_MODE = "10") then 
+					elsif (SCREEN_MODE = "01") then 
 						if chr_col_cnt = 0 then
+							if ver_cnt = 31 and chr_row_cnt = 0 and hor_cnt(5 downto 3) = "000" then
+								int_sig <= '0';
+							else
+								int_sig <= '1';
+							end if;
+						end if;
+					-- 128 int
+					elsif (SCREEN_MODE = "10") then 
+						if chr_col_cnt = 4 then
 							if ver_cnt = 31 and chr_row_cnt = 0 and hor_cnt(5 downto 3) = "000" then
 								int_sig <= '0';
 							else
@@ -302,7 +312,8 @@ begin
 
 	BLINK <= invert(4);
 	
-	COUNT_BLOCK <= '1' when paper = '0' and (chr_col_cnt(2) = '0' or hor_cnt(0) = '0') else '0'; -- paper = 0 screen, paper = 1 border
-	--COUNT_BLOCK <= '1' when paper = '0' and (( hor_cnt(0)&chr_col_cnt(2 downto 0))>3) else '0';
-
+	COUNT_BLOCK48 <= '1' when paper = '0' and (chr_col_cnt(2) = '0' or hor_cnt(0) = '0') else '0';
+	COUNT_BLOCK128 <= '1' when paper = '0' and (( hor_cnt(0)&chr_col_cnt)>3 or chr_col_cnt(2) = '0' or hor_cnt(0) = '0') else '0';
+	
+	COUNT_BLOCK <= COUNT_BLOCK48 when SCREEN_MODE = "01" else COUNT_BLOCK128 when SCREEN_MODE = "10" else '0';
 end architecture;

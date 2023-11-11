@@ -62,7 +62,7 @@ port (
 	ROM_BANK : in std_logic := '0';
 	EXT_ROM_BANK : in std_logic_vector(1 downto 0) := "00";
 	
-	COUNT_BLOCK : in std_logic := '0'; -- paper = '0' and (not (chr_col_cnt(2) and hor_cnt(0)));
+	COUNT_BLOCK : in std_logic := '0'; 
 	CONTENDED   : out std_logic := '0';
 	
 	-- DIVMMC
@@ -102,11 +102,12 @@ architecture RTL of memory is
 	
 	signal block_reg : std_logic := '0';
 	signal page_cont : std_logic := '0';
+	signal can_contend :std_logic:= '0';
 	
 	-- DIVMMC
 	signal is_romDIVMMC : std_logic;
 	signal is_ramDIVMMC : std_logic;
-	--signal tmp_divmmc_en : std_logic := '1';
+
 
 begin
    
@@ -272,7 +273,7 @@ begin
 	end process;
 	
 	page_cont <= '1' when mux="01" or (mux="11" and RAM_BANK(0) ='1') else '0';
-	--can_contend <= '1' when TURBO_MODE = "00" else '0';
+	can_contend <= '1' when TURBO_MODE = "00" else '0';
 	
 	process (clk2x)
 	begin 
@@ -281,7 +282,7 @@ begin
 			   (A(0) = '0' and N_IORQ = '0' and block_reg = '1' and count_block = '1' and DS80 = '0') or
 			   (N_MREQ = '1' and mux="01" and count_block = '1'  and block_reg = '1' and DS80 = '0')
 			then 
-				contended <= '1';--can_contend;
+				contended <= can_contend;
 			else 
 				contended <= '0';
 			end if;
