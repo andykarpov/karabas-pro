@@ -202,9 +202,9 @@ set_global_assignment -name PRE_FLOW_SCRIPT_FILE "quartus_sh:generate_messages.t
 #set_global_assignment -name PRE_FLOW_SCRIPT_FILE "quartus_sh:add_ver.tcl"
 #set_global_assignment -name POST_FLOW_SCRIPT_FILE "quartus_sh:remove_ver.tcl"
 
-set_parameter -name enable_saa1099 false
-set_parameter -name enable_zifi_uart false
-set_parameter -name enable_osd_icons false
+set_parameter -name enable_saa1099 true
+set_parameter -name enable_zifi_uart true
+set_parameter -name enable_osd_icons true
 
 set_global_assignment -name OPTIMIZE_HOLD_TIMING "ALL PATHS"
 set_global_assignment -name OPTIMIZE_MULTI_CORNER_TIMING ON

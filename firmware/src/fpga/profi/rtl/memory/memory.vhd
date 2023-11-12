@@ -65,6 +65,7 @@ port (
 	COUNT_BLOCK : in std_logic := '0'; 
 	COUNT_BLOCKio : in std_logic := '0';
 	CONTENDED   : out std_logic := '0';
+	SCREEN_MODE : in std_logic_vector(1 downto 0);
 	
 	-- DIVMMC
 	DIVMMC_EN	: in std_logic;
@@ -273,15 +274,15 @@ begin
 		end if;
 	end process;
 	
-	page_cont <= '1' when mux="01" or (mux="11" and RAM_BANK(0) ='1') else '0';
-	can_contend <= '1' when TURBO_MODE = "00" else '0';
+	page_cont <= '1' when mux="01" or (mux="11" and RAM_BANK(0) ='1' and SCREEN_MODE = "10") else '0';
+	can_contend <= '1' when TURBO_MODE = "00"  and DS80 = '0' and (SCREEN_MODE = "01" or SCREEN_MODE = "10") else '0';
 	
 	process (clk2x)
 	begin 
 	if rising_edge(clk2x) then 
 			if (page_cont = '1' and block_reg = '1' and count_block = '1' and DS80 = '0') or 
-			   (A(0) = '0' and N_IORQ = '0' and block_reg = '1' and count_blockio = '1' and DS80 = '0') or
-			   (N_MREQ = '1' and mux="01" and count_blockio = '1'  and block_reg = '1' and DS80 = '0')
+			   (A(0) = '0' and N_IORQ = '0' and block_reg = '1' and count_blockio = '1')  or
+			   (N_MREQ = '1' and mux="01" and count_blockio = '1'  and block_reg = '1')
 			then 
 				contended <= can_contend;
 			else 

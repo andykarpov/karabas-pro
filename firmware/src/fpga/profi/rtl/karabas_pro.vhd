@@ -30,11 +30,11 @@ use IEEE.numeric_std.all;
 
 entity karabas_pro is
 	generic (
-		enable_zxuno_uart  : boolean := false;  -- uart 1 (enabled by default)
-		enable_zxuno_uart2 : boolean := false; -- uart 2 (enabled for ep4ce10 via qsf settings)
-		enable_zifi_uart   : boolean := false;  -- zifi (enabled for ep4ce10 via qsf settings)
-		enable_saa1099 	 : boolean := false; -- saa1099 (enabled for ep4ce10 via qsf settings)
-		enable_osd_icons   : boolean := false  -- osd icons (enabled for ep4ce10 via qsf settings)
+		enable_zxuno_uart  : boolean := true;  -- uart 1 (enabled by default)
+		enable_zxuno_uart2 : boolean := true; -- uart 2 (enabled for ep4ce10 via qsf settings)
+		enable_zifi_uart   : boolean := true;  -- zifi (enabled for ep4ce10 via qsf settings)
+		enable_saa1099 	 : boolean := true; -- saa1099 (enabled for ep4ce10 via qsf settings)
+		enable_osd_icons   : boolean := true  -- osd icons (enabled for ep4ce10 via qsf settings)
 	);
 port (
 	-- Clock (50MHz)
@@ -182,6 +182,7 @@ signal joy_type 		: std_logic := '0';
 signal joy_mode 		: std_logic_vector(2 downto 0) := "000";
 signal kb_loaded 		: std_logic := '0';
 signal kb_screen_mode: std_logic_vector(1 downto 0) := "00";
+signal pentagon		: std_logic	;
 
 -- Joy
 signal joy_bus 		: std_logic_vector(7 downto 0) := "00000000";
@@ -686,6 +687,7 @@ port map (
 	CONTENDED 		=> memory_contention,
 	-- OCH: added to not contend in turbo mode
 	TURBO_MODE 		=> turbo_mode,
+	SCREEN_MODE    => kb_screen_mode,
 	
 	-- DIVMMC signals
    DIVMMC_EN		=> divmmc_en,
@@ -1206,9 +1208,9 @@ cpu_wait_n <= '1';
 max_turbo <= "10";
 
 --OCH: automap = '0' and cs_nemo_ports = '0' - not contend DIVMMC and NEMO ports in CLASSIC screen mode
-clk_cpu <= '0' when kb_wait = '1' or  ((kb_screen_mode = "01" or kb_screen_mode = "10") and memory_contention = '1' and automap = '0' and cs_nemo_ports = '0' and DS80 = '0') or WAIT_IO = '0' else 
-		clk_bus and ena_div2 when turbo_mode = "10" and (dos_act='0' or DIVMMC_EN = '1' or cpm = '1' or onrom = '1' or ds80 = '1') else 
-		clk_bus and ena_div4 when turbo_mode = "01" and (dos_act='0' or DIVMMC_EN = '1' or cpm = '1' or onrom = '1' or ds80 = '1') else 
+clk_cpu <= '0' when kb_wait = '1' or  (memory_contention = '1' and automap = '0' and cs_nemo_ports = '0' and DS80 = '0') or WAIT_IO = '0' else 
+		clk_bus and ena_div2 when turbo_mode = "10" else 
+		clk_bus and ena_div4 when turbo_mode = "01" else 
 		clk_bus and ena_div8;
 
 
@@ -1382,8 +1384,17 @@ sco 	<= port_dffd_reg(3); -- Выбор положения окна проеци
 
 -- Extended memory for 1MB (default) or 6MB boards
 --ram_ext <= port_1ffd_reg(7) & port_1ffd_reg(4) & port_dffd_reg(2 downto 0); -- kay512+ profi 1024
-ram_ext <= port_7ffd_reg(6) & port_7ffd_reg(7) & port_dffd_reg(2 downto 0); -- pent 512 + profi 1024
+-- OCH: block ext ram in classic and 128 modes 
 
+pentagon <= '1' when kb_screen_mode = "00" else '0';
+
+process(clk_bus)
+begin
+	if rising_edge(clk_bus) and (pentagon = '1' or DS80 = '1') then 
+		ram_ext <= port_7ffd_reg(6) & port_7ffd_reg(7) & port_dffd_reg(2 downto 0) ; -- pent 512 + profi 1024 
+	end if;
+end process;
+		
 -- OCH: change decoding of #FE port when Nemo enabled  
 cs_xxfe <= '1' when (cpu_iorq_n = '0' and cpu_a_bus(0) = '0' and nemoide_en = '0') or 
 						  (cpu_iorq_n = '0' and cpu_a_bus(6 downto 0) = "1111110" and nemoide_en = '1') else '0';

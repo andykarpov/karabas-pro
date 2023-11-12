@@ -316,7 +316,7 @@ begin
 	
 	COUNT_BLOCK48 <= '1' when paper = '0' and (chr_col_cnt(2) = '0' or hor_cnt(0) = '0') else '0';
 	COUNT_BLOCK128 <= '1' when paper = '0' and (hor_cnt(0) & chr_col_cnt > 3)  else '0';
-	
+	 
 	COUNT_BLOCKIO128 <= COUNT_BLOCK48;
 	COUNT_BLOCKIO <= COUNT_BLOCK48 when SCREEN_MODE = "01" else COUNT_BLOCKIO128 when SCREEN_MODE = "10" else '0';
 	
