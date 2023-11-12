@@ -682,6 +682,7 @@ port map (
 	
 	-- contended memory signals
 	COUNT_BLOCK		=> count_block,
+	COUNT_BLOCKio		=> count_blockio,
 	CONTENDED 		=> memory_contention,
 	-- OCH: added to not contend in turbo mode
 	TURBO_MODE 		=> turbo_mode,

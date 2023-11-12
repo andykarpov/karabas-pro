@@ -102,6 +102,7 @@ architecture rtl of video is
 	signal hcnt_spec : std_logic_vector(9 downto 0);
 	signal vcnt_spec : std_logic_vector(8 downto 0);
 	signal ispaper_spec : std_logic;
+	signal ulaIowait : std_logic;
 
 begin
 
@@ -135,6 +136,7 @@ begin
 		
 		VBUS_MODE => VBUS_MODE,
 		VID_RD => VID_RD,
+		COUNT_BLOCKio => ulaIowait,
 		
 		COUNT_BLOCK => COUNT_BLOCK
 	);
@@ -232,5 +234,7 @@ begin
 	VIDEO_R <= palette_grb_reg(5 downto 3);
 	VIDEO_G <= palette_grb_reg(8 downto 6);
 	VIDEO_B <= palette_grb_reg(2 downto 0);
+	
+	COUNT_BLOCKio <= ulaIowait;
 
 end architecture;

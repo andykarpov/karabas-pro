@@ -63,6 +63,7 @@ port (
 	EXT_ROM_BANK : in std_logic_vector(1 downto 0) := "00";
 	
 	COUNT_BLOCK : in std_logic := '0'; 
+	COUNT_BLOCKio : in std_logic := '0';
 	CONTENDED   : out std_logic := '0';
 	
 	-- DIVMMC
@@ -279,8 +280,8 @@ begin
 	begin 
 	if rising_edge(clk2x) then 
 			if (page_cont = '1' and block_reg = '1' and count_block = '1' and DS80 = '0') or 
-			   (A(0) = '0' and N_IORQ = '0' and block_reg = '1' and count_block = '1' and DS80 = '0') or
-			   (N_MREQ = '1' and mux="01" and count_block = '1'  and block_reg = '1' and DS80 = '0')
+			   (A(0) = '0' and N_IORQ = '0' and block_reg = '1' and count_blockio = '1' and DS80 = '0') or
+			   (N_MREQ = '1' and mux="01" and count_blockio = '1'  and block_reg = '1' and DS80 = '0')
 			then 
 				contended <= can_contend;
 			else 
