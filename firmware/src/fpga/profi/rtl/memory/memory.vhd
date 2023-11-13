@@ -274,7 +274,7 @@ begin
 		end if;
 	end process;
 	
-	page_cont <= '1' when mux="01" or (mux="11" and RAM_BANK(0) ='1' and SCREEN_MODE = "10") else '0';
+	--page_cont <= '1' when mux="01" or (mux="11" and RAM_BANK(0) ='1' and SCREEN_MODE = "10") else '0';
 	can_contend <= '1' when TURBO_MODE = "00"  and DS80 = '0' and (SCREEN_MODE = "01" or SCREEN_MODE = "10") else '0';
 	
 	process (clk2x)
@@ -288,6 +288,13 @@ begin
 			else 
 				contended <= '0';
 			end if;
+			
+			if mux="01" or (mux="11" and RAM_BANK(0) ='1' and SCREEN_MODE = "10") then
+				page_cont <='1';
+			else 
+				page_cont <= '0';
+			end if;
+			
 	end if;
 	end process;
 			

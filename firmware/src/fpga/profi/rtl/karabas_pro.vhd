@@ -1207,8 +1207,7 @@ cpu_wait_n <= '1';
 -- max turbo = 14 MHz
 max_turbo <= "10";
 
---OCH: automap = '0' and cs_nemo_ports = '0' - not contend DIVMMC and NEMO ports in CLASSIC screen mode
-clk_cpu <= '0' when kb_wait = '1' or  (memory_contention = '1' and automap = '0' and cs_nemo_ports = '0' and DS80 = '0') or WAIT_IO = '0' else 
+clk_cpu <= '0' when memory_contention = '1' or WAIT_IO = '0' else 
 		clk_bus and ena_div2 when turbo_mode = "10" else 
 		clk_bus and ena_div4 when turbo_mode = "01" else 
 		clk_bus and ena_div8;

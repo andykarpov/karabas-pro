@@ -172,6 +172,7 @@ begin
 		VID_RD => VID_RD
 	);
 
+
 	A <= vid_a_profi when ds80 = '1' else vid_a_spec;
 
 	INT <= int_profi when ds80 = '1' else int_spec;
@@ -236,5 +237,9 @@ begin
 	VIDEO_B <= palette_grb_reg(2 downto 0);
 	
 	COUNT_BLOCKio <= ulaIowait;
+	
+	
+	
+	
 
 end architecture;

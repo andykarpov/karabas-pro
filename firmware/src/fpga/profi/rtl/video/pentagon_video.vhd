@@ -73,7 +73,10 @@ architecture rtl of pentagon_video is
 	signal COUNT_BLOCK128 : std_logic;
 	signal COUNT_BLOCKio128 : std_logic;
 	signal COUNT_BLOCK48 : std_logic;
-		
+	
+	signal zx128 : std_logic;
+	signal zx48 : std_logic;
+	
 begin
 
 	-- sync, counters
@@ -314,11 +317,30 @@ begin
 
 	BLINK <= invert(4);
 	
+	zx128 <= '1' when SCREEN_MODE = "10" else '0';
+	zx48 <= '1' when SCREEN_MODE = "01" else '0';	
+	
 	COUNT_BLOCK48 <= '1' when paper = '0' and (chr_col_cnt(2) = '0' or hor_cnt(0) = '0') else '0';
 	COUNT_BLOCK128 <= '1' when paper = '0' and (hor_cnt(0) & chr_col_cnt > 3)  else '0';
 	 
-	COUNT_BLOCKIO128 <= COUNT_BLOCK48;
-	COUNT_BLOCKIO <= COUNT_BLOCK48 when SCREEN_MODE = "01" else COUNT_BLOCKIO128 when SCREEN_MODE = "10" else '0';
+	COUNT_BLOCKIO128 <= '1' when paper = '0' and (chr_col_cnt(2) = '0' or hor_cnt(0) = '0') else '0';
 	
-	COUNT_BLOCK <= COUNT_BLOCK48 when SCREEN_MODE = "01" else COUNT_BLOCK128 when SCREEN_MODE = "10" else '0';
+--	process (CLK2X)
+--	begin
+--		if rising_edge(clk2X) then
+--			if zx48 = '1' then
+--				COUNT_BLOCK <= COUNT_BLOCK48;
+--				COUNT_BLOCKIO <= COUNT_BLOCK48;
+--			elsif zx128 = '1' then
+--				COUNT_BLOCK <= COUNT_BLOCK128;
+--				COUNT_BLOCKIO <= COUNT_BLOCK48;
+--			else
+--				COUNT_BLOCK <= '0';
+--				COUNT_BLOCKIO <= '0';
+--			end if;
+--		end if;
+--	end process;
+
+	COUNT_BLOCKIO <= COUNT_BLOCK48 when zx48 = '1' else COUNT_BLOCKIO128 when zx128 = '1' else '0';
+	COUNT_BLOCK <= COUNT_BLOCK48 when zx48 = '1' else COUNT_BLOCK128 when zx128 = '1' else '0';
 end architecture;
