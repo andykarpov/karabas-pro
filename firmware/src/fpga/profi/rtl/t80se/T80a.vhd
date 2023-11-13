@@ -78,6 +78,7 @@ entity T80a is
 		Mode : integer := 0     -- 0 => Z80, 1 => Fast Z80, 2 => 8080, 3 => GB
 	);
 	port(
+		CEN				 : in std_logic;
 		RESET_n         : in std_logic;
 		CLK_n           : in std_logic;
 		WAIT_n          : in std_logic;
@@ -101,7 +102,6 @@ end T80a;
 
 architecture rtl of T80a is
 
-	signal CEN                  : std_logic;
 	signal Reset_s              : std_logic;
 	signal IntCycle_n   : std_logic;
 	signal IORQ                 : std_logic;
@@ -125,8 +125,6 @@ architecture rtl of T80a is
 	signal TState               : std_logic_vector(2 downto 0);
 
 begin
-
-	CEN <= '1';
 
 	BUSAK_n <= BUSAK_n_i;
 	MREQ_n_i <= not MREQ or (Req_Inhibit and MReq_Inhibit);

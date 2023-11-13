@@ -131,6 +131,7 @@ signal cpu_mem_wr		: std_logic;
 signal cpu_mem_rd		: std_logic;
 signal cpu_nmi_n		: std_logic;
 signal cpu_wait_n 	: std_logic := '1';
+signal cen				: std_logic;
 
 -- Port
 signal port_xxfe_reg	: std_logic_vector(7 downto 0) := "00000000";
@@ -603,7 +604,7 @@ U5: entity work.T80a
 port map (
 	RESET_n			=> cpu_reset_n,
 	CLK_n			=> clk_cpu,
-	--CEN			=> '1',
+	CEN			=> CEN,
 	WAIT_n			=> cpu_wait_n,
 	INT_n				=> cpu_int_n and serial_ms_int,
 	NMI_n				=> cpu_nmi_n,
@@ -1212,6 +1213,7 @@ clk_cpu <= '0' when memory_contention = '1' or WAIT_IO = '0' else
 		clk_bus and ena_div4 when turbo_mode = "01" else 
 		clk_bus and ena_div8;
 
+CEN <= not kb_wait;
 
 -- одновибратор - по спаду /IORQ отсчитывает 400нс вейта проца 
 -- для работы периферии в турбе или в режиме расширенного экрана 

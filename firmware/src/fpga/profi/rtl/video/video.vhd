@@ -237,9 +237,5 @@ begin
 	VIDEO_B <= palette_grb_reg(2 downto 0);
 	
 	COUNT_BLOCKio <= ulaIowait;
-	
-	
-	
-	
 
 end architecture;
