@@ -1391,8 +1391,12 @@ pentagon <= '1' when kb_screen_mode = "00" else '0';
 
 process(clk_bus)
 begin
-	if rising_edge(clk_bus) and (pentagon = '1' or DS80 = '1') then 
-		ram_ext <= port_7ffd_reg(6) & port_7ffd_reg(7) & port_dffd_reg(2 downto 0) ; -- pent 512 + profi 1024 
+	if (pentagon ='0' and DS80 = '0') then
+		ram_ext <= (others => '0');
+	else
+		if rising_edge(clk_bus) then 
+			ram_ext <= port_7ffd_reg(6) & port_7ffd_reg(7) & port_dffd_reg(2 downto 0) ; -- pent 512 + profi 1024 
+		end if;
 	end if;
 end process;
 		

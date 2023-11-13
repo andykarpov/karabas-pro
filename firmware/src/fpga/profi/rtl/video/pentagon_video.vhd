@@ -322,7 +322,6 @@ begin
 	
 	COUNT_BLOCK48 <= '1' when paper = '0' and (chr_col_cnt(2) = '0' or hor_cnt(0) = '0') else '0';
 	COUNT_BLOCK128 <= '1' when paper = '0' and (hor_cnt(0) & chr_col_cnt > 3)  else '0';
-	 
 	COUNT_BLOCKIO128 <= '1' when paper = '0' and (chr_col_cnt(2) = '0' or hor_cnt(0) = '0') else '0';
 	
 --	process (CLK2X)

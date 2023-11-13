@@ -282,7 +282,7 @@ begin
 	if rising_edge(clk2x) then 
 			if (page_cont = '1' and block_reg = '1' and count_block = '1' and DS80 = '0') or 
 			   (A(0) = '0' and N_IORQ = '0' and block_reg = '1' and count_blockio = '1')  or
-			   (N_MREQ = '1' and mux="01" and count_blockio = '1'  and block_reg = '1')
+			   ((N_IORQ = '0') and mux="01" and count_blockio = '1'  and block_reg = '1')
 			then 
 				contended <= can_contend;
 			else 
