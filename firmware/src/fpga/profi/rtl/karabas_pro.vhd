@@ -378,6 +378,9 @@ signal ext_rom_bank  : std_logic_vector(1 downto 0) := "00";
 signal ext_rom_bank_pq	: std_logic_vector(1 downto 0) := "00";
 signal max_turbo 		: std_logic_vector(1 downto 0) := "11";
 
+signal PLL0_lock		: std_logic := '0';
+signal PLL1_lock		: std_logic := '0';
+
 -- Loader
 signal loader_ram_di	: std_logic_vector(7 downto 0);
 signal loader_ram_do	: std_logic_vector(7 downto 0);
@@ -497,6 +500,9 @@ signal WAIT_IO			:std_logic;
 signal WAIT_EN			:std_logic;
 signal WAIT_C_STOP	:std_logic;
 
+signal q1				:std_logic;
+signal q2				:std_logic;
+
 component saa1099
 port (
 	clk_sys	: in std_logic;
@@ -566,7 +572,7 @@ begin
 U1: entity work.altpll0
 port map (
 	inclk0			=> CLK_50MHZ,
-	locked			=> open,
+	locked			=> PLL0_lock,
 	c0 				=> clk_112
 	);
 	
@@ -574,9 +580,9 @@ port map (
 U2: entity work.altpll1
 port map (
 	inclk0			=> clk_112,
-	locked 			=> open,
-	c0 				=> clk_84,
-	c1 				=> clk_72,
+	locked 			=> PLL1_lock,
+	c0 				=> clk_bus_port,
+--	c1 				=> clk_72,
 	c2 				=> clk_28,
 	c3 				=> clk_24,
 	c4 				=> clk_8);
@@ -591,13 +597,13 @@ port map(
 );
 
 -- Bus Port clock selector
-U4: entity work.clk_ctrl2
-port map(
-	clkselect 	=> ds80,
-	inclk0x 		=> clk_84,
-	inclk1x 		=> clk_72,
-	outclk 		=> clk_bus_port
-);
+--U4: entity work.clk_ctrl2
+--port map(
+--	clkselect 	=> ds80,
+--	inclk0x 		=> clk_84,
+--	inclk1x 		=> clk_72,
+--	outclk 		=> clk_bus_port
+--);
 
 -- Zilog Z80A CPU
 U5: entity work.T80a
@@ -1184,7 +1190,7 @@ ena_div16 <= ena_cnt(3) and ena_cnt(2) and ena_cnt(1) and ena_cnt(0);
 
 process(clk_bus)
 begin
-	if rising_edge(clk_bus) then
+	if rising_edge(clk_bus) and PLL0_lock = '1' and PLL1_lock = '1' then
 		if (locked_tri = '0') then 
 			locked_tri <= '1';
 			areset <= '1';
@@ -1208,7 +1214,7 @@ cpu_wait_n <= '1';
 -- max turbo = 14 MHz
 max_turbo <= "10";
 
-clk_cpu <= '0' when memory_contention = '1' or WAIT_IO = '0' else 
+clk_cpu <= '0' when memory_contention = '1' else -- or WAIT_IO = '0'
 		clk_bus and ena_div2 when turbo_mode = "10" else 
 		clk_bus and ena_div4 when turbo_mode = "01" else 
 		clk_bus and ena_div8;
@@ -1222,7 +1228,7 @@ WAIT_C_STOP <=WAIT_C(1) and not WAIT_C(0);
 WAIT_EN <= reset or not turbo_mode(1);
 process (ena_div2, cpu_mreq_n, WAIT_EN, WAIT_C_STOP) 	
 	begin					
-		if ena_div2'event and ena_div2='0' then
+		if ena_div2'event and ena_div2='1' then
 			if WAIT_EN = '1' then	
 				WAIT_C <= "11";
 			elsif cpu_mreq_n='1' then
