@@ -344,6 +344,7 @@ signal clk_24 			: std_logic := '0';
 signal clk_8			: std_logic := '0';
 signal clk_bus			: std_logic := '0';
 signal clk_bus_port	: std_logic := '0';
+signal clk_bus_portw	: std_logic := '0';
 signal clk_div2		: std_logic := '0';
 signal clk_div4		: std_logic := '0';
 signal clk_div8		: std_logic := '0';
@@ -582,7 +583,7 @@ port map (
 	inclk0			=> clk_112,
 	locked 			=> PLL1_lock,
 	c0 				=> clk_bus_port,
---	c1 				=> clk_72,
+	c1 				=> clk_72,
 	c2 				=> clk_28,
 	c3 				=> clk_24,
 	c4 				=> clk_8);
@@ -971,7 +972,7 @@ port map (
 -- FDD / HDD controllers
 U17: entity work.bus_port
 port map (
-	CLK 				=> clk_bus_port,
+	CLK 				=> clk_bus_portw,
 	CLK2 				=> clk_8,
 	CLK_BUS 			=> clk_bus,
 	CLK_CPU 			=> clk_cpu,
@@ -1215,31 +1216,33 @@ cpu_wait_n <= '1';
 max_turbo <= "10";
 
 clk_cpu <= '0' when memory_contention = '1' else -- or WAIT_IO = '0'
-		clk_bus and ena_div2 when turbo_mode = "10" else 
+		clk_bus and ena_div2 when turbo_mode = "10" and (dos_act = '0' or ds80 = '1') else 
 		clk_bus and ena_div4 when turbo_mode = "01" else 
 		clk_bus and ena_div8;
 
 CEN <= not kb_wait;
 
+clk_bus_portw <= clk_bus_port or memory_contention;
+
 -- одновибратор - по спаду /IORQ отсчитывает 400нс вейта проца 
 -- для работы периферии в турбе или в режиме расширенного экрана 
-WAIT_IO <= WAIT_C(1);
-WAIT_C_STOP <=WAIT_C(1) and not WAIT_C(0);
-WAIT_EN <= reset or not turbo_mode(1);
-process (ena_div2, cpu_mreq_n, WAIT_EN, WAIT_C_STOP) 	
-	begin					
-		if ena_div2'event and ena_div2='1' then
-			if WAIT_EN = '1' then	
-				WAIT_C <= "11";
-			elsif cpu_mreq_n='1' then
-				WAIT_C <= "11"; --WAIT MREQ = 0
-			elsif WAIT_C_STOP='0' then
-				WAIT_C <= WAIT_C + "01"; --COUNT
-			elsif WAIT_C_STOP='1' then
-				WAIT_C <= WAIT_C; --STOP
-			end if;
-		end if;
-	end process;
+--WAIT_IO <= WAIT_C(1);
+--WAIT_C_STOP <=WAIT_C(1) and not WAIT_C(0);
+--WAIT_EN <= reset or not turbo_mode(1);
+--process (ena_div2, cpu_mreq_n, WAIT_EN, WAIT_C_STOP) 	
+--	begin					
+--		if ena_div2'event and ena_div2='1' then
+--			if WAIT_EN = '1' then	
+--				WAIT_C <= "11";
+--			elsif cpu_mreq_n='1' then
+--				WAIT_C <= "11"; --WAIT MREQ = 0
+--			elsif WAIT_C_STOP='0' then
+--				WAIT_C <= WAIT_C + "01"; --COUNT
+--			elsif WAIT_C_STOP='1' then
+--				WAIT_C <= WAIT_C; --STOP
+--			end if;
+--		end if;
+--	end process;
 
 -- HDD / SD access
 led1_overwrite <= '1';
