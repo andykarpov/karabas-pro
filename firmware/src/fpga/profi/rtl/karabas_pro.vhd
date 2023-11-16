@@ -31,10 +31,10 @@ use IEEE.numeric_std.all;
 entity karabas_pro is
 	generic (
 		enable_zxuno_uart  : boolean := true;  -- uart 1 (enabled by default)
-		enable_zxuno_uart2 : boolean := true; -- uart 2 (enabled for ep4ce10 via qsf settings)
-		enable_zifi_uart   : boolean := true;  -- zifi (enabled for ep4ce10 via qsf settings)
-		enable_saa1099 	 : boolean := true; -- saa1099 (enabled for ep4ce10 via qsf settings)
-		enable_osd_icons   : boolean := true  -- osd icons (enabled for ep4ce10 via qsf settings)
+		enable_zxuno_uart2 : boolean := false; -- uart 2 (enabled for ep4ce10 via qsf settings)
+		enable_zifi_uart   : boolean := false;  -- zifi (enabled for ep4ce10 via qsf settings)
+		enable_saa1099 	 : boolean := false; -- saa1099 (enabled for ep4ce10 via qsf settings)
+		enable_osd_icons   : boolean := false  -- osd icons (enabled for ep4ce10 via qsf settings)
 	);
 port (
 	-- Clock (50MHz)
