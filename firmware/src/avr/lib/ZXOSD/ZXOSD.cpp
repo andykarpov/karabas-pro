@@ -1164,6 +1164,7 @@ void ZXOSD::updateScreenMode() {
     case 0: osd.print(PGMT(msg_pentagon)); break;
     case 1: osd.print(PGMT(msg_classic)); osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK); osd.print(PGMT(msg_space)); break;
     case 2: osd.print(PGMT(msg_128)); osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK); osd.print(PGMT(msg_space)); osd.print(PGMT(msg_space)); osd.print(PGMT(msg_space)); osd.print(PGMT(msg_space)); osd.print(PGMT(msg_space)); break;
+    case 3: osd.print(PGMT(msg_plus3e)); osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK); osd.print(PGMT(msg_space)); osd.print(PGMT(msg_space)); osd.print(PGMT(msg_space)); osd.print(PGMT(msg_space)); osd.print(PGMT(msg_space)); break;
   }
 }
 
