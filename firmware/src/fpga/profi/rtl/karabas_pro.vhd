@@ -1748,7 +1748,7 @@ port map(
 
 ------------------------ divmmc-----------------------------
 -- Engineer:   Mario Prato
--- 11.07.2013:OCH: adapted by me
+-- 11.07.2013:OCH: adapted by
 -- i take this implementation to correctly and easy make nmi 
 
 process (reset, divmmc_en, cpu_a_bus)
