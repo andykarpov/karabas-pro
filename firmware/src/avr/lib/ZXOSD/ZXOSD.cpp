@@ -565,7 +565,7 @@ void ZXOSD::initAboutOverlay()
   text(PGMT(msg_about));
 
   osd.setPos(0,7);
-  osd.setColor(OSD::COLOR_BLUE_I, OSD::COLOR_BLACK);
+  osd.setColor(OSD::COLOR_YELLOW_I, OSD::COLOR_BLACK);
   osd.print(PGMT(msg_karabas_developers_are));
 
   osd.setPos(0,9);
@@ -593,7 +593,7 @@ void ZXOSD::initAboutOverlay()
   hint(PGMT(msg_dev_nihirash_skills));
 
   osd.setPos(0,14);
-  osd.setColor(OSD::COLOR_BLUE_I, OSD::COLOR_BLACK);
+  osd.setColor(OSD::COLOR_YELLOW_I, OSD::COLOR_BLACK);
   osd.print(PGMT(msg_special_thanks_to));
 
   osd.setPos(0,16);
@@ -1417,9 +1417,9 @@ void ZXOSD::updateJoyState(uint8_t joy) {
 
 void ZXOSD::highlight(bool val) {
   if (val) 
-    osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLUE);
+    osd.setColor(OSD::COLOR_BLACK, OSD::COLOR_YELLOW_I);
   else 
-    osd.setColor(OSD::COLOR_BLUE_I, OSD::COLOR_BLACK);
+    osd.setColor(OSD::COLOR_YELLOW_I, OSD::COLOR_BLACK);
 }
 
 void ZXOSD::hint(const __FlashStringHelper* msg) {
