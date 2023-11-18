@@ -573,7 +573,7 @@ begin
 U1: entity work.altpll0
 port map (
 	inclk0			=> CLK_50MHZ,
-	locked			=> PLL0_lock,
+	locked			=> open,
 	c0 				=> clk_112
 	);
 	
@@ -581,8 +581,8 @@ port map (
 U2: entity work.altpll1
 port map (
 	inclk0			=> clk_112,
-	locked 			=> PLL1_lock,
-	c0 				=> clk_bus_port,
+	locked 			=> open,
+	c0 				=> clk_84,
 	c1 				=> clk_72,
 	c2 				=> clk_28,
 	c3 				=> clk_24,
@@ -598,13 +598,13 @@ port map(
 );
 
 -- Bus Port clock selector
---U4: entity work.clk_ctrl2
---port map(
---	clkselect 	=> ds80,
---	inclk0x 		=> clk_84,
---	inclk1x 		=> clk_72,
---	outclk 		=> clk_bus_port
---);
+U4: entity work.clk_ctrl2
+port map(
+	clkselect 	=> ds80,
+	inclk0x 		=> clk_84,
+	inclk1x 		=> clk_72,
+	outclk 		=> clk_bus_port
+);
 
 -- Zilog Z80A CPU
 U5: entity work.T80a
@@ -1191,7 +1191,7 @@ ena_div16 <= ena_cnt(3) and ena_cnt(2) and ena_cnt(1) and ena_cnt(0);
 
 process(clk_bus)
 begin
-	if rising_edge(clk_bus) and PLL0_lock = '1' and PLL1_lock = '1' then
+	if rising_edge(clk_bus) then
 		if (locked_tri = '0') then 
 			locked_tri <= '1';
 			areset <= '1';

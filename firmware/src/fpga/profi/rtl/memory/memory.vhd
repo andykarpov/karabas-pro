@@ -155,10 +155,10 @@ begin
 			N_CE1 <= ram_page(7);
 			N_CE2 <= not ram_page(7);
 			N_CE3 <= '1';
-		else
-			N_CE1 <= '1';
-			N_CE2 <= '1';
-			N_CE3 <= '1';
+		--else
+		--	N_CE1 <= '1';
+		--	N_CE2 <= '1';
+		--	N_CE3 <= '1';
 		end if;
 		
 	end process;					
