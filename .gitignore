@@ -64,4 +64,4 @@ karabas-pro-*-backups/
 # Gtkwave
 *.ghw
 *.cf
-
+*.ddb
