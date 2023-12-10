@@ -4,7 +4,7 @@
 
 I will be happy to receive any amount of EUR/USD/UAH. 
 
-[![](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](https://www.paypal.com/donate/?business=VLPSW86UVSDYA&no_recurring=0&currency_code=USD)
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/M4M3HFGIW)
 
 ### ROMain, FDImage tool, FlashTool, testROM by Doctor Max
 
