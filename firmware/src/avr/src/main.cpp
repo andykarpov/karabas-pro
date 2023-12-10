@@ -337,19 +337,13 @@ void loop()
   // react on hardware buttons every 100ms
 #if USE_HW_BUTTONS
   if (n - tb >= 100) {
-    if (analogRead(PIN_BTN1) < 3 && (n - tb1 >= 500) ) {
-      tb1 = n;
-      update_led(PIN_LED2, HIGH);
-      zxkbd.doMagic();
-       update_led(PIN_LED2, LOW);
-    }
 
-    if (analogRead(PIN_BTN2) < 3 && (n - tb2 >= 500) ) {
-      tb2 = n;
-      update_led(PIN_LED1, HIGH);
-      zxkbd.doReset();
-      update_led(PIN_LED1, LOW);
-    }
+    bool btn1 = (analogRead(PIN_BTN1) < 3);
+    bool btn2 = (analogRead(PIN_BTN2) < 3);
+
+    zxkbd.setKey(ZX_K_RESET, btn2);
+    zxkbd.setKey(ZX_K_MAGICK, btn1);
+
     tb = n;
   }
 #endif

@@ -1143,15 +1143,22 @@ void ZXKeyboard::transmit()
   }
 }
 
-void ZXKeyboard::doReset()
+void ZXKeyboard::doSpecial(uint8_t key1, uint8_t key2)
 {
   clear(ZX_MATRIX_SIZE);
-  matrix[ZX_K_RESET] = 1;
+  matrix[key1] = 1;
+  matrix[key2] = 1;
   transmit();
   delay(100);
   clear(ZX_MATRIX_SIZE);
-  matrix[ZX_K_RESET] = 0;
+  matrix[key1] = 0;
+  matrix[key2] = 0;
   transmit();
+}
+
+void ZXKeyboard::doReset()
+{
+  doSpecial(ZX_K_RESET, ZX_K_RESET);
 }
 
 void ZXKeyboard::doFullReset()
@@ -1170,13 +1177,7 @@ void ZXKeyboard::doFullReset()
 
 void ZXKeyboard::doMagic()
 {
-  clear(ZX_MATRIX_SIZE);
-  matrix[ZX_K_MAGICK] = 1;
-  transmit();
-  delay(100);
-  clear(ZX_MATRIX_SIZE);
-  matrix[ZX_K_MAGICK] = 0;
-  transmit();
+  doSpecial(ZX_K_MAGICK, ZX_K_MAGICK);
 }
 
 void ZXKeyboard::doCaps()

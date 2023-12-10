@@ -70,8 +70,6 @@
 library IEEE;
 use IEEE.std_logic_1164.all;
 use IEEE.numeric_std.all;
-library work;
-use work.all;
 
 entity T80_ALU is
 	generic(
@@ -97,7 +95,6 @@ entity T80_ALU is
 		BusB            : in  std_logic_vector(7 downto 0);
 		F_In            : in  std_logic_vector(7 downto 0);
 		Q               : out std_logic_vector(7 downto 0);
-    FC_Out          : out std_logic;
 		F_Out           : out std_logic_vector(7 downto 0)
 	);
 end T80_ALU;
@@ -167,15 +164,11 @@ begin
 	begin
 		Q_t := "--------";
 		F_Out <= F_In;
-    -- MCLEOD!!! aqui poner inicializacion de FC_Out a 0, por defecto. Se pondrá a 1 en cada when/case donde se alteren los flags
-    FC_Out <= '0';
 		DAA_Q := "---------";
 		case ALU_Op is
 		when "0000" | "0001" |  "0010" | "0011" | "0100" | "0101" | "0110" | "0111" =>
 			F_Out(Flag_N) <= '0';
 			F_Out(Flag_C) <= '0';
-      -- MCLEOD!!! Por ejemplo, aquí pondríamos FC_Out <= '1' porque se han tocado los flags
-      FC_Out <= '1';
 			case ALU_OP(2 downto 0) is
 			when "000" | "001" => -- ADD, ADC
 				Q_t := Q_v;
@@ -229,7 +222,6 @@ begin
 			-- DAA
 			F_Out(Flag_H) <= F_In(Flag_H);
 			F_Out(Flag_C) <= F_In(Flag_C);
-      FC_Out <= '1';
 			DAA_Q(7 downto 0) := unsigned(BusA);
 			DAA_Q(8) := '0';
 			if F_In(Flag_N) = '0' then
@@ -283,7 +275,6 @@ begin
 			F_Out(Flag_N) <= '0';
 			F_Out(Flag_X) <= Q_t(3);
 			F_Out(Flag_Y) <= Q_t(5);
-      FC_Out <= '1';
 			if Q_t(7 downto 0) = "00000000" then
 				F_Out(Flag_Z) <= '1';
 			else
@@ -294,7 +285,6 @@ begin
 				Q_t(4) xor Q_t(5) xor Q_t(6) xor Q_t(7));
 		when "1001" =>
 			-- BIT
-      FC_Out <= '1';
 			Q_t(7 downto 0) := BusB and BitMask;
 			F_Out(Flag_S) <= Q_t(7);
 			if Q_t(7 downto 0) = "00000000" then
@@ -306,7 +296,7 @@ begin
 			end if;
 			F_Out(Flag_H) <= '1';
 			F_Out(Flag_N) <= '0';
-			if IR(2 downto 0) = "110" or XY_State /= "00" then      
+			if IR(2 downto 0) = "110" or XY_State /= "00" then
 				F_Out(Flag_X) <= WZ(11);
 				F_Out(Flag_Y) <= WZ(13);
 			else
@@ -378,7 +368,6 @@ begin
 				F_Out(Flag_S) <= F_In(Flag_S);
 				F_Out(Flag_Z) <= F_In(Flag_Z);
 			end if;
-      FC_Out <= '1';
 		when others =>
 			null;
 		end case;

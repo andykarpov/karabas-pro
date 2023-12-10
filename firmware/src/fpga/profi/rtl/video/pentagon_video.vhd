@@ -31,6 +31,7 @@ entity pentagon_video is
 		BLINK 	: out std_logic;
 		SCREEN_MODE : in std_logic_vector(1 downto 0) := "00"; -- screen mode: 00 = pentagon, 01 - 128 classic, 10, 11 - reserver
 		COUNT_BLOCK : out std_logic;
+		COUNT_BLOCKIO : out std_logic;
 		
 		-- sram vram
 		VBUS_MODE : in std_logic := '0'; -- 1 = video bus, 2 = cpu bus
@@ -51,6 +52,8 @@ architecture rtl of pentagon_video is
 	signal vid_reg  : std_logic_vector(7 downto 0);	
 	signal attr     : std_logic_vector(7 downto 0);
 	signal bitmap   : std_logic_vector(7 downto 0);
+	signal bORatr   : std_logic_vector(7 downto 0);
+	signal bORatr_r : std_logic_vector(7 downto 0);
 	
 	signal paper_r  : std_logic;
 	signal blank_r  : std_logic;
@@ -67,30 +70,36 @@ architecture rtl of pentagon_video is
 	signal VIDEO_I 	: std_logic;	
 		
 	signal int_sig : std_logic;
-		
+	signal COUNT_BLOCK128 : std_logic;
+	signal COUNT_BLOCKio128 : std_logic;
+	signal COUNT_BLOCK48 : std_logic;
+	
+	signal zx128 : std_logic;
+	signal zx48 : std_logic;
+	
 begin
 
 	-- sync, counters
 	process( CLK2X, CLK, ENA, chr_col_cnt, hor_cnt, chr_row_cnt, ver_cnt, TURBO, INTA)
 	begin
-		if CLK2X'event and CLK2X = '1' then
+		if CLK2X'event and CLK2X = '1' then --28
 		
-			if CLK = '1' and ENA = '1' then
+			if CLK = '1' and ENA = '1' then --14 7 = 7
 			
-				if chr_col_cnt = 7 then
-				
-					if hor_cnt = 55 then
+				if chr_col_cnt = 7 then --8 pixels 0.142*8 = 1.138 us
+				---20.10.2023:OCH: 456 * 0.142 us for row in Classic 128 mode "10"
+					if (hor_cnt = 55 and (SCREEN_MODE = "00" or SCREEN_MODE = "01")) or (hor_cnt = 56 and SCREEN_MODE = "10")  then 
 						hor_cnt <= (others => '0');
 					else
 						hor_cnt <= hor_cnt + 1;
 					end if;
 					
-					if hor_cnt = 39 then
+					if hor_cnt = 39 then -- 
 						if chr_row_cnt = 7 then
 							if (ver_cnt = 39 and MODE60 = '0' and SCREEN_MODE = "00") or -- pentagon 50 Hz 
 								(ver_cnt = 32 and MODE60 = '1' and SCREEN_MODE = "00") or -- pentagon 60 Hz
-								(ver_cnt = 38 and MODE60 = '0' and SCREEN_MODE = "01") or -- classic 50 Hz
-								(ver_cnt = 31 and MODE60 = '1' and SCREEN_MODE = "01")    -- classic 60 Hz
+								(ver_cnt = 38 and MODE60 = '0' and (SCREEN_MODE = "01" or SCREEN_MODE = "10")) or -- classic or Classic 128 50 Hz 
+								(ver_cnt = 31 and MODE60 = '1' and (SCREEN_MODE = "01" or SCREEN_MODE = "10"))    -- classic or Classic 128 60 Hz
 							then
 								ver_cnt <= (others => '0');
 								invert <= invert + 1;
@@ -98,7 +107,11 @@ begin
 								ver_cnt <= ver_cnt + 1;
 							end if;
 						end if;
-						chr_row_cnt <= chr_row_cnt + 1;
+						if ver_cnt = 37 and MODE60 = '0' and SCREEN_MODE = "10" and chr_row_cnt = 5 then  
+							chr_row_cnt <= chr_row_cnt + 2; -- skip one row
+						else
+							chr_row_cnt <= chr_row_cnt + 1;
+						end if;
 					end if;
 				end if;
 
@@ -106,7 +119,7 @@ begin
 
 				if chr_col_cnt = 7 then
 
-					if (hor_cnt(5 downto 2) = "1010") then 
+					if hor_cnt(5 downto 2) = "1010" then
 						HSYNC <= '0';
 					else 
 						HSYNC <= '1';
@@ -169,11 +182,20 @@ begin
 								int_sig <= '1';
 							end if;
 						end if;
+					-- 128 int
+					elsif (SCREEN_MODE = "10") then 
+						if chr_col_cnt = 4 then
+							if ver_cnt = 31 and chr_row_cnt = 0 and hor_cnt(5 downto 3) = "000" then
+								int_sig <= '0';
+							else
+								int_sig <= '1';
+							end if;
+						end if;
 					end if;
 
 				end if;
 
-				chr_col_cnt <= chr_col_cnt + 1;
+				chr_col_cnt <= chr_col_cnt + 1; -- column counter 0.142 us per column/pixel
 			end if;
 		end if;
 	end process;
@@ -225,7 +247,7 @@ begin
 						if SCREEN_MODE = "00" and ((hor_cnt(5 downto 0) > 38 and hor_cnt(5 downto 0) < 48) or ((ver_cnt(5 downto 1) = 15 and MODE60 = '0') or (ver_cnt(5 downto 1) = 14 and MODE60 = '1'))) then	-- 15 = for 320 lines, 13 = for 264 lines
 							blank_r <= '0';
 						-- CLASSIC blank
-						elsif SCREEN_MODE = "01" and (hor_cnt(5 downto 2) = 10 or hor_cnt(5 downto 2) = 11 or (ver_cnt = 31 and MODE60 = '0') or (ver_cnt = 30 and MODE60 = '1')) then
+						elsif (SCREEN_MODE = "01" or SCREEN_MODE = "10") and (hor_cnt(5 downto 2) = 10 or hor_cnt(5 downto 2) = 11 or (ver_cnt = 31 and MODE60 = '0') or (ver_cnt = 30 and MODE60 = '1')) then
 							blank_r <= '0';
 						else 
 							blank_r <= '1';
@@ -284,8 +306,9 @@ begin
 	RGB <= VIDEO_R & VIDEO_G & VIDEO_B;
 	I <= VIDEO_I;
 	pFF_CS	<= not paper;
-	ATTR_O	<= attr_r;
-
+	
+	ATTR_O <= attr_r;
+	
 	INT <= int_sig;
 	
 	HCNT <= '0' & std_logic_vector(hor_cnt) & std_logic_vector(chr_col_cnt);
@@ -294,6 +317,29 @@ begin
 
 	BLINK <= invert(4);
 	
-	COUNT_BLOCK <= '1' when paper = '0' and (chr_col_cnt(2) = '0' or hor_cnt(0) = '0') else '0';
+	zx128 <= '1' when SCREEN_MODE = "10" else '0';
+	zx48 <= '1' when SCREEN_MODE = "01" else '0';	
+	
+	COUNT_BLOCK48 <= '1' when paper = '0' and (chr_col_cnt(2) = '0' or hor_cnt(0) = '0') else '0';
+	COUNT_BLOCK128 <= '1' when paper = '0' and (hor_cnt(0) & chr_col_cnt > 3)  else '0';
+	COUNT_BLOCKIO128 <= '1' when paper = '0' and (chr_col_cnt(2) = '0' or hor_cnt(0) = '0') else '0';
+	
+--	process (CLK2X)
+--	begin
+--		if rising_edge(clk2X) then
+--			if zx48 = '1' then
+--				COUNT_BLOCK <= COUNT_BLOCK48;
+--				COUNT_BLOCKIO <= COUNT_BLOCK48;
+--			elsif zx128 = '1' then
+--				COUNT_BLOCK <= COUNT_BLOCK128;
+--				COUNT_BLOCKIO <= COUNT_BLOCK48;
+--			else
+--				COUNT_BLOCK <= '0';
+--				COUNT_BLOCKIO <= '0';
+--			end if;
+--		end if;
+--	end process;
 
+	COUNT_BLOCKIO <= COUNT_BLOCK48 when zx48 = '1' else COUNT_BLOCKIO128 when zx128 = '1' else '0';
+	COUNT_BLOCK <= COUNT_BLOCK48 when zx48 = '1' else COUNT_BLOCK128 when zx128 = '1' else '0';
 end architecture;
