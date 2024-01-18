@@ -294,15 +294,17 @@ signal nemo_cs1			: std_logic;
 signal nemo_ior			: std_logic;
 
 -- Profi FDD ports
-signal RT_F2_1			:std_logic;
-signal RT_F2_2			:std_logic;
-signal RT_F2_3			:std_logic;
-signal fdd_cs_pff_n	:std_logic;
-signal RT_F1_1			:std_logic;
-signal RT_F1_2			:std_logic;
-signal RT_F1			:std_logic;
-signal P0				:std_logic;
-signal fdd_cs_n		:std_logic;
+signal RT_F2_1			: std_logic;
+signal RT_F2_2			: std_logic;
+signal RT_F2_3			: std_logic;
+signal fdd_cs_pff_n	: std_logic;
+signal RT_F1_1			: std_logic;
+signal RT_F1_2			: std_logic;
+signal RT_F1			: std_logic;
+signal P0				: std_logic;
+signal fdd_cs_n		: std_logic;
+signal fdd_cnt			: std_logic_vector(7 downto 0) := x"FF";
+signal fdd_wait		: std_logic;
 
 -- TurboSound
 signal ssg_sel			: std_logic;
@@ -1202,11 +1204,11 @@ max_turbo <= "10";
 
 --OCH: automap = '0' and cs_nemo_ports = '0' - not contend DIVMMC and NEMO ports in CLASSIC screen mode
 clk_cpu <= '0' when kb_wait = '1' or  (kb_screen_mode = "01" and memory_contention = '1' and automap = '0' and cs_nemo_ports = '0' and DS80 = '0') or WAIT_IO = '0' else 
-	clk_bus when turbo_mode = "11" and turbo_mode <= max_turbo else 
+	clk_bus when fdd_wait='1' and turbo_mode = "11" and turbo_mode <= max_turbo else 
 	-- OCH: disable turbo in trdos to be sure what all programming delays are original
 	-- 06.09.2023:OCH: fixed turbo mode by adding all condition when it can be enabled, i'm not sure about ds80 = 1 but let it be
-	clk_bus and ena_div2 when turbo_mode = "10" and turbo_mode <= max_turbo and (dos_act='0' or DIVMMC_EN = '1' or cpm = '1' or onrom = '1' or ds80 = '1') else 
-	clk_bus and ena_div4 when turbo_mode = "01" and turbo_mode <= max_turbo and (dos_act='0' or DIVMMC_EN = '1' or cpm = '1' or onrom = '1' or ds80 = '1') else 
+	clk_bus and ena_div2 when fdd_wait='1' and turbo_mode = "10" and turbo_mode <= max_turbo else 
+	clk_bus and ena_div4 when fdd_wait='1' and turbo_mode = "01" and turbo_mode <= max_turbo else 
 	clk_bus and ena_div8;
 
 -- одновибратор - по спаду /IORQ отсчитывает 400нс вейта проца 
@@ -1235,7 +1237,7 @@ led1_overwrite <= '1';
 process (clk_bus, hdd_wwe_n, hdd_rww_n, SD_NCS)
 begin
 	if rising_edge(clk_bus) then
-		if (IOW = '0') or (IOR ='0') or (hdd_wwe_n = '0') or (hdd_rww_n = '0') or (SD_NCS = '0') then
+		if (IOW = '0') or (IOR ='0') or (hdd_wwe_n = '0') or (hdd_rww_n = '0') or (SD_NCS = '0') or (fdd_wait = '0') then
 			led1 <= '1';
 		else 
 			led1 <= '0';
@@ -1469,6 +1471,23 @@ RT_F1_2 <= '0' when cpu_a_bus(7)='0' and cpu_a_bus(1 downto 0)="11" and cpu_iorq
 RT_F1 <= RT_F1_1 and RT_F1_2;
 P0 <='0' when (cpu_a_bus(7)='1' and cpu_a_bus(4 downto 0)="00011" and cpu_iorq_n='0') and ((cpm='1' and rom14='1') or (dos_act='1' and rom14='0')) else '1';
 fdd_cs_n <= RT_F1 and P0;
+
+process (ena_div4, reset)
+begin
+	if reset='1' then
+		fdd_cnt <= x"FF";
+	elsif ena_div4'event and ena_div4='1' then
+		if ((fdd_cs_pff_n='0') or (fdd_cs_n='0')) and ((cpu_rd_n='0') or (cpu_wr_n='0')) then
+			fdd_cnt <= x"00";
+		elsif fdd_cnt <= x"7F" then
+			fdd_cnt <= fdd_cnt + 1;
+		else
+			fdd_cnt <= x"FF";
+		end if;
+	end if;
+end process;
+
+fdd_wait <= fdd_cnt(7);
 
 -- Ports
 process (reset, areset, clk_bus, cpu_a_bus, dos_act, cs_xxfe, cs_eff7, cs_7ffd, cs_xxfd, port_7ffd_reg, port_1ffd_reg, cpu_mreq_n, cpu_m1_n, cpu_wr_n, cpu_do_bus, fd_port, cs_008b, kb_turbo, kb_turbo_old)

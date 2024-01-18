@@ -56,8 +56,7 @@ signal f1				:std_logic;
 signal f4				:std_logic;
 signal f_sel			:std_logic;
 signal fa				:std_logic_vector(4 downto 0);
-signal rd1				:std_logic;
-signal rd2				:std_logic;
+signal rd_reg			:std_logic_vector(1 downto 0);
 signal wdata			:std_logic_vector(3 downto 0);
 
 begin 
@@ -74,7 +73,7 @@ begin
 	
 	process(f_sel, FDC_WF_DE, FDC_STEP, FDC_DRQ, NRESET)
 	begin
-		if FDC_WF_DE = '0' or NRESET = '0' then
+		if NRESET = '0' then
 			f_sel <= '0'; -- FDC clock (1Mc)				
 		elsif FDC_STEP = '1' then
 			f_sel <= '1'; -- FDC clock (2Mc)	
@@ -93,21 +92,14 @@ begin
 	end process;
 	
 	------------------------------ RAWR 125 ms ---------------------------
-	process(CLK8, FDC_RDATA,rd1)
+	process(CLK8, FDC_RDATA, rd_reg)
 	begin
 		if (CLK8'event and CLK8='1') then
-			rd1 <= FDC_RDATA;
+			rd_reg <= not rd_reg(0) & FDC_RDATA;
 		end if;
 	end process;
 
-	process(CLK8,rd1,rd2)
-	begin
-		if (CLK8'event and CLK8='1') then
-			rd2 <= not rd1;
-		end if;
-	end process;
-
-	FDC_NRAWR <= '0' when FDC_WF_DE='0' and (rd1='1' and rd2='1') else '1'; -- RAWR is assembled, when WF_DE='1' - disallow output
+	FDC_NRAWR <= not(rd_reg(1) and rd_reg(0));
 
 	----------------- FAPCh (calculating RCLK shifts) -------------------
 	process(CLK8,FDC_NRAWR,fa)
@@ -135,7 +127,7 @@ begin
 	end if;
 	end process;
 
-	FDC_RCLK <= not fa(4) or FDC_WF_DE; -- RCLK disabled if there is no access to the floppy (and the same for RAWR)
+	FDC_RCLK <= not fa(4);
 
 	---------------- Write pre-compensation --------------------
 	FDC_WDATA <= wdata(3);
@@ -149,10 +141,7 @@ begin
 				wdata(2) <= FDC_TR43 and FDC_SL;
 				wdata(3) <= '0';
 			else
-				wdata(3) <= wdata(2);
-				wdata(2) <= wdata(1);
-				wdata(1) <= wdata(0);
-				wdata(0) <= '0';
+				wdata <= wdata(2 downto 0) & '0';
 			end if;
 		end if;
 	end process;
