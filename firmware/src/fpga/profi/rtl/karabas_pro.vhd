@@ -1477,7 +1477,7 @@ begin
 	if reset='1' then
 		fdd_cnt <= x"FF";
 	elsif ena_div4'event and ena_div4='1' then
-		if ((fdd_cs_pff_n='0') or (fdd_cs_n='0')) and ((cpu_rd_n='0') or (cpu_wr_n='0')) then
+		if fdd_cs_n='0' and ((cpu_rd_n='0') or (cpu_wr_n='0')) then
 			fdd_cnt <= x"00";
 		elsif fdd_cnt <= x"7F" then
 			fdd_cnt <= fdd_cnt + 1;
