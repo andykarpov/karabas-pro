@@ -174,10 +174,10 @@
     (fill (type none))
     (uuid d57fc621-655d-436d-9cab-17b305a18b2f)
   )
-  (rectangle (start 104.14 90.17) (end 116.84 90.17)
+  (rectangle (start 196.85 151.13) (end 241.3 151.13)
     (stroke (width 0) (type default))
     (fill (type none))
-    (uuid d9db1557-9a93-40e8-886b-a01e73777599)
+    (uuid df2cf2b4-ecf8-4484-a5bb-b6b2411fdbe0)
   )
   (rectangle (start 104.14 110.49) (end 116.84 110.49)
     (stroke (width 0) (type default))
@@ -194,11 +194,6 @@
     (fill (type none))
     (uuid e877fd43-ce9d-4410-95f8-4b18e6208f6f)
   )
-  (rectangle (start 104.14 120.65) (end 116.84 120.65)
-    (stroke (width 0) (type default))
-    (fill (type none))
-    (uuid f87da5ff-7990-48b9-ac81-5d3edeb0a768)
-  )
   (rectangle (start 196.85 130.81) (end 241.3 130.81)
     (stroke (width 0) (type default))
     (fill (type none))
@@ -210,13 +205,6 @@
     (uuid ff5fb185-4915-41f9-ac7c-d946c22d8072)
   )
 
-  (text_box "BUZZER"
-    (at 74.93 116.84 0) (size 29.21 7.62)
-    (stroke (width 0) (type default))
-    (fill (type none))
-    (effects (font (size 1.27 1.27)))
-    (uuid 08956f9e-1b61-4e3b-a78c-d9b3feee9bce)
-  )
   (text_box "PS/2 Keyboard"
     (at 241.3 66.04 0) (size 29.21 7.62)
     (stroke (width 0) (type default))
@@ -260,7 +248,7 @@
     (uuid 39e46931-ef0f-4822-85ae-47a2956d1b50)
   )
   (text_box "ESP8266"
-    (at 74.93 86.36 0) (size 29.21 7.62)
+    (at 241.3 147.32 0) (size 29.21 7.62)
     (stroke (width 0) (type default))
     (fill (type none))
     (effects (font (size 1.27 1.27)))
@@ -329,7 +317,7 @@
     (effects (font (size 1.27 1.27)))
     (uuid 8e1d7d7d-87fe-47ee-9f63-5c3f5afcc85c)
   )
-  (text_box "SRAM 6MB"
+  (text_box "SRAM 2MB"
     (at 74.93 55.88 0) (size 29.21 7.62)
     (stroke (width 0) (type default))
     (fill (type none))
@@ -350,8 +338,8 @@
     (effects (font (size 1.27 1.27)))
     (uuid 9ca5c8b2-a163-4134-a505-6b2b04613a43)
   )
-  (text_box "FPGA\nEP4CE10"
-    (at 116.84 45.72 0) (size 46.99 99.06)
+  (text_box "FPGA\nEP4CE22"
+    (at 116.84 45.72 0) (size 46.99 109.22)
     (stroke (width 0) (type default))
     (fill (type none))
     (effects (font (size 1.27 1.27)))
@@ -371,8 +359,8 @@
     (effects (font (size 1.27 1.27)))
     (uuid ccc95e82-fb85-48b6-9931-58860899c346)
   )
-  (text_box "AVR\nATMEGA328"
-    (at 179.07 66.04 0) (size 17.78 78.74)
+  (text_box "MCU\nRP2040"
+    (at 179.07 66.04 0) (size 17.78 88.9)
     (stroke (width 0) (type default))
     (fill (type none))
     (effects (font (size 1.27 1.27)))
@@ -395,9 +383,9 @@
     (effects (font (size 1.27 1.27) (thickness 0.254) bold) (justify left bottom))
     (uuid 50096aca-0fe3-4e80-9e33-faa4625dfc75)
   )
-  (text "UART" (at 107.95 90.17 0)
+  (text "UART" (at 215.9 151.13 0)
     (effects (font (size 1.27 1.27)) (justify left bottom))
-    (uuid 84913c8e-0cf9-4cba-83b1-3767f92af4a8)
+    (uuid 72ba91ee-fbf4-4a49-89d4-42b67a739fa0)
   )
   (text "SPI" (at 109.22 69.85 0)
     (effects (font (size 1.27 1.27)) (justify left bottom))
