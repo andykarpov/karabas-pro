@@ -1605,7 +1605,7 @@ end process;
 
 speaker <= port_xxfe_reg(4);
 BUZZER <= speaker;
-tape_in_monitor <= TAPE_IN when tape_in_out_enable = '1' else '0';
+tape_in_monitor <= not(TAPE_IN) when tape_in_out_enable = '1' else '0';
 
 audio_mono <= 	
 				("0000" & speaker & "00000000000") +
@@ -1784,7 +1784,7 @@ begin
 	case selector is
 		when x"00" => cpu_di_bus <= ram_do_bus;
 		when x"01" => cpu_di_bus <= mc146818_do_bus;
-		when x"02" => cpu_di_bus <= GX0 & TAPE_IN & kb_do_bus;
+		when x"02" => cpu_di_bus <= GX0 & not(TAPE_IN) & kb_do_bus;
 		when x"03" => cpu_di_bus <= zc_do_bus;
 		when x"04" => cpu_di_bus <= "11111100";	
 		when x"05" => cpu_di_bus <= joy_bus;
