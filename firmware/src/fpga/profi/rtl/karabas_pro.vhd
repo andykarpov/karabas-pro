@@ -1217,9 +1217,9 @@ cpu_wait_n <= '1';
 -- max turbo = 14 MHz
 max_turbo <= "10";
 
-clk_cpu <= '0' when memory_contention = '1' else -- or WAIT_IO = '0'
-		clk_bus and ena_div2 when turbo_mode = "10" and (dos_act = '0' or ds80 = '1') else 
-		clk_bus and ena_div4 when turbo_mode = "01" else 
+clk_cpu <= '0' when fdd_wait = '1' and memory_contention = '1' else -- or WAIT_IO = '0'
+		clk_bus and ena_div2 when fdd_wait = '1' and turbo_mode = "10" and (dos_act = '0' or ds80 = '1') else 
+		clk_bus and ena_div4 when fdd_wait = '1' and turbo_mode = "01" else 
 		clk_bus and ena_div8;
 
 CEN <= not kb_wait;
@@ -1513,6 +1513,23 @@ begin
 		end if;
 	end if;
 end process;
+
+process (ena_div4, reset)
+begin
+	if reset='1' then
+		fdd_cnt <= x"FF";
+	elsif ena_div4'event and ena_div4='1' then
+		if fdd_cs_n='0' and ((cpu_rd_n='0') or (cpu_wr_n='0')) then
+			fdd_cnt <= x"00";
+		elsif fdd_cnt <= x"7F" then
+			fdd_cnt <= fdd_cnt + 1;
+		else
+			fdd_cnt <= x"FF";
+		end if;
+	end if;
+end process;
+
+fdd_wait <= fdd_cnt(7);
 
 -- Ports
 process (reset, areset, clk_bus, cpu_a_bus, dos_act, cs_xxfe, cs_eff7, cs_7ffd, cs_xxfd, port_7ffd_reg, port_1ffd_reg, cpu_mreq_n, cpu_m1_n, cpu_wr_n, cpu_do_bus, fd_port, cs_008b, kb_turbo, kb_turbo_old)
