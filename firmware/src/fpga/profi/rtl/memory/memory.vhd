@@ -12,7 +12,7 @@ port (
 	CLK2X 		: in std_logic;
 	CLKX	   	: in std_logic;
 	CLK_CPU 		: in std_logic;
-
+	
 	A           : in std_logic_vector(15 downto 0); -- address bus
 	D 				: in std_logic_vector(7 downto 0);
 	N_MREQ		: in std_logic;
@@ -62,8 +62,10 @@ port (
 	ROM_BANK : in std_logic := '0';
 	EXT_ROM_BANK : in std_logic_vector(1 downto 0) := "00";
 	
-	COUNT_BLOCK : in std_logic := '0'; -- paper = '0' and (not (chr_col_cnt(2) and hor_cnt(0)));
+	COUNT_BLOCK : in std_logic := '0'; 
+	COUNT_BLOCKio : in std_logic := '0';
 	CONTENDED   : out std_logic := '0';
+	SCREEN_MODE : in std_logic_vector(1 downto 0);
 	
 	-- DIVMMC
 	DIVMMC_EN	: in std_logic;
@@ -102,11 +104,12 @@ architecture RTL of memory is
 	
 	signal block_reg : std_logic := '0';
 	signal page_cont : std_logic := '0';
+	signal can_contend :std_logic:= '0';
 	
 	-- DIVMMC
 	signal is_romDIVMMC : std_logic;
 	signal is_ramDIVMMC : std_logic;
-	--signal tmp_divmmc_en : std_logic := '1';
+
 
 begin
    
@@ -152,6 +155,10 @@ begin
 			N_CE1 <= ram_page(7);
 			N_CE2 <= not ram_page(7);
 			N_CE3 <= '1';
+		--else
+		--	N_CE1 <= '1';
+		--	N_CE2 <= '1';
+		--	N_CE3 <= '1';
 		end if;
 		
 	end process;					
@@ -164,13 +171,15 @@ begin
 		loader_ram_a(13 downto 0) when loader_act = '1' else -- loader ram
 --- 08.07.2023:OCH: set DIVMMC low adress
 		REG_E3(0) & A(12 downto 0) when vbus_mode = '0' and is_ramDIVMMC = '1' else -- DIVMMC ram
+		'1' & A(12 downto 0) when vbus_mode = '0' and is_romDIVMMC = '1' and REG_E3(6) = '1' else -- DIVMMC rom mapped from page 3 of divmmc ram
 		A(13 downto 0) when vbus_mode = '0' else -- spectrum ram or DIVMMC rom
 		VA; -- video ram (read by video controller)
 
 	MA(20 downto 14) <= 
 		loader_ram_a(20 downto 14) when loader_act = '1' else -- loader ram
 --- 08.07.2023:OCH: set DIVMMC high adress
-		"1010000" when is_romDIVMMC = '1' and vbus_mode = '0' else -- DIVMMC rom
+		"1010000" when is_romDIVMMC = '1' and vbus_mode = '0'  and REG_E3(6) = '0' else -- DIVMMC rom
+		"1100001" when is_romDIVMMC = '1' and vbus_mode = '0'  and REG_E3(6) = '1' else -- DIVMMC rom mapped from page 3 of divmmc ram
 		"11" & REG_E3(5 downto 1) when is_ramDIVMMC = '1' and vbus_mode = '0' else -- DIVMMC ram 512 kB from #X180000 SRAM
 ---
 		"100" & EXT_ROM_BANK(1 downto 0) & rom_page(1 downto 0) when is_rom = '1' and vbus_mode = '0' else -- rom from sram high bank 
@@ -181,7 +190,7 @@ begin
 		"0000000";
 	
 	MD(7 downto 0) <= 
-		loader_ram_do when loader_act = '1' else -- loader DO
+		loader_ram_do when loader_act = '1' else -- loader DO  
 		D(7 downto 0) when vbus_mode = '0' and ((is_ram = '1' or is_ramDIVMMC = '1' or (N_IORQ = '0' and N_M1 = '1')) and N_WR = '0') else  -- OCH: why (N_IORQ = '0' and N_M1 = '1') this used in memory controller? and in write mode
 		(others => 'Z');
 		
@@ -210,7 +219,6 @@ begin
 	end process;
 
 		---08.07.2023:OCH: DIVMMC signaling when we must map rom or ram of DIVMMC interface to Z80 adress space
-	---maybe it not necessary A(15 downto 13) ? Only check for A(13)?
 	is_romDIVMMC <= '1' when DIVMMC_EN = '1' and N_MREQ = '0' and (AUTOMAP ='1' or REG_E3(7) = '1') and A(15 downto 13) = "000" else '0';
 	is_ramDIVMMC <= '1' when DIVMMC_EN = '1' and N_MREQ = '0' and (AUTOMAP ='1' or REG_E3(7) = '1') and A(15 downto 13) = "001" else '0';
 	
@@ -222,7 +230,7 @@ begin
 	-- 10 - bank 2, Basic-128
 	-- 11 - bank 3, Basic-48
 
-	rom_page <= (not(TRDOS)) & ROM_BANK when DIVMMC_EN = '0' else "11";
+	rom_page <= (not(TRDOS)) & ROM_BANK when DIVMMC_EN = '0' else "1" & ROM_BANK;
 			
 	N_OE <= '0' when (is_ram = '1' or is_rom = '1') and N_RD = '0' else '1';
 		
@@ -262,7 +270,7 @@ begin
 	process( clk_cpu )
 	begin
 		if clk_cpu'event and clk_cpu = '1' then
-			if N_MREQ = '0' or (A(0) = '0' and N_IORQ = '0')then
+			if N_MREQ = '0' or (A(0) = '0' and N_IORQ = '0') then
 				block_reg <='0';
 			else
 				block_reg <= '1';
@@ -270,18 +278,27 @@ begin
 		end if;
 	end process;
 	
-	page_cont <= '1' when (A(0) = '0' and N_IORQ = '0') or mux="01" else '0';
+	can_contend <= '1' when TURBO_MODE = "00"  and DS80 = '0' and TRDOS = '0' and (SCREEN_MODE = "01" or SCREEN_MODE = "10") else '0';
 	
 	process (clk2x)
 	begin 
-		if rising_edge(clk2x) then 
-		-- OCH: contend only when 3,5 MHz CLK 
-			if (page_cont = '1' and block_reg = '1' and count_block = '1' and DS80 = '0' and TURBO_MODE = "00") then 
-				contended <= '1';
+	if rising_edge(clk2x) then 
+			if (page_cont = '1' and block_reg = '1' and count_block = '1') or 
+			   (A(0) = '0' and N_IORQ = '0' and block_reg = '1' and count_blockio = '1')  or
+			   (N_IORQ = '0' and mux="01" and count_block = '1'  and block_reg = '1')
+			then 
+				contended <= can_contend;
 			else 
 				contended <= '0';
 			end if;
-		end if;
+			
+			if mux="01" or (mux="11" and RAM_BANK(0) ='1' and SCREEN_MODE = "10") then
+				page_cont <='1';
+			else 
+				page_cont <= '0';
+			end if;
+			
+	end if;
 	end process;
 			
 end RTL;

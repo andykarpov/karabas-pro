@@ -79,13 +79,12 @@ library IEEE;
 use IEEE.std_logic_1164.all;
 use IEEE.numeric_std.all;
 use IEEE.STD_LOGIC_UNSIGNED.all;
-library work;
-use work.all;
+use work.T80_Pack.all;
 
 entity T80 is
 	generic(
 		Mode   : integer := 0;  -- 0 => Z80, 1 => Fast Z80, 2 => 8080, 3 => GB
-		IOWait : integer := 0;  -- 0 => Single cycle I/O, 1 => Std I/O cycle
+		IOWait : integer := 1;  -- 0 => Single cycle I/O, 1 => Std I/O cycle
 		Flag_C : integer := 0;
 		Flag_N : integer := 1;
 		Flag_P : integer := 2;
@@ -129,14 +128,6 @@ end T80;
 
 architecture rtl of T80 is
 
-	constant aNone              : std_logic_vector(2 downto 0) := "111";
-	constant aBC                : std_logic_vector(2 downto 0) := "000";
-	constant aDE                : std_logic_vector(2 downto 0) := "001";
-	constant aXY                : std_logic_vector(2 downto 0) := "010";
-	constant aIOA               : std_logic_vector(2 downto 0) := "100";
-	constant aSP                : std_logic_vector(2 downto 0) := "101";
-	constant aZI                : std_logic_vector(2 downto 0) := "110";
-
 	-- Registers
 	signal ACC, F               : std_logic_vector(7 downto 0);
 	signal Ap, Fp               : std_logic_vector(7 downto 0);
@@ -160,7 +151,6 @@ architecture rtl of T80 is
 
 	-- Help Registers
 	signal WZ                   : std_logic_vector(15 downto 0);        -- MEMPTR register
-  signal FChanged             : std_logic;                            -- Q flipflop (for SCF/CCF)
 	signal IR                   : std_logic_vector(7 downto 0);         -- Instruction register
 	signal ISet                 : std_logic_vector(1 downto 0);         -- Instruction set selector
 	signal RegBusA_r            : std_logic_vector(15 downto 0);
@@ -173,8 +163,8 @@ architecture rtl of T80 is
 	signal IntE_FF1             : std_logic;
 	signal IntE_FF2             : std_logic;
 	signal Halt_FF              : std_logic;
-	signal BusReq_s             : std_logic;
-	signal BusAck               : std_logic;
+	signal BusReq_s             : std_logic := '0';
+	signal BusAck               : std_logic := '0';
 	signal ClkEn                : std_logic;
 	signal NMI_s                : std_logic;
 	signal IStatus              : std_logic_vector(1 downto 0);
@@ -197,7 +187,6 @@ architecture rtl of T80 is
 	signal BusA                 : std_logic_vector(7 downto 0);
 	signal ALU_Q                : std_logic_vector(7 downto 0);
 	signal F_Out                : std_logic_vector(7 downto 0);
-  signal FChanged_Out         : std_logic;
 
 	-- Registered micro code outputs
 	signal Read_To_Reg_r        : std_logic_vector(4 downto 0);
@@ -260,13 +249,18 @@ architecture rtl of T80 is
 	signal XYbit_undoc          : std_logic;
 	signal DOR                  : std_logic_vector(127 downto 0);
 
+	signal ABus                 : std_logic_vector(15 downto 0);
+	signal ABus_last            : std_logic_vector(15 downto 0);
+	signal NoRead_int           : std_logic;
+	signal Write_int            : std_logic;
+
 begin
 
 	REG <= IntE_FF2 & IntE_FF1 & IStatus & DOR & std_logic_vector(PC) & std_logic_vector(SP) & std_logic_vector(R) & I & Fp & Ap & F & ACC when Alternate = '0'
 			 else IntE_FF2 & IntE_FF1 & IStatus & DOR(127 downto 112) & DOR(47 downto 0) & DOR(63 downto 48) & DOR(111 downto 64) &
 						std_logic_vector(PC) & std_logic_vector(SP) & std_logic_vector(R) & I & Fp & Ap & F & ACC;
 
-	mcode : entity work.T80_MCode
+	mcode : T80_MCode
 		generic map(
 			Mode   => Mode,
 			Flag_C => Flag_C,
@@ -330,11 +324,11 @@ begin
 			SetEI       => SetEI,
 			IMode       => IMode,
 			Halt        => Halt,
-			NoRead      => NoRead,
-			Write       => Write,
+			NoRead      => NoRead_int,
+			Write       => Write_int,
 			XYbit_undoc => XYbit_undoc);
 
-	alu : entity work.T80_ALU
+	alu : T80_ALU
 		generic map(
 			Mode   => Mode,
 			Flag_C => Flag_C,
@@ -357,7 +351,6 @@ begin
 			BusB    => BusB,
 			F_In    => F,
 			Q       => ALU_Q,
-      FC_Out  => FChanged_Out,
 			F_Out   => F_Out);
 
 	ClkEn <= CEN and not BusAck;
@@ -379,9 +372,8 @@ begin
 	begin
 		if RESET_n = '0' then
 			PC <= (others => '0');  -- Program Counter
-			A <= (others => '0');
+			ABus <= (others => '0');
 			WZ <= (others => '0');
-      FChanged <= '0';
 			IR <= "00000000";
 			ISet <= "00";
 			XY_State <= "00";
@@ -419,7 +411,7 @@ begin
 				R   <= unsigned(DIR(47 downto 40));
 				SP  <= unsigned(DIR(63 downto 48));
 				PC  <= unsigned(DIR(79 downto 64));
-				A   <= DIR(79 downto 64);
+				ABus <= DIR(79 downto 64);
 				IStatus <= DIR(209 downto 208);
 
 			elsif ClkEn = '1' then
@@ -446,8 +438,8 @@ begin
 
 					if TState = 2 and Wait_n = '1' then
 						if Mode < 2 then
-							A(7 downto 0) <= std_logic_vector(R);
-							A(15 downto 8) <= I;
+							ABus(7 downto 0) <= std_logic_vector(R);
+							ABus(15 downto 8) <= I;
 							R(6 downto 0) <= R(6 downto 0) + 1;
 						end if;
 
@@ -497,57 +489,57 @@ begin
 					if T_Res = '1' then
 						BTR_r <= (I_BT or I_BC or I_BTR) and not No_BTR;
 						if Jump = '1' then
-							A(15 downto 8) <= DI_Reg;
-							A(7 downto 0) <= WZ(7 downto 0);
+							ABus(15 downto 8) <= DI_Reg;
+							ABus(7 downto 0) <= WZ(7 downto 0);
 							PC(15 downto 8) <= unsigned(DI_Reg);
 							PC(7 downto 0) <= unsigned(WZ(7 downto 0));
 						elsif JumpXY = '1' then
-							A <= RegBusC;
+							ABus <= RegBusC;
 							PC <= unsigned(RegBusC);
 						elsif Call = '1' or RstP = '1' then
-							A <= WZ;
+							ABus <= WZ;
 							PC <= unsigned(WZ);
 						elsif MCycle = MCycles and NMICycle = '1' then
-							A <= "0000000001100110";
+							ABus <= "0000000001100110";
 							PC <= "0000000001100110";
 						elsif MCycle = "011" and IntCycle = '1' and IStatus = "10" then
-							A(15 downto 8) <= I;
-							A(7 downto 0) <= WZ(7 downto 0);
+							ABus(15 downto 8) <= I;
+							ABus(7 downto 0) <= WZ(7 downto 0);
 							PC(15 downto 8) <= unsigned(I);
 							PC(7 downto 0) <= unsigned(WZ(7 downto 0));
 						else
 							case Set_Addr_To is
 							when aXY =>
 								if XY_State = "00" then
-									A <= RegBusC;
+									ABus <= RegBusC;
 								else
 									if NextIs_XY_Fetch = '1' then
-										A <= std_logic_vector(PC);
+										ABus <= std_logic_vector(PC);
 									else
-										A <= WZ;
+										ABus <= WZ;
 									end if;
 								end if;
 							when aIOA =>
 								if Mode = 3 then
 									-- Memory map I/O on GBZ80
-									A(15 downto 8) <= (others => '1');
+									ABus(15 downto 8) <= (others => '1');
 								elsif Mode = 2 then
 									-- Duplicate I/O address on 8080
-									A(15 downto 8) <= DI_Reg;
+									ABus(15 downto 8) <= DI_Reg;
 								else
-									A(15 downto 8) <= ACC;
+									ABus(15 downto 8) <= ACC;
 								end if;
-								A(7 downto 0) <= DI_Reg;
+								ABus(7 downto 0) <= DI_Reg;
 								WZ <= (ACC & DI_Reg) + "1";
 							when aSP =>
-								A <= std_logic_vector(SP);
+								ABus <= std_logic_vector(SP);
 							when aBC =>
 								if Mode = 3 and IORQ_i = '1' then
 									-- Memory map I/O on GBZ80
-									A(15 downto 8) <= (others => '1');
-									A(7 downto 0) <= RegBusC(7 downto 0);
+									ABus(15 downto 8) <= (others => '1');
+									ABus(7 downto 0) <= RegBusC(7 downto 0);
 								else
-									A <= RegBusC;
+									ABus <= RegBusC;
 									if SetWZ = "01" then
 										WZ <= RegBusC + "1";
 									end if;
@@ -557,24 +549,24 @@ begin
 									end if;
 								end if;
 							when aDE =>
-								A <= RegBusC;
+								ABus <= RegBusC;
 								if SetWZ = "10" then
 									WZ(7 downto 0) <= RegBusC(7 downto 0) + "1";
 									WZ(15 downto 8) <= ACC;
 								end if;
 							when aZI =>
 								if Inc_WZ = '1' then
-									A <= std_logic_vector(unsigned(WZ) + 1);
+									ABus <= std_logic_vector(unsigned(WZ) + 1);
 								else
-									A(15 downto 8) <= DI_Reg;
-									A(7 downto 0) <= WZ(7 downto 0);
+									ABus(15 downto 8) <= DI_Reg;
+									ABus(7 downto 0) <= WZ(7 downto 0);
 									if SetWZ = "10" then
 										WZ(7 downto 0) <= WZ(7 downto 0) + "1";
 										WZ(15 downto 8) <= ACC;
 									end if;
 								end if;
 							when others =>
-								A <= std_logic_vector(PC);
+								ABus <= std_logic_vector(PC);
 							end case;
 						end if;
 
@@ -588,43 +580,26 @@ begin
 						if I_CPL = '1' then
 							-- CPL
 							ACC <= not ACC;
-              -- MCLEOD!!! en todo if/when/case en el que se toquen los flags, poner Q a 1
 							F(Flag_Y) <= not ACC(5);
 							F(Flag_H) <= '1';
 							F(Flag_X) <= not ACC(3);
 							F(Flag_N) <= '1';
-              FChanged <= '1';
 						end if;
 						if I_CCF = '1' then
 							-- CCF
 							F(Flag_C) <= not F(Flag_C);
+							F(Flag_Y) <= ACC(5);
 							F(Flag_H) <= F(Flag_C);
+							F(Flag_X) <= ACC(3);
 							F(Flag_N) <= '0';
-              -- MCLEOD!!! preguntar aquí por Q. Si vale 1, entonces es solo ACC. Si es 0, es el OR de los flags con ACC
-              -- y acto seguido, poner Q a 1 ya que se han tocado los flags
-              if FChanged = '0' then
-							  F(Flag_Y) <= F(Flag_Y) or ACC(5);
-							  F(Flag_X) <= F(Flag_X) or ACC(3);
-              else
-							  F(Flag_Y) <= ACC(5);
-							  F(Flag_X) <= ACC(3);
-              end if;
-              FChanged <= '1';
 						end if;
 						if I_SCF = '1' then
 							-- SCF
-              -- MCLEOD!!! aquí lo mismo que en CCF
 							F(Flag_C) <= '1';
+							F(Flag_Y) <= ACC(5);
 							F(Flag_H) <= '0';
+							F(Flag_X) <= ACC(3);
 							F(Flag_N) <= '0';
-              if FChanged = '0' then
-							  F(Flag_Y) <= F(Flag_Y) or ACC(5);
-							  F(Flag_X) <= F(Flag_X) or ACC(3);
-              else
-							  F(Flag_Y) <= ACC(5);
-							  F(Flag_X) <= ACC(3);
-              end if;
-              FChanged <= '1';
 						end if;
 					end if;
 
@@ -633,9 +608,8 @@ begin
 						F(Flag_N) <= DI_Reg(7);
 						F(Flag_C) <= ioq(8);
 						F(Flag_H) <= ioq(8);
-						ioq := (ioq and "000000111") xor ('0' & BusA);
+						ioq := (ioq and x"7") xor ('0'&BusA);
 						F(Flag_P) <= not (ioq(0) xor ioq(1) xor ioq(2) xor ioq(3) xor ioq(4) xor ioq(5) xor ioq(6) xor ioq(7));
-            FChanged <= '1';
 					end if;
 
 					if TState = 2 and Wait_n = '1' then
@@ -704,7 +678,6 @@ begin
 							ACC <= I;
 							F(Flag_P) <= IntE_FF2;
 							F(Flag_S) <= I(7);
-              FChanged <= '1';
 
 							if I = x"00" then
 								F(Flag_Z) <= '1';
@@ -722,7 +695,6 @@ begin
 							ACC <= std_logic_vector(R);
 							F(Flag_P) <= IntE_FF2;
 							F(Flag_S) <= R(7);
-              FChanged <= '1';
 
 							if R = x"00" then
 								F(Flag_Z) <= '1';
@@ -748,7 +720,6 @@ begin
 						F(6) <= F_Out(6);
 						F(5) <= F_Out(5);
 						F(7) <= F_Out(7);
-            FChanged <= FChanged_Out;
 						if PreserveC_r = '0' then
 							F(4) <= F_Out(4);
 						end if;
@@ -764,7 +735,6 @@ begin
 					F(Flag_N) <= '0';
 					F(Flag_X) <= DI_Reg(3);
 					F(Flag_Y) <= DI_Reg(5);
-          FChanged <= '1';
 					if DI_Reg(7 downto 0) = "00000000" then
 						F(Flag_Z) <= '1';
 					else
@@ -805,13 +775,11 @@ begin
 					F(Flag_Y) <= ALU_Q(1);
 					F(Flag_H) <= '0';
 					F(Flag_N) <= '0';
-          FChanged <= '1';
 				end if;
 				if TState = 1 and I_BC = '1' then
 					n := ALU_Q - ("0000000" & F_Out(Flag_H));
 					F(Flag_X) <= n(3);
 					F(Flag_Y) <= n(1);
-          FChanged <= '1';
 				end if;
 				if I_BC = '1' or I_BT = '1' then
 					F(Flag_P) <= IncDecZ;
@@ -959,7 +927,7 @@ begin
 		end if;
 	end process;
 
-	Regs : entity work.T80_Reg
+	Regs : T80_Reg
 		port map(
 			Clk => CLK_n,
 			CEN => ClkEn,
@@ -1066,6 +1034,9 @@ begin
 				else
 					RFSH_n <= '1';
 				end if;
+				if (TState = 1 and (NoRead_int = '0' and IORQ_i = '0')) or (TState = 3 and MCycle = "001") then
+					ABus_last <= ABus;
+				end if;
 			end if;
 		end if;
 	end process;
@@ -1074,11 +1045,15 @@ begin
 	TS <= std_logic_vector(TState);
 	DI_Reg <= DI;
 	HALT_n <= not Halt_FF;
-	BUSAK_n <= not BusAck;
+	BUSAK_n <= not (BusAck and RESET_n);
 	IntCycle_n <= not IntCycle;
 	IntE <= IntE_FF1;
 	IORQ <= IORQ_i;
 	Stop <= I_DJNZ;
+	NoRead <= NoRead_int;
+	Write <= Write_int;
+	A <= ABus when NoRead_int = '0' or Write_int = '1' else ABus_last;
+
 
 -------------------------------------------------------------------------
 --
@@ -1093,7 +1068,7 @@ begin
 			TState <= "000";
 			Pre_XY_F_M <= "000";
 			Halt_FF <= '0';
-			BusAck <= '0';
+			--BusAck <= '0';
 			NMICycle <= '0';
 			IntCycle <= '0';
 			IntE_FF1 <= '0';
@@ -1102,7 +1077,7 @@ begin
 			Auto_Wait_t1 <= '0';
 			Auto_Wait_t2 <= '0';
 			M1_n <= '1';
-			BusReq_s <= '0';
+			--BusReq_s <= '0';
 			NMI_s <= '0';
 		elsif rising_edge(CLK_n) then
 
@@ -1201,5 +1176,5 @@ begin
 		end if;
 	end process;
 
-	Auto_Wait <= '1' when IntCycle = '1' and MCycle = "001" else '0';
+	Auto_Wait <= '1' when (IntCycle = '1' or NMICycle = '1') and MCycle = "001" else '0';
 end;

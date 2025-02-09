@@ -88,7 +88,7 @@ begin
   elsif CLK'event and CLK='0' then
     if profi_ebl = '0' and cnt (7) = '0' then -- in nemo mode profi_ebl = nemo_ebl
       IDE_A <= BUS_A(2 downto 0);
-      if (cnt > 2 and cnt < 72) then
+      if (cnt > 2) then
 			if fromFPGA_NEMO_EBL = '0' then --profi
 			  IDE_CS0_N <=cs1fx;
 			  IDE_CS1_N <=cs3fx;
@@ -100,7 +100,7 @@ begin
         IDE_CS0_N <='1';
         IDE_CS1_N <='1';
       end if;
-      if (cnt > 8 and cnt < 31) then
+      if (cnt > 8) then
 			if fromFPGA_NEMO_EBL = '0' then  --profi
 				IDE_WR_N <=BUS_WR_N;
 				IDE_RD_N <=BUS_RD_N;

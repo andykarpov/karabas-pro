@@ -71,10 +71,10 @@ begin
 	process (CLK, BUS_HDD_CS_N, BUS_FDC_NCS, BUS_CSFF, BUS_CS3FX, BUS_RWE, BUS_RWW, BUS_WWE, BUS_WWC, BUS_FDC_STEP, BUS_RD_N, BUS_WR_N, bus_a, bus_di)
 	begin 
 		if CLK'event and CLK = '1' then
-			if cnt = "10" and BUS_nemo_ebl_n ='0' then
+			if BUS_nemo_ebl_n ='0' then
 					bus_a_reg <= BUS_nemo_ebl_n & BUS_FDC_NCS & BUS_CSFF & BUS_nemo_cs1 & BUS_RDH & BUS_IOR & 
 									 BUS_IOW & BUS_WRH & BUS_FDC_STEP & BUS_RD_N & BUS_WR_N & BUS_A7 & BUS_A(1 downto 0) & BUS_nemo_cs1 & BUS_nemo_cs0;
-			elsif cnt = "10" then 
+			else 
 					bus_a_reg <= BUS_HDD_CS_N & BUS_FDC_NCS & BUS_CSFF & BUS_CS3FX & BUS_RWE & BUS_RWW & 
 									 BUS_WWE & BUS_WWC & BUS_FDC_STEP & BUS_RD_N & BUS_WR_N & bus_a;
 			end if;

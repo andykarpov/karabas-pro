@@ -184,7 +184,7 @@ private:
   uint8_t turbo = 0; // turbo mode
   uint8_t max_turbo = 3; // max turbo
   uint8_t screen_mode = 0; // screen mode
-  uint8_t max_screen_mode = 1; // max screen mode
+  uint8_t max_screen_mode = 3; // max screen mode
   bool is_mouse_swap = false; // mouse buttons swap
   bool is_menu = false; // menu button pressed
   bool is_win = false; // win button pressed
@@ -279,6 +279,7 @@ public:
   void clear(int clear_size);
   void transmit();
 
+  void doSpecial(uint8_t key1, uint8_t key2);
   void doReset();
   void doFullReset();
   void doMagic();

@@ -131,6 +131,7 @@ signal cpu_mem_wr		: std_logic;
 signal cpu_mem_rd		: std_logic;
 signal cpu_nmi_n		: std_logic;
 signal cpu_wait_n 	: std_logic := '1';
+signal cen				: std_logic;
 
 -- Port
 signal port_xxfe_reg	: std_logic_vector(7 downto 0) := "00000000";
@@ -182,6 +183,7 @@ signal joy_type 		: std_logic := '0';
 signal joy_mode 		: std_logic_vector(2 downto 0) := "000";
 signal kb_loaded 		: std_logic := '0';
 signal kb_screen_mode: std_logic_vector(1 downto 0) := "00";
+signal pentagon		: std_logic	;
 
 -- Joy
 signal joy_bus 		: std_logic_vector(7 downto 0) := "00000000";
@@ -239,7 +241,7 @@ signal mapterm 		: std_logic;
 signal map3DXX 		: std_logic; 
 signal map1F00 		: std_logic;
 signal mapcond 		: std_logic;
-
+signal tmp_port_e3_reg_b6 : std_logic;
 
 -- MC146818A
 signal mc146818_wr		: std_logic;
@@ -344,6 +346,7 @@ signal clk_24 			: std_logic := '0';
 signal clk_8			: std_logic := '0';
 signal clk_bus			: std_logic := '0';
 signal clk_bus_port	: std_logic := '0';
+signal clk_bus_portw	: std_logic := '0';
 signal clk_div2		: std_logic := '0';
 signal clk_div4		: std_logic := '0';
 signal clk_div8		: std_logic := '0';
@@ -377,6 +380,9 @@ signal vid_rd2 		: std_logic := '0';
 signal ext_rom_bank  : std_logic_vector(1 downto 0) := "00";
 signal ext_rom_bank_pq	: std_logic_vector(1 downto 0) := "00";
 signal max_turbo 		: std_logic_vector(1 downto 0) := "11";
+
+signal PLL0_lock		: std_logic := '0';
+signal PLL1_lock		: std_logic := '0';
 
 -- Loader
 signal loader_ram_di	: std_logic_vector(7 downto 0);
@@ -483,6 +489,7 @@ signal tape_in_monitor : std_logic := '0';
 
 -- memory contention
 signal count_block 		: std_logic := '0';
+signal count_blockio 		: std_logic := '0';
 signal memory_contention : std_logic := '0';
 
 -- debug 
@@ -495,6 +502,9 @@ signal WAIT_C			:std_logic_vector(1 downto 0);
 signal WAIT_IO			:std_logic;
 signal WAIT_EN			:std_logic;
 signal WAIT_C_STOP	:std_logic;
+
+signal q1				:std_logic;
+signal q2				:std_logic;
 
 component saa1099
 port (
@@ -602,8 +612,8 @@ port map(
 U5: entity work.T80a
 port map (
 	RESET_n			=> cpu_reset_n,
-	CLK_n			=> not clk_cpu,
-	CEN			=> '1',
+	CLK_n			=> clk_cpu,
+	CEN			=> CEN,
 	WAIT_n			=> cpu_wait_n,
 	INT_n				=> cpu_int_n and serial_ms_int,
 	NMI_n				=> cpu_nmi_n,
@@ -683,9 +693,11 @@ port map (
 	
 	-- contended memory signals
 	COUNT_BLOCK		=> count_block,
+	COUNT_BLOCKio		=> count_blockio,
 	CONTENDED 		=> memory_contention,
 	-- OCH: added to not contend in turbo mode
 	TURBO_MODE 		=> turbo_mode,
+	SCREEN_MODE    => kb_screen_mode,
 	
 	-- DIVMMC signals
    DIVMMC_EN		=> divmmc_en,
@@ -727,7 +739,8 @@ port map (
 	ISPAPER 			=> vid_ispaper,
 	BLINK 			=> blink,
 	SCREEN_MODE    => kb_screen_mode,
-	COUNT_BLOCK 	=> count_block
+	COUNT_BLOCK 	=> count_block,
+	COUNT_BLOCKio 	=> count_blockio
 );
 
 -- osd overlay
@@ -773,7 +786,9 @@ port map (
 	RGB_O(5 downto 3)	=> VGA_G,
 	RGB_O(2 downto 0)	=> VGA_B,
 	VSYNC_VGA		=> VGA_VS,
-	HSYNC_VGA		=> VGA_HS
+	HSYNC_VGA		=> VGA_HS,
+	---20.10.2023:OCH: Classic 128 mode "10"
+	SCREEN_MODE 	=> kb_screen_mode
 );
 
 -- SPI flash parallel interface
@@ -959,7 +974,7 @@ port map (
 -- FDD / HDD controllers
 U17: entity work.bus_port
 port map (
-	CLK 				=> clk_bus_port,
+	CLK 				=> clk_bus_portw,
 	CLK2 				=> clk_8,
 	CLK_BUS 			=> clk_bus,
 	CLK_CPU 			=> clk_cpu,
@@ -1202,35 +1217,34 @@ cpu_wait_n <= '1';
 -- max turbo = 14 MHz
 max_turbo <= "10";
 
---OCH: automap = '0' and cs_nemo_ports = '0' - not contend DIVMMC and NEMO ports in CLASSIC screen mode
-clk_cpu <= '0' when kb_wait = '1' or  (kb_screen_mode = "01" and memory_contention = '1' and automap = '0' and cs_nemo_ports = '0' and DS80 = '0') or WAIT_IO = '0' else 
-	clk_bus when fdd_wait='1' and turbo_mode = "11" and turbo_mode <= max_turbo else 
-	-- OCH: disable turbo in trdos to be sure what all programming delays are original
-	-- 06.09.2023:OCH: fixed turbo mode by adding all condition when it can be enabled, i'm not sure about ds80 = 1 but let it be
-	clk_bus and ena_div2 when fdd_wait='1' and turbo_mode = "10" and turbo_mode <= max_turbo else 
-	clk_bus and ena_div4 when fdd_wait='1' and turbo_mode = "01" and turbo_mode <= max_turbo else 
-	clk_bus and ena_div8;
+clk_cpu <= '0' when fdd_wait = '1' and memory_contention = '1' else -- or WAIT_IO = '0'
+		clk_bus and ena_div2 when fdd_wait = '1' and turbo_mode = "10" and (dos_act = '0' or ds80 = '1') else 
+		clk_bus and ena_div4 when fdd_wait = '1' and turbo_mode = "01" else 
+		clk_bus and ena_div8;
+
+CEN <= not kb_wait;
+
+clk_bus_portw <= clk_bus_port or memory_contention;
 
 -- одновибратор - по спаду /IORQ отсчитывает 400нс вейта проца 
 -- для работы периферии в турбе или в режиме расширенного экрана 
-
-WAIT_IO <= WAIT_C(1);
-WAIT_C_STOP <=WAIT_C(1) and not WAIT_C(0);
-WAIT_EN <= reset or not turbo_mode(1);
-process (ena_div2, cpu_mreq_n, WAIT_EN, WAIT_C_STOP) 	
-	begin					
-		if ena_div2'event and ena_div2='0' then
-			if WAIT_EN = '1' then	
-				WAIT_C <= "11";
-			elsif cpu_mreq_n='1' then
-				WAIT_C <= "11"; --WAIT MREQ = 0
-			elsif WAIT_C_STOP='0' then
-				WAIT_C <= WAIT_C + "01"; --COUNT
-			elsif WAIT_C_STOP='1' then
-				WAIT_C <= WAIT_C; --STOP
-			end if;
-		end if;
-	end process;
+--WAIT_IO <= WAIT_C(1);
+--WAIT_C_STOP <=WAIT_C(1) and not WAIT_C(0);
+--WAIT_EN <= reset or not turbo_mode(1);
+--process (ena_div2, cpu_mreq_n, WAIT_EN, WAIT_C_STOP) 	
+--	begin					
+--		if ena_div2'event and ena_div2='1' then
+--			if WAIT_EN = '1' then	
+--				WAIT_C <= "11";
+--			elsif cpu_mreq_n='1' then
+--				WAIT_C <= "11"; --WAIT MREQ = 0
+--			elsif WAIT_C_STOP='0' then
+--				WAIT_C <= WAIT_C + "01"; --COUNT
+--			elsif WAIT_C_STOP='1' then
+--				WAIT_C <= WAIT_C; --STOP
+--			end if;
+--		end if;
+--	end process;
 
 -- HDD / SD access
 led1_overwrite <= '1';
@@ -1364,6 +1378,7 @@ sound_off <= port_028b_reg(4);									-- 4 	- Sound_off
 turbo_mode <= port_028b_reg(6 downto 5);						-- 5,6- Turbo Mode Selector 
 lock_dffd <= port_028b_reg(7);								 	-- 7 	- Lock port DFFD
 
+
 -- OCH: fdd currently disabled, should be implemented with xFF (TRDOS) port bit swapping
 -- the SDIR pin now used to select NEMOIDE HDD
 --SDIR <= fdc_swap;
@@ -1381,8 +1396,21 @@ sco 	<= port_dffd_reg(3); -- Выбор положения окна проеци
 
 -- Extended memory for 1MB (default) or 6MB boards
 --ram_ext <= port_1ffd_reg(7) & port_1ffd_reg(4) & port_dffd_reg(2 downto 0); -- kay512+ profi 1024
-ram_ext <= port_7ffd_reg(6) & port_7ffd_reg(7) & port_dffd_reg(2 downto 0); -- pent 512 + profi 1024
+-- OCH: block ext ram in classic and 128 modes 
 
+pentagon <= '1' when kb_screen_mode = "00" else '0';
+
+process(clk_bus)
+begin
+	if (pentagon ='0' and DS80 = '0') then
+		ram_ext <= (others => '0');
+	else
+		if rising_edge(clk_bus) then 
+			ram_ext <= port_7ffd_reg(6) & port_7ffd_reg(7) & port_dffd_reg(2 downto 0) ; -- pent 512 + profi 1024 
+		end if;
+	end if;
+end process;
+		
 -- OCH: change decoding of #FE port when Nemo enabled  
 cs_xxfe <= '1' when (cpu_iorq_n = '0' and cpu_a_bus(0) = '0' and nemoide_en = '0') or 
 						  (cpu_iorq_n = '0' and cpu_a_bus(6 downto 0) = "1111110" and nemoide_en = '1') else '0';
@@ -1472,6 +1500,20 @@ RT_F1 <= RT_F1_1 and RT_F1_2;
 P0 <='0' when (cpu_a_bus(7)='1' and cpu_a_bus(4 downto 0)="00011" and cpu_iorq_n='0') and ((cpm='1' and rom14='1') or (dos_act='1' and rom14='0')) else '1';
 fdd_cs_n <= RT_F1 and P0;
 
+--- 09/15/2023:OCH: port_e3_reg(6) is moved separately, because unlike bits 7, 5-0 it uses a different asynchronous reset signal
+--- to avoid turning off the power to reset bit 6 - it can now be reset with the reset + kb_magic combination on the motherboard karabas_pro
+--- this is necessary for the convenience of using the mapram divmmc mode (in this mode you can display the *.rom image instead of Basic48)
+process (reset, kb_magic, port_e3_reg(6), clk_bus, cpu_iorq_n, cpu_wr_n, cpu_a_bus(7 downto 0), cpm, divmmc_en)
+begin
+	if reset = '1' and kb_magic = '1' then
+		port_e3_reg(6) <= '0';
+	elsif clk_bus'event and clk_bus = '1' then
+		if (cpu_iorq_n = '0' and cpu_wr_n = '0' and cpu_a_bus(7 downto 0) = X"E3" and cpm = '0' and divmmc_en = '1') then	
+			port_e3_reg(6) <= port_e3_reg(6) or cpu_do_bus(6);
+		end if;
+	end if;
+end process;
+
 process (ena_div4, reset)
 begin
 	if reset='1' then
@@ -1510,14 +1552,15 @@ begin
 --- 06.07.2023:OCH: DIVMMC port added to ZController
 		port_e3_reg(5 downto 0) <= (others => '0');
 		port_e3_reg(7) <= '0';
-		
+		--port_e3_reg(6) <= tmp_port_e3_reg_b6 and not kb_magic;
 	elsif clk_bus'event and clk_bus = '1' then
 --- 06.07.2023:OCH: DIVMMC port E3 added to ZController
 			-- #xxE3
 --- 08.07.2023:OCH: Due to confict with port (E3) of fddcontroller in cpm mode
 --- block DIVMMC port E3 when in cpm
 			if (cpu_iorq_n = '0' and cpu_wr_n = '0' and cpu_a_bus(7 downto 0) = X"E3" and cpm = '0' and divmmc_en = '1') then	
-				port_e3_reg <=cpu_do_bus(7) & (port_e3_reg(6) or cpu_do_bus(6)) & cpu_do_bus(5 downto 0);
+				port_e3_reg(7) <=cpu_do_bus(7);
+				port_e3_reg(5 downto 0) <= cpu_do_bus(5 downto 0);
 			end if;		
 			
 			-- #EFF7
@@ -1593,8 +1636,8 @@ begin
 			end if;
 			
 			-- TR-DOS FLAG
-			if (((cpu_m1_n = '0' and cpu_mreq_n = '0' and cpu_a_bus(15 downto 8) = X"3D" and (rom14 = '1' or unlock_128 = '1')) or 
-			(cpu_nmi_n = '0'  and DS80 = '0')) and port_dffd_reg(4) = '0') or (onrom = '1') then dos_act <= '1';
+			if (((cpu_m1_n = '0' and cpu_mreq_n = '0' and cpu_a_bus(15 downto 8) = X"3D"  and (rom14 = '1' or unlock_128 = '1') and DIVMMC_EN = '0') or 
+			(cpu_nmi_n = '0'  and DS80 = '0')) and port_dffd_reg(4) = '0' and DIVMMC_EN = '0') or (onrom = '1') then dos_act <= '1'; --- 12.10.2023:OCH: dos_act can be active only if DIVMMC disabled
 			elsif ((cpu_m1_n = '0' and cpu_mreq_n = '0' and cpu_a_bus(15 downto 14) /= "00") or (port_dffd_reg(4) = '1')) then dos_act <= '0'; end if;
 				
 	end if;
@@ -1724,7 +1767,7 @@ port map(
 
 ------------------------ divmmc-----------------------------
 -- Engineer:   Mario Prato
--- 11.07.2013:OCH: adapted by me
+-- 11.07.2013:OCH: adapted by
 -- i take this implementation to correctly and easy make nmi 
 
 process (reset, divmmc_en, cpu_a_bus)

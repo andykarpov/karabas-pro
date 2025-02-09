@@ -565,7 +565,7 @@ void ZXOSD::initAboutOverlay()
   text(PGMT(msg_about));
 
   osd.setPos(0,7);
-  osd.setColor(OSD::COLOR_BLUE_I, OSD::COLOR_BLACK);
+  osd.setColor(OSD::COLOR_YELLOW_I, OSD::COLOR_BLACK);
   osd.print(PGMT(msg_karabas_developers_are));
 
   osd.setPos(0,9);
@@ -593,7 +593,7 @@ void ZXOSD::initAboutOverlay()
   hint(PGMT(msg_dev_nihirash_skills));
 
   osd.setPos(0,14);
-  osd.setColor(OSD::COLOR_BLUE_I, OSD::COLOR_BLACK);
+  osd.setColor(OSD::COLOR_YELLOW_I, OSD::COLOR_BLACK);
   osd.print(PGMT(msg_special_thanks_to));
 
   osd.setPos(0,16);
@@ -1163,6 +1163,8 @@ void ZXOSD::updateScreenMode() {
   switch (zxkbd.getScreenMode()) { 
     case 0: osd.print(PGMT(msg_pentagon)); break;
     case 1: osd.print(PGMT(msg_classic)); osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK); osd.print(PGMT(msg_space)); break;
+    case 2: osd.print(PGMT(msg_128)); osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK); osd.print(PGMT(msg_space)); osd.print(PGMT(msg_space)); osd.print(PGMT(msg_space)); osd.print(PGMT(msg_space)); osd.print(PGMT(msg_space)); break;
+    case 3: osd.print(PGMT(msg_plus3e)); osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK); osd.print(PGMT(msg_space)); osd.print(PGMT(msg_space)); osd.print(PGMT(msg_space)); osd.print(PGMT(msg_space)); osd.print(PGMT(msg_space)); break;
   }
 }
 
