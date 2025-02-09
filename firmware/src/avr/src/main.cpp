@@ -334,13 +334,16 @@ void loop()
   zxrtc.handle();
   zxjoy.handle(zxkbd.getJoyType());
 
-  // react on hardware buttons every 100ms
+// react on hardware buttons every 100ms
 #if USE_HW_BUTTONS
   if (n - tb >= 100) {
 
-    bool btn1 = (analogRead(PIN_BTN1) < 3);
-    bool btn2 = (analogRead(PIN_BTN2) < 3);
+    bool btn1 = (analogRead(PIN_BTN1) < 100);
+    bool btn2 = (analogRead(PIN_BTN2) < 100);
 
+    //if (btn2) zxkbd.doReset();
+    //if (btn1) zxkbd.doMagic();
+    
     zxkbd.setKey(ZX_K_RESET, btn2);
     zxkbd.setKey(ZX_K_MAGICK, btn1);
 
