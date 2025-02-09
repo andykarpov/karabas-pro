@@ -1427,13 +1427,13 @@ void ZXOSD::hint(const __FlashStringHelper* msg) {
 }
 
 void ZXOSD::param(const __FlashStringHelper* msg) {
-  osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
+  osd.setColor(OSD::COLOR_GREEN_I, OSD::COLOR_BLACK);
   osd.print(msg);
   osd.print(PGMT(msg_space));
 }
 
 void ZXOSD::text(const __FlashStringHelper* msg) {
-  osd.setColor(OSD::COLOR_GREEN_I, OSD::COLOR_BLACK);
+  osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
   osd.print(msg);
 }
 
