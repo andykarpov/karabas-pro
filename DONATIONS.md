@@ -4,7 +4,7 @@
 
 I will be happy to receive any amount of EUR/USD/UAH. 
 
-[![](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](https://www.paypal.com/donate/?business=VLPSW86UVSDYA&no_recurring=0&currency_code=USD)
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/M4M3HFGIW)
 
 ### ROMain, FDImage tool, FlashTool, testROM by Doctor Max
 
@@ -30,8 +30,7 @@ It would be great to buy some coffee for **nihirash** - author of great tools to
 
 Feel free to send any amount of USD/EUR/etc to support **nihirash**:
 
-[![](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](https://paypal.me/pinport)
-
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/D1D6JVS74)
 
 Thanks in advance to all bakers! :)
 

@@ -296,15 +296,17 @@ signal nemo_cs1			: std_logic;
 signal nemo_ior			: std_logic;
 
 -- Profi FDD ports
-signal RT_F2_1			:std_logic;
-signal RT_F2_2			:std_logic;
-signal RT_F2_3			:std_logic;
-signal fdd_cs_pff_n	:std_logic;
-signal RT_F1_1			:std_logic;
-signal RT_F1_2			:std_logic;
-signal RT_F1			:std_logic;
-signal P0				:std_logic;
-signal fdd_cs_n		:std_logic;
+signal RT_F2_1			: std_logic;
+signal RT_F2_2			: std_logic;
+signal RT_F2_3			: std_logic;
+signal fdd_cs_pff_n	: std_logic;
+signal RT_F1_1			: std_logic;
+signal RT_F1_2			: std_logic;
+signal RT_F1			: std_logic;
+signal P0				: std_logic;
+signal fdd_cs_n		: std_logic;
+signal fdd_cnt			: std_logic_vector(7 downto 0) := x"FF";
+signal fdd_wait		: std_logic;
 
 -- TurboSound
 signal ssg_sel			: std_logic;
@@ -1249,7 +1251,7 @@ led1_overwrite <= '1';
 process (clk_bus, hdd_wwe_n, hdd_rww_n, SD_NCS)
 begin
 	if rising_edge(clk_bus) then
-		if (IOW = '0') or (IOR ='0') or (hdd_wwe_n = '0') or (hdd_rww_n = '0') or (SD_NCS = '0') then
+		if (IOW = '0') or (IOR ='0') or (hdd_wwe_n = '0') or (hdd_rww_n = '0') or (SD_NCS = '0') or (fdd_wait = '0') then
 			led1 <= '1';
 		else 
 			led1 <= '0';
