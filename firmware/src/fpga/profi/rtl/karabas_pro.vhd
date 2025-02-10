@@ -1609,7 +1609,7 @@ tape_in_monitor <= not(TAPE_IN) when tape_in_out_enable = '1' else '0';
 
 audio_mono <= 	
 				("0000" & speaker & "00000000000") +
-				("00000" & tape_in_monitor & "0000000000") +				
+--				("00000" & tape_in_monitor & "0000000000") +				
 				("0000"  & ssg_cn0_a &     "0000") + 
 				("0000"  & ssg_cn0_b &     "0000") + 
 				("0000"  & ssg_cn0_c &     "0000") + 
@@ -1627,7 +1627,7 @@ audio_mono <=
 audio_l <= "0000000000000000" when loader_act = '1' or kb_wait = '1' or sound_off = '1' else 
 				audio_mono when soft_sw(9) = '1' else
 				("000" & speaker & "000000000000") + -- ACB: L = A + C/2
-				("00000" & tape_in_monitor & "0000000000") +	
+--				("00000" & tape_in_monitor & "0000000000") +	
 				("000"  & ssg_cn0_a &     "00000") + 
 				("0000"  & ssg_cn0_c &     "0000") + 
 				("000"  & ssg_cn1_a &     "00000") + 
@@ -1637,7 +1637,7 @@ audio_l <= "0000000000000000" when loader_act = '1' or kb_wait = '1' or sound_of
 				("000"  & covox_fb &      "00000") + 
 				("000"  & saa_out_l  &    "00000") when soft_sw(7) = '0' else 
 				("000" & speaker & "000000000000") +  -- ABC: L = A + B/2
-				("00000" & tape_in_monitor & "0000000000") +	
+--				("00000" & tape_in_monitor & "0000000000") +	
 				("000"  & ssg_cn0_a &     "00000") + 
 				("0000"  & ssg_cn0_b &     "0000") + 
 				("000"  & ssg_cn1_a &     "00000") + 
@@ -1650,7 +1650,7 @@ audio_l <= "0000000000000000" when loader_act = '1' or kb_wait = '1' or sound_of
 audio_r <= "0000000000000000" when loader_act = '1' or kb_wait = '1' or sound_off = '1' else 
 				audio_mono when soft_sw(9) = '1' else
 				("000" & speaker & "000000000000") + -- ACB: R = B + C/2
-				("00000" & tape_in_monitor & "0000000000") +	
+--				("00000" & tape_in_monitor & "0000000000") +	
 				("000"  & ssg_cn0_b &     "00000") + 
 				("0000"  & ssg_cn0_c &     "0000") + 
 				("000"  & ssg_cn1_b &     "00000") + 
@@ -1660,7 +1660,7 @@ audio_r <= "0000000000000000" when loader_act = '1' or kb_wait = '1' or sound_of
 				("000"  & covox_fb &      "00000") + 
 				("000"  & saa_out_r &     "00000") when soft_sw(7) = '0' else
 				("000" & speaker & "000000000000") + -- ABC: R = C + B/2
-				("00000" & tape_in_monitor & "0000000000") +	
+--				("00000" & tape_in_monitor & "0000000000") +	
 				("000"  & ssg_cn0_c &     "00000") + 
 				("0000"  & ssg_cn0_b &     "0000") + 
 				("000"  & ssg_cn1_c &     "00000") + 
