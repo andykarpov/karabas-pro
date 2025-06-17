@@ -4812,7 +4812,7 @@
 				)
 			)
 		)
-		(property "Value" "470"
+		(property "Value" "1k"
 			(at 60.96 153.67 90)
 			(effects
 				(font
@@ -5601,7 +5601,7 @@
 				)
 			)
 		)
-		(property "Value" "470"
+		(property "Value" "1k"
 			(at 60.96 176.53 90)
 			(effects
 				(font
