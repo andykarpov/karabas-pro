@@ -11119,7 +11119,7 @@
 				)
 			)
 		)
-		(property "Footprint" "Package_TO_SOT_SMD:SOT-23"
+		(property "Footprint" "Package_TO_SOT_SMD:SOT-23_Handsoldering"
 			(at 241.935 60.96 0)
 			(effects
 				(font
@@ -11455,7 +11455,7 @@
 				)
 			)
 		)
-		(property "Footprint" "Resistor_SMD:R_0805_2012Metric_Pad1.15x1.40mm_HandSolder"
+		(property "Footprint" "Resistor_SMD:R_0805_2012Metric_Pad1.20x1.40mm_HandSolder"
 			(at 248.412 24.13 90)
 			(effects
 				(font
@@ -11514,7 +11514,7 @@
 				)
 			)
 		)
-		(property "Value" "22pF"
+		(property "Value" "22p"
 			(at 92.71 99.06 90)
 			(effects
 				(font
@@ -11588,7 +11588,7 @@
 				)
 			)
 		)
-		(property "Footprint" "Resistor_SMD:R_0805_2012Metric_Pad1.15x1.40mm_HandSolder"
+		(property "Footprint" "Resistor_SMD:R_0805_2012Metric_Pad1.20x1.40mm_HandSolder"
 			(at 259.08 133.858 90)
 			(effects
 				(font
@@ -12035,7 +12035,7 @@
 				)
 			)
 		)
-		(property "Value" "22pF"
+		(property "Value" "22p"
 			(at 92.71 83.82 90)
 			(effects
 				(font
@@ -12110,7 +12110,7 @@
 				)
 			)
 		)
-		(property "Footprint" "Resistor_SMD:R_0805_2012Metric_Pad1.15x1.40mm_HandSolder"
+		(property "Footprint" "Resistor_SMD:R_0805_2012Metric_Pad1.20x1.40mm_HandSolder"
 			(at 253.492 24.13 90)
 			(effects
 				(font
@@ -12177,7 +12177,7 @@
 				(hide yes)
 			)
 		)
-		(property "Footprint" "Package_TO_SOT_SMD:SOT-23"
+		(property "Footprint" "Package_TO_SOT_SMD:SOT-23_Handsoldering"
 			(at 241.935 31.75 0)
 			(effects
 				(font
@@ -12250,7 +12250,7 @@
 				)
 			)
 		)
-		(property "Footprint" "Resistor_SMD:R_0805_2012Metric_Pad1.15x1.40mm_HandSolder"
+		(property "Footprint" "Resistor_SMD:R_0805_2012Metric_Pad1.20x1.40mm_HandSolder"
 			(at 248.412 53.34 90)
 			(effects
 				(font
@@ -12859,7 +12859,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "Connector_Dsub:DSUB-9_Male_Horizontal_P2.77x2.84mm_EdgePinOffset7.70mm_Housed_MountingHolesOffset9.12mm"
+		(property "Footprint" "Connector_Dsub:DSUB-9_Pins_Horizontal_P2.77x2.84mm_EdgePinOffset7.70mm_Housed_MountingHolesOffset9.12mm"
 			(at 160.02 173.99 0)
 			(effects
 				(font
@@ -13142,7 +13142,7 @@
 				)
 			)
 		)
-		(property "Footprint" "Resistor_SMD:R_0805_2012Metric_Pad1.15x1.40mm_HandSolder"
+		(property "Footprint" "Resistor_SMD:R_0805_2012Metric_Pad1.20x1.40mm_HandSolder"
 			(at 259.08 124.968 90)
 			(effects
 				(font
@@ -13273,7 +13273,7 @@
 				)
 			)
 		)
-		(property "Footprint" "Package_TO_SOT_SMD:SOT-23"
+		(property "Footprint" "Package_TO_SOT_SMD:SOT-23_Handsoldering"
 			(at 241.935 31.75 0)
 			(effects
 				(font
@@ -15161,7 +15161,7 @@
 				)
 			)
 		)
-		(property "Footprint" "Resistor_SMD:R_0805_2012Metric_Pad1.15x1.40mm_HandSolder"
+		(property "Footprint" "Resistor_SMD:R_0805_2012Metric_Pad1.20x1.40mm_HandSolder"
 			(at 253.492 53.34 90)
 			(effects
 				(font
@@ -16154,7 +16154,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "Package_SO:SOIC-8_5.23x5.23mm_P1.27mm"
+		(property "Footprint" "footprints:SOIC-8_5.23x5.23mm_P1.27mm-LONG"
 			(at 44.45 38.1 0)
 			(effects
 				(font
@@ -16823,7 +16823,7 @@
 				(hide yes)
 			)
 		)
-		(property "Footprint" "Package_TO_SOT_SMD:SOT-23"
+		(property "Footprint" "Package_TO_SOT_SMD:SOT-23_Handsoldering"
 			(at 241.935 60.96 0)
 			(effects
 				(font
@@ -16895,7 +16895,7 @@
 				)
 			)
 		)
-		(property "Footprint" "Resistor_SMD:R_0805_2012Metric_Pad1.15x1.40mm_HandSolder"
+		(property "Footprint" "Resistor_SMD:R_0805_2012Metric_Pad1.20x1.40mm_HandSolder"
 			(at 259.08 116.078 90)
 			(effects
 				(font
@@ -17779,7 +17779,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "RP2040_minimal:RP2040-QFN-56"
+		(property "Footprint" "footprints:QFN-56-1EP_7x7mm_P0.4mm_EP3.2x3.2mm_ThermalViaBig"
 			(at 129.54 91.44 0)
 			(effects
 				(font

@@ -4917,7 +4917,7 @@
 				(hide yes)
 			)
 		)
-		(property "Footprint" "Fuse:Fuse_1812_4532Metric_Castellated"
+		(property "Footprint" "Fuse:Fuse_1812_4532Metric_Pad1.30x3.40mm_HandSolder"
 			(at 77.47 44.45 0)
 			(effects
 				(font
@@ -5233,7 +5233,7 @@
 				(justify left)
 			)
 		)
-		(property "Value" "10uF"
+		(property "Value" "10u"
 			(at 69.0372 148.463 0)
 			(effects
 				(font
@@ -5755,7 +5755,7 @@
 				)
 			)
 		)
-		(property "Value" "1uF"
+		(property "Value" "1u"
 			(at 58.6994 170.18 90)
 			(effects
 				(font
@@ -6236,7 +6236,7 @@
 				(hide yes)
 			)
 		)
-		(property "Footprint" "Fuse:Fuse_1812_4532Metric_Castellated"
+		(property "Footprint" "Fuse:Fuse_1812_4532Metric_Pad1.30x3.40mm_HandSolder"
 			(at 59.69 34.29 0)
 			(effects
 				(font
@@ -8150,7 +8150,7 @@
 				(justify left)
 			)
 		)
-		(property "Value" "10uF"
+		(property "Value" "10u"
 			(at 174.4472 72.263 0)
 			(effects
 				(font
@@ -8485,7 +8485,7 @@
 				)
 			)
 		)
-		(property "Footprint" "Button_Switch_THT:SW_CuK_OS102011MA1QN1_SPDT_Angled"
+		(property "Footprint" "Button_Switch_THT:SW_Slide_SPDT_Angled_CK_OS102011MA1Q"
 			(at 59.69 45.72 0)
 			(effects
 				(font
@@ -8544,7 +8544,7 @@
 				(justify left)
 			)
 		)
-		(property "Value" "470uF"
+		(property "Value" "470u"
 			(at 80.4672 50.673 0)
 			(effects
 				(font
@@ -9603,7 +9603,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "Diode_SMD:D_SMB"
+		(property "Footprint" "Diode_SMD:D_SMB_Handsoldering"
 			(at 142.24 93.98 0)
 			(effects
 				(font
@@ -9728,7 +9728,7 @@
 				(justify left)
 			)
 		)
-		(property "Value" "220uF"
+		(property "Value" "220u"
 			(at 132.8928 36.957 0)
 			(effects
 				(font
@@ -10055,7 +10055,7 @@
 				)
 			)
 		)
-		(property "Value" "300"
+		(property "Value" "330"
 			(at 175.26 93.98 90)
 			(effects
 				(font
@@ -10063,7 +10063,7 @@
 				)
 			)
 		)
-		(property "Footprint" "Resistor_SMD:R_0805_2012Metric_Pad1.15x1.40mm_HandSolder"
+		(property "Footprint" "Resistor_SMD:R_0805_2012Metric_Pad1.20x1.40mm_HandSolder"
 			(at 174.498 93.98 90)
 			(effects
 				(font
@@ -10252,7 +10252,7 @@
 				(justify left)
 			)
 		)
-		(property "Value" "10uF"
+		(property "Value" "10u"
 			(at 122.3772 171.323 0)
 			(effects
 				(font
