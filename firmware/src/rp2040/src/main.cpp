@@ -44,6 +44,7 @@ EU, 2025
 #include "LittleFS.h"
 #include "boot_core.h"
 #include "PS2KeyAdvanced.h"
+#include "PS2Mouse.h"
 
 //PioSPI spiSD(PIN_MCU_SPI_TX, PIN_MCU_SPI_RX, PIN_MCU_SPI_SCK, PIN_CONF_CLK, SPI_MODE0, SD_SCK_MHZ(16)); // dedicated SD1 SPI
 //#define SD_CONFIG  SdSpiConfig(SD_CS_PIN, SHARED_SPI, SD_SCK_MHZ(16), &spiSD) // SD1 SPI Settings
@@ -54,6 +55,7 @@ Dir root1;
 ElapsedTimer my_timer, my_timer2;
 ElapsedTimer hide_timer;
 ElapsedTimer popup_timer;
+ElapsedTimer mouse_timer;
 RTC zxrtc;
 OSD zxosd;
 
@@ -95,6 +97,9 @@ uint8_t const ps2_usb_key_map[] = {
 
 SegaController sega;
 PS2KeyAdvanced kbd;
+PS2Mouse mouse;
+bool mouse_present;
+uint8_t mouse_tries;
 
 static queue_t spi_event_queue;
 
@@ -209,6 +214,10 @@ void setup1() {
   }
   ps2_pressed_size = 0;
   kbd.begin(PIN_PS2_KB_DATA, PIN_PS2_KB_CLK, &ps2_int);
+  mouse.begin(PIN_PS2_MS_CLK, PIN_PS2_MS_DATA);
+  mouse_present = mouse.streamInitialize();
+  mouse_timer.reset();
+  mouse_tries = MOUSE_INIT_TRIES;
 }
 
 void loop()
@@ -407,13 +416,30 @@ hid_keyboard_report_t ps2_to_usb(uint16_t c)
 void loop1()
 {
     // read kbd
-  uint16_t c = 0;
   if (kbd.available()) {
-    c = kbd.read();
+    uint16_t c = kbd.read();
     hid_keyboard_report_t report = ps2_to_usb(c);
     process_kbd_report(0, 0, &report, 0);
-  }  
+  }
 
+  // mouse init tries
+  if (mouse_tries > 0 && !mouse_present && mouse_timer.elapsed() > 500) {
+    mouse_tries--;
+    mouse_present = mouse.streamInitialize();
+    mouse_timer.reset();
+  }
+
+  // read mouse
+  if (mouse.reportAvailable() > 0 ) {
+    MouseData m = mouse.readReport();
+    hid_mouse_report_t report;
+    report.buttons = m.status;
+    report.pan = 0;
+    report.wheel = m.wheel;
+    report.x = m.position.x;
+    report.y = m.position.y;
+    process_mouse_report(0, 0, &report, 0);
+  }
 }
 
 void check_update(const char* filename) {

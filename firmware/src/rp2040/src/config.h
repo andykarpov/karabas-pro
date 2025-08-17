@@ -36,6 +36,8 @@
 #define PIN_LED1 3
 #define PIN_LED2 19
 
+#define MOUSE_INIT_TRIES 5
+
 #define CMD_USB_KBD 0x01
 #define CMD_USB_MOUSE 0x02
 #define CMD_JOYSTICK 0x03
