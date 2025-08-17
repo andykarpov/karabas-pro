@@ -2,6 +2,7 @@
 #define PS2_KBD_H
 
 #include <Arduino.h>
+#include <Adafruit_TinyUSB.h>
 
 void kb_send(uint8_t byte);
 void kb_send_xt(uint8_t byte, bool state);
