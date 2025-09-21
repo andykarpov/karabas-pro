@@ -10541,7 +10541,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "Package_SO:SSOP-16_4.4x5.2mm_P0.65mm"
+		(property "Footprint" "footprints:SSOP-16_4.4x5.2mm_P0.65mm-extended"
 			(at 140.97 48.26 0)
 			(effects
 				(font

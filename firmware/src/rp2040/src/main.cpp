@@ -443,6 +443,7 @@ void loop1()
 }
 
 void check_update(const char* filename) {
+  // if core does not exists on lfs partition
   if (!LittleFS.exists(filename)) {
     if (strcmp(filename, FILENAME_BOOT) == 0) {
       file2 = LittleFS.open(filename, "w");
@@ -451,9 +452,26 @@ void check_update(const char* filename) {
       d_print("Done. Copied "); d_print(BOOT_CORE_LEN); d_println(" bytes");
       file2.close();
     }
+  // if core exists
   } else {
     if (strcmp(filename, FILENAME_BOOT) == 0) {
-      // todo: compare versions of file1 and file2 and update only if is newer
+      // todo: compare versions of file1 and file2
+      file2 = LittleFS.open(filename, "r");
+      char ver1[8];
+      file2.readBytes(ver1, sizeof(ver1));
+      file2.close();
+      char ver2[8];
+      for (uint8_t i=FILE_POS_CORE_BUILD; i<FILE_POS_CORE_BUILD+8; i++) {
+        ver2[i-FILE_POS_CORE_BUILD] = BOOT_CORE[i];
+      }
+      // update the core
+      if (memcmp(ver1, ver2, 8) != 0) {
+        file2 = LittleFS.open(filename, "w");
+        d_print("Updating "); d_print(filename); d_print(" from internal resources...");
+        file2.write(BOOT_CORE, BOOT_CORE_LEN);
+        d_print("Done. Copied "); d_print(BOOT_CORE_LEN); d_println(" bytes");
+        file2.close();
+      }
     }
   }
 }

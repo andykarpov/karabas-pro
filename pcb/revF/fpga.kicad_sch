@@ -4105,7 +4105,7 @@
 		)
 		(uuid "24b7f8ca-1242-40e3-9baa-0a89f34ff048")
 	)
-	(text "Pin changes comparing to the previos revE:\n- UART_TX,RX,CTS moved to the MCU side\n- UART2_TX,RX,CTS was removed\n- RAMCE3,RAMCE2,RAMCE1,MRD was removed\n- BEEPER removed\n- SD_DET removed\n- MD4 -> pin_21\n- MA3 -> pin_20\n- SD15 -> pin_7\n- SD14 -> pin_141\n- SD13 -> pin_86\n- SD8 -> pin_91\n"
+	(text "Pin changes comparing to the previos revE:\n- UART_TX,RX,CTS moved to the MCU side\n- UART2_TX,RX,CTS was removed\n- RAMCE3,RAMCE2,RAMCE1,MRD was removed\n- BEEPER removed\n- SD_DET removed\n- MD4 -> pin_121\n- MA3 -> pin_120\n- SD15 -> pin_7\n- SD14 -> pin_141\n- SD13 -> pin_86\n- SD8 -> pin_91\n"
 		(exclude_from_sim no)
 		(at 175.514 144.78 0)
 		(effects
@@ -4161,6 +4161,12 @@
 		(diameter 0)
 		(color 0 0 0 0)
 		(uuid "4b13f1f5-13cf-479c-95ba-4d18b17a3521")
+	)
+	(junction
+		(at 22.86 105.41)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "83956290-e895-41be-9d8b-f63aa5e70920")
 	)
 	(junction
 		(at 46.99 144.78)
@@ -4548,6 +4554,16 @@
 	)
 	(wire
 		(pts
+			(xy 20.32 105.41) (xy 22.86 105.41)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "28a8e5a6-46fe-4554-903e-01eeef1db81a")
+	)
+	(wire
+		(pts
 			(xy 140.97 171.45) (xy 143.51 171.45)
 		)
 		(stroke
@@ -4635,6 +4651,16 @@
 			(type default)
 		)
 		(uuid "30d7448b-7efa-4825-b73a-d1c97fe079da")
+	)
+	(wire
+		(pts
+			(xy 22.86 107.95) (xy 22.86 105.41)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "31253787-bf5e-48c9-946b-72946f4003b2")
 	)
 	(wire
 		(pts
@@ -5308,6 +5334,16 @@
 	)
 	(wire
 		(pts
+			(xy 21.59 107.95) (xy 22.86 107.95)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "948619cd-d9f2-423a-a1d5-66ba2c66b60a")
+	)
+	(wire
+		(pts
 			(xy 241.3 80.01) (xy 248.92 80.01)
 		)
 		(stroke
@@ -5558,16 +5594,6 @@
 	)
 	(wire
 		(pts
-			(xy 33.02 105.41) (xy 35.56 105.41)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "ae5ab4c9-5ee9-433d-b14b-54c2a823eb38")
-	)
-	(wire
-		(pts
 			(xy 100.33 31.75) (xy 100.33 34.29)
 		)
 		(stroke
@@ -5675,6 +5701,16 @@
 			(type default)
 		)
 		(uuid "bfb8327d-8baf-4bce-8ecc-50403a129713")
+	)
+	(wire
+		(pts
+			(xy 22.86 105.41) (xy 35.56 105.41)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "c183ef1e-fa82-408c-9a1b-22590e70e6b3")
 	)
 	(wire
 		(pts
@@ -7350,6 +7386,28 @@
 					(size 1.27 1.27)
 				)
 				(justify left)
+				(hide yes)
+			)
+		)
+	)
+	(global_label "TP1"
+		(shape input)
+		(at 20.32 105.41 180)
+		(fields_autoplaced yes)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify right)
+		)
+		(uuid "48eab165-3dd3-4721-b359-538bab455926")
+		(property "Intersheetrefs" "${INTERSHEET_REFS}"
+			(at 14.5419 105.41 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify right)
 				(hide yes)
 			)
 		)
@@ -9468,7 +9526,7 @@
 	)
 	(symbol
 		(lib_id "Connector:TestPoint")
-		(at 33.02 105.41 90)
+		(at 21.59 107.95 90)
 		(unit 1)
 		(exclude_from_sim no)
 		(in_bom no)
@@ -9476,7 +9534,7 @@
 		(dnp no)
 		(uuid "04221897-33fc-4943-a9aa-7c88a201dbc2")
 		(property "Reference" "TP1"
-			(at 26.924 105.41 90)
+			(at 15.494 107.95 90)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -9484,7 +9542,7 @@
 			)
 		)
 		(property "Value" "TP1"
-			(at 29.718 102.87 90)
+			(at 18.288 105.41 90)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -9493,7 +9551,7 @@
 			)
 		)
 		(property "Footprint" "TestPoint:TestPoint_Pad_D1.0mm"
-			(at 33.02 100.33 0)
+			(at 21.59 102.87 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -9502,7 +9560,7 @@
 			)
 		)
 		(property "Datasheet" "~"
-			(at 33.02 100.33 0)
+			(at 21.59 102.87 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -9511,7 +9569,7 @@
 			)
 		)
 		(property "Description" "test point"
-			(at 33.02 105.41 0)
+			(at 21.59 107.95 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -11522,9 +11580,9 @@
 		(at 207.01 49.53 0)
 		(unit 1)
 		(exclude_from_sim no)
-		(in_bom yes)
+		(in_bom no)
 		(on_board yes)
-		(dnp no)
+		(dnp yes)
 		(fields_autoplaced yes)
 		(uuid "cca44870-817e-4d4a-b0e3-5b4b2fd08a6e")
 		(property "Reference" "JP1"

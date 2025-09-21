@@ -591,6 +591,206 @@
 			)
 			(embedded_fonts no)
 		)
+		(symbol "Connector_Generic:Conn_01x04"
+			(pin_names
+				(offset 1.016)
+				(hide yes)
+			)
+			(exclude_from_sim no)
+			(in_bom yes)
+			(on_board yes)
+			(property "Reference" "J"
+				(at 0 5.08 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Value" "Conn_01x04"
+				(at 0 -7.62 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Footprint" ""
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(property "Datasheet" "~"
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(property "Description" "Generic connector, single row, 01x04, script generated (kicad-library-utils/schlib/autogen/connector/)"
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(property "ki_keywords" "connector"
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(property "ki_fp_filters" "Connector*:*_1x??_*"
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(symbol "Conn_01x04_1_1"
+				(rectangle
+					(start -1.27 3.81)
+					(end 1.27 -6.35)
+					(stroke
+						(width 0.254)
+						(type default)
+					)
+					(fill
+						(type background)
+					)
+				)
+				(rectangle
+					(start -1.27 2.667)
+					(end 0 2.413)
+					(stroke
+						(width 0.1524)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(rectangle
+					(start -1.27 0.127)
+					(end 0 -0.127)
+					(stroke
+						(width 0.1524)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(rectangle
+					(start -1.27 -2.413)
+					(end 0 -2.667)
+					(stroke
+						(width 0.1524)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(rectangle
+					(start -1.27 -4.953)
+					(end 0 -5.207)
+					(stroke
+						(width 0.1524)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(pin passive line
+					(at -5.08 2.54 0)
+					(length 3.81)
+					(name "Pin_1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at -5.08 0 0)
+					(length 3.81)
+					(name "Pin_2"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "2"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at -5.08 -2.54 0)
+					(length 3.81)
+					(name "Pin_3"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "3"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at -5.08 -5.08 0)
+					(length 3.81)
+					(name "Pin_4"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "4"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+			)
+			(embedded_fonts no)
+		)
 		(symbol "Device:Battery_Cell"
 			(pin_numbers
 				(hide yes)
@@ -5675,6 +5875,12 @@
 		(uuid "1f4c3101-2858-4ca9-b7eb-225e61e5fa8e")
 	)
 	(junction
+		(at 181.61 127)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "2c44f9c2-d415-4506-8f3c-3b6df45db2b0")
+	)
+	(junction
 		(at 149.86 29.21)
 		(diameter 0)
 		(color 0 0 0 0)
@@ -6124,6 +6330,16 @@
 	)
 	(wire
 		(pts
+			(xy 184.15 124.46) (xy 181.61 124.46)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "0414580d-f12d-4500-853d-e55110b2b707")
+	)
+	(wire
+		(pts
 			(xy 154.94 39.37) (xy 154.94 40.64)
 		)
 		(stroke
@@ -6224,7 +6440,7 @@
 	)
 	(wire
 		(pts
-			(xy 180.34 127) (xy 184.15 127)
+			(xy 180.34 127) (xy 181.61 127)
 		)
 		(stroke
 			(width 0)
@@ -6381,6 +6597,26 @@
 			(type default)
 		)
 		(uuid "19ddd4af-edbc-406a-8f6f-c9ed8adc9e9b")
+	)
+	(wire
+		(pts
+			(xy 236.22 95.25) (xy 238.76 95.25)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "1a25fbd0-c38e-43e4-b972-a51ee1acdc4b")
+	)
+	(wire
+		(pts
+			(xy 236.22 90.17) (xy 238.76 90.17)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "1c730f61-53ea-471a-b02c-bd0873e6a226")
 	)
 	(wire
 		(pts
@@ -6994,6 +7230,16 @@
 	)
 	(wire
 		(pts
+			(xy 173.99 148.59) (xy 179.07 148.59)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "64b0087b-77bf-4946-b131-102eb5447ccc")
+	)
+	(wire
+		(pts
 			(xy 262.89 114.3) (xy 266.7 114.3)
 		)
 		(stroke
@@ -7211,6 +7457,16 @@
 			(type default)
 		)
 		(uuid "7bf403d4-1341-4be7-9e60-40a71cea238e")
+	)
+	(wire
+		(pts
+			(xy 181.61 127) (xy 184.15 127)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "7e6f0552-e2ef-4cf3-bee6-68ab8e028063")
 	)
 	(wire
 		(pts
@@ -7484,6 +7740,16 @@
 	)
 	(wire
 		(pts
+			(xy 236.22 87.63) (xy 238.76 87.63)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "9a624bb8-7017-4b2c-9749-d673f4cb67f9")
+	)
+	(wire
+		(pts
 			(xy 180.34 111.76) (xy 184.15 111.76)
 		)
 		(stroke
@@ -7551,6 +7817,16 @@
 			(type default)
 		)
 		(uuid "9edd7bd4-e22e-4cec-ad82-96482bf3644f")
+	)
+	(wire
+		(pts
+			(xy 181.61 124.46) (xy 181.61 127)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "9fb3a0ad-90b0-44e9-af81-a4503427e79d")
 	)
 	(wire
 		(pts
@@ -8114,6 +8390,16 @@
 	)
 	(wire
 		(pts
+			(xy 236.22 92.71) (xy 238.76 92.71)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "d93279a5-57a5-4f88-9207-6e11f0019e69")
+	)
+	(wire
+		(pts
 			(xy 229.87 29.21) (xy 238.76 29.21)
 		)
 		(stroke
@@ -8606,6 +8892,28 @@
 			)
 		)
 	)
+	(global_label "TP1"
+		(shape input)
+		(at 173.99 148.59 180)
+		(fields_autoplaced yes)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify right)
+		)
+		(uuid "098efa0a-8fbc-4c70-b7e4-5ed5cb325d33")
+		(property "Intersheetrefs" "${INTERSHEET_REFS}"
+			(at 168.2119 148.59 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify right)
+				(hide yes)
+			)
+		)
+	)
 	(global_label "JOY_L_P6"
 		(shape input)
 		(at 149.86 166.37 180)
@@ -8641,6 +8949,28 @@
 		(uuid "11d0b5e9-4e1b-4894-9fc8-bf9722d83b8b")
 		(property "Intersheetrefs" "${INTERSHEET_REFS}"
 			(at 213.1458 58.42 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify right)
+				(hide yes)
+			)
+		)
+	)
+	(global_label "I2C_SCL"
+		(shape bidirectional)
+		(at 236.22 92.71 180)
+		(fields_autoplaced yes)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify right)
+		)
+		(uuid "12bba6c0-2f80-41a2-8fb9-f6acc6539794")
+		(property "Intersheetrefs" "${INTERSHEET_REFS}"
+			(at 225.377 92.71 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -8927,6 +9257,28 @@
 		(uuid "3bcc25e3-30b1-4de4-8b7a-8a814c5c296e")
 		(property "Intersheetrefs" "${INTERSHEET_REFS}"
 			(at 195.5524 63.5 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+				(hide yes)
+			)
+		)
+	)
+	(global_label "TP2"
+		(shape input)
+		(at 179.07 148.59 0)
+		(fields_autoplaced yes)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left)
+		)
+		(uuid "418b8ef1-74a5-4ac9-97e9-49eaa2b7a739")
+		(property "Intersheetrefs" "${INTERSHEET_REFS}"
+			(at 184.8481 148.59 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -9543,6 +9895,28 @@
 		(uuid "86ef0d98-32d2-408a-9486-531adf3a3552")
 		(property "Intersheetrefs" "${INTERSHEET_REFS}"
 			(at 194.2824 58.42 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+				(hide yes)
+			)
+		)
+	)
+	(global_label "TP2"
+		(shape input)
+		(at 184.15 124.46 0)
+		(fields_autoplaced yes)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left)
+		)
+		(uuid "87c697cc-62b1-42c5-a0e7-61123612d1d9")
+		(property "Intersheetrefs" "${INTERSHEET_REFS}"
+			(at 189.9281 124.46 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -10230,6 +10604,28 @@
 					(size 1.27 1.27)
 				)
 				(justify left)
+				(hide yes)
+			)
+		)
+	)
+	(global_label "I2C_SDA"
+		(shape bidirectional)
+		(at 236.22 95.25 180)
+		(fields_autoplaced yes)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify right)
+		)
+		(uuid "e483d597-b37b-4b5b-88f5-df89a79bbea5")
+		(property "Intersheetrefs" "${INTERSHEET_REFS}"
+			(at 225.3165 95.25 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify right)
 				(hide yes)
 			)
 		)
@@ -13048,6 +13444,71 @@
 			(project "karabas-pro-revF"
 				(path "/0fa36eda-2d7d-4199-a7a1-2cda6b0cd120/30804830-8b4b-4203-8e29-20fad4bdaea9"
 					(reference "#PWR040")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "vcc33:VCC3_3")
+		(at 236.22 90.17 90)
+		(mirror x)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "5c3c5e08-d7d5-486c-8298-94cef3f56308")
+		(property "Reference" "#PWR0169"
+			(at 240.03 90.17 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Value" "VCC3_3"
+			(at 229.108 90.17 90)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" ""
+			(at 236.22 90.17 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" ""
+			(at 236.22 90.17 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" ""
+			(at 236.22 90.17 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "f90ba4d1-72e2-4737-87cf-1201282ab6ea")
+		)
+		(instances
+			(project "karabas-pro-revF"
+				(path "/0fa36eda-2d7d-4199-a7a1-2cda6b0cd120/30804830-8b4b-4203-8e29-20fad4bdaea9"
+					(reference "#PWR0169")
 					(unit 1)
 				)
 			)
@@ -15997,6 +16458,82 @@
 		)
 	)
 	(symbol
+		(lib_id "Connector_Generic:Conn_01x04")
+		(at 243.84 90.17 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "c4f65d19-5156-4d11-987f-3ded573d94d3")
+		(property "Reference" "J2"
+			(at 246.38 90.1699 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Value" "I2C"
+			(at 246.38 92.7099 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Footprint" "Connector_PinHeader_2.54mm:PinHeader_1x04_P2.54mm_Vertical"
+			(at 243.84 90.17 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" "~"
+			(at 243.84 90.17 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" "Generic connector, single row, 01x04, script generated (kicad-library-utils/schlib/autogen/connector/)"
+			(at 243.84 90.17 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(pin "4"
+			(uuid "4ccde75a-ed6c-4131-a2bb-48d6e4d41333")
+		)
+		(pin "2"
+			(uuid "4cb51df4-cfb5-44d9-b8af-5ba0f07d1db9")
+		)
+		(pin "1"
+			(uuid "9fece85b-b794-4d09-b2d9-5c33690cfcbc")
+		)
+		(pin "3"
+			(uuid "4dbba98a-5750-4774-9480-c5528ba490d1")
+		)
+		(instances
+			(project ""
+				(path "/0fa36eda-2d7d-4199-a7a1-2cda6b0cd120/30804830-8b4b-4203-8e29-20fad4bdaea9"
+					(reference "J2")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
 		(lib_id "power:GND")
 		(at 46.99 162.56 0)
 		(unit 1)
@@ -17611,6 +18148,71 @@
 			(project "karabas-pro-revF"
 				(path "/0fa36eda-2d7d-4199-a7a1-2cda6b0cd120/30804830-8b4b-4203-8e29-20fad4bdaea9"
 					(reference "R17")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "power:GND")
+		(at 236.22 87.63 270)
+		(mirror x)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "f584cc4c-7deb-48b7-820a-4f716634c6b3")
+		(property "Reference" "#PWR0168"
+			(at 229.87 87.63 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Value" "GND"
+			(at 230.632 87.63 90)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" ""
+			(at 236.22 87.63 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" ""
+			(at 236.22 87.63 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" ""
+			(at 236.22 87.63 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "094efd52-374d-47b9-8201-418916264eba")
+		)
+		(instances
+			(project "karabas-pro-revF"
+				(path "/0fa36eda-2d7d-4199-a7a1-2cda6b0cd120/30804830-8b4b-4203-8e29-20fad4bdaea9"
+					(reference "#PWR0168")
 					(unit 1)
 				)
 			)

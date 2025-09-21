@@ -3215,6 +3215,12 @@
 		(uuid "1100efeb-7153-4830-9efe-202a46e244fb")
 	)
 	(junction
+		(at 229.87 151.13)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "115fac78-39d6-45dd-9394-f207b98ac6b6")
+	)
+	(junction
 		(at 119.38 166.37)
 		(diameter 0)
 		(color 0 0 0 0)
@@ -3231,6 +3237,12 @@
 		(diameter 0)
 		(color 0 0 0 0)
 		(uuid "16d655d7-46eb-4a8a-bf90-151ade94632d")
+	)
+	(junction
+		(at 229.87 143.51)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "19d5b352-022e-43b0-8922-e25eb2aa08eb")
 	)
 	(junction
 		(at 189.23 151.13)
@@ -4320,6 +4332,16 @@
 	)
 	(wire
 		(pts
+			(xy 229.87 143.51) (xy 240.03 143.51)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "a4b60c17-f3ec-4498-abd4-6c48697669a0")
+	)
+	(wire
+		(pts
 			(xy 219.71 151.13) (xy 229.87 151.13)
 		)
 		(stroke
@@ -4397,6 +4419,16 @@
 			(type default)
 		)
 		(uuid "b2b030fe-b43f-462a-be3d-211e6da3efc7")
+	)
+	(wire
+		(pts
+			(xy 229.87 151.13) (xy 240.03 151.13)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "b3303f5d-1d26-42a4-aaf4-5eec7dbc3045")
 	)
 	(wire
 		(pts
@@ -10033,6 +10065,72 @@
 			(project "karabas-pro-revF"
 				(path "/0fa36eda-2d7d-4199-a7a1-2cda6b0cd120/b6d0546f-a5f2-471b-a189-271dad27733d"
 					(reference "#PWR087")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Device:C")
+		(at 240.03 147.32 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "ec11daf2-3de2-4715-a60e-5dd88494ac92")
+		(property "Reference" "C68"
+			(at 246.4308 147.32 90)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "100n"
+			(at 244.1194 147.32 90)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" "Capacitor_SMD:C_0805_2012Metric_Pad1.18x1.45mm_HandSolder"
+			(at 240.9952 151.13 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" "~"
+			(at 240.03 147.32 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" ""
+			(at 240.03 147.32 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "c737c4dd-7175-46f8-ab3d-01c383980f1f")
+		)
+		(pin "2"
+			(uuid "6b291a17-3814-46aa-8979-5d87abc9c2ea")
+		)
+		(instances
+			(project "karabas-pro-revF"
+				(path "/0fa36eda-2d7d-4199-a7a1-2cda6b0cd120/b6d0546f-a5f2-471b-a189-271dad27733d"
+					(reference "C68")
 					(unit 1)
 				)
 			)
