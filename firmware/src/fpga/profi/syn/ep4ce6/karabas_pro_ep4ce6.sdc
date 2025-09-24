@@ -30,7 +30,7 @@ set_clock_groups -exclusive -group {U2|altpll_component|auto_generated|pll1|clk[
 # описание путей, которые не нужно анализировать
 set_false_path -from [get_registers {port_dffd_reg[*]}] -to *
 set_false_path -from [get_registers {port_xx8b_reg[*]}] -to *
-set_false_path -from * -to [get_ports {VGA_*}]
+#set_false_path -from * -to [get_ports {VGA_*}]
 set_false_path -from * -to [get_ports {SND_*}]
 set_false_path -from [get_ports {SW3[*]}] -to *
 set_false_path -from * -to [get_ports {UART_TX}]

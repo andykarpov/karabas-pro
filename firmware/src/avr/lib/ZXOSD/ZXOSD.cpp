@@ -1416,9 +1416,9 @@ void ZXOSD::updateJoyState(uint8_t joy) {
 
 void ZXOSD::highlight(bool val) {
   if (val) 
-    osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLUE);
+    osd.setColor(OSD::COLOR_BLACK, OSD::COLOR_MAGENTA_I);
   else 
-    osd.setColor(OSD::COLOR_BLUE_I, OSD::COLOR_BLACK);
+    osd.setColor(OSD::COLOR_MAGENTA_I, OSD::COLOR_BLACK);
 }
 
 void ZXOSD::hint(const __FlashStringHelper* msg) {
@@ -1427,7 +1427,7 @@ void ZXOSD::hint(const __FlashStringHelper* msg) {
 }
 
 void ZXOSD::param(const __FlashStringHelper* msg) {
-  osd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
+  osd.setColor(OSD::COLOR_GREEN_I, OSD::COLOR_BLACK);
   osd.print(msg);
   osd.print(PGMT(msg_space));
 }
