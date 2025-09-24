@@ -10,7 +10,7 @@ OUTFILE = boot
 all: smart.log $(PROJECT).asm.rpt $(PROJECT).sta.rpt
 
 clean:
-	rm -rf *.rpt *.chg smart.log *.htm *.eqn *.pin *.sof *.pof db incremental_db *.summary *.done *.smsg *.jdi *.jic *.map *.rbf greybox*
+	rm -rf *.rpt *.chg smart.log *.htm *.eqn *.pin *.sof *.pof db incremental_db *.summary *.done *.smsg *.jdi *.jic *.map *.rbf greybox* PLLJ_*.txt
 
 map: smart.log $(PROJECT).map.rpt
 fit: smart.log $(PROJECT).fit.rpt
