@@ -3140,31 +3140,51 @@
 			)
 			(embedded_fonts no)
 		)
-		(symbol "Jumper:Jumper_2_Open"
+		(symbol "Diode:BAT54C"
 			(pin_names
-				(offset 0)
-				(hide yes)
+				(offset 1.016)
 			)
 			(exclude_from_sim no)
 			(in_bom yes)
 			(on_board yes)
-			(property "Reference" "JP"
-				(at 0 2.794 0)
+			(property "Reference" "D"
+				(at 0.635 -3.81 0)
 				(effects
 					(font
 						(size 1.27 1.27)
 					)
+					(justify left)
 				)
 			)
-			(property "Value" "Jumper_2_Open"
-				(at 0 -2.286 0)
+			(property "Value" "BAT54C"
+				(at -6.35 3.175 0)
 				(effects
 					(font
 						(size 1.27 1.27)
 					)
+					(justify left)
 				)
 			)
-			(property "Footprint" ""
+			(property "Footprint" "Package_TO_SOT_SMD:SOT-23"
+				(at 1.905 3.175 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(justify left)
+					(hide yes)
+				)
+			)
+			(property "Datasheet" "http://www.diodes.com/_files/datasheets/ds11005.pdf"
+				(at -2.032 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(property "Description" "dual schottky barrier diode, common cathode"
 				(at 0 0 0)
 				(effects
 					(font
@@ -3173,7 +3193,7 @@
 					(hide yes)
 				)
 			)
-			(property "Datasheet" "~"
+			(property "ki_keywords" "schottky diode common cathode"
 				(at 0 0 0)
 				(effects
 					(font
@@ -3182,7 +3202,7 @@
 					(hide yes)
 				)
 			)
-			(property "Description" "Jumper, 2-pole, open"
+			(property "ki_fp_filters" "SOT?23*"
 				(at 0 0 0)
 				(effects
 					(font
@@ -3191,28 +3211,95 @@
 					(hide yes)
 				)
 			)
-			(property "ki_keywords" "Jumper SPST"
-				(at 0 0 0)
-				(effects
-					(font
-						(size 1.27 1.27)
+			(symbol "BAT54C_0_1"
+				(polyline
+					(pts
+						(xy -3.175 -1.27) (xy -3.175 1.27) (xy -1.27 0) (xy -3.175 -1.27)
 					)
-					(hide yes)
-				)
-			)
-			(property "ki_fp_filters" "Jumper* TestPoint*2Pads* TestPoint*Bridge*"
-				(at 0 0 0)
-				(effects
-					(font
-						(size 1.27 1.27)
+					(stroke
+						(width 0)
+						(type default)
 					)
-					(hide yes)
+					(fill
+						(type none)
+					)
 				)
-			)
-			(symbol "Jumper_2_Open_0_0"
-				(circle
-					(center -2.032 0)
-					(radius 0.508)
+				(polyline
+					(pts
+						(xy -1.905 1.27) (xy -1.905 1.016)
+					)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy -1.905 0) (xy 1.905 0)
+					)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy -1.27 1.27) (xy -1.905 1.27)
+					)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy -1.27 1.27) (xy -1.27 -1.27)
+					)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy -1.27 0) (xy -3.81 0)
+					)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy -1.27 -1.27) (xy -0.635 -1.27)
+					)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy -0.635 -1.27) (xy -0.635 -1.016)
+					)
 					(stroke
 						(width 0)
 						(type default)
@@ -3222,8 +3309,92 @@
 					)
 				)
 				(circle
-					(center 2.032 0)
-					(radius 0.508)
+					(center 0 0)
+					(radius 0.254)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type outline)
+					)
+				)
+				(polyline
+					(pts
+						(xy 0.635 -1.27) (xy 0.635 -1.016)
+					)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy 1.27 1.27) (xy 1.27 -1.27)
+					)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy 1.27 1.27) (xy 1.905 1.27)
+					)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy 1.27 -1.27) (xy 0.635 -1.27)
+					)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy 1.905 1.27) (xy 1.905 1.016)
+					)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy 3.175 -1.27) (xy 3.175 1.27) (xy 1.27 0) (xy 3.175 -1.27)
+					)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy 3.81 0) (xy 1.27 0)
+					)
 					(stroke
 						(width 0)
 						(type default)
@@ -3233,25 +3404,11 @@
 					)
 				)
 			)
-			(symbol "Jumper_2_Open_0_1"
-				(arc
-					(start -1.524 1.27)
-					(mid 0 1.778)
-					(end 1.524 1.27)
-					(stroke
-						(width 0)
-						(type default)
-					)
-					(fill
-						(type none)
-					)
-				)
-			)
-			(symbol "Jumper_2_Open_1_1"
+			(symbol "BAT54C_1_1"
 				(pin passive line
-					(at -5.08 0 0)
-					(length 2.54)
-					(name "A"
+					(at -7.62 0 0)
+					(length 3.81)
+					(name "~"
 						(effects
 							(font
 								(size 1.27 1.27)
@@ -3267,9 +3424,27 @@
 					)
 				)
 				(pin passive line
-					(at 5.08 0 180)
-					(length 2.54)
-					(name "B"
+					(at 0 -5.08 90)
+					(length 5.08)
+					(name "~"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "3"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at 7.62 0 180)
+					(length 3.81)
+					(name "~"
 						(effects
 							(font
 								(size 1.27 1.27)
@@ -4574,6 +4749,10 @@
 		(uuid "684090d8-e268-4c97-a3e6-c116bd8ae144")
 	)
 	(no_connect
+		(at 153.67 180.34)
+		(uuid "7e2d4092-cc6e-4f64-adf4-7f6fe27058f3")
+	)
+	(no_connect
 		(at 44.45 69.85)
 		(uuid "8087a41d-90a0-407a-b71a-b19ab7f34abf")
 	)
@@ -5551,7 +5730,7 @@
 	)
 	(wire
 		(pts
-			(xy 148.59 180.34) (xy 151.13 180.34)
+			(xy 146.05 185.42) (xy 148.59 185.42)
 		)
 		(stroke
 			(width 0)
@@ -8124,73 +8303,6 @@
 		)
 	)
 	(symbol
-		(lib_id "Jumper:Jumper_2_Open")
-		(at 143.51 180.34 0)
-		(unit 1)
-		(exclude_from_sim no)
-		(in_bom yes)
-		(on_board yes)
-		(dnp no)
-		(fields_autoplaced yes)
-		(uuid "41d3c728-dd66-4174-8c91-28c7a9f937b7")
-		(property "Reference" "JP3"
-			(at 143.51 173.99 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Value" "VBUS"
-			(at 143.51 176.53 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Footprint" "Connector_PinHeader_2.54mm:PinHeader_1x02_P2.54mm_Vertical"
-			(at 143.51 180.34 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Datasheet" "~"
-			(at 143.51 180.34 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Description" ""
-			(at 143.51 180.34 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(pin "1"
-			(uuid "c1cb29d0-ff39-469e-8f9f-a428b01c9010")
-		)
-		(pin "2"
-			(uuid "deda3c18-2891-4722-a641-f502cd2e240b")
-		)
-		(instances
-			(project "karabas-pro-revF"
-				(path "/0fa36eda-2d7d-4199-a7a1-2cda6b0cd120/7f4e7edd-196d-4c95-a36b-79063a0e6ab2"
-					(reference "JP3")
-					(unit 1)
-				)
-			)
-		)
-	)
-	(symbol
 		(lib_id "Device:R")
 		(at 163.83 115.57 90)
 		(unit 1)
@@ -8803,7 +8915,7 @@
 	)
 	(symbol
 		(lib_id "power:VCC")
-		(at 151.13 180.34 270)
+		(at 148.59 185.42 270)
 		(unit 1)
 		(exclude_from_sim no)
 		(in_bom yes)
@@ -8811,7 +8923,7 @@
 		(dnp no)
 		(uuid "59405681-f42a-42c3-afcd-d52e1bc11ef2")
 		(property "Reference" "#PWR034"
-			(at 147.32 180.34 0)
+			(at 144.78 185.42 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -8820,7 +8932,7 @@
 			)
 		)
 		(property "Value" "VCC"
-			(at 156.972 180.34 90)
+			(at 154.432 185.42 90)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -8828,7 +8940,7 @@
 			)
 		)
 		(property "Footprint" ""
-			(at 151.13 180.34 0)
+			(at 148.59 185.42 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -8837,7 +8949,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 151.13 180.34 0)
+			(at 148.59 185.42 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -8846,7 +8958,7 @@
 			)
 		)
 		(property "Description" ""
-			(at 151.13 180.34 0)
+			(at 148.59 185.42 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -10948,6 +11060,76 @@
 			(project "karabas-pro-revF"
 				(path "/0fa36eda-2d7d-4199-a7a1-2cda6b0cd120/7f4e7edd-196d-4c95-a36b-79063a0e6ab2"
 					(reference "C26")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Diode:BAT54C")
+		(at 146.05 180.34 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "9fae81ab-7802-45ce-8c15-68978deef6d3")
+		(property "Reference" "D9"
+			(at 146.05 174.625 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "BAT54C"
+			(at 146.05 176.9364 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" "Package_TO_SOT_SMD:SOT-23_Handsoldering"
+			(at 147.955 177.165 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" "http://www.diodes.com/_files/datasheets/ds11005.pdf"
+			(at 144.018 180.34 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" ""
+			(at 146.05 180.34 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "a89be9fa-1cfe-471e-83f4-9b588adf2be1")
+		)
+		(pin "2"
+			(uuid "605de08c-a55c-42cd-a08d-b2bc565131eb")
+		)
+		(pin "3"
+			(uuid "d4cb0df1-539e-454c-ba3a-166d27567589")
+		)
+		(instances
+			(project "karabas-pro-revF"
+				(path "/0fa36eda-2d7d-4199-a7a1-2cda6b0cd120/7f4e7edd-196d-4c95-a36b-79063a0e6ab2"
+					(reference "D9")
 					(unit 1)
 				)
 			)
