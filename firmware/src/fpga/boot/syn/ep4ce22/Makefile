@@ -5,11 +5,12 @@
 PROJECT = karabas_pro_ep4ce22
 TOP_LEVEL_ENTITY = karabas_pro
 ASSIGNMENT_FILES = $(PROJECT).qpf $(PROJECT).qsf
+OUTFILE = boot
 
 all: smart.log $(PROJECT).asm.rpt $(PROJECT).sta.rpt
 
 clean:
-	rm -rf *.rpt *.chg smart.log *.htm *.eqn *.pin *.sof *.pof db incremental_db *.summary *.done *.smsg *.jdi *.jic *.map *.rbf
+	rm -rf *.rpt *.chg smart.log *.htm *.eqn *.pin *.sof *.pof db incremental_db *.summary *.done *.smsg *.jdi *.jic *.map *.rbf greybox*
 
 map: smart.log $(PROJECT).map.rpt
 fit: smart.log $(PROJECT).fit.rpt
@@ -46,10 +47,9 @@ $(PROJECT).asm.rpt: asm.chg $(PROJECT).fit.rpt
 
 $(PROJECT).sta.rpt: sta.chg $(PROJECT).fit.rpt
 	quartus_sta $(STA_ARGS) $(PROJECT)
-	quartus_sh -t remove_ver.tcl $(PROJECT)
 
 smart.log: $(ASSIGNMENT_FILES)
-	quartus_sh -t generate_messages.tcl --determine_smart_action $(PROJECT) > smart.log
+	quartus_sh --determine_smart_action $(PROJECT) > smart.log
 
 ###################################################################
 # Project initialization
@@ -70,11 +70,14 @@ asm.chg:
 # Programming the device
 ###################################################################
 
+rbf: $(PROJECT).sof
+	quartus_cpf -c $(PROJECT)_rbf.cof
+
 program: $(PROJECT).sof
 	quartus_pgm --no_banner --mode=jtag -o "P;$(PROJECT).sof"
 
-release: $(PROJECT).kp1
-	python3 make_core.py core.json profi.kp1
+release: $(PROJECT).rbf
+	python3 make_core.py core.json $(OUTFILE).kp1
 
 program-pof: $(PROJECT).pof
 	quartus_pgm --no_banner --mode=jtag -o "BVP;$(PROJECT).pof"

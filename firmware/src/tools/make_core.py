@@ -73,7 +73,7 @@ o.write(d.dir.ljust(32)[:32].encode('ascii') if hasattr(d, "dir") else b'\x00' *
 o.write(d.filename.ljust(32)[:32].encode('ascii') if hasattr(d, "filename") else b'\x00' * 32) # 32 bytes last selected filename in fileloader mode
 o.write(d.extensions.ljust(32)[:32].encode('ascii') if hasattr(d, "extensions") else b'\x00' * 32) # 32 bytes allowed file extensions (comma separated string) 
 o.write(d.spi_freq.to_bytes(1, 'big') if hasattr(d, "spi_freq") else b'\x00') # spi freq
-o.weite(d.sd_access.to_bytes(1, 'big') if hasattr(d, "sd_access") else b'\x00') # sd access
+o.write(d.sd_access.to_bytes(1, 'big') if hasattr(d, "sd_access") else b'\x00') # sd access
 o.write(b'\xFF' * 32) # reserved 32 bytes
 o.write(b'\xFF' * 37) # reserved 37 bytes
 o.write(b'\xFF' * 256) # eeprom 256 bytes
