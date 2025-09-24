@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 """
 File: bin2hex.py
 Converts a binary file into intel hex format. For usage try $bin2hex.py -h
@@ -281,7 +281,7 @@ if __name__ == "__main__":
     # http://docs.python.org/2/library/optparse.html#optparse-extending-optparse
     settings,args = process_command_line()
     if settings.version:
-        print "bin2hex.py %s"%("0.1")
+        print ("bin2hex.py %s"%("0.1"))
         sys.exit(0)
 
     # make sure the selected hex record type can represent the largest address
@@ -291,7 +291,7 @@ if __name__ == "__main__":
         #if (addr + os.path.getsize(binfile)) > maxaddress:
             #print "Error, address+binfile size 0x%0X is too large for format!"%(addr + os.path.getsize(binfile))
         if addr > maxaddress:
-            print "Error, address size 0x%0X is too large for format!"%(addr)
+            print ("Error, address size 0x%0X is too large for format!"%(addr))
             exit(errno.EINVAL)
 
     # check output file
@@ -305,7 +305,7 @@ if __name__ == "__main__":
         with open(settings.outfile, 'w') as f:
             pass
     except Exception as inst:
-        print "Error with output file: %s"%inst
+        print ("Error with output file: %s"%inst)
         sys.exit(errno.EINVAL)
 
     # now, produce the hex file from the input files and addresses
