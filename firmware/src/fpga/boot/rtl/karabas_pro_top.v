@@ -166,7 +166,7 @@ vga_sync vga_sync(
 
 //--------- OSD --------------
 wire [2:0] osd_r, osd_g, osd_b;
-overlay #(.DEFAULT(1)) overlay(
+overlay #(.DEFAULT(1), .H_OFFSET(172), .V_OFFSET(60)) overlay(
     .clk                (clk_sys),
     .rgb                (9'b0),
     .rgb_o              ({osd_r[2:0], osd_g[2:0], osd_b[2:0]}),
