@@ -73,6 +73,7 @@ typedef struct {
 	uint8_t eeprom_bank;
 	uint8_t rtc_type;
 	uint8_t spi_freq;
+	bool sd_enable;
 	core_osd_t osd[MAX_OSD_ITEMS];
 	uint8_t osd_len;
 	core_eeprom_t eeprom[MAX_EEPROM_ITEMS];
@@ -96,24 +97,9 @@ typedef struct {
 typedef struct {
 	bool debug_enabled;
 	bool debug_hid;
-	bool ft_enabled;
-	uint8_t ft_video_mode;
-	uint8_t ft_sound;
-	bool ft_click;
-	bool ft_time;
-	bool ft_date;
-	bool ft_char;
-	bool ft_3d_buttons;
 	bool autoload_enabled;
 	uint8_t autoload_timeout;
 	char autoload_core[32+1];
-	uint32_t color_bg;
-	uint32_t color_gradient;
-	uint32_t color_button;
-	uint32_t color_active;
-	uint32_t color_text;
-	uint32_t color_text_active;
-	uint32_t color_copyright;
 } setup_t;
 
 enum osd_state_e {

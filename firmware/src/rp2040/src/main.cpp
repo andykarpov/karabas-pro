@@ -157,8 +157,8 @@ void setup()
   pinMode(PIN_CONF_NSTATUS, INPUT_PULLUP);
   pinMode(PIN_CONF_NCONFIG, OUTPUT);
   pinMode(PIN_CONF_DONE, INPUT);
-  pinMode(PIN_CONF_CLK, OUTPUT);
-  pinMode(PIN_CONF_DATA, OUTPUT);
+  pinMode(PIN_CONF_CLK, INPUT);
+  pinMode(PIN_CONF_DATA, INPUT);
 
   // I2C
   Wire.setSDA(PIN_I2C_SDA);
@@ -195,16 +195,16 @@ void setup()
     LittleFS.begin();
   }
 
-  //root1 = LittleFS.openDir("/");
+  root1 = LittleFS.openDir("/");
 
   // check if required core is exists and copy it from internal resources
-  //check_update(FILENAME_BOOT);
+  check_update(FILENAME_BOOT);
 
   // load boot from SD or flashfs
-  //do_configure(FILENAME_BOOT);
+  do_configure(FILENAME_BOOT);
 
   osd_state = state_core_browser;
-  //app_core_browser_read_list();
+  app_core_browser_read_list();
   d_println("TODO");
 }
 
@@ -673,17 +673,27 @@ uint32_t fpga_send(const char* filename) {
   // seek to bitstream start
   file_seek(FILE_POS_BITSTREAM_START);
 
+  // set conf pins to output mode
+  pinMode(PIN_CONF_CLK, OUTPUT);
+  pinMode(PIN_CONF_DATA, OUTPUT);
+
+  // set dclk, data
+  digitalWrite(PIN_CONF_CLK, HIGH);
+  digitalWrite(PIN_CONF_DATA, HIGH);
+
   // pulse NCONFIG
   digitalWrite(PIN_CONF_NCONFIG, HIGH);
   digitalWrite(PIN_CONF_NCONFIG, LOW);
   digitalWrite(PIN_CONF_NCONFIG, HIGH);
 
   // wait for NSTATUS = 0
-  delay(10);
+  int i = 10;
+  while (i-- > 0 & digitalRead(PIN_CONF_NSTATUS) != LOW)
+    delay(10);
 
   my_timer.reset();
 
-  int i = 0;
+  i = 0;
   bool blink = false;
   char line[128];
   uint8_t n;
@@ -698,7 +708,8 @@ uint32_t fpga_send(const char* filename) {
       uint8_t c = line[s];
       for (uint8_t j=0; j<8; ++j) {
         // Set bit of data
-        gpio_put(PIN_CONF_DATA, (c & (1<<(7-j))) ? HIGH : LOW);
+        gpio_put(PIN_CONF_DATA, ((c & 0x01) == 0) ? LOW : HIGH);
+        c >>= 1;
         // Latch bit of data by CCLK impulse
         gpio_put(PIN_CONF_CLK, HIGH);
         gpio_put(PIN_CONF_CLK, LOW);
@@ -712,6 +723,9 @@ uint32_t fpga_send(const char* filename) {
     }
   }
   file1.close();
+
+  pinMode(PIN_CONF_CLK, INPUT);
+  pinMode(PIN_CONF_DATA, INPUT);
 
   d_print(i, DEC); d_println(" bytes done");
   d_print("Elapsed time: "); d_print(my_timer.elapsed(), DEC); d_println(" ms");
@@ -925,6 +939,7 @@ void read_core(const char* filename) {
   file_seek(FILE_POS_FILELOADER_FILE); core.last_file_id = file_read16(FILE_POS_FILELOADER_FILE);
   file_seek(FILE_POS_FILELOADER_EXTENSIONS); file_read_bytes(core.file_extensions, 32); core.file_extensions[32] = '\0';
   file_seek(FILE_POS_SPI_FREQ); core.spi_freq = file_read();
+  uint8_t sd_enable; file_seek(FILE_POS_SD_ENABLE); sd_enable = file_read(); core.sd_enable = (sd_enable > 0);
   uint32_t roms_len = file_read32(FILE_POS_ROM_LEN);
   uint32_t offset = FILE_POS_BITSTREAM_START + core.bitstream_length + roms_len;
   //d_print("OSD section: "); d_println(offset);

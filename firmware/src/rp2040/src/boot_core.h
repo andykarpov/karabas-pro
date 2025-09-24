@@ -1,6 +1,9 @@
-#pragma once
+#ifndef _BOOT_CORE_H
+#define _BOOT_CORE_H
+
 #include <Arduino.h>
 
-// todo
-size_t BOOT_CORE_LEN = 4;
-uint8_t BOOT_CORE[4] = {1,2,3,4};
+extern const uint8_t BOOT_CORE[];
+extern const size_t BOOT_CORE_LEN;
+
+#endif
