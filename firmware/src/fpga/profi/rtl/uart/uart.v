@@ -1,30 +1,32 @@
 `timescale 1ns / 1ps
 `default_nettype none
 
-//////////////////////////////////////////////////////////////////////////////////
-// Company: 
-// Engineer: 
-// 
-// Create Date:    19:56:26 10/17/2015 
-// Design Name: 
-// Module Name:    uart 
-// Project Name: 
-// Target Devices: 
-// Tool versions: 
-// Description: 
+//    This file is part of the ZXUNO Spectrum core. 
+//    Creation date is 19:56:26 2015-10-17 by Miguel Angel Rodriguez Jodar
+//    (c)2014-2020 ZXUNO association.
+//    ZXUNO official repository: http://svn.zxuno.com/svn/zxuno
+//    Username: guest   Password: zxuno
+//    Github repository for this core: https://github.com/mcleod-ideafix/zxuno_spectrum_core
 //
-// Dependencies: 
+//    ZXUNO Spectrum core is free software: you can redistribute it and/or modify
+//    it under the terms of the GNU General Public License as published by
+//    the Free Software Foundation, either version 3 of the License, or
+//    (at your option) any later version.
 //
-// Revision: 
-// Revision 0.01 - File Created
-// Additional Comments: 
+//    ZXUNO Spectrum core is distributed in the hope that it will be useful,
+//    but WITHOUT ANY WARRANTY; without even the implied warranty of
+//    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//    GNU General Public License for more details.
 //
-//////////////////////////////////////////////////////////////////////////////////
+//    You should have received a copy of the GNU General Public License
+//    along with the ZXUNO Spectrum core.  If not, see <https://www.gnu.org/licenses/>.
+//
+//    Any distributed copy of this file must keep this notice intact.
 
 module uart (
     // CPU interface
-	 input wire clk_bus,
-	 input wire ds80, 
+    input wire clk_bus,  // 28 MHz
+	 input wire ds80,
     input wire [7:0] txdata,
     input wire txbegin,
     output wire txbusy,
@@ -37,7 +39,9 @@ module uart (
     output wire rts
     );
 
-    uart_tx transmitter (
+    parameter CLK = 28000000;
+
+    uart_tx #(.CLK(CLK)) transmitter (
         .clk_bus(clk_bus),
 		  .ds80(ds80),
         .txdata(txdata),
@@ -46,7 +50,7 @@ module uart (
         .tx(tx)
     );
 
-    uart_rx receiver (
+    uart_rx #(.CLK(CLK)) receiver (
         .clk_bus(clk_bus),
 		  .ds80(ds80),
         .rxdata(rxdata),
@@ -55,11 +59,11 @@ module uart (
         .rx(rx),
         .rts(rts)
     );
-endmodule    
+endmodule
 
 module uart_tx (
     // CPU interface
-	 input wire clk_bus,
+    input wire clk_bus,  // 28 MHz
 	 input wire ds80,
     input wire [7:0] txdata,
     input wire txbegin,
@@ -75,16 +79,16 @@ module uart_tx (
     parameter BPS = 115200;
     parameter PERIOD = CLK / BPS;
 	 parameter PERIODDS80 = CLKDS80 / BPS;
-  
+
     parameter
         IDLE  = 2'd0,
         START = 2'd1,
         BIT   = 2'd2,
         STOP  = 2'd3;
-  
+
     reg [7:0] txdata_reg;
     reg [1:0] state = IDLE;
-    reg [17:0] bpscounter;
+    reg [15:0] bpscounter;
     reg [2:0] bitcnt;
     reg txbusy_ff = 1'b0;
     assign txbusy = txbusy_ff;
@@ -131,30 +135,30 @@ module uart_tx (
                             state <= IDLE;
                         end
                     end
-                default: 
+                default:
                     begin
                         state <= IDLE;
                         txbusy_ff <= 1'b0;
                     end
             endcase
-		  end
+        end
     end
 endmodule
 
 module uart_rx (
     // CPU interface
-	 input wire clk_bus,
+    input wire clk_bus,  // 28 MHz
 	 input wire ds80,
     output reg [7:0] rxdata,
     output reg rxrecv,
-	 input wire data_read,
+    input wire data_read,
     // RS232 interface
     input wire rx,
-	 output reg rts
+    output reg rts
     );
 
     initial rxrecv = 1'b0;
-	 initial rts = 1'b0;
+    initial rts = 1'b0;
 
     parameter CLK = 28000000;
 	 parameter CLKDS80 = 24000000;
@@ -162,112 +166,105 @@ module uart_rx (
     parameter PERIOD = CLK / BPS;	 
     parameter HALFPERIOD = PERIOD / 2;
     parameter PERIODDS80 = CLKDS80 / BPS;	 
-    parameter HALFPERIODDS80 = PERIODDS80 / 2;	 
-  
+    parameter HALFPERIODDS80 = PERIODDS80 / 2;	
+
     parameter
         IDLE  = 3'd0,
         START = 3'd1,
         BIT   = 3'd2,
         STOP  = 3'd3,
-		  WAIT  = 3'd4;
+        WAIT  = 3'd4;
 
-    // Sincronizacin de seales externas
+    // Sincronizacin de señales externas
     reg [1:0] rx_ff = 2'b00;
     always @(posedge clk_bus) begin
-		  rx_ff[1] <= rx_ff[0];
-		  rx_ff[0] <= rx;
+        rx_ff <= {rx_ff[0], rx};
     end
-    wire rx_int = rx_ff[1];
-    
-    reg [7:0] rxvalues = 8'h00;
-    always @(posedge clk_bus) begin
-			rxvalues <= {rxvalues[6:0], rx_int};
-    end
-    wire rx_is_1    = (rxvalues==8'hFF)? 1'b1: 1'b0;
-    wire rx_is_0    = (rxvalues==8'h00)? 1'b1: 1'b0;
-    wire rx_negedge = (rxvalues==8'hF0)? 1'b1: 1'b0;
-    
-    reg [17:0] bpscounter;
+
+    wire rx_is_1    = (rx_ff == 2'b11);
+    wire rx_is_0    = (rx_ff == 2'b00);
+    wire rx_negedge = (rx_ff == 2'b10);
+
+    reg [15:0] bpscounter;
     reg [2:0] state = IDLE;
     reg [2:0] bitcnt;
-    
+
     reg [7:0] rxshiftreg;
 
     always @(posedge clk_bus) begin
         case (state)
             IDLE:
                 begin
-                    rxrecv <= 1'b0;
-                    rts <= 1'b0;
-                    if (rx_negedge == 1'b1) begin
-                        bpscounter <= (ds80 ? PERIODDS80 : PERIOD) - 4;  // porque ya hemos perdido 4 ciclos detectando el flanco negativo
+                    rts <= 1'b0;      // permitimos la recepción
+                    rxrecv <= 1'b0;   // si estamos aqui, es porque no hay bytes pendientes de leer
+                    if (rx_negedge) begin
+                        bpscounter <= (ds80 ? PERIODDS80 : PERIOD) - 2;  // porque ya hemos perdido 2 ciclos detectando el flanco negativo                        
                         state <= START;
-                        rts <= 1'b1;
                     end
                 end
             START:
                 begin
-                    bpscounter <= bpscounter - 8'd1;
-                    if ((ds80 && bpscounter == HALFPERIODDS80) || (!ds80 && bpscounter == HALFPERIOD)) begin
-                        if (!rx_is_0) begin  // si no era una seal de START de verdad
+                    bpscounter <= bpscounter - 16'd1;
+                    if ((ds80 && bpscounter == HALFPERIODDS80) || (!ds80 && bpscounter == HALFPERIOD)) begin   // sampleamos el bit a mitad de ciclo
+                        if (!rx_is_0) begin  // si no era una señal de START de verdad
                             state <= IDLE;
-                            rts <= 1'b0;
                         end
                     end
                     else if (bpscounter == 16'h0000) begin
                         bpscounter <= ds80 ? PERIODDS80 : PERIOD;
-                        rxshiftreg <= 8'h00;
+                        rxshiftreg <= 8'h00;    // aqui iremos guardando los bits recibidos
                         bitcnt <= 3'd7;
-                        rxrecv <= 1'b0;
                         state <= BIT;
                     end
                 end
             BIT:
                 begin
                     bpscounter <= bpscounter - 16'd1;
-                    if ((ds80 && bpscounter == HALFPERIODDS80) || (!ds80 && bpscounter == HALFPERIOD)) begin
+                    if ((ds80 && bpscounter == HALFPERIODDS80) || (!ds80 && bpscounter == HALFPERIOD)) begin   // sampleamos el bit a mitad de ciclo
                         if (rx_is_1) begin
-                            rxshiftreg <= {1'b1, rxshiftreg[7:1]};
+                            rxshiftreg <= {1'b1, rxshiftreg[7:1]};   // los bits entran por la izquierda, del LSb al MSb
                         end
                         else if (rx_is_0) begin
                             rxshiftreg <= {1'b0, rxshiftreg[7:1]};
                         end
                         else begin
                             state <= IDLE;
-                            rts <= 1'b0;
                         end
                     end
                     else if (bpscounter == 16'h0000) begin
                         bitcnt <= bitcnt - 3'd1;
                         bpscounter <= ds80 ? PERIODDS80 : PERIOD;
+//                        if (bitcnt == 3'd3)
+//                            rts <= 1'b1;
                         if (bitcnt == 3'd0)
                             state <= STOP;
                     end
                 end
+
+//rts en stop: se come 1 de cada dos chars
+//rts a mitad de stop o antes: en vez de ok recibo "-" pero hace eco bien
             STOP:
                 begin
                     bpscounter <= bpscounter - 16'd1;
                     if ((ds80 && bpscounter == HALFPERIODDS80) || (!ds80 && bpscounter == HALFPERIOD)) begin
-                        if (!rx_is_1) begin  // si no era una seal de STOP de verdad
+                        if (!rx_is_1) begin  // si no era una señal de STOP de verdad
                             state <= IDLE;
-                            rts <= 1'b0;
                         end
-                    end
-                    else if (bpscounter == 16'h0000) begin
-                        rxrecv <= 1'b1;
-                        rxdata <= rxshiftreg;
-                        state <= WAIT;
+                        else begin
+                            rxrecv <= 1'b1;
+                            rts <= 1'b1;
+                            rxdata <= rxshiftreg;
+                            state <= WAIT;
+                        end
                     end
                 end
             WAIT:
                 begin
-                    rxrecv <= 1'b0;
-                    if (data_read == 1'b1) begin	
-                        rts <= 1'b0;
+                    if (data_read == 1'b1) begin
                         state <= IDLE;
                     end
                 end
             default: state <= IDLE;
         endcase
     end
-endmodule    
+endmodule
