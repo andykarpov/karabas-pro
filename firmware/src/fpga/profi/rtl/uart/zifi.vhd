@@ -26,7 +26,8 @@ port(
     ZIFI_OE_N   : out std_logic;
 	 
 	 ENABLED     : out std_logic;
-
+	 ZF_UART2	 : out std_logic;
+	 
     UART_RX     : in std_logic;
     UART_TX     : out std_logic;
     UART_CTS    : out std_logic        
@@ -62,6 +63,7 @@ signal err_reg              : std_logic_vector(7 downto 0);
 signal di_reg               : std_logic_vector(7 downto 0);
 signal do_reg               : std_logic_vector(7 downto 0);
 signal api_enabled          : std_logic := '0';
+signal api_sw_uart2			 : std_logic := '0';
 
 signal fifo_tx_di           : std_logic_vector(7 downto 0);
 signal fifo_tx_do           : std_logic_vector(7 downto 0);
@@ -198,7 +200,7 @@ begin
 			when push_rx_fifo => 
 				fifo_rx_wr_req <= '1';
 				rxstate <= end_push_rx_fifo;
-
+				data_read <= '1';
 			-- push byte into rx fifo end request
 			when end_push_rx_fifo => 
 				fifo_rx_wr_req <= '0';
@@ -206,7 +208,7 @@ begin
 
 			-- confirm to uart receiver that byte was read successfully
 			when ack_uart_read => 
-				data_read <= '1';
+				--data_read <= '1';
 				rxstate <= idle;
 			
 			when others => null;
@@ -224,6 +226,7 @@ begin
 		  rd_allow <= '1';
 		  fifo_tx_wr_req <= '0';
 		  api_enabled <= '0';
+		  api_sw_uart2 <= '0';
 		  
     elsif (rising_edge(CLK)) then
         -- запись данных в порт данных инициирует fifo_tx  write request
@@ -270,6 +273,8 @@ begin
 					when "00000001" => fifo_rx_clr_req  <= '1'; err_reg <= (others => '0'); new_command <= '0';  -- clear rx fifo
 					when "00000010" => fifo_tx_clr_req <= '1'; err_reg <= (others => '0'); new_command <= '0'; -- clear tx fifo
 					when "00000011" => fifo_tx_clr_req  <= '1'; err_reg <= (others => '0'); fifo_rx_clr_req <= '1'; new_command <= '0'; -- clear both in/out fifo
+					when "00000100" => api_sw_uart2 <= '0' ; fifo_tx_clr_req  <= '1'; err_reg <= (others => '0'); fifo_rx_clr_req <= '1'; new_command <= '0'; -- switch to uart1
+				   when "00000101" => api_sw_uart2 <= '1' ; fifo_tx_clr_req  <= '1'; err_reg <= (others => '0'); fifo_rx_clr_req <= '1'; new_command <= '0'; -- switch to uart2	
 					when "11110000" => api_enabled      <= '0'; err_reg <= (others => '0'); new_command <= '0'; -- api disabled
 					when "11110001" => api_enabled      <= '1'; err_reg <= (others => '0'); new_command <= '0'; -- api transparent
 					when "11111111" => -- get API version
@@ -304,5 +309,6 @@ fifo_tx_free <= std_logic_vector(unsigned(zifi_fifo_size) - unsigned(fifo_tx_use
 ZIFI_OE_N <= '0' when IORQ_N = '0' and RD_N = '0' and (A = zifi_in_fifo_port or A = zifi_out_fifo_port or A = zifi_error_port or A = zifi_data_port) else '1';
 
 ENABLED <= api_enabled;
+ZF_UART2 <= api_sw_uart2;
 
 end rtl;
