@@ -7,6 +7,7 @@
     "type": "boot",
     "order": 1,
     "eeprom_bank": 0,
+    "sd_access": 1,
     "roms": [],
     "osd": [
         {"type": "T", "bits": 1, "name": "Reset", "options": null, "default": 0, "hotkey": "Ctrl+Alt+Del"},

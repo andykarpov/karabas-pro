@@ -77,7 +77,7 @@ set_location_assignment PIN_69 -to SRAM_A[17]
 set_location_assignment PIN_68 -to SRAM_A[18]
 set_location_assignment PIN_66 -to SRAM_A[19]
 set_location_assignment PIN_44 -to SRAM_A[20]
-set_location_assignment PIN_67 -to SRAM_NWR
+set_location_assignment PIN_67 -to SRAM_WR_N
 
 #================= SPI FLASH / SD ===============
 set_location_assignment PIN_12 -to SPI_SCK

@@ -7,10 +7,10 @@ TOP_LEVEL_ENTITY = karabas_pro
 ASSIGNMENT_FILES = $(PROJECT).qpf $(PROJECT).qsf
 OUTFILE = boot
 
-all: smart.log $(PROJECT).asm.rpt $(PROJECT).sta.rpt
+all: smart.log $(PROJECT).asm.rpt $(PROJECT).sta.rpt $(PROJECT).rbf $(OUTFILE).kp1
 
 clean:
-	rm -rf *.rpt *.chg smart.log *.htm *.eqn *.pin *.sof *.pof db incremental_db *.summary *.done *.smsg *.jdi *.jic *.map *.rbf greybox* PLLJ_*.txt
+	rm -rf *.rpt *.chg smart.log *.htm *.eqn *.pin *.sof *.pof db incremental_db *.summary *.done *.smsg *.jdi *.jic *.map *.rbf greybox* PLLJ_*.txt *.kp1
 
 map: smart.log $(PROJECT).map.rpt
 fit: smart.log $(PROJECT).fit.rpt
@@ -67,17 +67,21 @@ asm.chg:
 	$(STAMP) asm.chg
 
 ###################################################################
-# Programming the device
+# Build release files
 ###################################################################
 
-rbf: $(PROJECT).sof
+$(PROJECT).rbf: $(PROJECT).sof
 	quartus_cpf -c $(PROJECT)_rbf.cof
+
+$(OUTFILE).kp1: $(PROJECT).rbf
+	python3 make_core.py core.json $(OUTFILE).kp1
+
+##################################################################
+# Program the device
+##################################################################
 
 program: $(PROJECT).sof
 	quartus_pgm --no_banner --mode=jtag -o "P;$(PROJECT).sof"
-
-release: $(PROJECT).rbf
-	python3 make_core.py core.json $(OUTFILE).kp1
 
 program-pof: $(PROJECT).pof
 	quartus_pgm --no_banner --mode=jtag -o "BVP;$(PROJECT).pof"
