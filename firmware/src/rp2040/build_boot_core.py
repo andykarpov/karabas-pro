@@ -57,15 +57,18 @@ def output_set(out_name, out_dir, in_names):
     h.close()
     c.close()
 
-def main():
-    in_file = "../fpga/boot/syn/ep4ce22/boot.kp1"
-    out_dir = "src/"
-    out_base = "boot_core"
+def convert(in_file, out_dir, out_base):
     msg = f"Converting {in_file} into {out_dir}{out_base} C structure"
     print(msg)
     output_set(out_base, out_dir, [in_file])
+
+def main():
+    # convert boot core into the variable
+    convert("../fpga/boot/syn/ep4ce22/boot.kp1", "src/", "boot_core")
+    # convert osd font into the variable
+    convert("font/osd_font_866.pf", "src/", "osd_font")
+
     
 #if __name__ == "__main__":
 #    main()
 main()
-

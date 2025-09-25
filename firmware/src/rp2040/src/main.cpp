@@ -483,8 +483,8 @@ void do_configure(const char* filename) {
   // trigger font loader reset
   zxosd.fontReset();
   // send font data
-  for (int i=0; i<OSD_FONT_SIZE; i++) {
-    zxosd.fontSend(osd_font[i]);
+  for (int i=0; i<OSD_FONT_LEN; i++) {
+    zxosd.fontSend(OSD_FONT[i]);
   }
   read_core(filename);
   if (!is_osd) {
