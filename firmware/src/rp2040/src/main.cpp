@@ -46,12 +46,16 @@ EU, 2025
 #include "PS2KeyAdvanced.h"
 #include "PS2Mouse.h"
 
-//PioSPI spiSD(PIN_MCU_SPI_TX, PIN_MCU_SPI_RX, PIN_MCU_SPI_SCK, PIN_CONF_CLK, SPI_MODE0, SD_SCK_MHZ(16)); // dedicated SD1 SPI
-//#define SD_CONFIG  SdSpiConfig(SD_CS_PIN, SHARED_SPI, SD_SCK_MHZ(16), &spiSD) // SD1 SPI Settings
+// todo: PIN_CONF_CLK will be reused as SD_CS_N to access SD from 2040 to FPGA by MCU SPI channel! 
+// it should be set to OUTPUT after core loaded in case core has sd_access=1 and set to INPUT in case of sd_access=0
+PioSPI spiSD(PIN_MCU_SPI_TX, PIN_MCU_SPI_RX, PIN_MCU_SPI_SCK, PIN_CONF_CLK, SPI_MODE0, SD_SCK_MHZ(16)); // dedicated SD1 SPI
+#define SD_CONFIG  SdSpiConfig(PIN_CONF_CLK, SHARED_SPI, SD_SCK_MHZ(16), &spiSD) // SD1 SPI Settings
 SPISettings settingsA(SD_SCK_MHZ(16), MSBFIRST, SPI_MODE0); // MCU SPI settings
 
 File file1, file2;
 Dir root1;
+SdFat32 sd1;
+File32 sdfile, sdroot;
 ElapsedTimer my_timer, my_timer2;
 ElapsedTimer hide_timer;
 ElapsedTimer popup_timer;
@@ -197,15 +201,14 @@ void setup()
 
   root1 = LittleFS.openDir("/");
 
-  // check if required core is exists and copy it from internal resources
+  // check if required core is exists and copy it from internal resources otherwise
   check_update(FILENAME_BOOT);
 
-  // load boot from SD or flashfs
+  // load boot from littlefs
   do_configure(FILENAME_BOOT);
 
   osd_state = state_core_browser;
   app_core_browser_read_list();
-  d_println("TODO");
 }
 
 void setup1() {
@@ -442,18 +445,43 @@ void loop1()
   }
 }
 
+void update_boot_core_from_flash(const char* filename) {
+  file2 = LittleFS.open(filename, "w");
+  d_print("Creating "); d_print(filename); d_print(" from internal resources...");
+  file2.write(BOOT_CORE, BOOT_CORE_LEN);
+  d_print("Done. Copied "); d_print(BOOT_CORE_LEN); d_println(" bytes");
+  file2.close();
+}
+
+void update_core_from_sd(const char* filename) {
+  file2 = LittleFS.open(filename, "w");
+  file2.seek(0);
+  d_print("Creating "); d_print(filename); d_print(" from sd card file...");
+  // todo: copy
+  size_t len = 0;
+  size_t total = 0;
+  uint8_t buf[512];
+  sdfile.seek(0);
+  while (len = sdfile.read(buf, 512)) {
+    file2.write(buf, len);
+    total += len;
+  }
+  d_print("Done. Copied "); d_print(total); d_println(" bytes");
+  file2.close();
+}
+
 void check_update(const char* filename) {
   // if core does not exists on lfs partition
   if (!LittleFS.exists(filename)) {
     if (strcmp(filename, FILENAME_BOOT) == 0) {
-      file2 = LittleFS.open(filename, "w");
-      d_print("Creating "); d_print(filename); d_print(" from internal resources...");
-      file2.write(BOOT_CORE, BOOT_CORE_LEN);
-      d_print("Done. Copied "); d_print(BOOT_CORE_LEN); d_println(" bytes");
-      file2.close();
+      update_boot_core_from_flash(filename);
+    } 
+    else {
+      update_core_from_sd(filename);
     }
   // if core exists
   } else {
+    // for boot core
     if (strcmp(filename, FILENAME_BOOT) == 0) {
       // todo: compare versions of file1 and file2
       file2 = LittleFS.open(filename, "r");
@@ -466,15 +494,47 @@ void check_update(const char* filename) {
       }
       // update the core
       if (memcmp(ver1, ver2, 8) != 0) {
+        update_boot_core_from_flash(filename);
+      }
+    } 
+    // for core from sd card
+    else {
+      file2 = LittleFS.open(filename, "r");
+      char ver1[8];
+      file2.seek(FILE_POS_CORE_BUILD);
+      file2.readBytes(ver1, sizeof(ver1));
+      file2.close();
+      char ver2[8];
+      sdfile.seek(FILE_POS_CORE_BUILD);
+      sdfile.readBytes(ver2, sizeof(ver2));
+      // update the core
+      if (memcmp(ver1, ver2, 8) != 0) {
         file2 = LittleFS.open(filename, "w");
-        d_print("Updating "); d_print(filename); d_print(" from internal resources...");
-        file2.write(BOOT_CORE, BOOT_CORE_LEN);
-        d_print("Done. Copied "); d_print(BOOT_CORE_LEN); d_println(" bytes");
-        file2.close();
+        sdfile.rewind();
+        update_core_from_sd(filename);
       }
     }
   }
 }
+
+void update_cores_from_sd() {
+  if (sdroot.isOpen()) {
+      sdroot.close();
+    }
+    if (!sdroot.open(&sd1, "/")) {
+      return;
+    }
+    sdroot.rewind();
+    while (sdfile.openNext(&sdroot, O_RDONLY)) {
+      char filename[32]; sdfile.getName(filename, sizeof(filename));
+      uint8_t len = strlen(filename);
+      if (strstr(strlwr(filename + (len - 4)), CORE_EXT)) {
+        check_update(filename);
+      }
+      sdfile.close();
+    }
+}
+
 
 void do_configure(const char* filename) {
   is_configuring = true;
@@ -500,6 +560,27 @@ void do_configure(const char* filename) {
     zxosd.hidePopup();
     osd_handle(true); // reinit osd
   }
+
+  // try to mount the sd card and update cores sd->littlefs
+  has_sd = false;
+  if (core.sd_enable) {
+    d_println("Trying to mount SD card");
+    pinMode(PIN_CONF_CLK, OUTPUT);
+    digitalWrite(PIN_CONF_CLK, HIGH);
+    has_sd = sd1.begin(SD_CONFIG);
+    if (has_sd) {
+      d_println("SD card mounted");
+      update_cores_from_sd();
+    } else {
+      d_println("SD card is inaccessible");
+      sd1.initErrorPrint(&Serial);
+    }
+  } else {
+    pinMode(PIN_CONF_CLK, INPUT_PULLUP);
+    sd1.end();
+    has_sd = false;
+  }
+
   spi_send(CMD_INIT_DONE, 0, 0);
   is_configuring = false;
 }
