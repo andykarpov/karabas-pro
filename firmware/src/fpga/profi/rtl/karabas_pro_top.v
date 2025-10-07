@@ -27,11 +27,10 @@
 
 // TODO:
 // 1. refactoring: move cpld module from profi to top level as fdd/hdd signals and zx_bus* (cpu) signals
-// 2. uart: implement zifi_emu and connect to mcu side
-// 3. flash: implement parallel flash tx/rx via mcu side
-// 4. refactoring: translate all vhdl modules to verilog
-// 5. new top level for old board revisions
-// 6. osd: add icons
+// 2. flash: implement parallel flash tx/rx via mcu side
+// 3. refactoring: translate all vhdl modules to verilog
+// 4. new top level for old board revisions
+// 5. osd: add icons
 
 module karabas_pro_top (
     //----------------- GLobal clock ---------
@@ -187,15 +186,21 @@ mcu mcu(
     .rtc_cs             (1'b1),
     .rtc_wr_n           (rtc_wr_n),
 
-    .uart_rx_data       (), // todo
-    .uart_rx_idx        (),
-    .uart_tx_data       (8'b0),
-    .uart_tx_wr         (1'b0),
-    .uart_tx_mode       (2'b00),
-    .uart_dll           (8'b0),
-    .uart_dlm           (8'b0),
-    .uart_dll_wr        (1'b0),
-    .uart_dlm_wr        (1'b0),
+    .usb_uart_rx_data   (usb_uart_rx_data),
+    .usb_uart_rx_idx    (usb_uart_rx_idx),
+    .usb_uart_tx_data   (usb_uart_tx_data),
+    .usb_uart_tx_wr     (usb_uart_tx_wr),
+    .usb_uart_tx_mode   (usb_uart_tx_mode),
+
+    .usb_uart_dll       (usb_uart_dll),
+    .usb_uart_dlm       (usb_uart_dlm),
+    .usb_uart_dll_wr    (usb_uart_dll_wr),
+    .usb_uart_dlm_wr    (usb_uart_dlm_wr),
+	 
+    .esp_uart_rx_data   (esp_uart_rx_data),
+    .esp_uart_rx_idx    (esp_uart_rx_idx),
+    .esp_uart_tx_data   (esp_uart_tx_data),
+    .esp_uart_tx_wr     (esp_uart_tx_wr),
 
     .softsw_command     (softsw_command),
     .osd_command        (osd_command),
@@ -204,8 +209,8 @@ mcu mcu(
     .romloader_addr     (romloader_addr),
     .romloader_data     (romloader_data),
     .romloader_wr       (romloader_wr),
-	 
-	 // todo: parallel flash data 
+     
+     // todo: parallel flash data 
      
     .debug_addr         (16'd0),
     .debug_data         (16'd0),
@@ -310,16 +315,14 @@ wire [31:0] flash_a_bus;
 wire [7:0] flash_di_bus, flash_do_bus;
 wire flash_rd_n, flash_wr_n, flash_er_n, flash_busy, flash_ready;
 
-wire [31:0] loader_a;
-wire [7:0] loader_d;
-wire loader_act, loader_reset, loader_wr;
-
 wire [8:0] video_rgb;
 wire video_hs, video_vs;
 wire icon_sd, icon_cf, icon_fdd;
 
-wire [7:0] uart_tx, uart_rx, uart2_tx, uart2_rx;
-wire uart_tx_req, uart_rx_req, uart2_tx_req, uart2_rx_req;
+wire [7:0] usb_uart_rx_data, usb_uart_rx_idx, usb_uart_tx_data;
+wire [7:0] esp_uart_rx_data, esp_uart_rx_idx, esp_uart_tx_data;
+wire [7:0] usb_uart_dll, usb_uart_dlm;
+wire usb_uart_tx_wr, usb_uart_tx_mode, usb_uart_dll_wr, usb_uart_dlm_wr, esp_uart_tx_wr;
 
 wire [7:0] rtc_a, rtc_di, rtc_do, rtc_wr_n, rtc_rd_n;
 
@@ -352,11 +355,11 @@ profi profi(
     .sram_rd_n          (),
     .sram_wr_n          (SRAM_WR_N),
 
-    .loader_act         (loader_act),
-    .loader_a           (loader_a),
-    .loader_d           (loader_d),
-    .loader_wr          (loader_wr),
-    .loader_reset       (loader_reset),
+    .loader_act         (romloader_active),
+    .loader_a           (romloader_addr),
+    .loader_d           (romloader_data),
+    .loader_wr          (romloader_wr),
+    .loader_reset       (1'b0),
 
     .video_rgb          (video_rgb), // 3:3:3
     .video_clk          (video_clk),
@@ -381,19 +384,23 @@ profi profi(
 
     .tape_out           (SPI_FLASH_CS_N),
     .tape_in            (TAPE_IN),
-     .buzzer             (),
+    .buzzer             (),
 
-    .uart_tx            (uart_tx),
-    .uart_tx_req        (uart_tx_req),
+    .usb_uart_rx_data   (usb_uart_rx_data),
+    .usb_uart_rx_idx    (usb_uart_rx_idx),
+    .usb_uart_tx_data   (usb_uart_tx_data),
+    .usb_uart_tx_wr     (usb_uart_tx_wr),
+    .usb_uart_tx_mode   (usb_uart_tx_mode),
 
-    .uart_rx            (uart_rx),
-    .uart_rx_req        (uart_rx_req),
-
-    .uart2_tx           (uart2_tx),
-    .uart2_tx_req       (uart2_tx_req),
-
-    .uart2_rx           (uart2_rx),
-    .uart2_rx_req       (uart2_rx_req),
+    .usb_uart_dll       (usb_uart_dll),
+    .usb_uart_dlm       (usb_uart_dlm),
+    .usb_uart_dll_wr    (usb_uart_dll_wr),
+    .usb_uart_dlm_wr    (usb_uart_dlm_wr),
+	 
+    .esp_uart_rx_data   (esp_uart_rx_data),
+    .esp_uart_rx_idx    (esp_uart_rx_idx),
+    .esp_uart_tx_data   (esp_uart_tx_data),
+    .esp_uart_tx_wr     (esp_uart_tx_wr),	  
 
     .rtc_a              (rtc_a),
     .rtc_do_bus         (rtc_do_mapped),

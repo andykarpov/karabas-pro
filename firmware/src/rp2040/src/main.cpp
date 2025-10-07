@@ -127,7 +127,8 @@ bool is_configuring = false;
 
 uint16_t joy;
 
-uint8_t uart_idx = 0;
+uint8_t usb_uart_idx = 0;
+uint8_t esp_uart_idx = 0;
 uint8_t evo_rs232_dll = 0;
 uint8_t evo_rs232_dlm = 0;
 uint32_t serial_speed = 115200;
@@ -176,6 +177,9 @@ void setup()
 
   d_begin(115200);
   d_println("Karabas Pro RP2040 firmware");
+
+  pinMode(PIN_UART_CTS, OUTPUT); digitalWrite(PIN_UART_CTS, LOW); // CTS bypass if enabled
+  Serial1.begin(115200); // esp uart
 
   sega.begin(PIN_JOY_SCK, PIN_JOY_LOAD, PIN_JOY_DATA, PIN_JOY_P7);
 
@@ -320,11 +324,21 @@ void loop()
     }
   }
 
-  if (Serial.available() > 0) {
-    uart_idx++;
-    int uart_rx = Serial.read();
-    if (uart_rx != -1) {
-      spi_send(CMD_UART, uart_idx, (uint8_t) uart_rx);
+  if (Serial.available() || Serial1.available()) {
+    // usb serial rx
+    if (Serial.available() > 0) {
+      usb_uart_idx++;
+      int uart_rx = Serial.read();
+      if (uart_rx != -1) {
+        spi_send(CMD_USB_UART, usb_uart_idx, (uint8_t) uart_rx);
+      }
+    // esp8266 serial rx
+    } if (Serial1.available() > 0) {
+      esp_uart_idx++;
+      int uart_rx = Serial1.read();
+      if (uart_rx != -1) {
+        spi_send(CMD_ESP_UART, esp_uart_idx, (uint8_t) uart_rx);
+      }
     }
   } else {
     spi_send(CMD_NOP, 0 ,0);
@@ -936,8 +950,10 @@ void serial_data(uint8_t addr, uint8_t data) {
 
 void process_in_cmd(uint8_t cmd, uint8_t addr, uint8_t data) {
 
-  if (cmd == CMD_UART) {
+  if (cmd == CMD_USB_UART) {
     serial_data(addr, data);
+  } else if (cmd == CMD_ESP_UART) {
+    Serial1.write(data);
   } else if (cmd == CMD_RTC) {
     zxrtc.setData(addr, data);
   } else if (cmd == CMD_DEBUG_DATA) {

@@ -35,17 +35,21 @@ module mcu(
     input wire         rtc_cs,
     input wire         rtc_wr_n,
 
-    output reg [7:0]   uart_rx_data,
-    output reg [7:0]   uart_rx_idx,
+    output reg [7:0]   usb_uart_rx_data,
+    output reg [7:0]   usb_uart_rx_idx,
+    input wire [7:0]   usb_uart_tx_data,
+    input wire         usb_uart_tx_wr,
+    input wire         usb_uart_tx_mode, // 0 - 115200, // 1 - dll/dlm
 
-    input wire [7:0]   uart_tx_data,
-    input wire         uart_tx_wr,
-    input wire [1:0]   uart_tx_mode, // 0 - zifi rs232 @ 115200, // 1 - evo rs232 @ dll/dlm, 2 - zifi esp8266 @ 115200 
+    input wire [7:0]   usb_uart_dll,
+    input wire [7:0]   usb_uart_dlm,
+    input wire         usb_uart_dll_wr,
+    input wire         usb_uart_dlm_wr,
 
-    input wire [7:0]   uart_dll,
-    input wire [7:0]   uart_dlm,
-    input wire         uart_dll_wr,
-    input wire         uart_dlm_wr,
+    output reg [7:0]   esp_uart_rx_data,
+    output reg [7:0]   esp_uart_rx_idx,
+    input wire [7:0]   esp_uart_tx_data,
+    input wire         esp_uart_tx_wr,
 
     output reg [15:0]  softsw_command,
     output reg [15:0]  osd_command,
@@ -74,7 +78,8 @@ localparam CMD_OSD          = 8'h20;
 localparam CMD_DEBUG_ADDR   = 8'h30;
 localparam CMD_DEBUG_DATA   = 8'h31;    
 localparam CMD_RTC          = 8'hfa;
-localparam CMD_UART         = 8'hfc;
+localparam CMD_ESP_UART     = 8'hfb;
+localparam CMD_USB_UART     = 8'hfc;
 localparam CMD_INIT_START   = 8'hfd;
 localparam CMD_INIT_DONE    = 8'hfe;    
 localparam CMD_NOPE         = 8'hff;
@@ -192,10 +197,15 @@ always @(posedge clk) begin
                 rtcr_d <= spi_data;
                 rtcr_command <= ~rtcr_command;
             end
-            CMD_UART:
+            CMD_USB_UART:
             begin
-                uart_rx_data <= spi_data;
-                uart_rx_idx <= spi_address;
+                usb_uart_rx_data <= spi_data;
+                usb_uart_rx_idx <= spi_address;
+            end
+            CMD_ESP_UART:
+            begin
+                esp_uart_rx_data <= spi_data;
+                esp_uart_rx_idx <= spi_address;
             end
             CMD_PS2_SCANCODE:
                 case (spi_address)
@@ -222,16 +232,16 @@ end
 reg [7:0] rtcr_a, rtcr_d, last_rtcr_a, last_rtcr_d;
 always @(posedge clk) begin
     queue_wr_req <= 0;
-    if (uart_tx_wr) begin
+    if (usb_uart_tx_wr) begin
         queue_wr_req <= 1;
-        case (uart_tx_mode)
-            1: queue_di <= {CMD_UART, 8'b00000011, uart_tx_data}; // evo rs232 - usb
-            0: queue_di <= {CMD_UART, 8'b00000000, uart_tx_data}; // zifi rs232 - usb
-            // todo: esp8266 access
+        case (usb_uart_tx_mode)
+            0: queue_di <= {CMD_USB_UART, 8'b00000000, usb_uart_tx_data}; // zifi rs232 - usb
+				1: queue_di <= {CMD_USB_UART, 8'b00000011, usb_uart_tx_data}; // evo rs232 - usb
         endcase
     end
-    else if (uart_dll_wr) begin queue_wr_req <= 1; queue_di <= {CMD_UART, 8'b00000001, uart_dll}; end 
-    else if (uart_dlm_wr) begin queue_wr_req <= 1; queue_di <= {CMD_UART, 8'b00000010, uart_dlm}; end 
+    else if (usb_uart_dll_wr) begin queue_wr_req <= 1; queue_di <= {CMD_USB_UART, 8'b00000001, usb_uart_dll}; end 
+    else if (usb_uart_dlm_wr) begin queue_wr_req <= 1; queue_di <= {CMD_USB_UART, 8'b00000010, usb_uart_dlm}; end 
+	 else if (esp_uart_tx_wr)  begin queue_wr_req <= 1; queue_di <= {CMD_ESP_UART, 8'b00000000, esp_uart_tx_data}; end
     else if (~rtc_wr_n && rtc_cs && ~busy && rtc_a != 8'h0c && rtc_a < 8'hf0) begin queue_wr_req <= 1; queue_di <= {CMD_RTC, rtc_a, rtc_di}; end
     else if (debug_addr != prev_debug_addr) begin queue_wr_req <= 1; queue_di <= {CMD_DEBUG_ADDR, debug_addr}; prev_debug_addr <= debug_addr; end
     else if (debug_data != prev_debug_data) begin queue_wr_req <= 1; queue_di <= {CMD_DEBUG_DATA, debug_data}; prev_debug_data <= debug_data; end

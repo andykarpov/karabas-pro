@@ -80,17 +80,21 @@ module profi(
     input wire              tape_in,
     output wire             buzzer,
 
-    output wire [7:0]       uart_tx,
-    output wire             uart_tx_req,
-
-    input wire [7:0]        uart_rx,
-    input wire              uart_rx_req,
-
-    output wire [7:0]       uart2_tx,
-    output wire             uart2_tx_req,
-
-    input wire [7:0]        uart2_rx,
-    input wire              uart2_rx_req,
+	 input wire [7:0]        usb_uart_rx_data,
+	 input wire [7:0]        usb_uart_rx_idx,
+	 output wire [7:0]       usb_uart_tx_data,
+	 output wire             usb_uart_tx_wr,
+	 output wire             usb_uart_tx_mode,
+	 
+	 output wire [7:0]       usb_uart_dll,
+	 output wire [7:0]       usb_uart_dlm,
+	 output wire             usb_uart_dll_wr,
+	 output wire             usb_uart_dlm_wr,
+	 
+	 input wire [7:0]        esp_uart_rx_data,
+	 input wire [7:0]        esp_uart_rx_idx,
+	 output wire [7:0]       esp_uart_tx_data,
+	 output wire             esp_uart_tx_wr,	 
 
     output wire [7:0]       rtc_a,
     input wire [7:0]        rtc_do_bus,
@@ -449,9 +453,9 @@ zxunoregs zxunoregs(
     .regaddr_changed        (zxuno_regaddr_changed)
 );
 
-// uart1 - esp8266 @ 115200
-wire uart1_tx_req;
-wire [7:0] uart1_tx;
+// zxuno uart1 - esp @ 115200
+wire uart1_tx_req, uart1_rx_req;
+wire [7:0] uart1_tx, uart1_rx;
 zxunouart_emu #(.UARTDATA(8'hC6), .UARTSTAT(8'hC7)) uart1(
     .clk_bus                (clk_bus),
     .reset                  (areset),
@@ -464,14 +468,15 @@ zxunouart_emu #(.UARTDATA(8'hC6), .UARTSTAT(8'hC7)) uart1(
     
     .uart_tx_req            (uart1_tx_req),
     .uart_tx_data           (uart1_tx),
-
-    .uart_rx_req            (uart_rx_req),
-    .uart_rx_data           (uart_rx),
+    .uart_rx_req            (uart1_rx_req),
+    .uart_rx_data           (uart1_rx),
 );
 
-// uart2 - usb uart @ 115200
+// zxuno uart2 - usb uart @ 115200
 wire [7:0] zxuno_uart2_do_bus;
 wire zxuno_uart2_oe_n;
+wire [7:0] uart2_tx, uart2_rx;
+wire uart2_tx_req, uart2_rx_req;
 zxunouart_emu #(.UARTDATA(8'hC8), .UARTSTAT(8'hC9)) uart2(
     .clk_bus                (clk_bus),
     .reset                  (areset),
@@ -484,7 +489,6 @@ zxunouart_emu #(.UARTDATA(8'hC8), .UARTSTAT(8'hC9)) uart2(
     
     .uart_tx_req            (uart2_tx_req),
     .uart_tx_data           (uart2_tx),
-
     .uart_rx_req            (uart2_rx_req),
     .uart_rx_data           (uart2_rx),
 );
@@ -492,9 +496,9 @@ zxunouart_emu #(.UARTDATA(8'hC8), .UARTSTAT(8'hC9)) uart2(
 wire [7:0] zifi_do_bus;
 wire zifi_oe_n;
 wire zifi_api_enabled;
-wire zifi_tx_req;
-wire [7:0] zifi_tx;
-/*zifi_emu zifi(
+wire [7:0] zifi_esp_uart_tx_data, zifi_usb_uart_tx_data;
+wire zifi_esp_uart_tx_wr, zifi_usb_uart_tx_wr, zifi_usb_uart_tx_mode;
+zifi_emu zifi(
     .CLK                    (clk_bus),
     .RESET                  (areset),
 
@@ -507,16 +511,52 @@ wire [7:0] zifi_tx;
     .ZIFI_OE_N              (zifi_oe_n),
     
     .ENABLED                (zifi_api_enabled),
+	 
+    .USB_UART_RX_DATA       (usb_uart_rx_data),
+    .USB_UART_RX_IDX        (usb_uart_rx_idx),
+    .USB_UART_TX_DATA       (zifi_usb_uart_tx_data),
+    .USB_UART_TX_WR         (zifi_usb_uart_tx_wr),
+    .USB_UART_TX_MODE       (zifi_usb_uart_tx_mode),
 
-    .UART_TX_REQ            (zifi_tx_req),
-    .UART_TX_DATA           (zifi_tx),
-    .UART_RX_REQ            (uart_rx_req),
-    .UART_RX_DATA           (uart_rx)
-);*/
+    .USB_UART_DLL           (usb_uart_dll),
+    .USB_UART_DLM           (usb_uart_dlm),
+    .USB_UART_DLL_WR        (usb_uart_dll_wr),
+    .USB_UART_DLM_WR        (usb_uart_dlm_wr),
 
-// mux zxuno uart1 / zifi tx requests
-assign uart_tx_req = (zifi_api_enabled) ? zifi_tx_req : uart1_tx_req;
-assign uart_tx = (zifi_api_enabled) ? zifi_tx : uart1_tx;
+    .ESP_UART_RX_DATA       (esp_uart_rx_data),
+	 .ESP_UART_RX_IDX        (esp_uart_rx_idx),
+    .ESP_UART_TX_WR         (zifi_esp_uart_tx_wr),
+    .ESP_UART_TX_DATA       (zifi_esp_uart_tx_data)
+);
+
+// mux zxuno uart1 / zxuno uart2 / zif usb / esp tx requests
+assign esp_uart_tx_wr = (zifi_api_enabled) ? zifi_esp_uart_tx_wr : uart1_tx_req;
+assign esp_uart_tx_data = (zifi_api_enabled) ? zifi_esp_uart_tx_data : uart1_tx;
+
+assign usb_uart_tx_wr = (zifi_api_enabled) ? zifi_usb_uart_tx_wr : uart2_tx_req;
+assign usb_uart_tx_data = (zifi_api_enabled) ? zifi_usb_uart_tx_data : uart2_tx;
+
+assign usb_uart_tx_mode = (zifi_api_enabled) ? zifi_usb_uart_tx_mode : 1'b0;
+
+// rx data strobes for zxuno uart
+assign uart1_rx = esp_uart_rx_data;
+assign uart2_rx = usb_uart_rx_data;
+
+reg [7:0] prev_esp_uart_rx_idx, prev_usb_uart_rx_idx;
+reg usb_uart_rx_req, esp_uart_rx_req;
+
+always @(posedge clk_bus) begin
+    prev_esp_uart_rx_idx <= esp_uart_rx_idx;
+	 prev_usb_uart_rx_idx <= usb_uart_rx_idx;
+	 esp_uart_rx_req <= 1'b0;
+	 usb_uart_rx_req <= 1'b0;
+	 if (prev_esp_uart_rx_idx != esp_uart_rx_idx)
+		esp_uart_rx_req <= 1'b1;
+	 if (prev_usb_uart_rx_idx != usb_uart_rx_idx)
+		usb_uart_rx_req <= 1'b1;		
+end
+assign uart1_rx_req = esp_uart_rx_req;
+assign uart2_rx_req = usb_uart_rx_req;
 
 // --------------------------------------------------------------------------------------------
 

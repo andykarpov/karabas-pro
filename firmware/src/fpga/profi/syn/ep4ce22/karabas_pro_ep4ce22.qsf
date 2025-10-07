@@ -182,6 +182,7 @@ set_instance_assignment -name GLOBAL_SIGNAL "GLOBAL CLOCK" -to CLK_50MHZ
 
 
 
+set_global_assignment -name VHDL_FILE ../../rtl/uart/zifi_emu.vhd
 set_global_assignment -name VHDL_FILE ../../rtl/video/linebuf.vhd
 set_global_assignment -name VHDL_FILE ../../rtl/video/vga_pal.vhd
 set_global_assignment -name VERILOG_FILE ../../rtl/mcu/usb_ps2_keybuf.v
