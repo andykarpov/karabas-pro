@@ -39,6 +39,7 @@ timing
 *.rpt
 *.smsg
 #*.sof
+*.ddb
 *.sopc_builder
 *.summary
 #*.tcl

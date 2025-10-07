@@ -1,0 +1,37 @@
+{
+    "id": "profi",
+    "name": "Profi +",
+    "build": "25092712",
+    "bitstream": "karabas_pro_ep4ce22.rbf",
+    "visible": true,
+    "type": "osd",
+    "order": 2,
+    "eeprom_bank": 1,
+    "sd_access": 0,
+    "roms": [
+        {"filename": "../../rom/ROMain_ramdisk_D.rom", "address": 1048576},
+        {"filename": "../../rom/bios_pqdos.rom", "address": 1114112},
+        {"filename": "../../rom/karabas-pro-flashtool_v2_71.rom", "address": 1179648},
+        {"filename": "../../rom/FDImage.rom", "address": 1245184},
+        {"filename": "../../rom/esxdos089.bin", "address": 1310720}
+    ],
+    "osd": [
+        {"type": "S", "name": "ROM Bank", "options": ["ROMain", "PQ-DOS", "FlashTool", "FDImage"], "default": 0, "hotkey": "Menu+F1"},
+        {"type": "S", "name": "TurboFDC", "options": ["Off", "On"], "default": 0, "hotkey": "Menu+F5"},
+        {"type": "S", "name": "Covox", "options": ["Off", "On"], "default": 1, "hotkey": "Menu+F6"},
+        {"type": "S", "name": "PSG Mix", "options": ["ABC", "ACB", "Mono"], "default": 1, "hotkey": "Menu+F7"},
+        {"type": "S", "name": "PSG Type", "options": ["AY3-8912", "YM2149F"], "default": 0, "hotkey": "Menu+F8"},
+        {"type": "S", "name": "Video", "options": ["VGA 30kHz", "RGB 15kHz"], "default": 0, "hotkey": "Menu+F9"},
+        {"type": "S", "name": "VSync", "options": ["50 Hz", "60 Hz"], "default": 0, "hotkey": "Menu+F10"},
+        {"type": "S", "name": "Turbo", "options": ["Off", "2x", "4x", "8x"], "default": 0, "hotkey": "Menu+F11"},
+        {"type": "S", "name": "Swap FDD", "options": ["Off", "On"], "default": 0, "hotkey": "Menu+Tab"},
+        {"type": "S", "name": "Joystick", "options": ["Kempston", "Sinclair1", "Sinclair2", "Cursor", "QAOPM", "QAOPS"], "default": 0, "hotkey": "Menu+J"},
+        {"type": "S", "name": "Mode", "options": ["Pentagon", "48k", "128k", "+3E"], "default": 0, "hotkey": "Menu+M"},
+        {"type": "S", "name": "DivMMC", "options": ["Off", "On"], "default": 0, "hotkey": "Menu+D"},
+        {"type": "S", "name": "NemoIDE", "options": ["Off", "On"], "default": 0, "hotkey": "Menu+N"},
+        {"type": "S", "name": "Keyboard", "options": ["Profi XT", "Spectrum"], "default": 0, "hotkey": "Menu+K"},
+        {"type": "N", "name": "Pause", "options": ["Off", "On"], "default": 0, "hotkey": "Menu+P"},
+        {"type": "T", "name": "NMI", "hotkey": "Menu+F12"},
+        {"type": "T", "name": "Reset", "hotkey": "Ctrl+Alt+Del"}
+    ]
+}
