@@ -15,7 +15,7 @@
                                                                 #               #               #             # 
 https://github.com/andykarpov/karabas-pro                       #               #               ############### 
 
-RP2050 firmware for Karabas-Pro
+RP2040 firmware for Karabas-Pro
 
 @author Andy Karpov <andy.karpov@gmail.com>
 EU, 2025
@@ -46,10 +46,7 @@ EU, 2025
 #include "PS2KeyAdvanced.h"
 #include "PS2Mouse.h"
 
-// todo: PIN_CONF_CLK will be reused as SD_CS_N to access SD from 2040 to FPGA by MCU SPI channel! 
-// it should be set to OUTPUT after core loaded in case core has sd_access=1 and set to INPUT in case of sd_access=0
-PioSPI spiSD(PIN_MCU_SPI_TX, PIN_MCU_SPI_RX, PIN_MCU_SPI_SCK, PIN_CONF_CLK, SPI_MODE0, SD_SCK_MHZ(16)); // dedicated SD1 SPI
-#define SD_CONFIG  SdSpiConfig(PIN_CONF_CLK, SHARED_SPI, SD_SCK_MHZ(16), &spiSD) // SD1 SPI Settings
+#define SD_CONFIG  SdSpiConfig(PIN_SD_CS, SHARED_SPI, SD_SCK_MHZ(16), &SPI) // SD1 SPI Settings
 SPISettings settingsA(SD_SCK_MHZ(16), MSBFIRST, SPI_MODE0); // MCU SPI settings
 
 File file1, file2;
@@ -74,6 +71,12 @@ uint16_t cached_file_from, cached_file_to;
 
 uint8_t ps2_pressed[64];
 uint8_t ps2_pressed_size = 0;
+
+uint32_t flash_a;
+uint8_t flash_di;
+uint8_t flash_do;
+bool flash_busy = false;
+bool flash_ready = false;
 
 // LCTRL LSHIFT LALT LGUI RCTRL RSHIFT RALT RGUI
 uint8_t const ps2_usb_modifieds_map[] = { 
@@ -155,15 +158,27 @@ void setup()
   SPI.setSCK(PIN_MCU_SPI_SCK);
   SPI.setRX(PIN_MCU_SPI_RX);
   SPI.setTX(PIN_MCU_SPI_TX);
+  pinMode(PIN_MCU_SPI_CS, OUTPUT);
+  digitalWrite(PIN_MCU_SPI_CS, HIGH);
   //SPI.setCS(PIN_MCU_SPI_CS);
-  SPI.begin(false);
+  SPI.begin(false); // do not use hw cs
 
   // FPGA bitstream loader
   pinMode(PIN_CONF_NSTATUS, INPUT_PULLUP);
   pinMode(PIN_CONF_NCONFIG, OUTPUT);
-  pinMode(PIN_CONF_DONE, INPUT);
-  pinMode(PIN_CONF_CLK, INPUT);
-  pinMode(PIN_CONF_DATA, INPUT);
+  digitalWrite(PIN_CONF_NCONFIG, HIGH);
+  pinMode(PIN_CONF_DONE, INPUT_PULLUP);
+  pinMode(PIN_CONF_CLK, OUTPUT);
+  digitalWrite(PIN_CONF_CLK, HIGH);
+  pinMode(PIN_CONF_DATA, INPUT_PULLUP);
+
+  // dedicated SD CS to access from MCU via shared FPGA
+  pinMode(PIN_SD_CS, OUTPUT);
+  digitalWrite(PIN_SD_CS, HIGH);
+
+  pinMode(PIN_TP3, INPUT_PULLUP);
+  pinMode(PIN_TP4, INPUT_PULLUP);
+  pinMode(PIN_TP5, INPUT_PULLUP);
 
   // I2C
   Wire.setSDA(PIN_I2C_SDA);
@@ -211,8 +226,8 @@ void setup()
   // load boot from littlefs
   do_configure(FILENAME_BOOT);
 
-  osd_state = state_core_browser;
   app_core_browser_read_list();
+  osd_state = state_core_browser;
 }
 
 void setup1() {
@@ -335,9 +350,10 @@ void loop()
     // esp8266 serial rx
     } if (Serial1.available() > 0) {
       esp_uart_idx++;
-      int uart_rx = Serial1.read();
+      char uart_rx = Serial1.read();
       if (uart_rx != -1) {
         spi_send(CMD_ESP_UART, esp_uart_idx, (uint8_t) uart_rx);
+        d_print(uart_rx);
       }
     }
   } else {
@@ -435,6 +451,7 @@ void loop1()
     // read kbd
   if (kbd.available()) {
     uint16_t c = kbd.read();
+    d_print("RAW ps/2 kbd: "); d_println(c);
     hid_keyboard_report_t report = ps2_to_usb(c);
     process_kbd_report(0, 0, &report, 0);
   }
@@ -499,30 +516,41 @@ void check_update(const char* filename) {
     if (strcmp(filename, FILENAME_BOOT) == 0) {
       // todo: compare versions of file1 and file2
       file2 = LittleFS.open(filename, "r");
-      char ver1[8];
+      char ver1[9];
+      file2.seek(FILE_POS_CORE_BUILD);
       file2.readBytes(ver1, sizeof(ver1));
+      ver1[8] = 0;
       file2.close();
-      char ver2[8];
+      char ver2[9];
       for (uint8_t i=FILE_POS_CORE_BUILD; i<FILE_POS_CORE_BUILD+8; i++) {
         ver2[i-FILE_POS_CORE_BUILD] = BOOT_CORE[i];
       }
+      ver2[8] = 0;
+      d_print("Flash core "); d_print(filename);
+      d_print(" version: "); d_print(ver1); d_print(", new version: "); d_println(ver2);
       // update the core
       if (memcmp(ver1, ver2, 8) != 0) {
+        d_println("Version mismatch. Updating");
         update_boot_core_from_flash(filename);
       }
     } 
     // for core from sd card
     else {
       file2 = LittleFS.open(filename, "r");
-      char ver1[8];
+      char ver1[9];
       file2.seek(FILE_POS_CORE_BUILD);
       file2.readBytes(ver1, sizeof(ver1));
+      ver1[8] = 0;
       file2.close();
-      char ver2[8];
+      char ver2[9];
       sdfile.seek(FILE_POS_CORE_BUILD);
       sdfile.readBytes(ver2, sizeof(ver2));
+      ver2[8] = 0;
+      d_print("Flash core "); d_print(filename);
+      d_print(" version: "); d_print(ver1); d_print(", new version on SD: "); d_println(ver2);
       // update the core
       if (memcmp(ver1, ver2, 8) != 0) {
+        d_println("Version mismatch. Updating");
         file2 = LittleFS.open(filename, "w");
         sdfile.rewind();
         update_core_from_sd(filename);
@@ -556,10 +584,12 @@ void do_configure(const char* filename) {
   spi_send(CMD_INIT_START, 0, 0);
   // trigger font loader reset
   zxosd.fontReset();
+  d_print("Sending "); d_print(OSD_FONT_LEN); d_print(" bytes of OSD font data...");
   // send font data
   for (int i=0; i<OSD_FONT_LEN; i++) {
     zxosd.fontSend(OSD_FONT[i]);
   }
+  d_println("done");
   read_core(filename);
   if (!is_osd) {
     zxosd.clear();
@@ -579,8 +609,6 @@ void do_configure(const char* filename) {
   has_sd = false;
   if (core.sd_enable) {
     d_println("Trying to mount SD card");
-    pinMode(PIN_CONF_CLK, OUTPUT);
-    digitalWrite(PIN_CONF_CLK, HIGH);
     has_sd = sd1.begin(SD_CONFIG);
     if (has_sd) {
       d_println("SD card mounted");
@@ -590,13 +618,14 @@ void do_configure(const char* filename) {
       sd1.initErrorPrint(&Serial);
     }
   } else {
-    pinMode(PIN_CONF_CLK, INPUT_PULLUP);
     sd1.end();
     has_sd = false;
   }
+  digitalWrite(PIN_SD_CS, HIGH); // disabling SD CS
 
   spi_send(CMD_INIT_DONE, 0, 0);
   is_configuring = false;
+  d_println("FPGA configuration finished");
 }
 
 bool on_global_hotkeys() {
@@ -769,7 +798,6 @@ uint32_t fpga_send(const char* filename) {
   file_seek(FILE_POS_BITSTREAM_START);
 
   // set conf pins to output mode
-  pinMode(PIN_CONF_CLK, OUTPUT);
   pinMode(PIN_CONF_DATA, OUTPUT);
 
   // set dclk, data
@@ -777,14 +805,18 @@ uint32_t fpga_send(const char* filename) {
   digitalWrite(PIN_CONF_DATA, HIGH);
 
   // pulse NCONFIG
-  digitalWrite(PIN_CONF_NCONFIG, HIGH);
   digitalWrite(PIN_CONF_NCONFIG, LOW);
+  delay(2);
   digitalWrite(PIN_CONF_NCONFIG, HIGH);
 
-  // wait for NSTATUS = 0
-  int i = 10;
-  while (i-- > 0 & digitalRead(PIN_CONF_NSTATUS) != LOW)
+  // wait for NSTATUS = 1
+  uint32_t i = 100;
+  while (i-- > 0 && digitalRead(PIN_CONF_NSTATUS) != HIGH)
     delay(10);
+
+  if (digitalRead(PIN_CONF_NSTATUS) != HIGH) {
+    halt("Error: NSTATUS didn't go high after NCONFIG. Aborting...");
+  }
 
   my_timer.reset();
 
@@ -793,21 +825,20 @@ uint32_t fpga_send(const char* filename) {
   char line[128];
   uint8_t n;
 
-  digitalWrite(PIN_CONF_CLK, LOW);
-
   while ((n = file_read_buf(line, (sizeof(line) < length ? sizeof(line) : length) ))) {
     i += n;
     length -=n;
 
     for (uint8_t s=0; s<n; s++) {
       uint8_t c = line[s];
-      for (uint8_t j=0; j<8; ++j) {
+      for (uint8_t j=0; j<8; j++) {
+        // Starting a clock cycle
+        gpio_put(PIN_CONF_CLK, LOW);
         // Set bit of data
         gpio_put(PIN_CONF_DATA, ((c & 0x01) == 0) ? LOW : HIGH);
         c >>= 1;
         // Latch bit of data by CCLK impulse
         gpio_put(PIN_CONF_CLK, HIGH);
-        gpio_put(PIN_CONF_CLK, LOW);
       }
     }
 
@@ -819,18 +850,25 @@ uint32_t fpga_send(const char* filename) {
   }
   file1.close();
 
-  pinMode(PIN_CONF_CLK, INPUT);
-  pinMode(PIN_CONF_DATA, INPUT);
-
   d_print(i, DEC); d_println(" bytes done");
   d_print("Elapsed time: "); d_print(my_timer.elapsed(), DEC); d_println(" ms");
   d_flush();
 
   d_print("Waiting for CONF_DONE... ");
-  while(digitalRead(PIN_CONF_DONE) == LOW) {
+
+  i = 10;
+  while (i-- > 0 && digitalRead(PIN_CONF_DONE) != HIGH)
     delay(10);
+
+  if (digitalRead(PIN_CONF_DONE) == HIGH) {
+    d_println("Done");
+  } else {
+    d_println("Failed");
+    halt("CONF_DONE didn't raised up. Aborting...");
   }
-  d_println("Done");
+
+  // re-using DATA in FPGA
+  pinMode(PIN_CONF_DATA, INPUT);
 
   return length;
 }
@@ -948,21 +986,57 @@ void serial_data(uint8_t addr, uint8_t data) {
     }
 }
 
+void flash_response() {
+  // response with 2 bytes: status and flash_do
+  uint8_t flash_status = 0;
+  flash_status = bitWrite(flash_status, 0, flash_busy);
+  flash_status = bitWrite(flash_status, 1, flash_ready);
+  spi_send(CMD_FLASH, flash_status, flash_do);
+}
+
+void flash_write() {
+  // todo: write a byte flash_di at flash_a
+  // todo: check bounds (bitstream segment, rom segments in the core file)
+}
+
+void flash_read() {
+  // todo: read a byte at flash_a into flash_do
+  // todo: check bounds 
+}
+
+void flash_erase() {
+  // todo: erase 64k block at flash_a
+  // todo: never implement!
+}
+
+void flash_data(uint8_t addr, uint8_t data) {
+  switch (addr) {
+    case 0: flash_a = (flash_a & 0x00FFFFFF) | ((uint32_t)data << 24); break;
+    case 1: flash_a = (flash_a & 0xFF00FFFF) | ((uint32_t)data << 16); break;
+    case 2: flash_a = (flash_a & 0xFFFF00FF) | ((uint32_t)data << 8); break;
+    case 3: flash_a = (flash_a & 0xFFFFFF00) | ((uint32_t)data); break;
+    case 4: flash_di = data; flash_busy = true; flash_response(); flash_write(); flash_busy = false; flash_response(); break;
+    case 5: flash_busy = true; flash_ready = false; flash_response(); flash_read(); flash_busy = false; flash_ready = true; flash_response(); break;
+    case 6: flash_busy = true; flash_response(); flash_erase(); flash_busy = false; flash_response(); break;
+  }
+}
+
 void process_in_cmd(uint8_t cmd, uint8_t addr, uint8_t data) {
 
-  if (cmd == CMD_USB_UART) {
-    serial_data(addr, data);
-  } else if (cmd == CMD_ESP_UART) {
-    Serial1.write(data);
-  } else if (cmd == CMD_RTC) {
-    zxrtc.setData(addr, data);
-  } else if (cmd == CMD_DEBUG_DATA) {
-    debug_data = addr*256 + data;
-  } else if (cmd == CMD_DEBUG_ADDRESS) {
-    debug_address = addr*256 + data;
-  } else if (cmd == CMD_NOP) {
-    //d_println("Nop");
+  if (cmd != CMD_NOP && data != 0 && addr != 0) {
+    halt("Unexpected in cmd");
   }
+
+  switch (cmd) {
+    case CMD_USB_UART: serial_data(addr, data); break;
+    case CMD_ESP_UART: Serial1.write(data); break;
+    case CMD_RTC: zxrtc.setData(addr, data); break;
+    case CMD_FLASH: flash_data(addr, data); break;
+    case CMD_DEBUG_DATA: debug_data = addr*256 + data; break;
+    case CMD_DEBUG_ADDRESS: debug_address = addr*256 + data; break;
+    case CMD_NOP: /* d_println("Nop"); */ break;
+  }
+
   if (prev_debug_data != debug_data) {
     prev_debug_data = debug_data;
     d_printf("Debug: %04x", debug_data); d_println();
@@ -1284,6 +1358,8 @@ void read_roms(const char* filename) {
 void osd_handle(bool force) {
   if (is_osd || force) {
     if ((osd_prev_state != osd_state) || force) {
+      d_print("OSD state "); d_println(osd_state);
+      d_print("Prev state "); d_println(osd_prev_state);
       osd_prev_state = osd_state;
       switch(osd_state) {
         case state_core_browser:

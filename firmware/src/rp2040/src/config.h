@@ -37,6 +37,10 @@
 #define PIN_LED2 19
 
 #define PIN_UART_CTS 2
+#define PIN_SD_CS 26
+#define PIN_TP3 27
+#define PIN_TP4 28
+#define PIN_TP5 29
 
 #define MOUSE_INIT_TRIES 5
 
@@ -95,6 +99,7 @@
 #define CMD_IOCTL_DATA 0x53 // (0-255, uint8_t): fileloader byte
 #define CMD_IOCTL_EXT 0x54 // (0-3, uint8_t): fileloader file ext
 
+#define CMD_FLASH 0xF9
 #define CMD_RTC 0xFA
 #define CMD_ESP_UART 0xFB
 #define CMD_USB_UART 0xFC

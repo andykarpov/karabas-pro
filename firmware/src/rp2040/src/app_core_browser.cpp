@@ -59,7 +59,7 @@ void app_core_browser_menu(uint8_t vpos) {
     zxosd.print(b);
     zxosd.print(name);
     zxosd.print(cores[i].build);
-    zxosd.print(cores[i].flash ? "  F" : " SD");
+    zxosd.print(cores[i].flash ? " FS" : " SD");
     pos++;
   }
   if (core_fill > core_to) {
@@ -79,7 +79,7 @@ void app_core_browser_menu(uint8_t vpos) {
 core_list_item_t app_core_browser_get_item() {
   core_list_item_t core;
   strcpy(core.filename, file1.name());
-  core.flash = false;
+  core.flash = true;
   file_seek(FILE_POS_CORE_ID); file_read_bytes(core.id, 32); core.id[32] = '\0';
   file_seek(FILE_POS_CORE_NAME); file_read_bytes(core.name, 32); core.name[32] = '\0';
   uint8_t visible; file_seek(FILE_POS_CORE_VISIBLE); visible = file_read(); core.visible = (visible > 0);
@@ -90,17 +90,19 @@ core_list_item_t app_core_browser_get_item() {
 }
 
 void app_core_browser_read_list() {
-
   root1 = LittleFS.openDir("/");
   root1.rewind();
-  while (file1.openNextFile()) {
-    char filename[32]; strcpy(filename, file1.name());
-    uint8_t len = strlen(filename);
-    if (strstr(strlwr(filename + (len - 4)), CORE_EXT)) {
-      cores[cores_len] = app_core_browser_get_item();
-      cores_len++;
+  while (root1.next()) {
+    if (root1.fileSize()) {
+      file1 = root1.openFile("r");
+      char filename[32]; strcpy(filename, file1.name());
+      uint8_t len = strlen(filename);
+      if (strstr(strlwr(filename + (len - 4)), CORE_EXT)) {
+        cores[cores_len] = app_core_browser_get_item();
+        cores_len++;
+      }
+      file1.close();
     }
-    file1.close();
   }
   // sort by core order number
   std::sort(cores, cores + cores_len);

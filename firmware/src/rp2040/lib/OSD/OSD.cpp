@@ -222,12 +222,12 @@ void OSD::logo(uint8_t x, uint8_t y) {
   write(0xc2); write(0xc3); // a
   write(0xc8); write(0xc9); // s
 
-  setPos(x+10, y+2);
+  setPos(x+8, y+2);
   write(0xba); write(0xbb); // p
   write(0xb4); write(0xb5); // r
   write(0xbc); write(0xbd); // o
 
-  setPos(x+10, y+3);
+  setPos(x+8, y+3);
   write(0xca); write(0xcb); // p
   write(0xc4); write(0xc5); // r
   write(0xcc); write(0xcd); // o

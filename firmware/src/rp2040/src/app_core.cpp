@@ -85,8 +85,6 @@ uint8_t find_next_item() {
 
 void app_core_overlay()
 {
-  osd_state = state_main;
-
   // disable popup in overlay mode
   zxosd.hidePopup();
 
