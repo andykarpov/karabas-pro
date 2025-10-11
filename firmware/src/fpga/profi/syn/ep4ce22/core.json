@@ -12,7 +12,7 @@
         {"filename": "../../rom/ROMain_ramdisk_D.rom", "address": 1048576},
         {"filename": "../../rom/bios_pqdos.rom", "address": 1114112},
         {"filename": "../../rom/karabas-pro-flashtool_v2_71.rom", "address": 1179648},
-        {"filename": "../../rom/FDImage.rom", "address": 1245184},
+        {"filename": "../../rom/fdimage.rom", "address": 1245184},
         {"filename": "../../rom/esxdos089.bin", "address": 1310720}
     ],
     "osd": [

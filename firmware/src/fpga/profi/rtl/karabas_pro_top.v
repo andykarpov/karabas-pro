@@ -41,14 +41,13 @@ module karabas_pro_top (
     inout wire [7:0]    SRAM_D,
     output wire         SRAM_WR_N,
 
-    //----------------- SPI Master for Flash / SD
-    output wire         SPI_FLASH_CS_N, // NCSO
-    output wire         SPI_SD_CS_N,
-    output wire         SPI_SCK,        // DCLK
-    input wire          SPI_MISO,       // DATA0
-    output wire         SPI_FLASH_MOSI, // ASDO
-    output wire         SPI_SD_MOSI,    // dedicated SD MOSI
-
+    //----------------- SPI Master for SD ---
+    output wire         SD_CS_N,
+    output wire         SD_SCK,     // ASDO
+    inout wire          SD_MISO,    // DATA0
+    output wire         SD_MOSI,    // dedicated SD MOSI 
+    // DCLK - can not be used! remains only for PS programming!
+	 
     //----------------- VGA ------------------
     output wire [2:0]   VGA_R,
     output wire [2:0]   VGA_G,
@@ -56,9 +55,9 @@ module karabas_pro_top (
     output wire         VGA_HS,
     output wire         VGA_VS,
 
-    //----------------- Misc -----------------
+    //----------------- Tape -----------------
     input wire          TAPE_IN,
-    input wire          TP1,
+    output wire         TAPE_OUT, // NCSO
 
     //----------------- I2S DAC --------------
     output wire         DAC_LRCK,
@@ -67,6 +66,7 @@ module karabas_pro_top (
 
     //----------------- SPI Slave for MCU ----
     input wire          MCU_CS_N,
+    input wire          MCU_SD_CS_N, // pin25
     input wire          MCU_SCK,
     input wire          MCU_MOSI,
     output wire         MCU_MISO,
@@ -81,9 +81,6 @@ module karabas_pro_top (
     output wire         BUS_DIR,
     input wire          LFDC_STEP
 );
-
-// unused signals (yet)
-assign SPI_FLASH_MOSI = 1'b1;
 
 // system clocks
 wire clk_sys;
@@ -343,10 +340,10 @@ profi profi(
     .clk_8              (clk_8),
     .areset             (areset),
 
-    .sd_sck             (SPI_SCK),
-    .sd_cs_n            (SPI_SD_CS_N),
-    .sd_mosi            (SPI_SD_MOSI),
-    .sd_miso            (SPI_MISO),
+    .sd_sck             (SD_SCK),
+    .sd_cs_n            (SD_CS_N),
+    .sd_mosi            (SD_MOSI),
+    .sd_miso            (SD_MISO),
 
     .flash_a_bus        (flash_a_bus),
     .flash_do_bus       (flash_do_bus),
@@ -389,7 +386,7 @@ profi profi(
     .audio_l            (audio_l),
     .audio_r            (audio_r),
 
-    .tape_out           (SPI_FLASH_CS_N),
+    .tape_out           (TAPE_OUT),
     .tape_in            (TAPE_IN),
     .buzzer             (),
 

@@ -70,7 +70,7 @@ module karabas_pro_top (
     output wire         BUS_CLK2,
     output wire [1:0]   BUS_A,
     input  wire [7:0]   BUS_DI,  // SD8-15
-    input wire [7:0]    BUS_DO,  // SD0-7
+    input  wire [7:0]   BUS_DO,  // SD0-7
     output wire         BUS_DIR,
     input wire          LFDC_STEP
 );
@@ -84,7 +84,7 @@ assign BUS_CLK        = 1'b0;
 assign BUS_CLK2       = 1'b0;
 assign BUS_RESET_N    = 1'b0;
 assign BUS_A          = 2'b00;
-//assign BUS_DO         = 8'b0;
+//assign BUS_DO         = 8'b0; // todo: conflict ???
 assign BUS_DIR        = 1'b0;
 
 // system clocks
