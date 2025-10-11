@@ -210,7 +210,14 @@ mcu mcu(
     .romloader_data     (romloader_data),
     .romloader_wr       (romloader_wr),
      
-     // todo: parallel flash data 
+    .flash_a_bus        (flash_a_bus),
+    .flash_do_bus       (flash_do_bus),
+    .flash_di_bus       (flash_di_bus),
+    .flash_rd_n         (flash_rd_n),
+    .flash_wr_n         (flash_wr_n),
+    .flash_er_n         (flash_er_n),
+    .flash_busy         (flash_busy),
+    .flash_ready        (flash_ready), 
      
     .debug_addr         (16'd0),
     .debug_data         (16'd0),

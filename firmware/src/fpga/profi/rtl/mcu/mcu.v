@@ -58,6 +58,15 @@ module mcu(
     output reg [31:0]  romloader_addr,
     output reg [7:0]   romloader_data,
     output reg         romloader_wr,
+	 
+    input wire [31:0]  flash_a_bus,
+    input wire [7:0]   flash_di_bus,
+    output reg [7:0]   flash_do_bus,
+    input wire         flash_rd_n,
+    input wire         flash_wr_n,
+    input wire         flash_er_n,
+    output reg         flash_busy,
+    output reg         flash_ready,
 
     input wire [15:0]  debug_addr,
     input wire [15:0]  debug_data,
@@ -76,7 +85,8 @@ localparam CMD_ROMLOADER    = 8'h08;
 localparam CMD_PS2_SCANCODE = 8'h0b;
 localparam CMD_OSD          = 8'h20;
 localparam CMD_DEBUG_ADDR   = 8'h30;
-localparam CMD_DEBUG_DATA   = 8'h31;    
+localparam CMD_DEBUG_DATA   = 8'h31; 
+localparam CMD_FLASH        = 8'hf9;   
 localparam CMD_RTC          = 8'hfa;
 localparam CMD_ESP_UART     = 8'hfb;
 localparam CMD_USB_UART     = 8'hfc;
@@ -207,6 +217,12 @@ always @(posedge clk) begin
                 esp_uart_rx_data <= spi_data;
                 esp_uart_rx_idx <= spi_address;
             end
+				CMD_FLASH:
+				begin
+					flash_busy <= spi_address[0];
+					flash_ready <= spi_address[1];
+					flash_do_bus <= spi_data;
+				end
             CMD_PS2_SCANCODE:
                 case (spi_address)
                     0: begin kb_scancode <= spi_data; kb_scancode_upd <= ~kb_scancode_upd; end
@@ -230,8 +246,13 @@ end
 
 // fifo handling / queue commands to mcu side
 reg [7:0] rtcr_a, rtcr_d, last_rtcr_a, last_rtcr_d;
+reg [31:0] prev_flash_a_bus;
+reg prev_flash_wr_n, prev_flash_rd_n, prev_flash_er_n;
 always @(posedge clk) begin
     queue_wr_req <= 0;
+	 prev_flash_wr_n <= flash_wr_n;
+	 prev_flash_rd_n <= flash_rd_n;
+	 prev_flash_er_n <= flash_er_n;
     if (usb_uart_tx_wr) begin
         queue_wr_req <= 1;
         case (usb_uart_tx_mode)
@@ -243,6 +264,13 @@ always @(posedge clk) begin
     else if (usb_uart_dlm_wr) begin queue_wr_req <= 1; queue_di <= {CMD_USB_UART, 8'b00000010, usb_uart_dlm}; end 
 	 else if (esp_uart_tx_wr)  begin queue_wr_req <= 1; queue_di <= {CMD_ESP_UART, 8'b00000000, esp_uart_tx_data}; end
     else if (~rtc_wr_n && rtc_cs && ~busy && rtc_a != 8'h0c && rtc_a < 8'hf0) begin queue_wr_req <= 1; queue_di <= {CMD_RTC, rtc_a, rtc_di}; end
+	 else if (flash_a_bus[31:24] != prev_flash_a_bus[31:24]) begin queue_wr_req <= 1; queue_di <= {CMD_FLASH, 8'h00, flash_a_bus[31:24]}; prev_flash_a_bus[31:24] <= flash_a_bus[31:24]; end
+	 else if (flash_a_bus[23:16] != prev_flash_a_bus[23:16]) begin queue_wr_req <= 1; queue_di <= {CMD_FLASH, 8'h01, flash_a_bus[23:16]}; prev_flash_a_bus[23:16] <= flash_a_bus[23:16]; end
+	 else if (flash_a_bus[15:8]  != prev_flash_a_bus[15:8])  begin queue_wr_req <= 1; queue_di <= {CMD_FLASH, 8'h02, flash_a_bus[15:8]};  prev_flash_a_bus[15:8]  <= flash_a_bus[15:8]; end
+	 else if (flash_a_bus[7:0]   != prev_flash_a_bus[7:0])   begin queue_wr_req <= 1; queue_di <= {CMD_FLASH, 8'h03, flash_a_bus[7:0]};   prev_flash_a_bus[7:0]   <= flash_a_bus[7:0]; end
+	 else if (~flash_wr_n && prev_flash_wr_n) begin queue_wr_req <= 1; queue_di <= {CMD_FLASH, 8'h04, flash_di_bus}; end
+	 else if (~flash_rd_n && prev_flash_rd_n) begin queue_wr_req <= 1; queue_di <= {CMD_FLASH, 8'h05, 8'h00}; end
+	 else if (~flash_er_n && prev_flash_er_n) begin queue_wr_req <= 1; queue_di <= {CMD_FLASH, 8'h06, 8'h00}; end
     else if (debug_addr != prev_debug_addr) begin queue_wr_req <= 1; queue_di <= {CMD_DEBUG_ADDR, debug_addr}; prev_debug_addr <= debug_addr; end
     else if (debug_data != prev_debug_data) begin queue_wr_req <= 1; queue_di <= {CMD_DEBUG_DATA, debug_data}; prev_debug_data <= debug_data; end
     else if (queue_rd_empty) begin queue_wr_req <= 1; queue_di <= {CMD_NOPE, 16'b0}; end

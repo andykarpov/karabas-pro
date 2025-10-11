@@ -1,24 +1,24 @@
 `timescale 1ns / 1ps
 
-module dpram #(parameter DATAWIDTH=8, ADDRWIDTH=8, NUMWORDS=1<<ADDRWIDTH, MEM_INIT_FILE="")
+module dpram #(parameter DATAWIDTH=8, ADDRWIDTH=8, MEM_INIT_FILE="")
 (
-	input	                 clock,
+    input                     clock,
 
-	input	 [ADDRWIDTH-1:0] address_a,
-	input	 [DATAWIDTH-1:0] data_a,
-	input	                 wren_a,
-	output reg [DATAWIDTH-1:0] q_a,
+    input     [ADDRWIDTH-1:0] address_a,
+    input     [DATAWIDTH-1:0] data_a,
+    input                     wren_a,
+    output reg [DATAWIDTH-1:0] q_a,
 
-	input	 [ADDRWIDTH-1:0] address_b,
-	input	 [DATAWIDTH-1:0] data_b,
-	input	                 wren_b,
-	output reg [DATAWIDTH-1:0] q_b
+    input     [ADDRWIDTH-1:0] address_b,
+    input     [DATAWIDTH-1:0] data_b,
+    input                     wren_b,
+    output reg [DATAWIDTH-1:0] q_b
 );
 
-   reg [DATAWIDTH-1:0] mem[0:NUMWORDS];
+   reg [DATAWIDTH-1:0] mem[0:2**ADDRWIDTH-1] /* synthesis ramstyle = "M9K" */;
    initial begin  // usa $readmemb/$readmemh dependiendo del formato del fichero que contenga la ROM
     if (MEM_INIT_FILE != "") begin
-      $readmemh(MEM_INIT_FILE, mem);
+      $readmemb(MEM_INIT_FILE, mem);
     end
    end
 

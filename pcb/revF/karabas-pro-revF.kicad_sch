@@ -6,8 +6,8 @@
 	(paper "A4")
 	(title_block
 		(title "Karabas Pro")
-		(date "2024-05-01")
-		(rev "F")
+		(date "2025-10-10")
+		(rev "F a3")
 	)
 	(lib_symbols
 		(symbol "Graphic:Logo_Open_Hardware_Small"
@@ -672,7 +672,7 @@
 		)
 		(uuid "44393b12-c2c9-45f6-8a05-bfa65d4f1192")
 	)
-	(text "Karabas Pro simplified block diagram"
+	(text "Karabas Pro Rev.${REVISION} simplified block diagram"
 		(exclude_from_sim no)
 		(at 74.93 40.64 0)
 		(effects

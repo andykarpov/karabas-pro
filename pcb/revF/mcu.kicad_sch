@@ -6,8 +6,8 @@
 	(paper "A4")
 	(title_block
 		(title "Karabas Pro")
-		(date "2024-05-01")
-		(rev "F")
+		(date "2025-10-10")
+		(rev "F a3")
 	)
 	(lib_symbols
 		(symbol "Connector:DB9_Female_MountingHoles"
@@ -10474,6 +10474,28 @@
 			)
 		)
 	)
+	(global_label "~{MCU_SD_CS}"
+		(shape output)
+		(at 184.15 127 0)
+		(fields_autoplaced yes)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left)
+		)
+		(uuid "e2646e5c-0e89-4a49-b41c-6b3626f056bf")
+		(property "Intersheetrefs" "${INTERSHEET_REFS}"
+			(at 197.4271 127 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+				(hide yes)
+			)
+		)
+	)
 	(global_label "JOY_L_P6"
 		(shape input)
 		(at 220.98 154.94 0)
@@ -16077,72 +16099,6 @@
 			(project "karabas-pro-revF"
 				(path "/0fa36eda-2d7d-4199-a7a1-2cda6b0cd120/30804830-8b4b-4203-8e29-20fad4bdaea9"
 					(reference "C4")
-					(unit 1)
-				)
-			)
-		)
-	)
-	(symbol
-		(lib_id "Connector:TestPoint")
-		(at 184.15 127 270)
-		(unit 1)
-		(exclude_from_sim no)
-		(in_bom no)
-		(on_board yes)
-		(dnp no)
-		(uuid "bb6719f2-21ed-4fa1-80ab-62d82c5a292c")
-		(property "Reference" "TP2"
-			(at 188.722 127 90)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify left)
-			)
-		)
-		(property "Value" "A0"
-			(at 193.294 127.0001 90)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify left)
-			)
-		)
-		(property "Footprint" "TestPoint:TestPoint_Pad_D1.0mm"
-			(at 184.15 132.08 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Datasheet" "~"
-			(at 184.15 132.08 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Description" "test point"
-			(at 184.15 127 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(pin "1"
-			(uuid "14a62020-50e7-40c3-801d-601d90a7720e")
-		)
-		(instances
-			(project ""
-				(path "/0fa36eda-2d7d-4199-a7a1-2cda6b0cd120/30804830-8b4b-4203-8e29-20fad4bdaea9"
-					(reference "TP2")
 					(unit 1)
 				)
 			)

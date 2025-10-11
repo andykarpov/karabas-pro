@@ -6,8 +6,8 @@
 	(paper "A4")
 	(title_block
 		(title "Karabas Pro")
-		(date "2024-05-01")
-		(rev "F")
+		(date "2025-10-10")
+		(rev "F a3")
 	)
 	(lib_symbols
 		(symbol "Connector:SD_Card"
@@ -3254,7 +3254,7 @@
 			)
 		)
 	)
-	(global_label "DCLK"
+	(global_label "SD_SCK"
 		(shape input)
 		(at 39.37 58.42 180)
 		(fields_autoplaced yes)
@@ -3266,7 +3266,7 @@
 		)
 		(uuid "6807c810-3098-4575-8fa1-4dea9816165e")
 		(property "Intersheetrefs" "${INTERSHEET_REFS}"
-			(at 32.2009 58.42 0)
+			(at 29.8424 58.42 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -3277,7 +3277,7 @@
 		)
 	)
 	(global_label "DATA0"
-		(shape input)
+		(shape output)
 		(at 39.37 63.5 180)
 		(fields_autoplaced yes)
 		(effects

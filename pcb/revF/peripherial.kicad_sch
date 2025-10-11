@@ -6,8 +6,8 @@
 	(paper "A4")
 	(title_block
 		(title "Karabas Pro")
-		(date "2024-05-01")
-		(rev "F")
+		(date "2025-10-10")
+		(rev "F a3")
 	)
 	(lib_symbols
 		(symbol "Device:R"
