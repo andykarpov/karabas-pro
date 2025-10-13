@@ -190,7 +190,6 @@ set_location_assignment PIN_25 -to MCU_SD_CS_N
 set_location_assignment PIN_8 -to TAPE_OUT
 set_global_assignment -name AUTO_RESTART_CONFIGURATION OFF
 set_global_assignment -name CYCLONEIII_CONFIGURATION_SCHEME "PASSIVE SERIAL"
-set_global_assignment -name CONFIGURATION_VCCIO_LEVEL AUTO
 set_global_assignment -name GENERATE_RBF_FILE ON
 set_location_assignment PIN_6 -to SD_SCK
 set_location_assignment PIN_13 -to SD_MISO

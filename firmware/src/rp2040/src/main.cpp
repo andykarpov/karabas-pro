@@ -46,8 +46,8 @@ EU, 2025
 #include "PS2KeyAdvanced.h"
 #include "PS2Mouse.h"
 
-#define SD_CONFIG  SdSpiConfig(PIN_SD_CS, SHARED_SPI, SD_SCK_MHZ(16), &SPI) // SD1 SPI Settings
-SPISettings settingsA(SD_SCK_MHZ(16), MSBFIRST, SPI_MODE0); // MCU SPI settings
+#define SD_CONFIG  SdSpiConfig(PIN_SD_CS, SHARED_SPI, SD_SCK_MHZ(8), &SPI) // SD1 SPI Settings
+SPISettings settingsA(SD_SCK_MHZ(8), MSBFIRST, SPI_MODE0); // MCU SPI settings
 
 File file1, file2;
 Dir root1;
@@ -353,7 +353,7 @@ void loop()
       char uart_rx = Serial1.read();
       if (uart_rx != -1) {
         spi_send(CMD_ESP_UART, esp_uart_idx, (uint8_t) uart_rx);
-        d_print(uart_rx);
+        //d_print(uart_rx);
       }
     }
   } else {
@@ -386,7 +386,13 @@ uint8_t get_ps2_usb_key(uint8_t i) {
 hid_keyboard_report_t ps2_to_usb(uint16_t c)
 {
   bool pressed = !bitRead(c, 15);
+  bool extended = bitRead(c, 8);
   uint8_t key = lowByte(c);
+
+  // hack: transform menu to WIN left
+  if (extended && key == PS2_KEY_MENU) {
+    key = PS2_KEY_L_GUI;
+  }
 
   //d_printf("Key %02X press=%d", key, pressed); d_println();
 
@@ -636,6 +642,7 @@ bool on_global_hotkeys() {
        ((joy & SC_BTN_START) && (joy & SC_BTN_C))
       )
     ) {
+      d_println("Menu+ESC");
     if (!is_osd) {
       is_osd = true;
       zxosd.showMenu();
@@ -753,7 +760,6 @@ void core_trigger(uint8_t pos)
   d_printf("Trigger: %s", core.osd[pos].name);
   d_println();
 
-  d_println("Reset Host");
   spi_send(CMD_SWITCHES, pos, 1);
   delay(100);
   spi_send(CMD_SWITCHES, pos, 0);
@@ -1023,10 +1029,6 @@ void flash_data(uint8_t addr, uint8_t data) {
 
 void process_in_cmd(uint8_t cmd, uint8_t addr, uint8_t data) {
 
-  if (cmd != CMD_NOP && data != 0 && addr != 0) {
-    halt("Unexpected in cmd");
-  }
-
   switch (cmd) {
     case CMD_USB_UART: serial_data(addr, data); break;
     case CMD_ESP_UART: Serial1.write(data); break;
@@ -1078,7 +1080,7 @@ void read_core(const char* filename) {
     halt("Unable to open bitstream file to read");
   }
 
-  core.flash = false;
+  core.flash = true;
   strcpy(core.filename, file1.name());
   core.filename[32] = '\0';
   file_seek(FILE_POS_CORE_NAME); file_read_bytes(core.name, 32); core.name[32] = '\0';
@@ -1092,7 +1094,7 @@ void read_core(const char* filename) {
     case CORE_TYPE_OSD: is_osd = false; break;
     case CORE_TYPE_FILELOADER: is_osd = true; break;
     default: is_osd = false;
-  }  
+  }
   d_print("Core type: ");
   switch (core.type) {
     case CORE_TYPE_BOOT: d_println("Boot"); break;

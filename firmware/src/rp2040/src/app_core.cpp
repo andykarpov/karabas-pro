@@ -85,6 +85,8 @@ uint8_t find_next_item() {
 
 void app_core_overlay()
 {
+  osd_state = state_main;
+
   // disable popup in overlay mode
   zxosd.hidePopup();
 
@@ -155,6 +157,9 @@ void app_core_menu(uint8_t vpos) {
 
 void app_core_save(uint8_t pos)
 {
+    d_print("Save value "); d_print(core.osd[pos].val); d_print(" at pos "); d_println(pos);
+    core.osd_need_save = false;
+    return;
     if (file1) {
       file1.close();
     }

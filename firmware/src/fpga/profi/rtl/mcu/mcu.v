@@ -74,32 +74,32 @@ module mcu(
     output reg         busy
 );
 
-localparam CMD_KBD          = 8'h01;
-localparam CMD_MOUSE        = 8'h02;
-localparam CMD_JOY          = 8'h03;
-localparam CMD_BTN          = 8'h04;
-localparam CMD_SWITCHES     = 8'h05;
-localparam CMD_ROMBANK      = 8'h06;
-localparam CMD_ROMDATA      = 8'h07;
-localparam CMD_ROMLOADER    = 8'h08;
-localparam CMD_PS2_SCANCODE = 8'h0b;
-localparam CMD_OSD          = 8'h20;
-localparam CMD_DEBUG_ADDR   = 8'h30;
-localparam CMD_DEBUG_DATA   = 8'h31; 
-localparam CMD_FLASH        = 8'hf9;   
-localparam CMD_RTC          = 8'hfa;
-localparam CMD_ESP_UART     = 8'hfb;
-localparam CMD_USB_UART     = 8'hfc;
-localparam CMD_INIT_START   = 8'hfd;
-localparam CMD_INIT_DONE    = 8'hfe;    
-localparam CMD_NOPE         = 8'hff;
+localparam [7:0] CMD_KBD          = 8'h01;
+localparam [7:0] CMD_MOUSE        = 8'h02;
+localparam [7:0] CMD_JOY          = 8'h03;
+localparam [7:0] CMD_BTN          = 8'h04;
+localparam [7:0] CMD_SWITCHES     = 8'h05;
+localparam [7:0] CMD_ROMBANK      = 8'h06;
+localparam [7:0] CMD_ROMDATA      = 8'h07;
+localparam [7:0] CMD_ROMLOADER    = 8'h08;
+localparam [7:0] CMD_PS2_SCANCODE = 8'h0b;
+localparam [7:0] CMD_OSD          = 8'h20;
+localparam [7:0] CMD_DEBUG_ADDR   = 8'h30;
+localparam [7:0] CMD_DEBUG_DATA   = 8'h31; 
+localparam [7:0] CMD_FLASH        = 8'hf9;   
+localparam [7:0] CMD_RTC          = 8'hfa;
+localparam [7:0] CMD_ESP_UART     = 8'hfb;
+localparam [7:0] CMD_USB_UART     = 8'hfc;
+localparam [7:0] CMD_INIT_START   = 8'hfd;
+localparam [7:0] CMD_INIT_DONE    = 8'hfe;    
+localparam [7:0] CMD_NOPE         = 8'hff;
 
 // spi slave
 wire spi_do_valid;
 wire [23:0] spi_di, spi_do;
 wire spi_di_req;
 
-spi_slave #(.N(24)) spi_slave(
+spi_slave #(.N(24), .CPOL(1'b0), .CPHA(1'b0), .PREFETCH(2)) spi_slave(
     .clk_i         (clk),
     .spi_sck_i     (mcu_sck),
     .spi_ssel_i    (mcu_cs_n),
@@ -115,16 +115,17 @@ assign spi_di = queue_do;
 
 // memory for rtc registers
 wire [7:0] rtcr_do;
-dpram #(.DATAWIDTH(8), .ADDRWIDTH(8)) rtc_ram(
-    .clock         (clk),
-    .data_a        (rtcw_di),
-    .address_a     (rtcw_a),
-    .wren_a        (rtcw_wr),
-    .address_b     (rtc_a),
-    .data_b        (8'b0),
-    .wren_b        (1'b0),
-    .q_b           (rtcr_do)
+
+rtc rtc(
+	.wrclock(clk),
+	.data(rtcw_di),
+	.wraddress(rtcw_a),
+	.wren(rtcw_wr),		
+	.rdclock(clk),
+	.rdaddress(rtc_a),
+	.q(rtcr_do)
 );
+
 assign rtc_do = rtcr_do;
     
 // fifo for write commands to send them on mcu side 
@@ -133,15 +134,18 @@ wire [23:0] queue_do;
 reg queue_wr_req;
 wire queue_rd_empty, queue_wr_full;
 
-fifo #(.ADDR_WIDTH(9), .DATA_WIDTH(24)) fifo(
-    .clk          (clk),
-    .reset        (reset),
-    .empty        (queue_rd_empty),
-    .full         (queue_wr_full),
-    .rd           (queue_rd_req),
-    .dout         (queue_do),
-    .wr           (queue_wr_req),
-    .din          (queue_di)
+queue queue( 
+	.data(queue_di),
+	.wrreq(queue_wr_req),
+	.wrclk(clk),
+	.wrfull(queue_wr_full),
+	.wrusedw(),
+		
+	.rdreq(queue_rd_req),
+	.rdclk(clk),
+	.q(queue_do),
+	.rdempty(queue_rd_empty),
+	.rdusedw()
 );
 
 // pull queue data
