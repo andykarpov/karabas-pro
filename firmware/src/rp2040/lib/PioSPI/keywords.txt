@@ -1,0 +1,29 @@
+#######################################
+# Syntax Coloring Map PioSPI
+#######################################
+
+#######################################
+# Datatypes (KEYWORD1)
+#######################################
+
+PioSPI	KEYWORD1	PioSPI
+
+#######################################
+# Methods and Functions (KEYWORD2)
+#######################################
+begin	KEYWORD2
+end	KEYWORD2
+transfer	KEYWORD2
+setRX	KEYWORD2
+setTX	KEYWORD2
+setSCK	KEYWORD2
+setCS	KEYWORD2
+
+#######################################
+# Constants (LITERAL1)
+#######################################
+SPI_MODE0	LITERAL1
+SPI_MODE1	LITERAL1
+SPI_MODE2	LITERAL1
+SPI_MODE3	LITERAL1
+

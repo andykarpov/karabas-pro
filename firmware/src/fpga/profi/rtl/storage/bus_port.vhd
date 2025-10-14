@@ -14,7 +14,8 @@ entity bus_port is
 	RESET 	: in std_logic;
 	 
 	-- physical interface with CPLD
-	SD 			: inout std_logic_vector(15 downto 0) := "ZZZZZZZZZZZZZZZZ";
+	SD_DI      : out std_logic_vector(7 downto 0);
+	SD_DO      : in std_logic_vector(7 downto 0);
 	SA 			: out std_logic_vector(1 downto 0);
 --	SDIR : out std_logic;
 	CPLD_CLK 	: out std_logic;
@@ -63,7 +64,7 @@ begin
 	CPLD_CLK2 <= CLK2;
 	NRESET <= not reset;
 	SA <= cnt;	
-	BUS_DO <= SD(15 downto 8);
+	BUS_DO <= SD_DO;
 	-- OCH: fix fdd swap 
 	fdd_id <= "00" when bus_di(1 downto 0) = "01" else
 				 "01" when bus_di(1 downto 0) = "00" else
@@ -107,7 +108,7 @@ begin
 		data2x => bus_d_reg,
 		data3x => "11111111",
 		sel => cnt,
-		result => SD(7 downto 0)
+		result => SD_DI
 	);
 
 end RTL;
