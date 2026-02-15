@@ -476,7 +476,9 @@ U1: entity work.altpll0
 port map (
 	inclk0			=> CLK_50MHZ,
 	locked			=> open,
-	c0 				=> clk_112
+	c0 				=> clk_112--,
+--	c1					=> clk_96,
+--	c2					=> clk_8
 	);
 	
 -- PLL2
