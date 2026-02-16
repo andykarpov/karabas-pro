@@ -98,9 +98,9 @@ end
 assign DO = dout;
 reg [7:0] dout;
 always_comb begin
-	dout = 8'hFF;
-	if(~BDIR & BC & !addr[7:4]) begin
-		case(addr[3:0])
+	dout = (MODE) ? addr[7:0] & 8'h0F : 8'hFF; // 1 = AY, 0 = YM
+	if(~BDIR & BC) begin
+		case(addr[7:0])
 			 0: dout = ymreg[0];
 			 1: dout = ymreg[1][3:0];
 			 2: dout = ymreg[2];
@@ -117,6 +117,7 @@ always_comb begin
 			13: dout = ymreg[13][3:0];
 			14: dout = ymreg[7][6] ? ymreg[14] & IOA_in : IOA_in;
 			15: dout = ymreg[7][7] ? ymreg[15] & IOA_in : IOB_in;
+			default: dout = (MODE) ? addr[7:0] & 8'h0F : 8'hFF; // 1 = AY, 0 = YM
 		endcase
 	end
 end
