@@ -99,6 +99,7 @@
 #define CMD_IOCTL_DATA 0x53 // (0-255, uint8_t): fileloader byte
 #define CMD_IOCTL_EXT 0x54 // (0-3, uint8_t): fileloader file ext
 
+#define CMD_UART_FIFO_STATUS 0xF8 // bits: 0 - zifi rx full, 1 - usb rx full, .......
 #define CMD_FLASH 0xF9
 #define CMD_RTC 0xFA
 #define CMD_ESP_UART 0xFB

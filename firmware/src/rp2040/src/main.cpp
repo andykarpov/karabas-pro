@@ -135,6 +135,8 @@ uint8_t esp_uart_idx = 0;
 uint8_t evo_rs232_dll = 0;
 uint8_t evo_rs232_dlm = 0;
 uint32_t serial_speed = 115200;
+bool esp_fifo_full = false;
+bool usb_fifo_full = false;
 
 uint16_t debug_address = 0;
 uint16_t prev_debug_address = 0;
@@ -285,7 +287,7 @@ void loop()
 
   // debug features
   // TODO: remove from production / refactor
-  if (btn1) {
+  /*if (btn1) {
     // wait until released
     while (btn1) { btn1 = btn_read(0); delay(100); }
     d_println("Reboot");
@@ -296,7 +298,7 @@ void loop()
       d_println("Reboot to bootloader");
       d_flush();
       rp2040.rebootToBootloader();
-  }
+  }*/
 
   // read joy
   joy = sega.getState();
@@ -341,19 +343,20 @@ void loop()
 
   if (Serial.available() || Serial1.available()) {
     // usb serial rx
-    if (Serial.available() > 0) {
+    if (Serial.available() > 0 && !usb_fifo_full) {
       usb_uart_idx++;
       int uart_rx = Serial.read();
       if (uart_rx != -1) {
         spi_send(CMD_USB_UART, usb_uart_idx, (uint8_t) uart_rx);
       }
     // esp8266 serial rx
-    } if (Serial1.available() > 0) {
+    } if (Serial1.available() > 0 && !esp_fifo_full) {
       esp_uart_idx++;
       char uart_rx = Serial1.read();
       if (uart_rx != -1) {
         spi_send(CMD_ESP_UART, esp_uart_idx, (uint8_t) uart_rx);
         //d_print(uart_rx);
+        //Serial.write(uart_rx);
       }
     }
   } else {
@@ -624,14 +627,17 @@ void do_configure(const char* filename) {
       sd1.initErrorPrint(&Serial);
     }
   } else {
+    d_println("SD access by MCU is disabled for this core");
+    d_println("Ending SD");
     sd1.end();
     has_sd = false;
   }
   digitalWrite(PIN_SD_CS, HIGH); // disabling SD CS
-
-  spi_send(CMD_INIT_DONE, 0, 0);
+  SPI.end(); SPI.begin(false); // reinit SPI
   is_configuring = false;
   d_println("FPGA configuration finished");
+  delay(100);
+  spi_send(CMD_INIT_DONE, 0, 0);
 }
 
 bool on_global_hotkeys() {
@@ -1030,6 +1036,12 @@ void flash_data(uint8_t addr, uint8_t data) {
 void process_in_cmd(uint8_t cmd, uint8_t addr, uint8_t data) {
 
   switch (cmd) {
+    case CMD_UART_FIFO_STATUS : 
+      esp_fifo_full = bitRead(data, 0); // rx esp fifo on fpga side
+      usb_fifo_full = bitRead(data, 1); // rx usb fifo on fpga side
+      d_print("ESP FIFO "); if (esp_fifo_full) d_println("full") else d_println("empty");
+      d_print("USB FIFO "); if (usb_fifo_full) d_println("full") else d_println("empty");
+      break;
     case CMD_USB_UART: serial_data(addr, data); break;
     case CMD_ESP_UART: Serial1.write(data); break;
     case CMD_RTC: zxrtc.setData(addr, data); break;
