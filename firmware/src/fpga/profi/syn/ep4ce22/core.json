@@ -1,7 +1,7 @@
 {
     "id": "profi",
     "name": "Profi +",
-    "build": "25101233",
+    "build": "26022116",
     "bitstream": "karabas_pro_ep4ce22.rbf",
     "visible": true,
     "type": "osd",
@@ -22,7 +22,7 @@
         {"type": "S", "name": "PSG Mix", "options": ["ABC", "ACB", "Mono"], "default": 1, "hotkey": "Menu+F7"},
         {"type": "S", "name": "PSG Type", "options": ["AY3-8912", "YM2149F"], "default": 0, "hotkey": "Menu+F8"},
         {"type": "S", "name": "Video", "options": ["VGA 30kHz", "RGB 15kHz"], "default": 0, "hotkey": "Menu+F9"},
-        {"type": "S", "name": "VSync", "options": ["50 Hz", "60 Hz"], "default": 0, "hotkey": "Menu+F10"},
+        {"type": "S", "name": "VSync", "options": ["50 Hz", "60 Hz"], "default": 1, "hotkey": "Menu+F10"},
         {"type": "S", "name": "Turbo", "options": ["Off", "2x", "4x", "8x"], "default": 0, "hotkey": "Menu+F11"},
         {"type": "S", "name": "Swap FDD", "options": ["Off", "On"], "default": 0, "hotkey": "Menu+Tab"},
         {"type": "S", "name": "Joystick", "options": ["Kempston", "Sinclair1", "Sinclair2", "Cursor", "QAOPM", "QAOPS"], "default": 0, "hotkey": "Menu+J"},

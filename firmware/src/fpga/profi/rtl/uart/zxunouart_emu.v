@@ -20,10 +20,10 @@ module zxunouart_emu (
     parameter UARTDATA = 8'hC6;
     parameter UARTSTAT = 8'hC7;
     
-    // rx fifo 2k
+    // rx fifo 64 bytes
     wire fifo_rx_full, fifo_rx_empty;
     wire [7:0] fifo_rx_do;
-    fifo #( .ADDR_WIDTH(11), .DATA_WIDTH(8)) fifo_rx (
+    fifo #( .ADDR_WIDTH(6), .DATA_WIDTH(8)) fifo_rx (
         .clk(clk_bus),
         .reset(reset),
 

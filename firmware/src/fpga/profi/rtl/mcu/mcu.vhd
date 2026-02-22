@@ -16,7 +16,7 @@ entity mcu is
 
 	 -- spi
     MCU_MOSI    : in std_logic;
-    MCU_MISO    : out std_logic := 'Z';
+    MCU_MISO    : out std_logic := '1';
     MCU_SCK     : in std_logic;
 	 MCU_CS_N 		 : in std_logic;
 
@@ -25,7 +25,7 @@ entity mcu is
 	 MS_Y 	 	: out std_logic_vector(7 downto 0) := "00000000";
 	 MS_B 	   : out std_logic_vector(2 downto 0) := "000";
 	 MS_Z 		: out std_logic_vector(3 downto 0) := "0000";
-	 MS_UPD		: buffer std_logic := '0'; -- todo: refactor it, move ms event to abs coord into a new module "cursor"
+	 MS_UPD		: buffer std_logic := '0'; 
 	 
 	 -- usb keyboard
 	 KB_STATUS : out std_logic_vector(7 downto 0) := "00000000";
@@ -36,14 +36,9 @@ entity mcu is
 	 KB_DAT4   : out std_logic_vector(7 downto 0) := "00000000";
 	 KB_DAT5   : out std_logic_vector(7 downto 0) := "00000000";
 	 
-	 -- ps/2 scancode
-	 KB_SCANCODE : out std_logic_vector(7 downto 0) := "00000000";
-	 KB_SCANCODE_UPD : buffer std_logic := '0';
-
-	 -- xt scancode (simplified)
-	 XT_SCANCODE : out std_logic_vector(7 downto 0) := "00000000";
-	 XT_SCANCODE_UPD : buffer std_logic := '0';
-
+	 -- physical buttons
+	 BTN		  : out std_logic_vector(1 downto 0) := "00";
+	 
 	 -- joysticks
 	 JOYSTICK	: out std_logic_vector(12 downto 0) := "0000000000000";
 
@@ -56,22 +51,25 @@ entity mcu is
 	 
 	 -- usb uart
 	 USB_UART_RX_DATA			: out std_logic_vector(7 downto 0);
-	 USB_UART_RX_IDX	: out std_logic_vector(7 downto 0) := (others => '0');	 
-	 USB_UART_TX_DATA			: in std_logic_vector(7 downto 0);
-	 USB_UART_TX_WR				: in std_logic := '0';
-	 USB_UART_TX_MODE 			: in std_logic := '0'; -- 0 = zifi data @ 115200, 1 = evo rs232 data @ dll/dlm speed
+	 USB_UART_RX_IDX			: out std_logic_vector(7 downto 0) := (others => '0');	 
+	 USB_UART_TX_DATA			: in std_logic_vector(7 downto 0) := (others => '0');
+	 USB_UART_TX_WR			: in std_logic := '0';
+	 USB_UART_TX_MODE 		: in std_logic := '0'; -- 0 = zifi data @ 115200, 1 = evo rs232 data @ dll/dlm speed
 	 
 	 -- evo rs232 dlm/dll registers
-	 USB_UART_DLM : in std_logic_vector(7 downto 0);
-	 USB_UART_DLL : in std_logic_vector(7 downto 0);
-	 USB_UART_DLM_WR : in std_logic;
-	 USB_UART_DLL_WR : in std_logic;
+	 USB_UART_DLM : in std_logic_vector(7 downto 0) := (others => '0');
+	 USB_UART_DLL : in std_logic_vector(7 downto 0) := (others => '0');
+	 USB_UART_DLM_WR : in std_logic := '0';
+	 USB_UART_DLL_WR : in std_logic := '0';
 
 	 -- esp uart
 	 ESP_UART_RX_DATA			: out std_logic_vector(7 downto 0);
-	 ESP_UART_RX_IDX	: out std_logic_vector(7 downto 0) := (others => '0');	 
-	 ESP_UART_TX_DATA			: in std_logic_vector(7 downto 0);
+	 ESP_UART_RX_IDX	: out std_logic_vector(7 downto 0) := (others => '0');
+	 ESP_UART_TX_DATA			: in std_logic_vector(7 downto 0) := (others => '0');
 	 ESP_UART_TX_WR				: in std_logic := '0';
+	 
+	 -- fifo status
+	 UART_FIFO_STATUS : in std_logic_vector(7 downto 0);
 	 
 	 -- soft switches command
 	 SOFTSW_COMMAND : out std_logic_vector(15 downto 0);
@@ -85,14 +83,14 @@ entity mcu is
 	 ROMLOAD_DATA: out std_logic_vector(7 downto 0) := (others => '0');
 	 ROMLOAD_WR : out std_logic := '0';
 
-     FLASH_A : in std_logic_vector(31 downto 0);
-     FLASH_DI : in std_logic_vector(7 downto 0);
-     FLASH_DO : out std_logic_vector(7 downto 0);
-     FLASH_RD_N : in std_logic := '1';
-     FLASH_WR_N : in std_logic := '1';
-     FLASH_ER_N : in std_logic := '1';
-     FLASH_BUSY : out std_logic;
-     FLASH_READY : out std_logic;
+    FLASH_A : in std_logic_vector(31 downto 0) := (others => '0');
+    FLASH_DI : in std_logic_vector(7 downto 0) := (others => '0');
+    FLASH_DO : out std_logic_vector(7 downto 0);
+    FLASH_RD_N : in std_logic := '1';
+    FLASH_WR_N : in std_logic := '1';
+    FLASH_ER_N : in std_logic := '1';
+    FLASH_BUSY : out std_logic := '0';
+    FLASH_READY : out std_logic := '0';
 
 	 -- debug
 	 DEBUG_ADDR : in std_logic_vector(15 downto 0) := (others => '0');
@@ -114,11 +112,11 @@ architecture rtl of mcu is
 	constant CMD_ROMBANK    : std_logic_vector(7 downto 0) := x"06";
 	constant CMD_ROMDATA    : std_logic_vector(7 downto 0) := x"07";
 	constant CMD_ROMLOADER  : std_logic_vector(7 downto 0) := x"08";
-	constant CMD_PS2_SCANCODE : std_logic_vector(7 downto 0) := x"0B";
 
 	constant CMD_OSD 		: std_logic_vector(7 downto 0) := x"20";
 	constant CMD_DEBUG_ADDR : std_logic_vector(7 downto 0) := x"30";
-	constant CMD_DEBUG_DATA : std_logic_vector(7 downto 0) := x"31";	
+	constant CMD_DEBUG_DATA : std_logic_vector(7 downto 0) := x"31";
+	constant CMD_UART_FIFO_STATUS  : std_logic_vector(7 downto 0) := x"f8";	
 	constant CMD_FLASH    	: std_logic_vector(7 downto 0) := x"f9";
 	constant CMD_RTC 			: std_logic_vector(7 downto 0) := x"FA";
 	constant CMD_ESP_UART   : std_logic_vector(7 downto 0) := x"FB";
@@ -175,7 +173,9 @@ architecture rtl of mcu is
     signal prev_flash_wr_n : std_logic := '1';
     signal prev_flash_rd_n : std_logic := '1';
     signal prev_flash_er_n : std_logic := '1';
-		 
+	 
+	 signal prev_uart_fifo_status : std_logic_vector(7 downto 0) := (others => '0');
+
 begin
 	
 	--------------------------------------------------------------------------
@@ -198,13 +198,7 @@ begin
 		  wren_i         => '1',
 		  
 		  do_valid_o     => spi_do_valid,
-		  do_o           => spi_do,
-
-		  do_transfer_o  => open,
-		  wren_o         => open,
-		  wren_ack_o     => open,
-		  rx_bit_reg_o   => open,
-		  state_dbg_o    => open
+		  do_o           => spi_do
 	);
 
 	spi_di <= queue_do;
@@ -248,6 +242,13 @@ begin
 							when X"01" => MS_Y(7 downto 0) <= spi_do(7 downto 0);
 							when X"02" => MS_Z(3 downto 0) <= spi_do(3 downto 0);
 							when X"03" => MS_B(2 downto 0) <= spi_do(2 downto 0); MS_UPD <= not(MS_UPD);
+							when others => null;
+						end case;
+					-- phy buttons
+					when CMD_BTNS => 
+						case spi_do(15 downto 8) is
+							when x"00" => BTN(0) <= spi_do(0);
+							when x"01" => BTN(1) <= spi_do(1);
 							when others => null;
 						end case;
 					-- joy data
@@ -317,14 +318,6 @@ begin
 						FLASH_READY <= spi_do(9);
 						FLASH_DO <= spi_do(7 downto 0);
 					
-					-- ps/2 scancode from mcu
-					when CMD_PS2_SCANCODE => 
-						case spi_do(15 downto 8) is
-							when x"00" => KB_SCANCODE <= spi_do(7 downto 0); KB_SCANCODE_UPD <= not(KB_SCANCODE_UPD);
-							when x"01" => XT_SCANCODE <= spi_do(7 downto 0); XT_SCANCODE_UPD <= not(XT_SCANCODE_UPD);
-							when others => null;
-						end case;
-
 					-- init start
 					when CMD_INIT_START => BUSY <= '1';
 
@@ -412,52 +405,54 @@ begin
 	        prev_flash_wr_n <= flash_wr_n;
 	        prev_flash_rd_n <= flash_rd_n;
 	        prev_flash_er_n <= flash_er_n;
---			if USB_UART_TX_WR = '1' then -- send USB UART byte
---				queue_wr_req <= '1';
---				if (USB_UART_TX_MODE = '1') then
---					queue_di <= CMD_USB_UART & "00000011" & USB_UART_TX_DATA;
---				else 
---					queue_di <= CMD_USB_UART & "00000000" & USB_UART_TX_DATA;
---				end if;
---			elsif ESP_UART_TX_WR = '1' then -- send ESP UART byte
---				queue_wr_req <= '1';
---				queue_di <= CMD_ESP_UART & "00000000" & ESP_UART_TX_DATA;
---			elsif USB_UART_DLL_WR = '1' then -- send USB UART DLL reg
---				queue_wr_req <= '1';
---				queue_di <= CMD_USB_UART & "00000001" & USB_UART_DLL;
---			elsif USB_UART_DLM_WR = '1' then -- send USB UART RLM reg
---				queue_wr_req <= '1';
---				queue_di <= CMD_USB_UART & "00000010" & USB_UART_DLM;
-			if RTC_WR_N = '0' AND RTC_CS = '1' and BUSY = '0' and (RTC_A /= x"0C" and RTC_A < x"F0") then -- add rtc register write to queue
+			if USB_UART_TX_WR = '1' then -- send USB UART byte
+				queue_wr_req <= '1';
+				if (USB_UART_TX_MODE = '1') then
+					queue_di <= CMD_USB_UART & "00000011" & USB_UART_TX_DATA;
+				else 
+					queue_di <= CMD_USB_UART & "00000000" & USB_UART_TX_DATA;
+				end if;
+			elsif ESP_UART_TX_WR = '1' then -- send ESP UART byte
+				queue_wr_req <= '1';
+				queue_di <= CMD_ESP_UART & "00000000" & ESP_UART_TX_DATA;
+			elsif USB_UART_DLL_WR = '1' then -- send USB UART DLL reg
+				queue_wr_req <= '1';
+				queue_di <= CMD_USB_UART & "00000001" & USB_UART_DLL;
+			elsif USB_UART_DLM_WR = '1' then -- send USB UART RLM reg
+				queue_wr_req <= '1';
+				queue_di <= CMD_USB_UART & "00000010" & USB_UART_DLM;
+			elsif UART_FIFO_STATUS /= prev_uart_fifo_status then -- send UART FIFO STATUS
+				queue_wr_req <= '1';
+				queue_di <= CMD_UART_FIFO_STATUS & "00000000" & UART_FIFO_STATUS;
+				prev_uart_fifo_status <= UART_FIFO_STATUS;
+			elsif RTC_WR_N = '0' AND RTC_CS = '1' and BUSY = '0' and (RTC_A /= x"0C" and RTC_A < x"F0") then -- add rtc register write to queue
 				queue_wr_req <= '1';
 				queue_di <= CMD_RTC & RTC_A & RTC_DI;
-
---	        elsif flash_a(31 downto 24) /= prev_flash_a(31 downto 24) then
---                queue_wr_req <= '1'; 
---                queue_di <= CMD_FLASH & "00000000" & flash_a(31 downto 24); 
---                prev_flash_a(31 downto 24) <= flash_a(31 downto 24);
---	        elsif flash_a(23 downto 16) /= prev_flash_a(23 downto 16) then
---                queue_wr_req <= '1'; 
---                queue_di <= CMD_FLASH & "00000001" & flash_a(23 downto 16); 
---                prev_flash_a(23 downto 16) <= flash_a(23 downto 16);
---	        elsif flash_a(15 downto 8) /= prev_flash_a(15 downto 8) then
---                queue_wr_req <= '1'; 
---                queue_di <= CMD_FLASH & "00000010" & flash_a(15 downto 8); 
---                prev_flash_a(15 downto 8) <= flash_a(15 downto 8);
---	        elsif flash_a(7 downto 0) /= prev_flash_a(7 downto 0) then
---                queue_wr_req <= '1'; 
---                queue_di <= CMD_FLASH & "00000011" & flash_a(7 downto 0); 
---                prev_flash_a(7 downto 0) <= flash_a(7 downto 0);
---            elsif flash_wr_n = '0' and prev_flash_wr_n = '1' then 
---                queue_wr_req <= '1'; 
---                queue_di <= CMD_FLASH & "00000100" & flash_di(7 downto 0); 
---            elsif flash_rd_n = '0' and prev_flash_rd_n = '1' then 
---                queue_wr_req <= '1'; 
---                queue_di <= CMD_FLASH & "00000101" & "00000000"; 
---            elsif flash_er_n = '0' and prev_flash_er_n = '1' then 
---                queue_wr_req <= '1'; 
---                queue_di <= CMD_FLASH & "00000110" & "00000000"; 
-
+		  elsif flash_a(31 downto 24) /= prev_flash_a(31 downto 24) then -- send flash address
+				 queue_wr_req <= '1'; 
+				 queue_di <= CMD_FLASH & "00000000" & flash_a(31 downto 24); 
+				 prev_flash_a(31 downto 24) <= flash_a(31 downto 24);
+		  elsif flash_a(23 downto 16) /= prev_flash_a(23 downto 16) then
+				 queue_wr_req <= '1'; 
+				 queue_di <= CMD_FLASH & "00000001" & flash_a(23 downto 16); 
+				 prev_flash_a(23 downto 16) <= flash_a(23 downto 16);
+		  elsif flash_a(15 downto 8) /= prev_flash_a(15 downto 8) then
+				 queue_wr_req <= '1'; 
+				 queue_di <= CMD_FLASH & "00000010" & flash_a(15 downto 8); 
+				 prev_flash_a(15 downto 8) <= flash_a(15 downto 8);
+		  elsif flash_a(7 downto 0) /= prev_flash_a(7 downto 0) then
+				 queue_wr_req <= '1'; 
+				 queue_di <= CMD_FLASH & "00000011" & flash_a(7 downto 0); 
+				 prev_flash_a(7 downto 0) <= flash_a(7 downto 0);
+			elsif flash_wr_n = '0' and prev_flash_wr_n = '1' then -- send flash write data 
+				 queue_wr_req <= '1'; 
+				 queue_di <= CMD_FLASH & "00000100" & flash_di(7 downto 0); 
+			elsif flash_rd_n = '0' and prev_flash_rd_n = '1' then -- send flash read data
+				 queue_wr_req <= '1'; 
+				 queue_di <= CMD_FLASH & "00000101" & "00000000"; 
+			elsif flash_er_n = '0' and prev_flash_er_n = '1' then -- send flash erase data
+				 queue_wr_req <= '1'; 
+				 queue_di <= CMD_FLASH & "00000110" & "00000000"; 
 			elsif DEBUG_ADDR /= prev_debug_addr then -- debug address
 				queue_wr_req <= '1';
 				queue_di <= CMD_DEBUG_ADDR & DEBUG_ADDR;

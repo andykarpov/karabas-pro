@@ -20,7 +20,7 @@
 --
 -- @author Andy Karpov <andy.karpov@gmail.com>
 -- @author Oleh Starychenko <solegstar@gmail.com>
--- Ukraine, 2021-2025
+-- Ukraine, 2021-2026
 -------------------------------------------------------------------------------------------------------------------
 
 library IEEE; 
@@ -54,18 +54,18 @@ port (
 	-- RP2040 SPI slave
 	MCU_SCK 		: in std_logic;
 	MCU_MOSI 	: in std_logic;
-	MCU_MISO 	: out std_logic := 'Z';
+	MCU_MISO 	: out std_logic;
 	MCU_CS_N		: in std_logic;
 	MCU_SD_CS_N : in std_logic;
 	
 	-- Parallel bus for CPLD
-	BUS_RESET_N : in std_logic;
-	BUS_CLK 	: in std_logic;
-	BUS_CLK2 	: in std_logic;
-	BUS_DIR 	: in std_logic;	-- OCH: Nemo HDD EBL for CPLD
-	BUS_A		: in std_logic_vector(1 downto 0);
-	BUS_DI		: in std_logic_vector(7 downto 0) := "ZZZZZZZZ";
-	BUS_DO		: in std_logic_vector(7 downto 0);
+	BUS_RESET_N : out std_logic;
+	BUS_CLK 		: out std_logic;
+	BUS_CLK2 	: out std_logic;
+	BUS_DIR 		: out std_logic;	-- OCH: Nemo HDD EBL for CPLD
+	BUS_A			: out std_logic_vector(1 downto 0);
+	BUS_DI		: in std_logic_vector(7 downto 0);
+	BUS_DO		: out std_logic_vector(7 downto 0);
 	
 	-- I2S Sound
 	DAC_BCK		: out std_logic;
@@ -73,7 +73,7 @@ port (
 	DAC_DAT 		: out std_logic;
 	
    LFDC_STEP   : in std_logic;
-	TAPE_IN 		: in std_logic := '1'; 
+	TAPE_IN 		: in std_logic; 
 	TAPE_OUT 	: out std_logic
 );
 end karabas_pro_top;
@@ -158,6 +158,7 @@ signal kb_loaded 		: std_logic := '0';
 signal kb_screen_mode: std_logic_vector(1 downto 0) := "00";
 signal kb_psg_mix    : std_logic_vector(2 downto 0) := "000";
 signal kb_psg_type   : std_logic := '0';
+signal kb_btns       : std_logic_vector(1 downto 0) := "00";
 signal softsw_command : std_logic_vector(15 downto 0);
 signal mcu_busy      : std_logic := '0';
 
@@ -362,7 +363,7 @@ signal loader_ram_a	: std_logic_vector(31 downto 0);
 signal loader_ram_wr : std_logic;
 
 -- Parallel flash interface
-signal flash_a_bus: std_logic_vector(23 downto 0);
+signal flash_a_bus: std_logic_vector(31 downto 0);
 signal flash_di_bus : std_logic_vector(7 downto 0);
 signal flash_do_bus: std_logic_vector(7 downto 0);
 signal flash_wr_n : std_logic := '1';
@@ -371,12 +372,6 @@ signal flash_er_n : std_logic := '1';
 signal flash_busy : std_logic := '1';
 signal flash_rdy : std_logic := '0';
 signal fw_update_mode : std_logic := '0';
-
-signal host_flash_a_bus : std_logic_vector(23 downto 0);
-signal host_flash_di_bus : std_logic_vector(7 downto 0);
-signal host_flash_rd_n : std_logic := '1';
-signal host_flash_wr_n : std_logic := '1';
-signal host_flash_er_n : std_logic := '1';
 signal is_flash_not_sd : std_logic := '0';
 
 signal port_xx87_reg : std_logic_vector(7 downto 0);
@@ -396,18 +391,38 @@ signal zxuno_uart_do_bus 	: std_logic_vector(7 downto 0);
 signal zxuno_uart_oe_n 		: std_logic;
 signal zxuno_uart2_do_bus 	: std_logic_vector(7 downto 0);
 signal zxuno_uart2_oe_n 		: std_logic;
-signal uart2_tx : std_logic;
-signal uart2_rx : std_logic;
-signal uart2_cts : std_logic;
-signal zxuno_uart_tx : std_logic;
-signal zxuno_uart_cts : std_logic;
 
 -- ZIFI UART 
 signal zifi_do_bus : std_logic_vector(7 downto 0);
 signal zifi_oe_n   : std_logic := '1';
-signal zifi_uart_tx : std_logic;
-signal zifi_uart_cts : std_logic;
 signal zifi_api_enabled : std_logic;
+
+-- UART emulation
+signal uart1_tx_req : std_logic;
+signal uart1_rx_req : std_logic;
+signal uart1_tx_data : std_logic_vector(7 downto 0);
+signal uart1_rx_data : std_logic_vector(7 downto 0);
+signal uart2_tx_req : std_logic;
+signal uart2_rx_req : std_logic;
+signal uart2_tx_data : std_logic_vector(7 downto 0);
+signal uart2_rx_data : std_logic_vector(7 downto 0);
+
+signal zifi_esp_uart_tx_data : std_logic_vector(7 downto 0);
+signal zifi_usb_uart_tx_data : std_logic_vector(7 downto 0);
+signal zifi_esp_uart_tx_wr : std_logic;
+signal zifi_usb_uart_tx_wr : std_logic;
+signal zifi_usb_uart_tx_mode : std_logic;
+
+signal prev_esp_uart_rx_idx : std_logic_vector(7 downto 0);
+signal prev_usb_uart_rx_idx : std_logic_vector(7 downto 0);
+signal usb_uart_rx_req : std_logic;
+signal esp_uart_rx_req : std_logic;
+
+signal uart1_rx_fifo_full : std_logic;
+signal uart2_rx_fifo_full : std_logic;
+signal esp_uart_rx_fifo_full : std_logic;
+signal usb_uart_rx_fifo_full : std_logic;
+signal uart_fifo_status : std_logic_vector(7 downto 0);
 
 -- cpld port
 signal cpld_do 		: std_logic_vector(7 downto 0);
@@ -444,6 +459,23 @@ signal WAIT_IO			:std_logic;
 signal WAIT_EN			:std_logic;
 signal WAIT_C_STOP	:std_logic;
 
+-- usb uart
+signal usb_uart_rx_data : std_logic_vector(7 downto 0);
+signal usb_uart_rx_idx  : std_logic_vector(7 downto 0);
+signal usb_uart_tx_data : std_logic_vector(7 downto 0) := (others => '0');
+signal usb_uart_tx_wr   : std_logic := '0';
+signal usb_uart_tx_mode : std_logic := '0';
+
+signal usb_uart_dll     : std_logic_vector(7 downto 0) := (others => '0');
+signal usb_uart_dlm     : std_logic_vector(7 downto 0) := (others => '0');
+signal usb_uart_dll_wr  : std_logic := '0';
+signal usb_uart_dlm_wr  : std_logic := '0';
+	 
+signal esp_uart_rx_data : std_logic_vector(7 downto 0);
+signal esp_uart_rx_idx  : std_logic_vector(7 downto 0);
+signal esp_uart_tx_data : std_logic_vector(7 downto 0) := (others => '0');
+signal esp_uart_tx_wr   : std_logic := '0';
+
 component saa1099
 port (
 	clk_sys	: in std_logic;
@@ -468,6 +500,44 @@ port (
     lrck : out std_logic);
 end component;
 
+component zxunoregs
+port (
+	clk: in std_logic;
+	rst_n : in std_logic;
+	a : in std_logic_vector(15 downto 0);
+	iorq_n : in std_logic;
+	rd_n : in std_logic;
+	wr_n : in std_logic;
+	din : in std_logic_vector(7 downto 0);
+	dout : out std_logic_vector(7 downto 0);
+	oe_n : out std_logic;
+	addr : out std_logic_vector(7 downto 0);
+	read_from_reg: out std_logic;
+	write_to_reg: out std_logic;
+	regaddr_changed: out std_logic);
+end component;
+
+component zxunouart_emu
+generic (
+	UARTDATA : std_logic_vector(7 downto 0) := x"C6";
+	UARTSTAT : std_logic_vector(7 downto 0) := x"C7"
+);
+port (
+	clk_bus : in std_logic;
+	zxuno_addr : in std_logic_vector(7 downto 0);
+	zxuno_regrd : in std_logic;
+	zxuno_regwr : in std_logic;
+	din : in std_logic_vector(7 downto 0);
+	dout : out std_logic_vector(7 downto 0);
+	oe_n : out std_logic;
+	
+	uart_tx_req : out std_logic;
+   uart_tx_data : out std_logic_vector(7 downto 0);
+	uart_rx_req : in std_logic;
+	uart_rx_data : in std_logic_vector(7 downto 0);
+	uart_rx_fifo_full : out std_logic
+);
+end component;
 
 begin
 
@@ -476,9 +546,7 @@ U1: entity work.altpll0
 port map (
 	inclk0			=> CLK_50MHZ,
 	locked			=> open,
-	c0 				=> clk_112--,
---	c1					=> clk_96,
---	c2					=> clk_8
+	c0 				=> clk_112
 	);
 	
 -- PLL2
@@ -779,10 +847,9 @@ port map(
    KB_DAT3			=> kb_dat3,
    KB_DAT4			=> kb_dat4,
    KB_DAT5			=> kb_dat5,
+	
+	BTN				=> kb_btns,
      
-   KB_SCANCODE		=> open, --kb_scancode,
-   KB_SCANCODE_UPD => open, --kb_scancode_upd,
-
    JOYSTICK			=> joystick_md,
 
    RTC_A 			=> mc146818_a_bus,
@@ -791,43 +858,45 @@ port map(
    RTC_CS			=> '1',
    RTC_WR_N			=> not mc146818_wr,
 
-   usb_uart_rx_data => open, --usb_uart_rx_data,
-   usb_uart_rx_idx  => open, --usb_uart_rx_idx,
-   usb_uart_tx_data => (others => '0'), --usb_uart_tx_data,
-   usb_uart_tx_wr   => '0', --usb_uart_tx_wr,
-   usb_uart_tx_mode => '0', --usb_uart_tx_mode,
+   USB_UART_RX_DATA => usb_uart_rx_data,
+   USB_UART_RX_IDX  => usb_uart_rx_idx,
+   USB_UART_TX_DATA => usb_uart_tx_data,
+   USB_UART_TX_WR   => usb_uart_tx_wr,
+   USB_UART_TX_MODE => usb_uart_tx_mode,
 
-   usb_uart_dll     => (others => '0'), --usb_uart_dll,
-   usb_uart_dlm     => (others => '0'), --usb_uart_dlm,
-   usb_uart_dll_wr  => '0', --usb_uart_dll_wr,
-   usb_uart_dlm_wr  => '0', --usb_uart_dlm_wr,
+   USB_UART_DLM     => usb_uart_dlm,
+   USB_UART_DLL     => usb_uart_dll,
+   USB_UART_DLM_WR  => usb_uart_dlm_wr,
+   USB_UART_DLL_WR  => usb_uart_dll_wr,
 	 
-   esp_uart_rx_data => open, --esp_uart_rx_data,
-   esp_uart_rx_idx  => open, --esp_uart_rx_idx,
-   esp_uart_tx_data => (others => '0'), --esp_uart_tx_data,
-   esp_uart_tx_wr   => '0', --esp_uart_tx_wr,
+   ESP_UART_RX_DATA => esp_uart_rx_data,
+   ESP_UART_RX_IDX  => esp_uart_rx_idx,
+   ESP_UART_TX_DATA => esp_uart_tx_data,
+   ESP_UART_TX_WR   => esp_uart_tx_wr,
+	
+	UART_FIFO_STATUS => uart_fifo_status,
 
-   softsw_command   => softsw_command,
-   osd_command      => osd_command,
+   SOFTSW_COMMAND   => softsw_command,
+   OSD_COMMAND      => osd_command,
 
-   romloader_active => loader_act,
-   romload_addr     => loader_ram_a,
-   romload_data     => loader_ram_do,
-   romload_wr       => loader_ram_wr,
+   ROMLOADER_ACTIVE => loader_act,
+   ROMLOAD_ADDR     => loader_ram_a,
+   ROMLOAD_DATA     => loader_ram_do,
+   ROMLOAD_WR       => loader_ram_wr,
      
-   flash_a          => (others => '0'), --flash_a_bus,
-   flash_do         => open, --flash_do_bus,
-   flash_di         => (others => '0'), --flash_di_bus,
-   flash_rd_n       => '1', --flash_rd_n,
-   flash_wr_n       => '1', --flash_wr_n,
-   flash_er_n       => '1', --flash_er_n,
-   flash_busy       => open, --flash_busy,
-   flash_ready      => open, --flash_ready, 
+   FLASH_A          => flash_a_bus,
+   FLASH_DO         => flash_do_bus,
+   FLASH_DI         => flash_di_bus,
+   FLASH_RD_N       => flash_rd_n,
+   FLASH_WR_N       => flash_wr_n,
+   FLASH_ER_N       => flash_er_n,
+   FLASH_BUSY       => flash_busy,
+   FLASH_READY      => flash_rdy, 
      
-   debug_addr       => (others => '0'),
-   debug_data       => (others => '0'),
+   DEBUG_ADDR       => (others => '0'),
+   DEBUG_DATA       => (others => '0'),
 
-   busy             => mcu_busy
+   BUSY             => mcu_busy
 );
 
 U14: entity work.soft_switches
@@ -858,7 +927,7 @@ vid_scandoubler_enable <= not kb_video_15khz;
 
 U15: entity work.hid_parser
 generic map(
-	NUM_KEYS => 6
+	NUM_KEYS => 5
 )
 port map(
 	CLK			=> clk_bus,
@@ -871,26 +940,13 @@ port map(
    KB_DAT4     => kb_dat4,
    KB_DAT5     => kb_dat5,
      
-   KB_SCANCODE => (others => '0'), --kb_scancode,
-   KB_SCANCODE_UPD => '0', --kb_scancode_upd,
-     
    JOY_TYPE_L  => joy_mode,
-   JOY_TYPE_R  => "000",
    JOY_L       => joystick_md,
-   JOY_R       => "0000000000000",
      
    A           => cpu_a_bus(15 downto 8),
    KB_TYPE     => kb_mode,
    JOY_DO      => joy_bus,
-   KB_DO       => kb_do_bus,
-
-	-- todo: mapping keyboard scancodes to the rtc registers
-   RTC_A       => mc146818_a_bus,
-   RTC_DI      => cpu_do_bus,
-   RTC_DO_IN   => mc146818_do_bus,
-   RTC_DO_OUT  => open,
-   RTC_WR      => '0',
-   RTC_RD      => '0'
+   KB_DO       => kb_do_bus
 );
 	
 -- DAC
@@ -914,12 +970,12 @@ port map (
 	CLK_CPU 			=> clk_cpu,
 	RESET 			=> reset,
 	
-	SD_DI => open, --BUS_DO,
+	SD_DI => BUS_DO,
 	SD_DO => BUS_DI,
-	SA 				=> open, --BUS_A,
-	CPLD_CLK 		=> open, --BUS_CLK,
-	CPLD_CLK2 		=> open, --BUS_CLK2,
-	NRESET 			=> open, --BUS_RESET_N,
+	SA 				=> BUS_A,
+	CPLD_CLK 		=> BUS_CLK,
+	CPLD_CLK2 		=> BUS_CLK2,
+	NRESET 			=> BUS_RESET_N,
 	-- OCH: fix fdd swap
 	FDC_SWAP			=> fdc_swap,
 
@@ -979,7 +1035,125 @@ port map(
 ms_delta_x <= signed(ms_x);
 ms_delta_y <= signed(ms_y);
 
--- todo: zifi_emu, zxuno_emu
+-- ZXUNO UART
+U19: zxunoregs 
+port map(
+	clk 				=> clk_bus,
+	rst_n 			=> not(reset),
+	a 					=> cpu_a_bus,
+	iorq_n 			=> cpu_iorq_n,
+	rd_n 				=> cpu_rd_n,
+	wr_n 				=> cpu_wr_n,
+	din 				=> cpu_do_bus,
+	dout 				=> zxuno_addr_to_cpu,
+	oe_n 				=> zxuno_addr_oe_n,
+	addr 				=> zxuno_addr,
+	read_from_reg 	=> zxuno_regrd,
+	write_to_reg 	=> zxuno_regwr,
+	regaddr_changed => zxuno_regaddr_changed
+);
+
+U20: zxunouart_emu -- C6, C7
+port map(
+	clk_bus 			=> clk_bus,
+	zxuno_addr 		=> zxuno_addr,
+	zxuno_regrd 	=> zxuno_regrd,
+	zxuno_regwr 	=> zxuno_regwr,
+	din 				=> cpu_do_bus,
+	dout 				=> zxuno_uart_do_bus,
+	oe_n 				=> zxuno_uart_oe_n,
+	uart_tx_req		=> uart1_tx_req,
+	uart_tx_data	=> uart1_tx_data,
+	uart_rx_req		=> uart1_rx_req,
+	uart_rx_data	=> uart1_rx_data,
+	uart_rx_fifo_full => uart1_rx_fifo_full
+);	
+
+U21: zxunouart_emu -- C8, C9
+generic map(
+	UARTDATA => x"C8",
+	UARTSTAT => x"C9"
+)
+port map(
+	clk_bus 			=> clk_bus,
+	zxuno_addr 		=> zxuno_addr,
+	zxuno_regrd 	=> zxuno_regrd,
+	zxuno_regwr 	=> zxuno_regwr,
+	din 				=> cpu_do_bus,
+	dout 				=> zxuno_uart2_do_bus,
+	oe_n 				=> zxuno_uart2_oe_n,
+	uart_tx_req		=> uart2_tx_req,
+	uart_tx_data	=> uart2_tx_data,
+	uart_rx_req		=> uart2_rx_req,
+	uart_rx_data	=> uart2_rx_data,
+	uart_rx_fifo_full => uart2_rx_fifo_full
+);	
+
+-- ZIFI UART
+U22: entity work.zifi_emu
+port map (
+	CLK    			=> clk_bus,
+	RESET  			=> areset,
+
+	A      			=> cpu_a_bus,
+	DI     			=> cpu_do_bus,
+	DO     			=> zifi_do_bus,
+	IORQ_N 			=> cpu_iorq_n,
+	RD_N   			=> cpu_rd_n,
+	WR_N   			=> cpu_wr_n,
+	ZIFI_OE_N 		=> zifi_oe_n,	
+	ENABLED 			=> zifi_api_enabled,
+
+	USB_UART_RX_DATA	=>	usb_uart_rx_data,
+   USB_UART_RX_IDX	=> usb_uart_rx_idx,
+	USB_UART_RX_FIFO_FULL => usb_uart_rx_fifo_full,
+   USB_UART_TX_DATA	=> zifi_usb_uart_tx_data,
+   USB_UART_TX_WR    => zifi_usb_uart_tx_wr,
+   USB_UART_TX_MODE  => zifi_usb_uart_tx_mode,
+
+   USB_UART_DLL      => usb_uart_dll,
+   USB_UART_DLM      => usb_uart_dlm,
+   USB_UART_DLL_WR   => usb_uart_dll_wr,
+   USB_UART_DLM_WR   => usb_uart_dlm_wr,
+
+   ESP_UART_RX_DATA  => esp_uart_rx_data,
+   ESP_UART_RX_IDX   => esp_uart_rx_idx,
+	ESP_UART_RX_FIFO_FULL => esp_uart_rx_fifo_full,
+   ESP_UART_TX_WR    => zifi_esp_uart_tx_wr,
+   ESP_UART_TX_DATA  => zifi_esp_uart_tx_data	
+);
+
+-- mux zxuno uart1 / zxuno uart2 / zif usb / esp tx requests
+esp_uart_tx_wr <= zifi_esp_uart_tx_wr when zifi_api_enabled = '1' else uart1_tx_req;
+esp_uart_tx_data <= zifi_esp_uart_tx_data when zifi_api_enabled = '1' else uart1_tx_data;
+usb_uart_tx_wr <= zifi_usb_uart_tx_wr when zifi_api_enabled = '1' else uart2_tx_req;
+usb_uart_tx_data <= zifi_usb_uart_tx_data when zifi_api_enabled = '1' else uart2_tx_data;
+usb_uart_tx_mode <= zifi_usb_uart_tx_mode when (zifi_api_enabled = '1') else '0';
+
+-- rx data strobes for zxuno uart
+uart1_rx_data <= esp_uart_rx_data;
+uart2_rx_data <= usb_uart_rx_data;
+uart1_rx_req <= esp_uart_rx_req when (zifi_api_enabled = '0') else '0';
+uart2_rx_req <= usb_uart_rx_req when (zifi_api_enabled = '0') else '0';
+
+-- uart fifo status (depends on zifi_api_enabled flag)
+uart_fifo_status <= "000000" & uart2_rx_fifo_full & uart1_rx_fifo_full when (zifi_api_enabled = '0') else 
+						  "000000" & usb_uart_rx_fifo_full & esp_uart_rx_fifo_full;
+
+process (clk_bus) begin
+	if rising_edge(clk_bus) then 
+		prev_esp_uart_rx_idx <= esp_uart_rx_idx;
+		prev_usb_uart_rx_idx <= usb_uart_rx_idx;
+		esp_uart_rx_req <= '0';
+		usb_uart_rx_req <= '0';
+     if (prev_esp_uart_rx_idx /= esp_uart_rx_idx) then 
+        esp_uart_rx_req <= '1';
+	  end if;
+     if (prev_usb_uart_rx_idx /= usb_uart_rx_idx) then
+        usb_uart_rx_req <= '1';
+	  end if;
+	end if;
+end process;
 
 -------------------------------------------------------------------------------
 -- clocks
@@ -1028,13 +1202,13 @@ ena_div16 <= ena_cnt(3) and ena_cnt(2) and ena_cnt(1) and ena_cnt(0);
 -- Global signals
 
 areset <= not locked;
-reset <= areset or kb_reset or loader_act; -- hot reset
+reset <= areset or kb_reset or kb_btns(1) or loader_act or mcu_busy; -- hot reset
 
 cpu_reset_n <= not(reset); -- CPU reset
 cpu_inta_n <= cpu_iorq_n or cpu_m1_n;	-- INTA
 
 -- 11.07.2013:OCH: implementation of nmi signal for DIVMMC
-cpu_nmi_n <= mapcond when kb_magic = '1' and divmmc_en = '1' else 
+cpu_nmi_n <= mapcond when (kb_magic = '1' or kb_btns(0) = '1') and divmmc_en = '1' else 
 	'0' when divmmc_en = '0' and kb_magic = '1' and ((cpu_m1_n = '0' and cpu_mreq_n = '0' and cpu_a_bus(15 downto 14) /= "00") or DS80 = '1') else 
 	'1';
 cpu_wait_n <= '1';
@@ -1079,13 +1253,13 @@ SD_CS_N	<= '1' when loader_act = '1' else zc_cs_n;
 SD_SCK 	<= '1' when loader_act = '1' else zc_sclk;
 SD_MOSI 	<= '1' when loader_act = '1' else zc_mosi;
 
-host_flash_rd_n <= not port_xxC7_reg(0);	-- бит чтения из SPI-Flash
-host_flash_wr_n <= not port_xxC7_reg(1);	-- бит записи в SPI-Flash
-host_flash_er_n <= not port_xxC7_reg(4);  -- бит стирания 64-блока SPI-Flash
+flash_rd_n <= not port_xxC7_reg(0);	-- бит чтения из SPI-Flash
+flash_wr_n <= not port_xxC7_reg(1);	-- бит записи в SPI-Flash
+flash_er_n <= not port_xxC7_reg(4);  -- бит стирания 64-блока SPI-Flash
 is_flash_not_sd <= port_xxC7_reg(2);		-- бит переключения SPI между flash / SD картой
 fw_update_mode <= port_xxC7_reg (3);		-- бит разрешения обновления SPI-Flash
-host_flash_di_bus <= port_xxE7_reg;			-- Регистр со значением шины данных на вывод в SPI-Flash
-host_flash_a_bus <= port_xxA7_reg & port_xx87_reg & port_xx67_reg;	-- Шина адреса для SPI-Flash
+flash_di_bus <= port_xxE7_reg;			-- Регистр со значением шины данных на вывод в SPI-Flash
+flash_a_bus <= "00000000" & port_xxA7_reg & port_xx87_reg & port_xx67_reg;	-- Шина адреса для SPI-Flash
 
 --Доступен, если бит ROM14=1 (7FFD), бит CPM=1 (DFFD), 80DS=1 (DFFD)
 --Порт С7 - статус регистр R/W:
@@ -1626,16 +1800,16 @@ selector <=
 	x"0A" when (cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_a_bus = X"FADF" and ms_present = '1' and cpm='0') else	-- Mouse0 port key, z
 	x"0B" when (cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_a_bus = X"FBDF" and ms_present = '1' and cpm='0') else	-- Mouse0 port x
 	x"0C" when (cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_a_bus = X"FFDF" and ms_present = '1' and cpm='0') else	-- Mouse0 port y 
---	x"0D" when (enable_zxuno_uart and cpu_iorq_n = '0' and cpu_rd_n = '0' and zxuno_uart2_oe_n = '0') else -- ZX UNO UART2
+	x"0D" when (cpu_iorq_n = '0' and cpu_rd_n = '0' and zxuno_uart2_oe_n = '0') else -- ZX UNO UART2
 	x"0E" when (serial_ms_oe_n = '0') else -- Serial mouse
---	x"0F" when (enable_zxuno_uart and cpu_iorq_n = '0' and cpu_rd_n = '0' and zxuno_addr_oe_n = '0') else -- ZX UNO Register
---	x"10" when (enable_zxuno_uart and cpu_iorq_n = '0' and cpu_rd_n = '0' and zxuno_uart_oe_n = '0') else -- ZX UNO UART
+	x"0F" when (cpu_iorq_n = '0' and cpu_rd_n = '0' and zxuno_addr_oe_n = '0') else -- ZX UNO Register
+	x"10" when (cpu_iorq_n = '0' and cpu_rd_n = '0' and zxuno_uart_oe_n = '0') else -- ZX UNO UART
 	x"11" when (cs_xxC7 = '1' and cpu_rd_n = '0') else
 	x"12" when (cs_xxE7 = '1' and cpu_rd_n = '0') else
 	x"13" when (cs_008b = '1' and cpu_rd_n = '0') else										-- port #008B
 	x"14" when (cs_018b = '1' and cpu_rd_n = '0') else										-- port #018B
 	x"15" when (cs_028b = '1' and cpu_rd_n = '0') else										-- port #028B
---	x"16" when zifi_oe_n = '0' else  -- zifi
+	x"16" when zifi_oe_n = '0' else  -- zifi
 	x"17" when (vid_pff_cs = '1' and cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_a_bus( 7 downto 0) = X"FF") and dos_act='0' and cpm = '0' and ds80 = '0' else -- Port FF select
 	x"18" when cpu_iorq_n = '0' and cpu_rd_n = '0' and cpu_m1_n = '1' else -- cpld 
 	(others => '1');

@@ -154,7 +154,7 @@ set_global_assignment -name OUTPUT_IO_TIMING_FAR_END_VMEAS "HALF SIGNAL SWING" -
 set_global_assignment -name OUTPUT_IO_TIMING_FAR_END_VMEAS "HALF SIGNAL SWING" -fall
 set_global_assignment -name POWER_PRESET_COOLING_SOLUTION "23 MM HEAT SINK WITH 200 LFPM AIRFLOW"
 set_global_assignment -name POWER_BOARD_THERMAL_MODEL "NONE (CONSERVATIVE)"
-set_global_assignment -name SYNTH_TIMING_DRIVEN_SYNTHESIS OFF
+set_global_assignment -name SYNTH_TIMING_DRIVEN_SYNTHESIS ON
 set_global_assignment -name PARTITION_NETLIST_TYPE SOURCE -section_id Top
 set_global_assignment -name PARTITION_FITTER_PRESERVATION_LEVEL PLACEMENT_AND_ROUTING -section_id Top
 set_global_assignment -name PARTITION_COLOR 16764057 -section_id Top
@@ -164,7 +164,7 @@ set_global_assignment -name PHYSICAL_SYNTHESIS_ASYNCHRONOUS_SIGNAL_PIPELINING ON
 set_global_assignment -name PHYSICAL_SYNTHESIS_REGISTER_DUPLICATION ON
 set_global_assignment -name PHYSICAL_SYNTHESIS_COMBO_LOGIC_FOR_AREA ON
 set_global_assignment -name PHYSICAL_SYNTHESIS_MAP_LOGIC_TO_MEMORY_FOR_AREA ON
-set_global_assignment -name CYCLONEII_OPTIMIZATION_TECHNIQUE BALANCED
+set_global_assignment -name CYCLONEII_OPTIMIZATION_TECHNIQUE SPEED
 set_global_assignment -name ALLOW_POWER_UP_DONT_CARE OFF
 set_global_assignment -name EDA_GENERATE_FUNCTIONAL_NETLIST OFF -section_id eda_formal_verification
 set_global_assignment -name OPTIMIZE_HOLD_TIMING "ALL PATHS"
@@ -184,6 +184,13 @@ set_location_assignment PIN_10 -to SD_CS_N
 set_instance_assignment -name IO_MAXIMUM_TOGGLE_RATE "0 MHz" -to SD_SCK
 set_location_assignment PIN_8 -to TAPE_OUT
 set_location_assignment PIN_25 -to MCU_SD_CS_N
+set_global_assignment -name STRATIXIII_UPDATE_MODE STANDARD
+set_global_assignment -name CONFIGURATION_VCCIO_LEVEL 3.3V
+set_global_assignment -name DEVICE_MIGRATION_LIST "EP4CE22E22C8,EP4CE10E22C8,EP4CE6E22C8,EP4CE15E22C8"
+set_global_assignment -name VERILOG_FILE ../../rtl/fifo/fifo.v
+set_global_assignment -name VERILOG_FILE ../../../profi/rtl/uart/zxunouart_emu.v
+set_global_assignment -name VERILOG_FILE ../../../profi/rtl/uart/zxunoregs.v
+set_global_assignment -name VHDL_FILE ../../../profi/rtl/uart/zifi_emu.vhd
 set_global_assignment -name VHDL_FILE ../../rtl/mcu/mcu.vhd
 set_global_assignment -name VHDL_FILE ../../rtl/mcu/soft_switches.vhd
 set_global_assignment -name VHDL_FILE ../../rtl/avr/rtc.vhd
@@ -229,7 +236,4 @@ set_global_assignment -name CDF_FILE karabas_pro_ep4ce22.cdf
 set_global_assignment -name CDF_FILE Chain1.cdf
 set_global_assignment -name QIP_FILE ../../rtl/pll/pll.qip
 set_global_assignment -name VHDL_FILE ../../rtl/karabas_pro_top.vhd
-set_global_assignment -name STRATIXIII_UPDATE_MODE STANDARD
-set_global_assignment -name CONFIGURATION_VCCIO_LEVEL 3.3V
-set_global_assignment -name DEVICE_MIGRATION_LIST "EP4CE22E22C8,EP4CE10E22C8,EP4CE6E22C8,EP4CE15E22C8"
 set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top

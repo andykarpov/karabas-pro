@@ -111,7 +111,7 @@ signal zifi_fifo_rx_do          : std_logic_vector(7 downto 0);
 signal zifi_fifo_rx_rd_req      : std_logic := '0';
 signal zifi_fifo_rx_wr_req      : std_logic := '0';
 signal zifi_fifo_rx_clr_req     : std_logic := '0';
-signal zifi_fifo_rx_used        : std_logic_vector(10 downto 0) := (others => '0');
+signal zifi_fifo_rx_used        : std_logic_vector(7 downto 0) := (others => '0');
 signal zifi_fifo_rx_full 			: std_logic;
 signal zifi_fifo_rx_empty       : std_logic;
 
@@ -120,7 +120,7 @@ signal rs232_fifo_rx_do          : std_logic_vector(7 downto 0);
 signal rs232_fifo_rx_rd_req      : std_logic := '0';
 signal rs232_fifo_rx_wr_req      : std_logic := '0';
 signal rs232_fifo_rx_clr_req     : std_logic := '0';
-signal rs232_fifo_rx_used        : std_logic_vector(10 downto 0) := (others => '0');
+signal rs232_fifo_rx_used        : std_logic_vector(7 downto 0) := (others => '0');
 signal rs232_fifo_rx_full 			: std_logic;
 signal rs232_fifo_rx_empty       : std_logic;
 
@@ -203,7 +203,7 @@ port map(
 
 ZIFI_FIFO_OUT: fifo
 generic map(
-	ADDR_WIDTH => 11, -- 2 kbytes
+	ADDR_WIDTH => 8, -- 256 bytes
 	DATA_WIDTH => 8
 )
 port map(
@@ -239,7 +239,7 @@ port map(
 
 RS232_FIFO_OUT: fifo
 generic map(
-	ADDR_WIDTH => 11, -- 2 kbytes
+	ADDR_WIDTH => 8, -- 256 bytes
 	DATA_WIDTH => 8
 )
 port map(

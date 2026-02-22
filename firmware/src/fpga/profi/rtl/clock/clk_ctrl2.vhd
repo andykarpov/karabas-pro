@@ -242,7 +242,7 @@ END RTL;
 -- Retrieval info: CONNECT: outclk 0 0 0 0 @outclk 0 0 0 0
 -- Retrieval info: GEN_FILE: TYPE_NORMAL clk_ctrl2.vhd TRUE
 -- Retrieval info: GEN_FILE: TYPE_NORMAL clk_ctrl2.inc FALSE
--- Retrieval info: GEN_FILE: TYPE_NORMAL clk_ctrl2.cmp TRUE
+-- Retrieval info: GEN_FILE: TYPE_NORMAL clk_ctrl2.cmp FALSE
 -- Retrieval info: GEN_FILE: TYPE_NORMAL clk_ctrl2.bsf FALSE
 -- Retrieval info: GEN_FILE: TYPE_NORMAL clk_ctrl2_inst.vhd FALSE
 -- Retrieval info: LIB_FILE: cycloneive
