@@ -6,8 +6,8 @@
 	(paper "A4")
 	(title_block
 		(title "Karabas Pro")
-		(date "2025-10-10")
-		(rev "F a3")
+		(date "2026-02-23")
+		(rev "F a4")
 	)
 	(lib_symbols
 		(symbol "Connector:DB9_Female_MountingHoles"
@@ -474,113 +474,6 @@
 						)
 					)
 					(number "0"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-				)
-			)
-			(embedded_fonts no)
-		)
-		(symbol "Connector:TestPoint"
-			(pin_numbers
-				(hide yes)
-			)
-			(pin_names
-				(offset 0.762)
-				(hide yes)
-			)
-			(exclude_from_sim no)
-			(in_bom yes)
-			(on_board yes)
-			(property "Reference" "TP"
-				(at 0 6.858 0)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-				)
-			)
-			(property "Value" "TestPoint"
-				(at 0 5.08 0)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-				)
-			)
-			(property "Footprint" ""
-				(at 5.08 0 0)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-					(hide yes)
-				)
-			)
-			(property "Datasheet" "~"
-				(at 5.08 0 0)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-					(hide yes)
-				)
-			)
-			(property "Description" "test point"
-				(at 0 0 0)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-					(hide yes)
-				)
-			)
-			(property "ki_keywords" "test point tp"
-				(at 0 0 0)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-					(hide yes)
-				)
-			)
-			(property "ki_fp_filters" "Pin* Test*"
-				(at 0 0 0)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-					(hide yes)
-				)
-			)
-			(symbol "TestPoint_0_1"
-				(circle
-					(center 0 3.302)
-					(radius 0.762)
-					(stroke
-						(width 0)
-						(type default)
-					)
-					(fill
-						(type none)
-					)
-				)
-			)
-			(symbol "TestPoint_1_1"
-				(pin passive line
-					(at 0 0 90)
-					(length 2.54)
-					(name "1"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-					(number "1"
 						(effects
 							(font
 								(size 1.27 1.27)
@@ -1356,6 +1249,182 @@
 						(effects
 							(font
 								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+			)
+			(embedded_fonts no)
+		)
+		(symbol "Device:Crystal_GND3_Small"
+			(pin_names
+				(offset 1.016)
+				(hide yes)
+			)
+			(exclude_from_sim no)
+			(in_bom yes)
+			(on_board yes)
+			(property "Reference" "Y"
+				(at 0 5.08 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Value" "Crystal_GND3_Small"
+				(at 0 3.175 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Footprint" ""
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(property "Datasheet" "~"
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(property "Description" "Three pin crystal, GND on pin 3, small symbol"
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(property "ki_keywords" "quartz ceramic resonator oscillator"
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(property "ki_fp_filters" "Crystal*"
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(symbol "Crystal_GND3_Small_0_1"
+				(polyline
+					(pts
+						(xy -1.27 -0.762) (xy -1.27 0.762)
+					)
+					(stroke
+						(width 0.381)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy -1.27 -1.27) (xy -1.27 -1.905) (xy 1.27 -1.905) (xy 1.27 -1.27)
+					)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(rectangle
+					(start -0.762 -1.524)
+					(end 0.762 1.524)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy 1.27 -0.762) (xy 1.27 0.762)
+					)
+					(stroke
+						(width 0.381)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+			)
+			(symbol "Crystal_GND3_Small_1_1"
+				(pin passive line
+					(at -2.54 0 0)
+					(length 1.27)
+					(name "1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "1"
+						(effects
+							(font
+								(size 0.762 0.762)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at 0 -2.54 90)
+					(length 0.635)
+					(name "3"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "3"
+						(effects
+							(font
+								(size 0.762 0.762)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at 2.54 0 180)
+					(length 1.27)
+					(name "2"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "2"
+						(effects
+							(font
+								(size 0.762 0.762)
 							)
 						)
 					)
@@ -3880,26 +3949,25 @@
 			)
 			(embedded_fonts no)
 		)
-		(symbol "Timer_RTC:DS3231MZ"
+		(symbol "Timer_RTC:DS1307Z+"
 			(exclude_from_sim no)
 			(in_bom yes)
 			(on_board yes)
 			(property "Reference" "U"
-				(at -7.62 8.89 0)
+				(at -8.89 8.89 0)
 				(effects
 					(font
 						(size 1.27 1.27)
 					)
-					(justify right)
 				)
 			)
-			(property "Value" "DS3231MZ"
-				(at 11.43 8.89 0)
+			(property "Value" "DS1307Z+"
+				(at 1.27 8.89 0)
 				(effects
 					(font
 						(size 1.27 1.27)
 					)
-					(justify right)
+					(justify left)
 				)
 			)
 			(property "Footprint" "Package_SO:SOIC-8_3.9x4.9mm_P1.27mm"
@@ -3911,16 +3979,7 @@
 					(hide yes)
 				)
 			)
-			(property "Datasheet" "http://datasheets.maximintegrated.com/en/ds/DS3231M.pdf"
-				(at 0 -15.24 0)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-					(hide yes)
-				)
-			)
-			(property "Description" "±5ppm, I2C Real-Time Clock SOIC-8"
+			(property "Datasheet" "https://datasheets.maximintegrated.com/en/ds/DS1307.pdf"
 				(at 0 0 0)
 				(effects
 					(font
@@ -3929,7 +3988,7 @@
 					(hide yes)
 				)
 			)
-			(property "ki_keywords" "RTC TCXO Realtime Time Clock MEMS I2C"
+			(property "Description" "64 x 8, Serial, I2C Real-time clock, 4.5V to 5.5V VCC, 0°C to +70°C, SOIC-8"
 				(at 0 0 0)
 				(effects
 					(font
@@ -3938,7 +3997,7 @@
 					(hide yes)
 				)
 			)
-			(property "ki_fp_filters" "SOIC*3.9x4.9mm*P1.27mm*"
+			(property "ki_keywords" "RTC, I2C Timekeeping Chip"
 				(at 0 0 0)
 				(effects
 					(font
@@ -3947,7 +4006,16 @@
 					(hide yes)
 				)
 			)
-			(symbol "DS3231MZ_0_1"
+			(property "ki_fp_filters" "SOIC*3.9x4.9mm?P1.27mm*"
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(symbol "DS1307Z+_0_1"
 				(rectangle
 					(start -10.16 7.62)
 					(end 10.16 -7.62)
@@ -3960,7 +4028,7 @@
 					)
 				)
 			)
-			(symbol "DS3231MZ_1_1"
+			(symbol "DS1307Z+_1_1"
 				(pin input line
 					(at -12.7 5.08 0)
 					(length 2.54)
@@ -3971,7 +4039,7 @@
 							)
 						)
 					)
-					(number "8"
+					(number "6"
 						(effects
 							(font
 								(size 1.27 1.27)
@@ -3989,7 +4057,7 @@
 							)
 						)
 					)
-					(number "7"
+					(number "5"
 						(effects
 							(font
 								(size 1.27 1.27)
@@ -3997,17 +4065,35 @@
 						)
 					)
 				)
-				(pin bidirectional line
-					(at -12.7 -5.08 0)
+				(pin input line
+					(at -12.7 -2.54 0)
 					(length 2.54)
-					(name "~{RST}"
+					(name "X1"
 						(effects
 							(font
 								(size 1.27 1.27)
 							)
 						)
 					)
-					(number "4"
+					(number "1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin input line
+					(at -12.7 -5.08 0)
+					(length 2.54)
+					(name "X2"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "2"
 						(effects
 							(font
 								(size 1.27 1.27)
@@ -4018,14 +4104,14 @@
 				(pin power_in line
 					(at -2.54 10.16 270)
 					(length 2.54)
-					(name "VBAT"
+					(name "VCC"
 						(effects
 							(font
 								(size 1.27 1.27)
 							)
 						)
 					)
-					(number "6"
+					(number "8"
 						(effects
 							(font
 								(size 1.27 1.27)
@@ -4036,14 +4122,14 @@
 				(pin power_in line
 					(at 0 10.16 270)
 					(length 2.54)
-					(name "VCC"
+					(name "VBAT"
 						(effects
 							(font
 								(size 1.27 1.27)
 							)
 						)
 					)
-					(number "2"
+					(number "3"
 						(effects
 							(font
 								(size 1.27 1.27)
@@ -4061,7 +4147,7 @@
 							)
 						)
 					)
-					(number "5"
+					(number "4"
 						(effects
 							(font
 								(size 1.27 1.27)
@@ -4070,34 +4156,16 @@
 					)
 				)
 				(pin open_collector line
-					(at 12.7 5.08 180)
+					(at 12.7 0 180)
 					(length 2.54)
-					(name "32KHZ"
+					(name "SQW/OUT"
 						(effects
 							(font
 								(size 1.27 1.27)
 							)
 						)
 					)
-					(number "1"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-				)
-				(pin open_collector line
-					(at 12.7 -2.54 180)
-					(length 2.54)
-					(name "~{INT}/SQW"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-					(number "3"
+					(number "7"
 						(effects
 							(font
 								(size 1.27 1.27)
@@ -5839,7 +5907,7 @@
 		(uuid "069dd7df-372c-4d21-8ae2-dc6b5a606d5e")
 	)
 	(junction
-		(at 33.02 166.37)
+		(at 33.02 170.18)
 		(diameter 0)
 		(color 0 0 0 0)
 		(uuid "06b4721a-30cc-4074-ac10-9aab227ef884")
@@ -5869,7 +5937,7 @@
 		(uuid "163f8474-b9c3-4dd7-9982-5ed501b3bb52")
 	)
 	(junction
-		(at 22.86 176.53)
+		(at 22.86 180.34)
 		(diameter 0)
 		(color 0 0 0 0)
 		(uuid "1f4c3101-2858-4ca9-b7eb-225e61e5fa8e")
@@ -5911,7 +5979,7 @@
 		(uuid "329bb6a5-b194-4ede-8a8b-2d900e472d4e")
 	)
 	(junction
-		(at 46.99 139.7)
+		(at 44.45 139.7)
 		(diameter 0)
 		(color 0 0 0 0)
 		(uuid "3673e8b8-d187-4851-9f92-617fadbe0c57")
@@ -5923,7 +5991,7 @@
 		(uuid "369070d2-6001-4dca-af4d-ae333b82e8c1")
 	)
 	(junction
-		(at 44.45 140.97)
+		(at 46.99 140.97)
 		(diameter 0)
 		(color 0 0 0 0)
 		(uuid "39798776-b64e-4976-b74e-6ccab3a83c3a")
@@ -6007,7 +6075,7 @@
 		(uuid "4e9138b0-b73c-4c4c-9be2-baa520e4aff1")
 	)
 	(junction
-		(at 22.86 173.99)
+		(at 22.86 177.8)
 		(diameter 0)
 		(color 0 0 0 0)
 		(uuid "530dedac-2ff4-4b51-8508-18c4e6711f74")
@@ -6127,7 +6195,7 @@
 		(uuid "b425d8bf-f20d-41e4-a6f0-006ee0b70036")
 	)
 	(junction
-		(at 33.02 181.61)
+		(at 33.02 185.42)
 		(diameter 0)
 		(color 0 0 0 0)
 		(uuid "b5da5e6b-557d-4f52-8df5-1f14696963be")
@@ -6247,7 +6315,7 @@
 		(uuid "fd57a32e-1c70-431b-a65d-a754ec95d162")
 	)
 	(no_connect
-		(at 59.69 147.32)
+		(at 59.69 152.4)
 		(uuid "0d69fc8b-f019-4707-9bbd-b18ff4073637")
 	)
 	(no_connect
@@ -6255,12 +6323,12 @@
 		(uuid "1f4a8bf9-2a8e-4e98-a4ef-9d942b8f91fb")
 	)
 	(no_connect
-		(at 59.69 154.94)
-		(uuid "50815f1b-8e0a-463d-bc60-d6392112c3bd")
-	)
-	(no_connect
 		(at 275.59 58.42)
 		(uuid "5d9a1bfc-6d8c-465f-a566-5df429ab4b6a")
+	)
+	(no_connect
+		(at 180.34 129.54)
+		(uuid "600f6286-bae7-4a0e-b731-8bdc2eebaf6f")
 	)
 	(no_connect
 		(at 275.59 34.29)
@@ -6271,6 +6339,10 @@
 		(uuid "69157c09-e879-4e99-8f83-0007f3fa690e")
 	)
 	(no_connect
+		(at 180.34 132.08)
+		(uuid "80f06095-a5ad-4bd5-b596-dd200ec20c88")
+	)
+	(no_connect
 		(at 275.59 29.21)
 		(uuid "82b559de-23e9-4ea0-bdb7-09addfc10c37")
 	)
@@ -6279,8 +6351,8 @@
 		(uuid "88f6428e-a1c9-4d86-a16c-92cbbaadcbd3")
 	)
 	(no_connect
-		(at 34.29 157.48)
-		(uuid "b2b06c88-2960-4c53-b66d-60e32306a714")
+		(at 180.34 134.62)
+		(uuid "dcccd7b7-9070-48be-aec3-0e0b93b176cf")
 	)
 	(wire
 		(pts
@@ -6314,7 +6386,7 @@
 	)
 	(wire
 		(pts
-			(xy 44.45 133.35) (xy 44.45 140.97)
+			(xy 46.99 133.35) (xy 46.99 140.97)
 		)
 		(stroke
 			(width 0)
@@ -6364,7 +6436,7 @@
 	)
 	(wire
 		(pts
-			(xy 22.86 173.99) (xy 22.86 176.53)
+			(xy 22.86 177.8) (xy 22.86 180.34)
 		)
 		(stroke
 			(width 0)
@@ -6404,7 +6476,7 @@
 	)
 	(wire
 		(pts
-			(xy 41.91 140.97) (xy 44.45 140.97)
+			(xy 49.53 140.97) (xy 46.99 140.97)
 		)
 		(stroke
 			(width 0)
@@ -6434,7 +6506,7 @@
 	)
 	(wire
 		(pts
-			(xy 43.18 181.61) (xy 33.02 181.61)
+			(xy 43.18 185.42) (xy 33.02 185.42)
 		)
 		(stroke
 			(width 0)
@@ -6484,7 +6556,7 @@
 	)
 	(wire
 		(pts
-			(xy 43.18 173.99) (xy 45.72 173.99)
+			(xy 43.18 177.8) (xy 45.72 177.8)
 		)
 		(stroke
 			(width 0)
@@ -6694,7 +6766,7 @@
 	)
 	(wire
 		(pts
-			(xy 44.45 140.97) (xy 44.45 142.24)
+			(xy 46.99 140.97) (xy 46.99 142.24)
 		)
 		(stroke
 			(width 0)
@@ -7044,7 +7116,7 @@
 	)
 	(wire
 		(pts
-			(xy 39.37 133.35) (xy 44.45 133.35)
+			(xy 52.07 133.35) (xy 46.99 133.35)
 		)
 		(stroke
 			(width 0)
@@ -7364,7 +7436,7 @@
 	)
 	(wire
 		(pts
-			(xy 22.86 171.45) (xy 22.86 173.99)
+			(xy 22.86 175.26) (xy 22.86 177.8)
 		)
 		(stroke
 			(width 0)
@@ -7481,16 +7553,6 @@
 			(type default)
 		)
 		(uuid "81263d91-7a36-4db2-99da-5abc8e62c33b")
-	)
-	(wire
-		(pts
-			(xy 180.34 132.08) (xy 184.15 132.08)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "817bcb06-40cf-49e7-84b1-bf27baba1023")
 	)
 	(wire
 		(pts
@@ -7624,7 +7686,7 @@
 	)
 	(wire
 		(pts
-			(xy 46.99 139.7) (xy 46.99 142.24)
+			(xy 44.45 139.7) (xy 44.45 142.24)
 		)
 		(stroke
 			(width 0)
@@ -8074,16 +8136,6 @@
 	)
 	(wire
 		(pts
-			(xy 180.34 129.54) (xy 184.15 129.54)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "ba724e87-dbcd-48ab-bca1-82e323f43437")
-	)
-	(wire
-		(pts
 			(xy 276.86 144.78) (xy 276.86 156.21)
 		)
 		(stroke
@@ -8091,16 +8143,6 @@
 			(type default)
 		)
 		(uuid "bafae410-0688-4163-8f01-2eca8c83044e")
-	)
-	(wire
-		(pts
-			(xy 46.99 138.43) (xy 46.99 139.7)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "bd87c079-7dc4-4f08-82b9-8bb6f3b4198e")
 	)
 	(wire
 		(pts
@@ -8121,6 +8163,16 @@
 			(type default)
 		)
 		(uuid "bf17cad8-001b-4ee6-89f2-af54f44ebbd0")
+	)
+	(wire
+		(pts
+			(xy 29.21 157.48) (xy 34.29 157.48)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "bf56d577-767b-4b78-bcc1-10bcf7093ed5")
 	)
 	(wire
 		(pts
@@ -8151,16 +8203,6 @@
 			(type default)
 		)
 		(uuid "c16ef29e-68f7-4cba-81fc-ce8bcfa2ce48")
-	)
-	(wire
-		(pts
-			(xy 180.34 134.62) (xy 184.15 134.62)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "c1b1a3a9-58b4-4214-958e-85af40928720")
 	)
 	(wire
 		(pts
@@ -8234,7 +8276,17 @@
 	)
 	(wire
 		(pts
-			(xy 43.18 176.53) (xy 43.18 181.61)
+			(xy 34.29 154.94) (xy 24.13 154.94)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "cd57b92a-5783-4319-8934-71df9949708d")
+	)
+	(wire
+		(pts
+			(xy 43.18 180.34) (xy 43.18 185.42)
 		)
 		(stroke
 			(width 0)
@@ -8304,6 +8356,16 @@
 	)
 	(wire
 		(pts
+			(xy 44.45 137.16) (xy 44.45 139.7)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "d7420863-e892-46e3-bccc-70ffa36bb1e2")
+	)
+	(wire
+		(pts
 			(xy 161.29 40.64) (xy 161.29 39.37)
 		)
 		(stroke
@@ -8314,7 +8376,7 @@
 	)
 	(wire
 		(pts
-			(xy 22.86 181.61) (xy 33.02 181.61)
+			(xy 22.86 185.42) (xy 33.02 185.42)
 		)
 		(stroke
 			(width 0)
@@ -8334,7 +8396,7 @@
 	)
 	(wire
 		(pts
-			(xy 22.86 176.53) (xy 22.86 181.61)
+			(xy 22.86 180.34) (xy 22.86 185.42)
 		)
 		(stroke
 			(width 0)
@@ -8584,7 +8646,7 @@
 	)
 	(wire
 		(pts
-			(xy 43.18 171.45) (xy 45.72 171.45)
+			(xy 43.18 175.26) (xy 45.72 175.26)
 		)
 		(stroke
 			(width 0)
@@ -8621,6 +8683,16 @@
 			(type default)
 		)
 		(uuid "f1a21a9b-2371-45fa-a425-3ca7a7f1cdad")
+	)
+	(wire
+		(pts
+			(xy 24.13 154.94) (xy 24.13 157.48)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "f266846d-10f8-4403-a3c7-9ed82aab1a49")
 	)
 	(wire
 		(pts
@@ -8826,22 +8898,22 @@
 	)
 	(global_label "VBat"
 		(shape input)
-		(at 39.37 133.35 180)
+		(at 52.07 133.35 0)
 		(fields_autoplaced yes)
 		(effects
 			(font
 				(size 1.27 1.27)
 			)
-			(justify right)
+			(justify left)
 		)
 		(uuid "01e50963-61e1-45e1-aab8-7c04b930bdc9")
 		(property "Intersheetrefs" "${INTERSHEET_REFS}"
-			(at 32.1515 133.35 0)
+			(at 59.2885 133.35 0)
 			(effects
 				(font
 					(size 1.27 1.27)
 				)
-				(justify right)
+				(justify left)
 				(hide yes)
 			)
 		)
@@ -8980,7 +9052,7 @@
 	)
 	(global_label "I2C_SCL"
 		(shape bidirectional)
-		(at 45.72 173.99 0)
+		(at 45.72 177.8 0)
 		(fields_autoplaced yes)
 		(effects
 			(font
@@ -8990,7 +9062,7 @@
 		)
 		(uuid "1545275c-ad46-4f62-b7a3-4d6b5a2a4b71")
 		(property "Intersheetrefs" "${INTERSHEET_REFS}"
-			(at 57.376 173.99 0)
+			(at 57.376 177.8 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -10256,7 +10328,7 @@
 	)
 	(global_label "I2C_SDA"
 		(shape bidirectional)
-		(at 45.72 171.45 0)
+		(at 45.72 175.26 0)
 		(fields_autoplaced yes)
 		(effects
 			(font
@@ -10266,7 +10338,7 @@
 		)
 		(uuid "c911479c-8d09-473d-b5f5-dcd00f89fdb2")
 		(property "Intersheetrefs" "${INTERSHEET_REFS}"
-			(at 57.4365 171.45 0)
+			(at 57.4365 175.26 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -10848,8 +10920,7 @@
 	)
 	(symbol
 		(lib_id "Device:Battery_Cell")
-		(at 36.83 140.97 270)
-		(mirror x)
+		(at 54.61 140.97 90)
 		(unit 1)
 		(exclude_from_sim no)
 		(in_bom yes)
@@ -10857,7 +10928,7 @@
 		(dnp no)
 		(uuid "05dc410f-15c7-49b9-87f8-a50f3e7cf6e9")
 		(property "Reference" "BT1"
-			(at 36.322 137.033 90)
+			(at 55.118 137.033 90)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -10866,7 +10937,7 @@
 			)
 		)
 		(property "Value" "3V"
-			(at 33.02 137.16 90)
+			(at 58.42 137.16 90)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -10875,7 +10946,7 @@
 			)
 		)
 		(property "Footprint" "footprints:BAT_BS-7-BLUE"
-			(at 38.354 140.97 90)
+			(at 53.086 140.97 90)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -10884,7 +10955,7 @@
 			)
 		)
 		(property "Datasheet" "~"
-			(at 38.354 140.97 90)
+			(at 53.086 140.97 90)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -10893,7 +10964,7 @@
 			)
 		)
 		(property "Description" ""
-			(at 36.83 140.97 0)
+			(at 54.61 140.97 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -12129,72 +12200,6 @@
 		)
 	)
 	(symbol
-		(lib_id "Connector:TestPoint")
-		(at 184.15 132.08 270)
-		(unit 1)
-		(exclude_from_sim no)
-		(in_bom no)
-		(on_board yes)
-		(dnp no)
-		(uuid "3e55544e-96f5-48bb-8ad3-81da7bbbab23")
-		(property "Reference" "TP4"
-			(at 188.722 132.08 90)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify left)
-			)
-		)
-		(property "Value" "A2"
-			(at 193.294 132.0801 90)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify left)
-			)
-		)
-		(property "Footprint" "TestPoint:TestPoint_Pad_D1.0mm"
-			(at 184.15 137.16 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Datasheet" "~"
-			(at 184.15 137.16 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Description" "test point"
-			(at 184.15 132.08 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(pin "1"
-			(uuid "44cec0e8-1260-48b1-af29-8dcf9dc37916")
-		)
-		(instances
-			(project "karabas-pro-revF"
-				(path "/0fa36eda-2d7d-4199-a7a1-2cda6b0cd120/30804830-8b4b-4203-8e29-20fad4bdaea9"
-					(reference "TP4")
-					(unit 1)
-				)
-			)
-		)
-	)
-	(symbol
 		(lib_id "power:+3.3VP")
 		(at 24.13 26.67 90)
 		(unit 1)
@@ -12794,72 +12799,6 @@
 		)
 	)
 	(symbol
-		(lib_id "Connector:TestPoint")
-		(at 184.15 129.54 270)
-		(unit 1)
-		(exclude_from_sim no)
-		(in_bom no)
-		(on_board yes)
-		(dnp no)
-		(uuid "4e4ac3b6-9ab3-476c-aee3-c98f5a2311b8")
-		(property "Reference" "TP3"
-			(at 188.722 129.54 90)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify left)
-			)
-		)
-		(property "Value" "A1"
-			(at 193.294 129.5401 90)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify left)
-			)
-		)
-		(property "Footprint" "TestPoint:TestPoint_Pad_D1.0mm"
-			(at 184.15 134.62 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Datasheet" "~"
-			(at 184.15 134.62 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Description" "test point"
-			(at 184.15 129.54 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(pin "1"
-			(uuid "c29f568c-6f56-4f4e-8974-73f94068a21e")
-		)
-		(instances
-			(project "karabas-pro-revF"
-				(path "/0fa36eda-2d7d-4199-a7a1-2cda6b0cd120/30804830-8b4b-4203-8e29-20fad4bdaea9"
-					(reference "TP3")
-					(unit 1)
-				)
-			)
-		)
-	)
-	(symbol
 		(lib_id "power:GND")
 		(at 95.25 48.26 0)
 		(unit 1)
@@ -13296,8 +13235,7 @@
 	)
 	(symbol
 		(lib_id "power:GND")
-		(at 54.61 139.7 90)
-		(mirror x)
+		(at 36.83 139.7 270)
 		(unit 1)
 		(exclude_from_sim no)
 		(in_bom yes)
@@ -13305,7 +13243,7 @@
 		(dnp no)
 		(uuid "5b91b838-8d78-4067-ad76-474d7cd93ff6")
 		(property "Reference" "#PWR040"
-			(at 60.96 139.7 0)
+			(at 30.48 139.7 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -13314,7 +13252,7 @@
 			)
 		)
 		(property "Value" "GND"
-			(at 59.0042 139.827 0)
+			(at 32.4358 139.827 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -13322,7 +13260,7 @@
 			)
 		)
 		(property "Footprint" ""
-			(at 54.61 139.7 0)
+			(at 36.83 139.7 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -13331,7 +13269,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 54.61 139.7 0)
+			(at 36.83 139.7 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -13340,7 +13278,7 @@
 			)
 		)
 		(property "Description" ""
-			(at 54.61 139.7 0)
+			(at 36.83 139.7 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -13619,6 +13557,70 @@
 		)
 	)
 	(symbol
+		(lib_id "power:VCC")
+		(at 44.45 137.16 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "61c0d85f-b977-41e7-807e-150f6a57e2a5")
+		(property "Reference" "#PWR011"
+			(at 44.45 140.97 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Value" "VCC"
+			(at 44.831 132.7658 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" ""
+			(at 44.45 137.16 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" ""
+			(at 44.45 137.16 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" ""
+			(at 44.45 137.16 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "57721006-70f1-4ba2-9975-f923cfaa4c9e")
+		)
+		(instances
+			(project "karabas-pro-revF"
+				(path "/0fa36eda-2d7d-4199-a7a1-2cda6b0cd120/30804830-8b4b-4203-8e29-20fad4bdaea9"
+					(reference "#PWR011")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
 		(lib_id "Transistor_FET:IRLML0030")
 		(at 243.84 36.83 270)
 		(mirror x)
@@ -13761,92 +13763,6 @@
 		)
 	)
 	(symbol
-		(lib_id "Timer_RTC:DS3231MZ")
-		(at 46.99 152.4 0)
-		(unit 1)
-		(exclude_from_sim no)
-		(in_bom yes)
-		(on_board yes)
-		(dnp no)
-		(uuid "63f8a297-e89f-47f7-aed6-936417866f7e")
-		(property "Reference" "U6"
-			(at 49.53 161.29 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify left)
-			)
-		)
-		(property "Value" "DS3231MZ"
-			(at 49.53 163.83 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify left)
-			)
-		)
-		(property "Footprint" "Package_SO:SOIC-8_3.9x4.9mm_P1.27mm"
-			(at 46.99 165.1 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Datasheet" "http://datasheets.maximintegrated.com/en/ds/DS3231M.pdf"
-			(at 46.99 167.64 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Description" ""
-			(at 46.99 152.4 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(pin "1"
-			(uuid "b2d00f25-3ca2-4a60-ba10-98899ececbe4")
-		)
-		(pin "2"
-			(uuid "846d2a7a-92e4-4dc2-a3e7-b58205dc95f1")
-		)
-		(pin "3"
-			(uuid "35b09ec6-5b2c-4c0c-ae9a-8b4bf3d3568b")
-		)
-		(pin "4"
-			(uuid "d72508b6-8c23-4e9a-b95f-b7e4143d226f")
-		)
-		(pin "5"
-			(uuid "44255e69-c110-4bf9-9443-48ae074537a1")
-		)
-		(pin "6"
-			(uuid "ba93c667-8a80-4296-a916-cbb245701eb7")
-		)
-		(pin "7"
-			(uuid "d89f6055-7d53-44b8-a1d9-ad5d5f5c636b")
-		)
-		(pin "8"
-			(uuid "2d7d6b6a-fecf-4e16-967b-3caa09ac1b8e")
-		)
-		(instances
-			(project "karabas-pro-revF"
-				(path "/0fa36eda-2d7d-4199-a7a1-2cda6b0cd120/30804830-8b4b-4203-8e29-20fad4bdaea9"
-					(reference "U6")
-					(unit 1)
-				)
-			)
-		)
-	)
-	(symbol
 		(lib_id "vcc33:VCC3_3")
 		(at 243.84 20.32 0)
 		(unit 1)
@@ -13977,8 +13893,7 @@
 	)
 	(symbol
 		(lib_id "Device:C")
-		(at 50.8 139.7 90)
-		(mirror x)
+		(at 40.64 139.7 270)
 		(unit 1)
 		(exclude_from_sim no)
 		(in_bom yes)
@@ -13986,7 +13901,7 @@
 		(dnp no)
 		(uuid "6b0d67a2-17eb-4b52-aa1a-5dbb3d59c8e5")
 		(property "Reference" "C2"
-			(at 52.07 133.35 90)
+			(at 39.37 133.35 90)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -13994,7 +13909,7 @@
 			)
 		)
 		(property "Value" "100n"
-			(at 52.07 135.89 90)
+			(at 39.37 135.89 90)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -14002,7 +13917,7 @@
 			)
 		)
 		(property "Footprint" "Capacitor_SMD:C_0805_2012Metric_Pad1.18x1.45mm_HandSolder"
-			(at 54.61 140.6652 0)
+			(at 36.83 140.6652 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -14011,7 +13926,7 @@
 			)
 		)
 		(property "Datasheet" "~"
-			(at 50.8 139.7 0)
+			(at 40.64 139.7 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -14020,7 +13935,7 @@
 			)
 		)
 		(property "Description" ""
-			(at 50.8 139.7 0)
+			(at 40.64 139.7 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -14443,7 +14358,7 @@
 	)
 	(symbol
 		(lib_id "power:GND")
-		(at 25.4 166.37 270)
+		(at 25.4 170.18 270)
 		(unit 1)
 		(exclude_from_sim no)
 		(in_bom yes)
@@ -14451,7 +14366,7 @@
 		(dnp no)
 		(uuid "780fd0f4-120e-4fca-b356-b20de026fbb2")
 		(property "Reference" "#PWR030"
-			(at 19.05 166.37 0)
+			(at 19.05 170.18 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -14460,7 +14375,7 @@
 			)
 		)
 		(property "Value" "GND"
-			(at 21.0058 166.497 0)
+			(at 21.0058 170.307 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -14468,7 +14383,7 @@
 			)
 		)
 		(property "Footprint" ""
-			(at 25.4 166.37 0)
+			(at 25.4 170.18 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -14477,7 +14392,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 25.4 166.37 0)
+			(at 25.4 170.18 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -14486,7 +14401,7 @@
 			)
 		)
 		(property "Description" ""
-			(at 25.4 166.37 0)
+			(at 25.4 170.18 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -14569,72 +14484,6 @@
 			(project "karabas-pro-revF"
 				(path "/0fa36eda-2d7d-4199-a7a1-2cda6b0cd120/30804830-8b4b-4203-8e29-20fad4bdaea9"
 					(reference "C5")
-					(unit 1)
-				)
-			)
-		)
-	)
-	(symbol
-		(lib_id "Connector:TestPoint")
-		(at 184.15 134.62 270)
-		(unit 1)
-		(exclude_from_sim no)
-		(in_bom no)
-		(on_board yes)
-		(dnp no)
-		(uuid "7e46837f-1f50-45d8-b6f4-c525ba32e63c")
-		(property "Reference" "TP5"
-			(at 188.722 134.62 90)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify left)
-			)
-		)
-		(property "Value" "A3"
-			(at 193.294 134.6201 90)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify left)
-			)
-		)
-		(property "Footprint" "TestPoint:TestPoint_Pad_D1.0mm"
-			(at 184.15 139.7 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Datasheet" "~"
-			(at 184.15 139.7 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Description" "test point"
-			(at 184.15 134.62 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(pin "1"
-			(uuid "e39df41c-1b26-4cc8-8f2b-f883ca7fa510")
-		)
-		(instances
-			(project "karabas-pro-revF"
-				(path "/0fa36eda-2d7d-4199-a7a1-2cda6b0cd120/30804830-8b4b-4203-8e29-20fad4bdaea9"
-					(reference "TP5")
 					(unit 1)
 				)
 			)
@@ -14898,6 +14747,92 @@
 			(project "karabas-pro-revF"
 				(path "/0fa36eda-2d7d-4199-a7a1-2cda6b0cd120/30804830-8b4b-4203-8e29-20fad4bdaea9"
 					(reference "D3")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Timer_RTC:DS1307Z+")
+		(at 46.99 152.4 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "9542a405-a672-4622-9578-5e3088108f94")
+		(property "Reference" "U2"
+			(at 63.5 145.9798 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "DS1307Z+"
+			(at 63.5 148.5198 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" "Package_SO:SOIC-8_3.9x4.9mm_P1.27mm"
+			(at 46.99 165.1 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" "https://datasheets.maximintegrated.com/en/ds/DS1307.pdf"
+			(at 46.99 152.4 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" "64 x 8, Serial, I2C Real-time clock, 4.5V to 5.5V VCC, 0°C to +70°C, SOIC-8"
+			(at 46.99 152.4 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(pin "1"
+			(uuid "82abc4a4-0a2e-4fd3-8b5b-33ed956d05ed")
+		)
+		(pin "2"
+			(uuid "d74d8fed-4c04-4014-9f1e-982fb4c4f7c4")
+		)
+		(pin "8"
+			(uuid "ced06563-ea0e-4f66-a6ea-f9b21c8ad090")
+		)
+		(pin "3"
+			(uuid "4e4c7a22-fe9b-45aa-bd91-77ca17049e0b")
+		)
+		(pin "6"
+			(uuid "8ea58845-1a03-4f02-b436-581f265e7d35")
+		)
+		(pin "5"
+			(uuid "f70f17c0-a766-4391-bc70-103e8ae5f823")
+		)
+		(pin "4"
+			(uuid "e27fc7aa-2e17-4bf1-9c20-56dfa1127d98")
+		)
+		(pin "7"
+			(uuid "10725154-7e75-4d81-a84c-207c67f61ce4")
+		)
+		(instances
+			(project ""
+				(path "/0fa36eda-2d7d-4199-a7a1-2cda6b0cd120/30804830-8b4b-4203-8e29-20fad4bdaea9"
+					(reference "U2")
 					(unit 1)
 				)
 			)
@@ -15971,6 +15906,76 @@
 		)
 	)
 	(symbol
+		(lib_id "Device:Crystal_GND3_Small")
+		(at 26.67 157.48 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "b61bde28-49a5-466e-ba6e-ed609778f611")
+		(property "Reference" "Y2"
+			(at 26.67 153.67 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "32768"
+			(at 31.75 159.258 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" "Crystal:Crystal_C26-LF_D2.1mm_L6.5mm_Horizontal_1EP_style2"
+			(at 26.67 157.48 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" "~"
+			(at 26.67 157.48 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" "Three pin crystal, GND on pin 3, small symbol"
+			(at 26.67 157.48 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(pin "1"
+			(uuid "c5a4bc3c-9ff1-4f88-b4c4-6204c9f2e450")
+		)
+		(pin "2"
+			(uuid "b491acc1-0977-4e30-b22a-e6b94abccbc7")
+		)
+		(pin "3"
+			(uuid "f2c0e1d4-e896-417c-9859-b54c56605230")
+		)
+		(instances
+			(project ""
+				(path "/0fa36eda-2d7d-4199-a7a1-2cda6b0cd120/30804830-8b4b-4203-8e29-20fad4bdaea9"
+					(reference "Y2")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
 		(lib_name "VCC_1")
 		(lib_id "power:VCC")
 		(at 208.28 133.35 90)
@@ -16660,35 +16665,16 @@
 		)
 	)
 	(symbol
-		(lib_id "Memory_EEPROM:24LC08")
-		(at 33.02 173.99 0)
+		(lib_id "power:GND")
+		(at 26.67 160.02 0)
 		(unit 1)
 		(exclude_from_sim no)
 		(in_bom yes)
 		(on_board yes)
 		(dnp no)
-		(fields_autoplaced yes)
-		(uuid "d0070695-81a2-4d46-ab5a-103c54067026")
-		(property "Reference" "U4"
-			(at 35.2141 163.83 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify left)
-			)
-		)
-		(property "Value" "24LC08B"
-			(at 35.2141 166.37 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify left)
-			)
-		)
-		(property "Footprint" "Package_SO:SO-8_3.9x4.9mm_P1.27mm"
-			(at 33.02 173.99 0)
+		(uuid "cef44d5c-3598-496e-a137-7fab3f77a730")
+		(property "Reference" "#PWR012"
+			(at 26.67 166.37 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -16696,8 +16682,25 @@
 				(hide yes)
 			)
 		)
-		(property "Datasheet" "http://ww1.microchip.com/downloads/en/DeviceDoc/21710J.pdf"
-			(at 33.02 173.99 0)
+		(property "Value" "GND"
+			(at 26.67 163.83 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" ""
+			(at 26.67 160.02 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" ""
+			(at 26.67 160.02 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -16706,7 +16709,72 @@
 			)
 		)
 		(property "Description" ""
-			(at 33.02 173.99 0)
+			(at 26.67 160.02 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "f40c7149-0258-4bb3-9c51-b61de737a223")
+		)
+		(instances
+			(project "karabas-pro-revF"
+				(path "/0fa36eda-2d7d-4199-a7a1-2cda6b0cd120/30804830-8b4b-4203-8e29-20fad4bdaea9"
+					(reference "#PWR012")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Memory_EEPROM:24LC08")
+		(at 33.02 177.8 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "d0070695-81a2-4d46-ab5a-103c54067026")
+		(property "Reference" "U4"
+			(at 35.306 168.402 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Value" "24LC08B"
+			(at 35.306 170.942 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Footprint" "Package_SO:SO-8_3.9x4.9mm_P1.27mm"
+			(at 33.02 177.8 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" "http://ww1.microchip.com/downloads/en/DeviceDoc/21710J.pdf"
+			(at 33.02 177.8 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" ""
+			(at 33.02 177.8 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -16748,8 +16816,7 @@
 	)
 	(symbol
 		(lib_id "power:GND")
-		(at 34.29 140.97 270)
-		(mirror x)
+		(at 57.15 140.97 90)
 		(unit 1)
 		(exclude_from_sim no)
 		(in_bom yes)
@@ -16757,7 +16824,7 @@
 		(dnp no)
 		(uuid "d1fca4ac-ff47-4ca1-95b2-8e4063631549")
 		(property "Reference" "#PWR033"
-			(at 27.94 140.97 0)
+			(at 63.5 140.97 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -16766,7 +16833,7 @@
 			)
 		)
 		(property "Value" "GND"
-			(at 29.8958 140.843 0)
+			(at 61.5442 140.843 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -16774,7 +16841,7 @@
 			)
 		)
 		(property "Footprint" ""
-			(at 34.29 140.97 0)
+			(at 57.15 140.97 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -16783,7 +16850,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 34.29 140.97 0)
+			(at 57.15 140.97 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -16792,7 +16859,7 @@
 			)
 		)
 		(property "Description" ""
-			(at 34.29 140.97 0)
+			(at 57.15 140.97 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -16944,7 +17011,7 @@
 	)
 	(symbol
 		(lib_id "power:GND")
-		(at 33.02 181.61 0)
+		(at 33.02 185.42 0)
 		(unit 1)
 		(exclude_from_sim no)
 		(in_bom yes)
@@ -16952,7 +17019,7 @@
 		(dnp no)
 		(uuid "df195ec3-6340-4f28-9309-0bf2b5ca22d0")
 		(property "Reference" "#PWR032"
-			(at 33.02 187.96 0)
+			(at 33.02 191.77 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -16961,7 +17028,7 @@
 			)
 		)
 		(property "Value" "GND"
-			(at 33.147 186.0042 0)
+			(at 33.147 189.8142 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -16969,7 +17036,7 @@
 			)
 		)
 		(property "Footprint" ""
-			(at 33.02 181.61 0)
+			(at 33.02 185.42 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -16978,7 +17045,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 33.02 181.61 0)
+			(at 33.02 185.42 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -16987,7 +17054,7 @@
 			)
 		)
 		(property "Description" ""
-			(at 33.02 181.61 0)
+			(at 33.02 185.42 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -17116,7 +17183,7 @@
 	)
 	(symbol
 		(lib_id "vcc33:VCC3_3")
-		(at 33.02 166.37 0)
+		(at 33.02 170.18 0)
 		(unit 1)
 		(exclude_from_sim no)
 		(in_bom yes)
@@ -17124,7 +17191,7 @@
 		(dnp no)
 		(uuid "e5dfb6b6-ee7e-40bb-818a-af45b56a1413")
 		(property "Reference" "#PWR031"
-			(at 33.02 170.18 0)
+			(at 33.02 173.99 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -17133,7 +17200,7 @@
 			)
 		)
 		(property "Value" "VCC3_3"
-			(at 31.75 162.56 0)
+			(at 33.02 166.37 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -17141,7 +17208,7 @@
 			)
 		)
 		(property "Footprint" ""
-			(at 33.02 166.37 0)
+			(at 33.02 170.18 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -17150,7 +17217,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 33.02 166.37 0)
+			(at 33.02 170.18 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -17159,7 +17226,7 @@
 			)
 		)
 		(property "Description" ""
-			(at 33.02 166.37 0)
+			(at 33.02 170.18 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -17319,7 +17386,7 @@
 	)
 	(symbol
 		(lib_id "Device:C")
-		(at 29.21 166.37 270)
+		(at 29.21 170.18 270)
 		(unit 1)
 		(exclude_from_sim no)
 		(in_bom yes)
@@ -17327,7 +17394,7 @@
 		(dnp no)
 		(uuid "eb3c9b26-4dcc-4ee8-80a8-07c4d85ca18f")
 		(property "Reference" "C1"
-			(at 25.4 160.02 90)
+			(at 21.336 166.37 90)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -17335,7 +17402,7 @@
 			)
 		)
 		(property "Value" "100n"
-			(at 25.4 162.56 90)
+			(at 25.4 166.37 90)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -17343,7 +17410,7 @@
 			)
 		)
 		(property "Footprint" "Capacitor_SMD:C_0805_2012Metric_Pad1.18x1.45mm_HandSolder"
-			(at 25.4 167.3352 0)
+			(at 25.4 171.1452 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -17352,7 +17419,7 @@
 			)
 		)
 		(property "Datasheet" "~"
-			(at 29.21 166.37 0)
+			(at 29.21 170.18 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -17361,7 +17428,7 @@
 			)
 		)
 		(property "Description" ""
-			(at 29.21 166.37 0)
+			(at 29.21 170.18 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -17646,70 +17713,6 @@
 			(project "karabas-pro-revF"
 				(path "/0fa36eda-2d7d-4199-a7a1-2cda6b0cd120/30804830-8b4b-4203-8e29-20fad4bdaea9"
 					(reference "#PWR037")
-					(unit 1)
-				)
-			)
-		)
-	)
-	(symbol
-		(lib_id "vcc33:VCC3_3")
-		(at 46.99 138.43 0)
-		(unit 1)
-		(exclude_from_sim no)
-		(in_bom yes)
-		(on_board yes)
-		(dnp no)
-		(uuid "f0114c35-a370-452c-8ba7-f20c3bb8883d")
-		(property "Reference" "#PWR038"
-			(at 46.99 142.24 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Value" "VCC3_3"
-			(at 45.72 134.62 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Footprint" ""
-			(at 46.99 138.43 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Datasheet" ""
-			(at 46.99 138.43 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Description" ""
-			(at 46.99 138.43 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(pin "1"
-			(uuid "a545b101-8547-4c6f-a61f-c6d9ebe1f1fe")
-		)
-		(instances
-			(project "karabas-pro-revF"
-				(path "/0fa36eda-2d7d-4199-a7a1-2cda6b0cd120/30804830-8b4b-4203-8e29-20fad4bdaea9"
-					(reference "#PWR038")
 					(unit 1)
 				)
 			)

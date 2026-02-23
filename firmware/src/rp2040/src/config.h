@@ -165,9 +165,18 @@
 #define WAIT_SERIAL 0
 #endif
 
+#ifndef DEBUG_MODE
+#define d_begin(...);
+#define d_print(...);
+#define d_printf(...);
+#define d_write(...);
+#define d_println(...);
+#define d_flush(...);
+#else
 #define d_begin(...)   Serial.begin(__VA_ARGS__);
 #define d_print(...)   Serial.print(__VA_ARGS__);
 #define d_printf(...)  Serial.printf(__VA_ARGS__);
 #define d_write(...)   Serial.write(__VA_ARGS__);
 #define d_println(...) Serial.println(__VA_ARGS__);
 #define d_flush(...)   Serial.flush(__VA_ARGS__);
+#endif

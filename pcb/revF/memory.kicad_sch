@@ -6,8 +6,8 @@
 	(paper "A4")
 	(title_block
 		(title "Karabas Pro")
-		(date "2025-10-10")
-		(rev "F a3")
+		(date "2026-02-23")
+		(rev "F a4")
 	)
 	(lib_symbols
 		(symbol "power:GND"
