@@ -45,6 +45,7 @@ EU, 2025
 #include "boot_core.h"
 #include "PS2KeyAdvanced.h"
 #include "PS2Mouse.h"
+#include <GyverFIFO.h>
 
 #define SD_CONFIG  SdSpiConfig(PIN_SD_CS, SHARED_SPI, SD_SCK_MHZ(8), &SPI) // SD1 SPI Settings
 SPISettings settingsA(SD_SCK_MHZ(8), MSBFIRST, SPI_MODE0); // MCU SPI settings
@@ -142,6 +143,9 @@ uint16_t debug_address = 0;
 uint16_t prev_debug_address = 0;
 uint16_t debug_data = 0;
 uint16_t prev_debug_data = 0;
+
+GyverFIFO<uint8_t, 4096> esp_rx_fifo;
+GyverFIFO<uint8_t, 4096> usb_rx_fifo;
 
 void ps2_int(uint a, uint32_t b)
 {
@@ -341,27 +345,38 @@ void loop()
     }
   }
 
-  if (Serial.available() || Serial1.available()) {
-    // usb serial rx
-    if (Serial.available() > 0 && !usb_fifo_full) {
-      usb_uart_idx++;
-      int uart_rx = Serial.read();
-      if (uart_rx != -1) {
-        spi_send(CMD_USB_UART, usb_uart_idx, (uint8_t) uart_rx);
-      }
-    // esp8266 serial rx
-    } if (Serial1.available() > 0 && !esp_fifo_full) {
-      esp_uart_idx++;
-      char uart_rx = Serial1.read();
-      if (uart_rx != -1) {
-        spi_send(CMD_ESP_UART, esp_uart_idx, (uint8_t) uart_rx);
-        //d_print(uart_rx);
-        //Serial.write(uart_rx);
-      }
+  // read from usb serial to usb fifo
+  while (Serial.available() && usb_rx_fifo.availableForWrite()) {
+    int usb_rx = Serial.read();
+    if (usb_rx != -1) {
+      usb_rx_fifo.write((uint8_t) usb_rx);
     }
-  } else {
-    spi_send(CMD_NOP, 0 ,0);
   }
+
+  // read from esp serial to esp fifo
+  while (Serial1.available() && esp_rx_fifo.availableForWrite()) {
+    int esp_rx = Serial1.read();
+    if (esp_rx != -1) {
+      esp_rx_fifo.write((uint8_t) esp_rx);
+    }
+  }
+
+  // send usb serial fifo value to the fpga side
+  if (usb_rx_fifo.available() && !usb_fifo_full) {
+    uint8_t usb_rx = usb_rx_fifo.read();
+    usb_uart_idx++;
+    spi_send(CMD_USB_UART, usb_uart_idx, usb_rx);
+  }
+
+  // send esp serial fifo value to the fpga side
+  if (esp_rx_fifo.available() && !esp_fifo_full) {
+    uint8_t esp_rx = esp_rx_fifo.read();
+    esp_uart_idx++;
+    spi_send(CMD_ESP_UART, esp_uart_idx, esp_rx);
+  }
+
+  // nop to read something from the fpga side if any
+  spi_send(CMD_NOP, 0 ,0);
 }
 
 uint8_t get_ps2_usb_modifier() {
@@ -1038,9 +1053,10 @@ void process_in_cmd(uint8_t cmd, uint8_t addr, uint8_t data) {
   switch (cmd) {
     case CMD_UART_FIFO_STATUS : 
       esp_fifo_full = bitRead(data, 0); // rx esp fifo on fpga side
+      digitalWrite(PIN_UART_CTS, esp_fifo_full); // set hw cts 0/1
       usb_fifo_full = bitRead(data, 1); // rx usb fifo on fpga side
-      d_print("ESP FIFO "); if (esp_fifo_full) d_println("full") else d_println("empty");
-      d_print("USB FIFO "); if (usb_fifo_full) d_println("full") else d_println("empty");
+      //d_print("ESP FIFO "); if (esp_fifo_full) d_println("full") else d_println("empty");
+      //d_print("USB FIFO "); if (usb_fifo_full) d_println("full") else d_println("empty");
       break;
     case CMD_USB_UART: serial_data(addr, data); break;
     case CMD_ESP_UART: Serial1.write(data); break;

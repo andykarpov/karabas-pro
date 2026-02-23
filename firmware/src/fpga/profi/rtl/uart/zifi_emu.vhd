@@ -29,6 +29,7 @@ port(
 	 -- usb uart (mcu interface)
 	 USB_UART_RX_DATA : in std_logic_vector(7 downto 0);
 	 USB_UART_RX_IDX  : in std_logic_vector(7 downto 0);
+	 USB_UART_RX_FIFO_FULL : out std_logic;
 	 USB_UART_TX_DATA : out std_logic_vector(7 downto 0);
 	 USB_UART_TX_WR : out std_logic := '0';
 	 USB_UART_TX_MODE : out std_logic := '0'; -- 0 - zifi @ 115200, 1 - rs232 @ dll/dlm
@@ -41,6 +42,7 @@ port(
 	 -- esp 8266 (mcu interface)
 	 ESP_UART_RX_DATA : in std_logic_vector(7 downto 0);
 	 ESP_UART_RX_IDX  : in std_logic_vector(7 downto 0);
+	 ESP_UART_RX_FIFO_FULL : out std_logic;
 	 ESP_UART_TX_DATA : out std_logic_vector(7 downto 0);
 	 ESP_UART_TX_WR : out std_logic
 );
@@ -86,7 +88,7 @@ signal command_reg          : std_logic_vector(7 downto 0);
 signal err_reg              : std_logic_vector(7 downto 0);
 signal di_reg               : std_logic_vector(7 downto 0);
 signal do_reg               : std_logic_vector(7 downto 0);
-signal api_enabled          : std_logic := '1';
+signal api_enabled          : std_logic := '0';
 
 signal zifi_fifo_tx_di           : std_logic_vector(7 downto 0);
 signal zifi_fifo_tx_do           : std_logic_vector(7 downto 0);
@@ -111,7 +113,7 @@ signal zifi_fifo_rx_do          : std_logic_vector(7 downto 0);
 signal zifi_fifo_rx_rd_req      : std_logic := '0';
 signal zifi_fifo_rx_wr_req      : std_logic := '0';
 signal zifi_fifo_rx_clr_req     : std_logic := '0';
-signal zifi_fifo_rx_used        : std_logic_vector(7 downto 0) := (others => '0');
+signal zifi_fifo_rx_used        : std_logic_vector(10 downto 0) := (others => '0');
 signal zifi_fifo_rx_full 			: std_logic;
 signal zifi_fifo_rx_empty       : std_logic;
 
@@ -120,7 +122,7 @@ signal rs232_fifo_rx_do          : std_logic_vector(7 downto 0);
 signal rs232_fifo_rx_rd_req      : std_logic := '0';
 signal rs232_fifo_rx_wr_req      : std_logic := '0';
 signal rs232_fifo_rx_clr_req     : std_logic := '0';
-signal rs232_fifo_rx_used        : std_logic_vector(7 downto 0) := (others => '0');
+signal rs232_fifo_rx_used        : std_logic_vector(10 downto 0) := (others => '0');
 signal rs232_fifo_rx_full 			: std_logic;
 signal rs232_fifo_rx_empty       : std_logic;
 
@@ -184,7 +186,7 @@ begin
 
 -- zifi
 
-ZIFI_FIFO_IN: fifo
+ZIFI_FIFO_IN: fifo -- tx fifo
 generic map(
 	ADDR_WIDTH => 8, -- 256 bytes
 	DATA_WIDTH => 8
@@ -201,9 +203,9 @@ port map(
 	 data_count => zifi_fifo_tx_used
 );
 
-ZIFI_FIFO_OUT: fifo
+ZIFI_FIFO_OUT: fifo -- rx fifo
 generic map(
-	ADDR_WIDTH => 8, -- 256 bytes
+	ADDR_WIDTH => 11, -- 2048 bytes
 	DATA_WIDTH => 8
 )
 port map(
@@ -220,7 +222,7 @@ port map(
 
 -- rs232
 
-RS232_FIFO_IN: fifo
+RS232_FIFO_IN: fifo -- tx fifo
 generic map(
 	ADDR_WIDTH => 8, -- 256 bytes
 	DATA_WIDTH => 8
@@ -237,9 +239,9 @@ port map(
     data_count => rs232_fifo_tx_used	 
 );
 
-RS232_FIFO_OUT: fifo
+RS232_FIFO_OUT: fifo -- rx fifo
 generic map(
-	ADDR_WIDTH => 8, -- 256 bytes
+	ADDR_WIDTH => 11, -- 2048 bytes
 	DATA_WIDTH => 8
 )
 port map(
@@ -391,7 +393,7 @@ begin
         rs232_rd_allow <= '1';
         rs232_fifo_tx_wr_req <= '0';
 
-        api_enabled <= '1';
+        api_enabled <= '0';
         is_rs232 <= '0';
 		  is_evo_rs232 <= '0';
 		  
@@ -609,15 +611,11 @@ begin
 end process;
 
 DO <= -- ts zifi / rs232 ports 
-		-- 191 when rx fifo > 191
-      "10111111"  when IORQ_N = '0' and RD_N = '0' and A = zifi_in_fifo_port and zifi_fifo_rx_used > 191  else 
-      "10111111"  when IORQ_N = '0' and RD_N = '0' and A = rs232_in_fifo_port and rs232_fifo_rx_used > 191  else 
-		-- 0 when rx is busy (hotfix)
-		"00000000"  when IORQ_N = '0' and RD_N = '0' and A = zifi_in_fifo_port and zifi_fifo_rx_busy = '1' else
-		"00000000"  when IORQ_N = '0' and RD_N = '0' and A = rs232_in_fifo_port and rs232_fifo_rx_busy = '1' else
+      "11111111"  when IORQ_N = '0' and RD_N = '0' and A = zifi_in_fifo_port and zifi_fifo_rx_used >= 255  else 
+      "11111111"  when IORQ_N = '0' and RD_N = '0' and A = rs232_in_fifo_port and rs232_fifo_rx_used >= 255  else 
 		-- actual rx fifo size
-	   zifi_fifo_rx_used(7 downto 0)  when IORQ_N = '0' and RD_N = '0' and A = zifi_in_fifo_port  else 
-      rs232_fifo_rx_used(7 downto 0)  when IORQ_N = '0' and RD_N = '0' and A = rs232_in_fifo_port  else 
+	   zifi_fifo_rx_used(7 downto 0)  when IORQ_N = '0' and RD_N = '0' and A = zifi_in_fifo_port else 
+      rs232_fifo_rx_used(7 downto 0)  when IORQ_N = '0' and RD_N = '0' and A = rs232_in_fifo_port else 
 		-- tx fifo size
       zifi_fifo_tx_free when IORQ_N = '0' and RD_N = '0' and A = zifi_out_fifo_port else 
       rs232_fifo_tx_free when IORQ_N = '0' and RD_N = '0' and A = rs232_out_fifo_port else 
@@ -680,38 +678,10 @@ evo_lsr_reg(0) <= not rs232_fifo_rx_empty;
 evo_msr_reg <= "11100000";
 
 ENABLED <= api_enabled;
-
---UART_CTS <= '1' when zifi_fifo_rx_used > 1792 else '0'; -- active 0
 USB_UART_DLL <= evo_dl_reg(7 downto 0);
 USB_UART_DLM <= evo_dl_reg(15 downto 8);
 USB_UART_TX_MODE <= is_evo_rs232;
-
--- workarround to fix random hang of zifi.spg (a2cfe54), which is always doing 191-bytes-inir (see fifo_inir function)
-process (clk) begin
-	if rising_edge(clk) then
-		-- zifi
-		if (zifi_fifo_rx_wr_req = '1') then 
-			zifi_fifo_busy_cnt <= "00000000000000000001";
-		elsif (zifi_fifo_busy_cnt > 0) then 
-			zifi_fifo_busy_cnt <= zifi_fifo_busy_cnt + 1;
-		end if;		
-		if (zifi_fifo_rx_wr_req = '1' or zifi_fifo_busy_cnt > 0) and zifi_fifo_rx_used < 191 then
-			zifi_fifo_rx_busy <= '1';
-		else
-			zifi_fifo_rx_busy <= '0';
-		end if;
-		-- rs232
-		if (rs232_fifo_rx_wr_req = '1') then 
-			rs232_fifo_busy_cnt <= "00000000000000000001";
-		elsif (rs232_fifo_busy_cnt > 0) then 
-			rs232_fifo_busy_cnt <= rs232_fifo_busy_cnt + 1;
-		end if;		
-		if (rs232_fifo_rx_wr_req = '1' or rs232_fifo_busy_cnt > 0) and rs232_fifo_rx_used < 191 then
-			rs232_fifo_rx_busy <= '1';
-		else
-			rs232_fifo_rx_busy <= '0';
-		end if;		
-	end if;
-end process;
+USB_UART_RX_FIFO_FULL <= '1' when (rs232_fifo_rx_used > 1792) else '0';
+ESP_UART_RX_FIFO_FULL <= '1' when (zifi_fifo_rx_used > 1792) else '0';
 
 end rtl;

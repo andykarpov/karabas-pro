@@ -105,24 +105,24 @@ void OSD::frame(uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2, uint8_t thicknes
     for(uint8_t y=y1; y<=y2; y++) {
         setPos(x1, y);
         for(uint8_t x=x1; x<=x2; x++) {
-            if (y==y1 && x==x1) {
-                write(210); // lt
+	    if (y==y1 && x==x1) {
+                write(thickness ? 201 : 218); // lt
             }
             else if (y==y2 && x==x1) {
-                write(212); // lb
+                write(thickness ? 200 : 192); // lb
             }
             else if (y==y1 && x==x2) {
-                write(211); // rt
+                write(thickness ? 187 : 191); // rt
             }
             else if (y==y2 && x==x2) {
-                write(213); // rb
+                write(thickness ? 188 : 217); // rb
             }
             else if (y==y1 || y == y2) {
-                write(209); // t / b
+                write(thickness ? 205 : 196); // t / b
             }
             else if ((x==x1 && y>y1 && y<y2) || (x==x2 && y>y1 && y<y2)) {
                 setPos(x,y);
-                write(208); // l / r
+                write(thickness ? 186 : 179); // l / r
             }
         }
     }
@@ -196,7 +196,7 @@ void OSD::fontSend(uint8_t data) {
 void OSD::line(uint8_t y) {
   setPos(0,y);
   for (uint8_t i=0; i<32; i++) {
-    write(0xd1); 
+    write(0x5f); 
   }
 }
 
