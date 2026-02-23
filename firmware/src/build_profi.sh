@@ -70,3 +70,19 @@ make clean
 echo "Done"
 
 cd ../../../../
+
+echo "Building Profi FPGA sources for EP4CE22"
+
+cd fpga/profi/syn/en4ce22
+
+make clean
+make all
+make profi.kp1
+
+cp profi.kp1 ../../../../../releases/profi/ep4ce22/profi.kp1
+
+make clean
+
+echo "Done"
+
+cd ../../../../

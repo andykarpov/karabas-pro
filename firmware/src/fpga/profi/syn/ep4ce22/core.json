@@ -1,7 +1,7 @@
 {
     "id": "profi",
     "name": "Profi +",
-    "build": "26022300",
+    "build": "26022320",
     "bitstream": "karabas_pro_ep4ce22.rbf",
     "visible": true,
     "type": "osd",

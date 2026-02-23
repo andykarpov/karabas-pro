@@ -10,7 +10,7 @@ OUTFILE = profi
 all: smart.log $(PROJECT).asm.rpt $(PROJECT).sta.rpt $(PROJECT).rbf $(OUTFILE).kp1
 
 clean:
-	rm -rf *.rpt *.chg smart.log *.htm *.eqn *.pin *.sof *.pof db incremental_db *.summary *.done *.smsg *.jdi *.jic *.map *.rbf greybox* PLLJ_*.txt *.kp1
+	rm -rf *.rpt *.chg smart.log *.htm *.eqn *.pin *.sof *.pof db incremental_db *.summary *.done *.smsg *.jdi *.map *.rbf greybox* PLLJ_*.txt *.kp1
 
 map: smart.log $(PROJECT).map.rpt
 fit: smart.log $(PROJECT).fit.rpt
@@ -74,6 +74,8 @@ $(PROJECT).rbf: $(PROJECT).sof
 	quartus_cpf -c $(PROJECT)_rbf.cof
 
 $(OUTFILE).kp1: $(PROJECT).rbf
+	@NEW_BUILD=$$(date +"%y%m%d%H"); \
+	sed -i "s/\"build\": \"[0-9]*\"/\"build\": \"$$NEW_BUILD\"/g" core.json
 	python3 make_core.py core.json $(OUTFILE).kp1
 
 ##################################################################
