@@ -1,0 +1,16 @@
+{
+    "id": "boot",
+    "name": "Boot Menu",
+    "build": "2510112B",
+    "bitstream": "karabas_pro_ep4ce22.rbf",
+    "visible": false,
+    "type": "boot",
+    "order": 1,
+    "eeprom_bank": 0,
+    "sd_access": 1,
+    "roms": [],
+    "osd": [
+        {"type": "T", "bits": 1, "name": "Reset", "options": null, "default": 0, "hotkey": "Ctrl+Alt+Del"},
+        {"type": "T", "bits": 1, "name": "Global Reset", "options": null, "default": 0, "hotkey": "Ctrl+Alt+Bkspace"}
+    ]
+}
