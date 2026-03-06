@@ -1,0 +1,21 @@
+{
+    "id": "nes",
+    "name": "NES",
+    "build": "2603061B",
+    "bitstream": "karabas_pro_ep4ce22.rbf",
+    "visible": true,
+    "type": "fileloader",
+    "dir": "nes",
+    "filename": "",
+    "extensions": ".nes,.ines",
+    "order": 6,
+    "eeprom_bank": 255,
+    "sd_access": 1,
+    "spi_freq": 8,
+    "roms": [
+    ],
+    "osd": [
+        {"type": "T", "name": "Reset", "hotkey": "F12"}
+    ]
+}
+
