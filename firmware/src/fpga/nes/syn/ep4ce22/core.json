@@ -1,7 +1,7 @@
 {
     "id": "nes",
     "name": "NES",
-    "build": "2603061B",
+    "build": "26030616",
     "bitstream": "karabas_pro_ep4ce22.rbf",
     "visible": true,
     "type": "fileloader",
