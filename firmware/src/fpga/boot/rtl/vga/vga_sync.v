@@ -1,9 +1,9 @@
 `default_nettype none
 module vga_sync(
     input wire  clk,
-    output wire hs,
-    output wire vs,
-    output wire de,
+    output reg hs,
+    output reg vs,
+    output reg de,
 	 output wire [11:0] h,
 	 output wire [11:0] v
 );
@@ -42,15 +42,38 @@ reg [11:0] hcnt;
 reg [11:0] vcnt;
 
 always @(posedge clk) begin
-    hcnt <= (hcnt == h_end) ? 0 : hcnt + 1;
-    if (hcnt == h_sync_on) begin
-        vcnt <= (vcnt == v_end) ? 0 : vcnt + 1;
-    end
+	// cnt
+	if (hcnt == h_end) begin
+		hcnt <= 0;
+		if (vcnt == v_end) begin
+			vcnt <= 0;
+		end else begin
+			vcnt <= vcnt + 1;
+		end
+	end else begin
+		hcnt <= hcnt + 1;
+	end
+	
+	// hs
+	if (hcnt == h_sync_on)
+		hs <= h_sync_pol;
+	else if (hcnt == h_sync_off)
+		hs <= ~h_sync_pol;
+		
+	// vs
+	if (vcnt == v_sync_on)
+		vs <= v_sync_pol;
+	else if (vcnt == v_sync_off)
+		vs <= ~v_sync_pol;
+		
+	// de
+	if (hcnt <= h_size && vcnt <= v_size)
+		de <= 1;
+	else
+		de <= 0;
+		
 end
 
-assign hs = ((hcnt <= h_sync_on) || (hcnt > h_sync_off)) ? ~h_sync_pol : h_sync_pol;
-assign vs = ((vcnt <= v_sync_on) || (vcnt > v_sync_off)) ? ~v_sync_pol : v_sync_pol;
-assign de = ((hcnt > h_size) || (vcnt > v_size)) ? 1'b0 : 1'b1;
 assign h = hcnt;
 assign v = vcnt;
 
