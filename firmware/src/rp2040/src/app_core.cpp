@@ -573,7 +573,7 @@ void app_core_on_select_file() {
   if (core.osd[curr_osd_item].type == CORE_OSD_TYPE_FILELOADER) {
 
     zxosd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
-    zxosd.frame(8,8,24,12, 1);
+    zxosd.frame(8,8,24,12, 2);
     zxosd.fill(9,9,23,11, 32);
     zxosd.setColor(OSD::COLOR_YELLOW_I, OSD::COLOR_BLACK);
     zxosd.setPos(9, 9);

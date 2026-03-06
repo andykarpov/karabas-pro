@@ -66,7 +66,8 @@ def main():
     # convert boot core into the variable
     convert("../fpga/boot/syn/ep4ce22/boot.kp1", "src/", "boot_core")
     # convert osd font into the variable
-    convert("font/osd_font_866.pf", "src/", "osd_font")
+    #convert("font/osd_font_866.pf", "src/", "osd_font")
+    convert("font/font_logo_ua.pf", "src/", "osd_font")
 
     
 #if __name__ == "__main__":

@@ -22,6 +22,10 @@ extern bool need_redraw;
 extern File file1, file2;
 extern Dir root1;
 
+extern SdFat32 sd1;
+extern File32 sdfile, sdroot;
+extern bool has_sd;
+
 extern hid_keyboard_report_t usb_keyboard_report;
 extern hid_mouse_report_t usb_mouse_report;
 

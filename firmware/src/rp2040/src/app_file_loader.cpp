@@ -15,7 +15,7 @@
 void app_file_loader_read_list(bool forceIndex = false) {
 
   zxosd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
-  zxosd.frame(8,8,24,12, 1);
+  zxosd.frame(8,8,24,12, 2);
   zxosd.fill(9,9,23,11, 32);
   zxosd.setColor(OSD::COLOR_GREEN_I, OSD::COLOR_BLACK);
   zxosd.setPos(9, 9);
@@ -27,20 +27,20 @@ void app_file_loader_read_list(bool forceIndex = false) {
 
   // files from sd1 card
 
-  /*if (has_sd) {
+  if (has_sd) {
     String dir = String(core.dir);
     dir.trim();
     if (dir.length() == 0) dir = "/";
     if (dir.charAt(0) != '/') dir = "/" + dir;
     char d[256];
     dir.toCharArray(d, 255);
-    if (root1.isOpen()) {
-      root1.close();
+    if (sdroot.isOpen()) {
+      sdroot.close();
     }
-    if (!root1.open(d)) {
+    if (!sdroot.open(d)) {
 
         zxosd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
-        zxosd.frame(8,8,24,12, 1);
+        zxosd.frame(8,8,24,12, 2);
         zxosd.fill(9,9,23,11, 32);
         zxosd.setColor(OSD::COLOR_RED_I, OSD::COLOR_BLACK);
         zxosd.setPos(9, 9);
@@ -53,7 +53,7 @@ void app_file_loader_read_list(bool forceIndex = false) {
         app_file_loader_read_list(forceIndex);
         return;
     }
-    root1.rewind();
+    sdroot.rewind();
 
     d_println("Read file list");
     files_len = 0;
@@ -63,22 +63,22 @@ void app_file_loader_read_list(bool forceIndex = false) {
     exts.toLowerCase(); exts.trim();
     char e[33];
     exts.toCharArray(e, 32);
-    while (file1.openNext(&root1, O_RDONLY)) {
-      char filename[14]; file1.getSFN(filename, sizeof(filename));
+    while (sdfile.openNext(&sdroot, O_RDONLY)) {
+      char filename[14]; sdfile.getSFN(filename, sizeof(filename));
       uint8_t len = strlen(filename);
-      if (!file1.isDirectory() && files_len < SORT_FILES_MAX) {
+      if (!sdfile.isDirectory() && files_len < SORT_FILES_MAX) {
         if (exts.length() == 0 || exts.indexOf(strlwr(filename + (len - 4))) != -1) {
           memcpy(files[files_len].hash, filename, SORT_HASH_LEN);
-          files[files_len].file_id = file1.dirIndex();
+          files[files_len].file_id = sdfile.dirIndex();
           files_len++;
         }
       }
-      file1.close();
+      sdfile.close();
     }
 
   } else {
     zxosd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
-    zxosd.frame(8,8,24,12, 1);
+    zxosd.frame(8,8,24,12, 2);
     zxosd.fill(9,9,23,11, 32);
     zxosd.setColor(OSD::COLOR_RED_I, OSD::COLOR_BLACK);
     zxosd.setPos(9, 9);
@@ -88,27 +88,27 @@ void app_file_loader_read_list(bool forceIndex = false) {
     delay(1000);
     app_file_loader_read_list(forceIndex);
     return;
-  }*/
+  }
 
   // sort by file name
   std::sort(files, files + files_len);
   
   // cleanup error messages
-  /*if (has_sd) {
+  if (has_sd) {
     zxosd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
     zxosd.fill(8,8,24,12, 32);  
-  }*/
+  }
 
   // select and load prev file on boot
-  /*if (has_sd && files_len > 0 && core.last_file_id > 0) {
+  if (has_sd && files_len > 0 && core.last_file_id > 0) {
     //d_printf("Looking for last file id = %d", core.last_file_id); d_println();
     for (uint16_t i=0; i<files_len; i++) {
       if (core.last_file_id == files[i].file_id) {
           file_sel = i;
           //d_printf("Found %d pos", i); d_println();
-          if (file1.open(&root1, core.last_file_id)) {
+          if (sdfile.open(&sdroot, core.last_file_id)) {
             app_file_loader_send_file(core.last_file_id);
-            file1.close();
+            sdfile.close();
           }
           // hide osd
           if (!is_osd_hiding) {
@@ -118,7 +118,7 @@ void app_file_loader_read_list(bool forceIndex = false) {
           }
       }
     }
-  }*/
+  }
 }
 
 void app_file_loader_menu(uint8_t vpos) {
@@ -130,7 +130,7 @@ void app_file_loader_menu(uint8_t vpos) {
   uint16_t pos = vpos;
   uint16_t j = 0;
 
-  /*if (files_len > 0) {    
+  if (files_len > 0) {    
     for(uint16_t i=file_from; i < file_to; i++) {
       zxosd.setPos(0, pos);
       if (file_sel == i) {
@@ -148,15 +148,15 @@ void app_file_loader_menu(uint8_t vpos) {
       // get name from filename and put into cache
       else {
 
-        if (file1.open(&root1, files[i].file_id)) {
+        if (sdfile.open(&sdroot, files[i].file_id)) {
           char filename[255];
-          file1.getName(filename, sizeof(filename));
+          sdfile.getName(filename, sizeof(filename));
           String exts = String(core.file_extensions); exts.toLowerCase(); exts.trim();
           String f(filename);
           f.toCharArray(name, sizeof(name));
           f.toCharArray(cached_names[j].name, sizeof(cached_names[j].name));
           cached_names[j].name[32] = '\0';
-          file1.close();
+          sdfile.close();
         }
       }
 
@@ -173,7 +173,7 @@ void app_file_loader_menu(uint8_t vpos) {
     }
     cached_file_from = file_from;
     cached_file_to = file_to;
-  }*/
+  }
   if (file_fill > file_to) {
     for (uint16_t i=file_to; i<file_fill; i++) {
       zxosd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
@@ -211,24 +211,24 @@ void app_file_loader_overlay(bool initSD = true, bool recreateIndex = false) {
 
 void app_file_loader_save()
 {
-    /*sd1.chvol();
-    if (!file1.open(core.filename, FILE_WRITE)) {
+  return; // TODO: придумать, куда писать сохранение!!!
+  if (file1) {
+    file1.close();
+  }
+  file1 = LittleFS.open(core.filename, "w"); 
+    if (!file1) {
       d_println("Unable to open bitstream file to write");
-      return;
-    }
-    if (!file1.isWritable()) {
-      d_println("File is not writable");
       return;
     }
     core.last_file_id = files[file_sel].file_id;
     file_write16(FILE_POS_FILELOADER_FILE, core.last_file_id);
-    file1.close();*/
+    file1.close();
 }
 
 void app_file_loader_send_file(uint16_t file_id) {
   
   zxosd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
-  zxosd.frame(8,8,24,12, 1);
+  zxosd.frame(8,8,24,12, 2);
   zxosd.fill(9,9,23,11, 32);
   zxosd.setColor(OSD::COLOR_GREEN_I, OSD::COLOR_BLACK);
   zxosd.setPos(9, 9);
@@ -237,11 +237,11 @@ void app_file_loader_send_file(uint16_t file_id) {
   zxosd.setPos(9,10);
   zxosd.print("Please wait.   ");
 
-  /*if (root1.isOpen()) {
-    root1.close();
+  if (sdroot.isOpen()) {
+    sdroot.close();
   }
 
-  if (!root1.isOpen()) {
+  if (!sdroot.isOpen()) {
     String dir = String(core.dir);
     dir.trim();
     if (dir.length() == 0) dir = "/";
@@ -249,7 +249,7 @@ void app_file_loader_send_file(uint16_t file_id) {
     //sd1.chdir(dir);
     char dirname[255];
     dir.toCharArray(dirname, sizeof(dirname));
-    if (!root1.open(&sd1, dirname)) {
+    if (!sdroot.open(&sd1, dirname)) {
       d_printf("Unable to open dir %s", dirname); d_println();
       return;
     } else {
@@ -257,22 +257,22 @@ void app_file_loader_send_file(uint16_t file_id) {
     }
   }
 
-  if (file1.isOpen()) {
-    file1.close();
+  if (sdfile.isOpen()) {
+    sdfile.close();
   }
 
-  if (!file1.open(&root1, file_id, FILE_READ)) {
+  if (!sdfile.open(&sdroot, file_id, FILE_READ)) {
     d_printf("Unable to open file %d", file_id); d_println();
     d_flush();
     app_file_loader_overlay(false, false);
     return;
-  }*/
+  }
 
   uint8_t buf[512];
   int c;
 
   zxosd.setColor(OSD::COLOR_WHITE, OSD::COLOR_BLACK);
-  zxosd.frame(8,8,24,12, 1);
+  zxosd.frame(8,8,24,12, 2);
   zxosd.fill(9,9,23,11, 32);
   zxosd.setColor(OSD::COLOR_YELLOW_I, OSD::COLOR_BLACK);
   zxosd.setPos(9, 9);
@@ -286,14 +286,14 @@ void app_file_loader_send_file(uint16_t file_id) {
   spi_send(CMD_FILELOADER, 0, 3); // 11 - active = 1, reset = 1
   spi_send(CMD_FILELOADER, 0, 2); // 10 - active = 1, reset = 0
 
-  uint64_t file_size = file1.size();
+  uint64_t file_size = sdfile.size();
 
   d_printf("Sending file %d (%d bytes)", file_id, (uint32_t)((file_size))); d_println();
   d_flush();
   
 uint32_t cnt = 0;
 
-  while(c = file1.read(buf, sizeof(buf))) {
+  while(c = sdfile.read(buf, sizeof(buf))) {
     for (int j=0; j<c; j++) {
       app_file_loader_send_byte(cnt, buf[j]);
       cnt++;
@@ -308,7 +308,7 @@ uint32_t cnt = 0;
   // 00 - active = 0, reset = 0
   spi_send(CMD_FILELOADER, 0, 0);
 
-  file1.close();
+  sdfile.close();
   d_printf("Sent %u bytes", cnt); d_println();
   delay(100);
 

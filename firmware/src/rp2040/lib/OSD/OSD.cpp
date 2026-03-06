@@ -106,23 +106,23 @@ void OSD::frame(uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2, uint8_t thicknes
         setPos(x1, y);
         for(uint8_t x=x1; x<=x2; x++) {
 	    if (y==y1 && x==x1) {
-                write(thickness ? 201 : 218); // lt
+                write(218); // lt
             }
             else if (y==y2 && x==x1) {
-                write(thickness ? 200 : 192); // lb
+                write(214); // lb
             }
             else if (y==y1 && x==x2) {
-                write(thickness ? 187 : 191); // rt
+                write(213); // rt
             }
             else if (y==y2 && x==x2) {
-                write(thickness ? 188 : 217); // rb
+                write(217); // rb
             }
             else if (y==y1 || y == y2) {
-                write(thickness ? 205 : 196); // t / b
+                write(215); // t / b
             }
             else if ((x==x1 && y>y1 && y<y2) || (x==x2 && y>y1 && y<y2)) {
                 setPos(x,y);
-                write(thickness ? 186 : 179); // l / r
+                write(216); // l / r
             }
         }
     }

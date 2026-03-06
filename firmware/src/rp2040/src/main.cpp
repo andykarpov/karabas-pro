@@ -604,6 +604,13 @@ void update_cores_from_sd() {
 
 void do_configure(const char* filename) {
   is_configuring = true;
+
+  // turn off SD
+  sd1.end();
+  has_sd = false;
+  SPI.end(); SPI.begin(false); // reinit SPI
+  digitalWrite(PIN_SD_CS, HIGH); // disabling SD CS
+
   fpga_send(filename);
   spi_send(CMD_INIT_START, 0, 0);
   // trigger font loader reset
@@ -651,7 +658,7 @@ void do_configure(const char* filename) {
   SPI.end(); SPI.begin(false); // reinit SPI
   is_configuring = false;
   d_println("FPGA configuration finished");
-  delay(100);
+  delay(10);
   spi_send(CMD_INIT_DONE, 0, 0);
 }
 
