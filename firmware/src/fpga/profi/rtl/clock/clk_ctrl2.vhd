@@ -34,7 +34,7 @@
 
 
 --altclkctrl CBX_AUTO_BLACKBOX="ALL" CLOCK_TYPE="Global Clock" DEVICE_FAMILY="Cyclone IV E" ENA_REGISTER_MODE="falling edge" USE_GLITCH_FREE_SWITCH_OVER_IMPLEMENTATION="ON" clkselect ena inclk outclk
---VERSION_BEGIN 13.0 cbx_altclkbuf 2013:06:12:18:03:43:SJ cbx_cycloneii 2013:06:12:18:03:43:SJ cbx_lpm_add_sub 2013:06:12:18:03:43:SJ cbx_lpm_compare 2013:06:12:18:03:43:SJ cbx_lpm_decode 2013:06:12:18:03:43:SJ cbx_lpm_mux 2013:06:12:18:03:43:SJ cbx_mgl 2013:06:12:18:05:10:SJ cbx_stratix 2013:06:12:18:03:43:SJ cbx_stratixii 2013:06:12:18:03:43:SJ cbx_stratixiii 2013:06:12:18:03:43:SJ cbx_stratixv 2013:06:12:18:03:43:SJ  VERSION_END
+--VERSION_BEGIN 13.0 cbx_altclkbuf 2013:06:12:18:04:00:SJ cbx_cycloneii 2013:06:12:18:04:00:SJ cbx_lpm_add_sub 2013:06:12:18:04:00:SJ cbx_lpm_compare 2013:06:12:18:04:00:SJ cbx_lpm_decode 2013:06:12:18:04:00:SJ cbx_lpm_mux 2013:06:12:18:04:00:SJ cbx_mgl 2013:06:12:18:04:42:SJ cbx_stratix 2013:06:12:18:04:00:SJ cbx_stratixii 2013:06:12:18:04:00:SJ cbx_stratixiii 2013:06:12:18:04:00:SJ cbx_stratixv 2013:06:12:18:04:00:SJ  VERSION_END
 
  LIBRARY cycloneive;
  USE cycloneive.all;
@@ -79,8 +79,8 @@
 	 SIGNAL  wire_clkctrl1_clkselect	:	STD_LOGIC_VECTOR (1 DOWNTO 0);
 	 SIGNAL  wire_vcc	:	STD_LOGIC;
 	 SIGNAL  wire_clkctrl1_outclk	:	STD_LOGIC;
-	 SIGNAL  wire_w_lg_w_select_enable_wire_range14w20w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_clkselect_wire_range13w15w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_select_enable_wire_range15w20w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_clkselect_wire_range13w14w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL  wire_w_lg_w_clkselect_wire_range18w19w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL  clkselect_wire :	STD_LOGIC_VECTOR (1 DOWNTO 0);
 	 SIGNAL  inclk_wire :	STD_LOGIC_VECTOR (3 DOWNTO 0);
@@ -88,7 +88,7 @@
 	 SIGNAL  wire_w_clkselect_wire_range13w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL  wire_w_clkselect_wire_range3w	:	STD_LOGIC_VECTOR (1 DOWNTO 0);
 	 SIGNAL  wire_w_clkselect_wire_range18w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_select_enable_wire_range14w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_select_enable_wire_range15w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 COMPONENT  cycloneive_clkctrl
 	 GENERIC 
 	 (
@@ -107,17 +107,17 @@
  BEGIN
 
 	wire_vcc <= '1';
-	wire_w_lg_w_select_enable_wire_range14w20w(0) <= wire_w_select_enable_wire_range14w(0) OR wire_w_lg_w_clkselect_wire_range18w19w(0);
-	wire_w_lg_w_clkselect_wire_range13w15w(0) <= wire_w_clkselect_wire_range13w(0) XOR wire_select_reg_w_q_range12w(0);
+	wire_w_lg_w_select_enable_wire_range15w20w(0) <= wire_w_select_enable_wire_range15w(0) OR wire_w_lg_w_clkselect_wire_range18w19w(0);
+	wire_w_lg_w_clkselect_wire_range13w14w(0) <= wire_w_clkselect_wire_range13w(0) XOR wire_select_reg_w_q_range12w(0);
 	wire_w_lg_w_clkselect_wire_range18w19w(0) <= wire_w_clkselect_wire_range18w(0) XOR wire_select_reg_w_q_range17w(0);
 	clkselect_wire <= ( clkselect);
 	inclk_wire <= ( inclk);
 	outclk <= (wire_clkctrl1_outclk AND ena_reg);
-	select_enable_wire <= ( wire_w_lg_w_select_enable_wire_range14w20w & wire_w_lg_w_clkselect_wire_range13w15w);
+	select_enable_wire <= ( wire_w_lg_w_select_enable_wire_range15w20w & wire_w_lg_w_clkselect_wire_range13w14w);
 	wire_w_clkselect_wire_range13w(0) <= clkselect_wire(0);
 	wire_w_clkselect_wire_range3w <= clkselect_wire(1 DOWNTO 0);
 	wire_w_clkselect_wire_range18w(0) <= clkselect_wire(1);
-	wire_w_select_enable_wire_range14w(0) <= select_enable_wire(0);
+	wire_w_select_enable_wire_range15w(0) <= select_enable_wire(0);
 	PROCESS (wire_clkctrl1_outclk)
 	BEGIN
 		IF (wire_clkctrl1_outclk = '0' AND wire_clkctrl1_outclk'event) THEN ena_reg <= (ena AND (NOT select_enable_wire(1)));
@@ -242,7 +242,7 @@ END RTL;
 -- Retrieval info: CONNECT: outclk 0 0 0 0 @outclk 0 0 0 0
 -- Retrieval info: GEN_FILE: TYPE_NORMAL clk_ctrl2.vhd TRUE
 -- Retrieval info: GEN_FILE: TYPE_NORMAL clk_ctrl2.inc FALSE
--- Retrieval info: GEN_FILE: TYPE_NORMAL clk_ctrl2.cmp TRUE
+-- Retrieval info: GEN_FILE: TYPE_NORMAL clk_ctrl2.cmp FALSE
 -- Retrieval info: GEN_FILE: TYPE_NORMAL clk_ctrl2.bsf FALSE
 -- Retrieval info: GEN_FILE: TYPE_NORMAL clk_ctrl2_inst.vhd FALSE
 -- Retrieval info: LIB_FILE: cycloneive

@@ -1,5 +1,15 @@
 # Karabas-Pro PCB changelog:
 
+## Rev.F:
+- Replaced EP4CE10 with EP4CE22
+- Replaced Atmega328p with RP2040
+- Replaced TDA1543 with PCM5102A DAC
+- Moved ESP8266 to the RP2040 side
+- Removed conf flash from the FPGA
+- Removed beeper
+- Removed extra RAM chips
+- Added EEPROM chip
+
 ## Rev.Ї (EU):
 - All PCB labels translated to Ukrainian language
 

@@ -1,0 +1,16 @@
+{
+    "id": "test",
+    "name": "Test",
+    "build": "26022012",
+    "bitstream": "karabas_pro_ep4ce22.rbf",
+    "visible": true,
+    "type": "none",
+    "order": 10,
+    "eeprom_bank": 255,
+    "sd_access": 1,
+    "roms": [],
+    "osd": [
+        {"type": "T", "bits": 1, "name": "Reset", "options": null, "default": 0, "hotkey": "Ctrl+Alt+Del"},
+        {"type": "T", "bits": 1, "name": "Global Reset", "options": null, "default": 0, "hotkey": "Ctrl+Alt+Bkspace"}
+    ]
+}
