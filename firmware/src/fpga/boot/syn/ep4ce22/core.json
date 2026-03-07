@@ -1,7 +1,7 @@
 {
     "id": "boot",
     "name": "Boot Menu",
-    "build": "26030618",
+    "build": "26030617",
     "bitstream": "karabas_pro_ep4ce22.rbf",
     "visible": false,
     "type": "boot",

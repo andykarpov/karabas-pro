@@ -37,7 +37,7 @@ module karabas_pro_top (
     //----------------- SPI Master for SD
     output wire         SD_CS_N,
     output wire         SD_SCK,     // ASDO pin6
-    inout wire          SD_MISO,    // DATA0 (warning! mcu output while configuring )
+    input wire          SD_MISO,    // DATA0 (warning! mcu output while configuring )
     output wire         SD_MOSI,    // dedicated SD MOSI
      // DCLK - can not be used! remains only for PS programming!
 
@@ -150,21 +150,21 @@ overlay #(.DEFAULT(1), .H_OFFSET(172), .V_OFFSET(60)) overlay(
 reg [8:0] rgb = 0;
 always @(posedge clk_sys)
 	if (video_de)
-		if (h < 100) rgb <= 9'b111111111;
+		if (h < 100)      rgb <= 9'b111111111;
 		else if (h < 200) rgb <= 9'b111111000;
 		else if (h < 300) rgb <= 9'b000111111;
 		else if (h < 400) rgb <= 9'b000111000;
 		else if (h < 500) rgb <= 9'b111000111;
 		else if (h < 600) rgb <= 9'b111000000;
 		else if (h < 700) rgb <= 9'b000000111;
-		else if (h < 800) rgb <= 9'b000000000;
+		else if (h < 800) rgb <= 9'b011011011;
 		else rgb <= 9'b000000000;
 	else rgb <= 9'b000000000;
 	
 // vga mux
-assign VGA_R[2:0]     = osd_r[2:0];
-assign VGA_G[2:0]     = osd_g[2:0];
-assign VGA_B[2:0]     = osd_b[2:0];
+assign VGA_R[2:0]     = (video_de) ? osd_r[2:0] : 3'b000;
+assign VGA_G[2:0]     = (video_de) ? osd_g[2:0] : 3'b000;
+assign VGA_B[2:0]     = (video_de) ? osd_b[2:0] : 3'b000;
 assign VGA_HS         = video_hs;
 assign VGA_VS         = video_vs;
 

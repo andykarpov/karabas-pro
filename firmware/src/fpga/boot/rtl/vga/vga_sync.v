@@ -29,13 +29,13 @@ module vga_sync(
 localparam [11:0] h_size = 800-1;
 localparam [11:0] h_sync_on = 840-1;
 localparam [11:0] h_sync_off = 968-1;
-localparam        h_sync_pol = 1;
+localparam        h_sync_pol = 1'b1;
 localparam [11:0] h_end = 1056-1;
 
 localparam [11:0] v_size = 600-1;
 localparam [11:0] v_sync_on = 601-1;
 localparam [11:0] v_sync_off = 605-1;
-localparam        v_sync_pol = 1;
+localparam        v_sync_pol = 1'b1;
 localparam [11:0] v_end = 628-1;
 
 reg [11:0] hcnt;
