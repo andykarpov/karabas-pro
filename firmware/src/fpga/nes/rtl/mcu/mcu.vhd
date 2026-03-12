@@ -96,11 +96,9 @@ architecture rtl of mcu is
 
 	 -- romload addr
 	 signal tmp_romload_addr    : std_logic_vector(31 downto 0);
-	 signal prev_romload_addr   : std_logic_vector(31 downto 0) := x"FFFFFFFF";
 
 	 -- file addr
 	 signal tmp_fileload_addr   : std_logic_vector(31 downto 0);
-	 signal prev_fileload_addr  : std_logic_vector(31 downto 0) := x"FFFFFFFF";
 
 	--state machine for queue writes
 	type qmachine IS(idle, rtc_wr_req, rtc_wr_ack);
@@ -151,6 +149,8 @@ begin
 	process (CLK)
 	begin
 		if (rising_edge(CLK)) then
+			ROMLOAD_WR <= '0';
+			FILELOAD_WR <= '0';
 			prev_spi_do_valid <= spi_do_valid;
 			if spi_do_valid = '1' and prev_spi_do_valid = '0' then
 				case spi_do(23 downto 16) is 
@@ -225,6 +225,7 @@ begin
 						ROMLOAD_ADDR(31 downto 8) <= tmp_romload_addr(31 downto 8);
 						ROMLOAD_ADDR(7 downto 0) <= spi_do(15 downto 8);
 						ROMLOAD_DATA(7 downto 0) <= spi_do(7 downto 0);
+						ROMLOAD_WR <= '1';
 						
 					when CMD_ROMLOADER =>
 						ROMLOADER_ACTIVE <= spi_do(0);
@@ -243,6 +244,7 @@ begin
 						FILELOAD_ADDR(31 downto 8) <= tmp_fileload_addr(31 downto 8);
 						FILELOAD_ADDR(7 downto 0) <= spi_do(15 downto 8);
 						FILELOAD_DATA(7 downto 0) <= spi_do(7 downto 0);
+						FILELOAD_WR <= '1';
 						
 					when CMD_FILELOADER =>
 						FILELOAD_RESET <= spi_do(0);
@@ -258,30 +260,6 @@ begin
 					
 					when others => null;
 				end case;
-			end if;
-		end if;
-	end process;
-	
-	-- romload wr signal
-	process (CLK)
-	begin
-		if rising_edge(CLK) then 
-			ROMLOAD_WR <= '0';
-			if (prev_romload_addr /= ROMLOAD_ADDR and ROMLOADER_ACTIVE = '1') then 
-				ROMLOAD_WR <= '1';
-				prev_romload_addr <= ROMLOAD_ADDR;
-			end if;
-		end if;
-	end process;
-	
-	-- fileload wr signal
-	process (CLK)
-	begin
-		if rising_edge(CLK) then 
-			FILELOAD_WR <= '0';
-			if (prev_fileload_addr /= FILELOAD_ADDR) then 
-				FILELOAD_WR <= '1';
-				prev_fileload_addr <= FILELOAD_ADDR;
 			end if;
 		end if;
 	end process;

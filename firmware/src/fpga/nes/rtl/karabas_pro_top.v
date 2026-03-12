@@ -191,6 +191,9 @@ PCM5102 PCM5102(
 	.lrck(DAC_LRCK)
 );
 
+assign audio_out_l = {sample[15] ^ 1'b1, sample[14:0]};
+assign audio_out_r = {sample[15] ^ 1'b1, sample[14:0]};
+
 //--------- OSD --------------
 
 wire [2:0] video_r, video_g, video_b, osd_r, osd_g, osd_b;

@@ -172,9 +172,8 @@ assign VGA_VS         = video_vs;
 assign SD_SCK = MCU_SCK;
 assign SD_CS_N = MCU_SD_CS_N;
 assign SD_MOSI = MCU_MOSI;
-assign MCU_MISO = (~MCU_SD_CS_N) ? SD_MISO :
-                  (~MCU_CS_N) ? mcu_miso_int :
-                  1'b1;
+assign MCU_MISO = (~MCU_CS_N) ? mcu_miso_int :
+                  SD_MISO;
 
 endmodule
 

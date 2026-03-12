@@ -640,7 +640,7 @@ void do_configure(const char* filename) {
   has_sd = false;
   if (core.sd_enable) {
     d_println("Trying to mount SD card");
-    has_sd = sd1.begin(SD_CONFIG);
+    has_sd = sd1.begin(SdSpiConfig(PIN_SD_CS, SHARED_SPI, SD_SCK_MHZ(8), &SPI));
     if (has_sd) {
       d_println("SD card mounted");
       update_cores_from_sd();
