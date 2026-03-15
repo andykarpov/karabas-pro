@@ -39,7 +39,9 @@ port (
 	SA: in std_logic_vector(1 downto 0);
 	-- OCH: if SDIR == 1 - Nemo HDD port is accessed from FPGA
 	SDIR: in std_logic; -- OCH
-	SD: inout std_logic_vector(15 downto 0);
+	SD_IN : in std_logic_vector(7 downto 0);   -- SD[7:0]
+	SD_OUT : out std_logic_vector(7 downto 0); -- SD[15:8]
+--	SD: inout std_logic_vector(15 downto 0);
 
 	-- BDI signals
 	FDC_NWR: out std_logic;
@@ -92,7 +94,8 @@ signal ide_bus_do : std_logic_vector(7 downto 0);
 
 begin 
 
-	SD(15 downto 8) <= bus_do;
+	--SD(15 downto 8) <= bus_do;
+	SD_OUT <= bus_do;
 	
 	-- rx
 	process (CLK, SA)
@@ -100,12 +103,12 @@ begin
 		if rising_edge(CLK) then
 			case SA is 
 				when "00" => 
-					rx_buf <= SD(7 downto 0); -- rx
+					rx_buf <= SD_IN(7 downto 0); -- SD(7 downto 0); -- rx
 				when "01" => 
 					bus_a(15 downto 8) <= rx_buf;
-					bus_a(7 downto 0) <= SD(7 downto 0);
+					bus_a(7 downto 0) <= SD_IN(7 downto 0); -- SD(7 downto 0);
 				when "10" =>
-					bus_di <= SD(7 downto 0);
+					bus_di <= SD_IN(7 downto 0); -- SD(7 downto 0);
 				when "11" =>
 					bus_di <= bus_di;
 			end case;

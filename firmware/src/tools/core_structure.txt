@@ -1,0 +1,58 @@
+Karabas Pro core file structure v1
+---------------------------------
+
+SIGNATURE + CORE SETUP + BITSTREAM + ROMS + OSD PARAMETERS
+4+32+32+8+1+1+1+1=
+-----------------------------------------------------
+Offset             | N of Bytes | Description 
+-----------------------------------------------------
+0                  | 4          | Signature (kpro)
+4                  | 32         | Core ID
+36                 | 32         | Core Name
+68                 | 8          | Core Revision
+76                 | 1          | Visible in the core list (1 - visible, 0 - invisible)
+77                 | 1          | Order number (1-255)
+78                 | 1          | Type (0 - boot, 1 - normal osd, 2 - fileloader, 3-255 - reserved)
+79                 | 1          | EEPROM bank (0-3)
+80                 | 4          | Bitstream Length (B)
+84                 | 4          | Roms Length (R)
+88                 | 1          | RTC type: 0 = mc146818a mode (default), 1 = ds1307 registers mode
+89                 | 32         | Initial directory in fileloader mode
+121                | 32         | Selected filename in fileloader mode
+153                | 32         | Allowed fileloader file extensions (comma separated)
+185                | 1          | Core SPI frequency (0 = default)
+186                | 1          | SD card access (1 - allowed, 0 - not allowed)
+187                | 32         | Reserved
+219                | 37         | Reserved
+256                | 256        | Initial EEPROM Data
+512                | 256        | Initial OSD Switches Data
+768                | 256        | Reserved
+... bitstream ...
+1024               | N          | Bitstream
+... roms ...
+1024+B             | 4          | ROM0 Length (or ROM0 filename length if bit31=1 that means external ROM on sd card)
+1028+B             | 4          | ROM0 target address
+1032+B             | R0         | ROM0 Data (or ROM0 filename for external ROM)
+... osd parameters ...
+1032+B+R           | 1          | Number of OSD parameters
+1033+B+R           | 1          | Param 0 type (
+                                        0 - switch (S in json), 
+                                        1 - non-volatile switch (N in json), 
+                                        2 - trigger (T in json), 
+                                        3 - hidden trigger (H in json), 
+                                        4 - plain text line (P in json),
+                                        5 - file mounter (F in json),
+                                        6 - file loader (FL in json)
+                                  )
+1034+B+R           | 1          | Reserved
+1050+B+R           | 16         | Parameter Name
+1051+B+R           | 1          | Default value
+1052+B+R           | 1          | Number of options (or slot number for file mounter, autoload bit as bit7)
+1068+B+R           | 16(256)    | option0 (or 256 bytes for file mounter extension)
+1084+B+R           | 16(256)    | option1 (or 256 bytes for file mounter initial dirname - writable by firmware)
+1100+B+R           | 16(256)    | option2 (or 256 bytes for file mounter filename - writable by firmware)
+...
+1100+B+R           | 16         | Hotkey description (or second 16 bytes of text line)
+1116+B+R           | 2          | Hotkey keycodes
+1119+B+R           | 3          | Reserved
+

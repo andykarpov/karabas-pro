@@ -965,7 +965,8 @@ port map (
 	CLK_CPU 			=> clk_cpu,
 	RESET 			=> reset,
 	
-	SD 				=> SD,
+	SD_DI 			=> SD(15 downto 8),
+	SD_DO				=> SD(7 downto 0),
 	SA 				=> SA,
 	CPLD_CLK 		=> CPLD_CLK,
 	CPLD_CLK2 		=> CPLD_CLK2,
@@ -1101,6 +1102,7 @@ port map (
 	ZIFI_OE_N => zifi_oe_n,
 	
 	ENABLED => zifi_api_enabled,
+	ZF_UART2 => open,
 
 	UART_RX   => UART_RX,
 	UART_TX   => zifi_uart_tx,
