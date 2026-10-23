@@ -51,3 +51,4 @@ For PCB Rev. A / Rev. B:
 | 0x11 | NemoIDE enable | 10 (Enabled), 20 (Disabled) | 20 (Disabled) | 20 (Disabled) | 20 (Disabled) |
 | 0x12 | LED override by FPGA | 10 (Enabled), 20 (Disabled) | 20 (Disabled) | 10 (Enabled) | 10 (Enabled) |
 | 0x13 | HW buttons (Reset/Magic) | 10 (Enabled), 20 (Disabled) | 10 (Enabled) | 10 (Enabled) | 20 (Disabled) |
+| 0x14 | Language | 0 (English), 1 (Russian), 2 (Ukrainian) | 0 (English) | 0 (English) | 0 (English) |

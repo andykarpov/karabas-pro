@@ -129,6 +129,12 @@
 #define EEPROM_NEMOIDE_ADDRESS 0x11
 #define EEPROM_LED_OVERRIDE_ADDRESS 0x12
 #define EEPROM_HW_BUTTONS_ADDRESS   0x13
+#define EEPROM_LANG_ADDRESS         0x14
+
+#define LANG_EN 0
+#define LANG_RU 1
+#define LANG_UA 2
+#define LANG_COUNT 3
 
 #define EEPROM_VALUE_TRUE 10
 #define EEPROM_VALUE_FALSE 20
@@ -203,6 +209,8 @@ void keyboard_set_led_override(bool val);
 bool keyboard_get_led_override(void);
 void keyboard_set_hw_buttons(bool val);
 bool keyboard_get_hw_buttons(void);
+void keyboard_set_lang(uint8_t val);
+uint8_t keyboard_get_lang(void);
 
 bool keyboard_get_is_osd_overlay(void);
 bool keyboard_get_is_osd_popup(void);

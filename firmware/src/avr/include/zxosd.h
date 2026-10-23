@@ -4,21 +4,11 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#define LANG_EN 0
-#define LANG_RU 1
-#define LANG_UA 2
-
-#ifndef LANG
-#define LANG LANG_EN
-#endif
-
-#if (LANG == LANG_RU)
-#include "lang_ru.h"
-#elif (LANG == LANG_UA)
-#include "lang_ua.h"
-#else
+#include "keyboard.h"
+#include "lang_common.h"
 #include "lang_en.h"
-#endif
+#include "lang_ru.h"
+#include "lang_ua.h"
 
 #define MAIN_MENU_ITEMS_COUNT 16
 #define RTC_FIELDS_COUNT 7
