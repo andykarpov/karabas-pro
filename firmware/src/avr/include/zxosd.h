@@ -34,6 +34,9 @@ void zxosd_clear(void);
 
 void zxosd_init_overlay(void);
 void zxosd_init_popup(uint8_t event_type);
+void zxosd_show_popup(uint8_t event_type);
+void zxosd_show_boot_popup(void);
+void zxosd_on_key_event(uint8_t event_type);
 
 void zxosd_update_item(uint8_t idx);
 void zxosd_update_time(void);

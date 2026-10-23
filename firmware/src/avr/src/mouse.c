@@ -1,5 +1,7 @@
 #include "mouse.h"
 #include "hal.h"
+#include "keyboard.h"
+#include "zxosd.h"
 
 #define PIN_MS_CLK 3 // PD3 (INT1)
 #define PIN_MS_DAT 5 // PD5
@@ -22,7 +24,6 @@ static volatile uint8_t s_bit_counter = 0;
 static volatile uint8_t s_incoming_byte = 0;
 static volatile uint8_t s_parity_check = 0;
 
-static mouse_event_cb s_on_mouse_cb = 0;
 static bool s_is_started = false;
 static bool s_mouse_present = false;
 static bool s_mouse_swap = false;
@@ -234,9 +235,9 @@ static void mouse_try_init(void)
   s_mouse_present = mouse_stream_init();
 }
 
-void mouse_init(mouse_event_cb on_mouse_cb)
+void mouse_init(void)
 {
-  s_on_mouse_cb = on_mouse_cb;
+  s_mouse_swap = keyboard_get_mouse_swap();
   ms_clk_high();
   ms_dat_high();
   s_mouse_tries = 3;
@@ -286,17 +287,22 @@ void mouse_handle(bool menu)
     spi_send(CMD_MOUSE, ADDR_MOUSE_Y, s_mouse_y);
     spi_send(CMD_MOUSE, ADDR_MOUSE_Z, s_mouse_z);
 
-    if (s_on_mouse_cb) {
-      s_on_mouse_cb(EVENT_OSD_MOUSE_DATA);
+    if (keyboard_get_is_osd_overlay()) {
+      zxosd_update_mouse(s_mouse_x, s_mouse_y, s_mouse_z);
     }
 
     // Middle button hold for 1000ms toggles mouse swap
     if (btn3) {
       if (n - s_ts >= 1000) {
         s_mouse_swap = !s_mouse_swap;
-        if (s_on_mouse_cb) {
-          s_on_mouse_cb(EVENT_OSD_MOUSE_SWAPPED);
-        }
+        keyboard_set_mouse_swap(s_mouse_swap);
+        hal_led1_set(true);
+        delay_ms(100);
+        hal_led1_set(false);
+        delay_ms(100);
+        hal_led1_set(true);
+        delay_ms(100);
+        hal_led1_set(false);
         s_ts = n;
       }
     } else {

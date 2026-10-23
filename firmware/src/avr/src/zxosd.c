@@ -3,6 +3,7 @@
 #include "keyboard.h"
 #include "rtc.h"
 #include "hal.h"
+#include "config.h"
 #include <string.h>
 #include <avr/pgmspace.h>
 
@@ -159,6 +160,8 @@ typedef enum {
 } OsdState;
 
 static bool s_is_started = false;
+static uint32_t s_tpopup = 0;
+static bool s_boot_popup = false;
 static uint8_t s_fpga_cfg = 0;
 static uint8_t s_fpga_build_num[8] = {0};
 static const char *s_avr_build_num = 0;
@@ -659,8 +662,51 @@ void zxosd_init_popup(uint8_t event_type)
   }
 }
 
+void zxosd_show_popup(uint8_t event_type)
+{
+  s_tpopup = millis();
+  if (!keyboard_get_is_osd_popup()) {
+    zxosd_clear();
+  }
+  keyboard_set_osd_popup(true);
+  zxosd_init_popup(event_type);
+}
+
+void zxosd_show_boot_popup(void)
+{
+  s_boot_popup = true;
+  zxosd_show_popup(EVENT_OSD_POPUP);
+}
+
+void zxosd_on_key_event(uint8_t event_type)
+{
+  if (!s_is_started) return;
+
+  int8_t item_idx = zxosd_event_to_menu_item(event_type);
+  if (keyboard_get_is_osd_overlay()) {
+    if (event_type == EVENT_OSD_OVERLAY) {
+      zxosd_init_overlay();
+    } else if (item_idx >= 0) {
+      zxosd_update_item((uint8_t)item_idx);
+    }
+  } else {
+    if (item_idx >= 0) {
+      s_boot_popup = false;
+      zxosd_show_popup(event_type);
+    }
+  }
+}
+
 void zxosd_handle(void)
 {
+  if (keyboard_get_is_osd_popup()) {
+    uint32_t timeout = s_boot_popup ? BOOT_POPUP_TIMEOUT : POPUP_TIMEOUT;
+    if (millis() - s_tpopup > timeout) {
+      keyboard_set_osd_popup(false);
+      s_boot_popup = false;
+    }
+  }
+
   if (!keyboard_get_is_osd_overlay()) return;
 
   switch (s_osd_state) {

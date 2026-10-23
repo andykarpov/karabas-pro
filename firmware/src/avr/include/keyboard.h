@@ -156,11 +156,10 @@
 extern "C" {
 #endif
 
-typedef void (*keyboard_event_cb)(uint8_t event_type, uint16_t scancode);
-
-void keyboard_init(keyboard_event_cb on_kbd_cb, bool send_echo);
+void keyboard_init(bool send_echo);
 bool keyboard_started(void);
-void keyboard_handle(void);
+bool keyboard_handle(void);
+void keyboard_apply_joy(uint8_t data);
 
 void keyboard_set_key(uint8_t key, bool pressed);
 bool keyboard_get_key(uint8_t key);

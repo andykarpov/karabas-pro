@@ -2,9 +2,9 @@
 #include "keyboard_map.h"
 #include "ps2_kbd.h"
 #include "hal.h"
+#include "zxosd.h"
 #include <avr/pgmspace.h>
 
-static keyboard_event_cb s_on_kbd_cb = 0;
 static bool s_is_started = false;
 
 static bool s_matrix[ZX_MATRIX_FULL_SIZE];
@@ -287,29 +287,29 @@ static bool handle_hotkey(uint8_t code, uint32_t n, bool is_up)
             break;
           case HK_SWAP_AB:
             keyboard_toggle_swap_ab();
-            if (s_on_kbd_cb) s_on_kbd_cb(EVENT_OSD_SWAP_AB, 0);
+            zxosd_on_key_event(EVENT_OSD_SWAP_AB);
             break;
           case HK_DIVMMC:
             keyboard_toggle_divmmc();
-            if (s_on_kbd_cb) s_on_kbd_cb(EVENT_OSD_DIVMMC, 0);
+            zxosd_on_key_event(EVENT_OSD_DIVMMC);
             break;
           case HK_JOYSTICK:
             keyboard_toggle_joy_type();
-            if (s_on_kbd_cb) s_on_kbd_cb(EVENT_OSD_JOYSTICK, 0);
+            zxosd_on_key_event(EVENT_OSD_JOYSTICK);
             break;
           case HK_JOYSTICK_MODE:
             s_joy_mode = (s_joy_mode < 4) ? s_joy_mode + 1 : 0;
             keyboard_set_joy_mode(s_joy_mode);
-            if (s_on_kbd_cb) s_on_kbd_cb(EVENT_OSD_JOYSTICK_MODE, 0);
+            zxosd_on_key_event(EVENT_OSD_JOYSTICK_MODE);
             break;
           case HK_NEMOIDE:
             keyboard_toggle_nemoide();
-            if (s_on_kbd_cb) s_on_kbd_cb(EVENT_OSD_NEMOIDE, 0);
+            zxosd_on_key_event(EVENT_OSD_NEMOIDE);
             break;
           case HK_SCREEN_MODE:
             s_screen_mode = (s_screen_mode < s_max_screen_mode) ? s_screen_mode + 1 : 0;
             keyboard_set_screen_mode(s_screen_mode);
-            if (s_on_kbd_cb) s_on_kbd_cb(EVENT_OSD_SCREEN_MODE, 0);
+            zxosd_on_key_event(EVENT_OSD_SCREEN_MODE);
             break;
           case HK_ROMBANK_0:
           case HK_ROMBANK_1:
@@ -317,40 +317,40 @@ static bool handle_hotkey(uint8_t code, uint32_t n, bool is_up)
           case HK_ROMBANK_3: {
             uint8_t b = action - HK_ROMBANK_0;
             keyboard_set_rombank(b);
-            if (s_on_kbd_cb) s_on_kbd_cb(EVENT_OSD_ROMBANK, b);
+            zxosd_on_key_event(EVENT_OSD_ROMBANK);
             break;
           }
           case HK_TURBOFDC:
             keyboard_toggle_turbofdc();
-            if (s_on_kbd_cb) s_on_kbd_cb(EVENT_OSD_TURBOFDC, 0);
+            zxosd_on_key_event(EVENT_OSD_TURBOFDC);
             break;
           case HK_COVOX:
             keyboard_toggle_covox();
-            if (s_on_kbd_cb) s_on_kbd_cb(EVENT_OSD_COVOX, 0);
+            zxosd_on_key_event(EVENT_OSD_COVOX);
             break;
           case HK_STEREO: {
             uint8_t stereo = (s_is_sw7 ? 1 : 0) | (s_is_sw9 ? 2 : 0);
             stereo = (stereo < 2) ? stereo + 1 : 0;
             keyboard_toggle_stereo(stereo);
-            if (s_on_kbd_cb) s_on_kbd_cb(EVENT_OSD_STEREO, 0);
+            zxosd_on_key_event(EVENT_OSD_STEREO);
             break;
           }
           case HK_SSG:
             keyboard_toggle_ssg();
-            if (s_on_kbd_cb) s_on_kbd_cb(EVENT_OSD_SSG, 0);
+            zxosd_on_key_event(EVENT_OSD_SSG);
             break;
           case HK_VIDEO:
             keyboard_toggle_video();
-            if (s_on_kbd_cb) s_on_kbd_cb(EVENT_OSD_VIDEO, 0);
+            zxosd_on_key_event(EVENT_OSD_VIDEO);
             break;
           case HK_VSYNC:
             keyboard_toggle_vsync();
-            if (s_on_kbd_cb) s_on_kbd_cb(EVENT_OSD_VSYNC, 0);
+            zxosd_on_key_event(EVENT_OSD_VSYNC);
             break;
           case HK_TURBO:
             s_turbo = (s_turbo < s_max_turbo) ? s_turbo + 1 : 0;
             keyboard_set_turbo(s_turbo);
-            if (s_on_kbd_cb) s_on_kbd_cb(EVENT_OSD_TURBO, s_turbo);
+            zxosd_on_key_event(EVENT_OSD_TURBO);
             break;
           case HK_MAGIC:
             keyboard_do_magic();
@@ -565,7 +565,7 @@ static void fill_key(uint16_t sc, uint32_t n)
       case KT_SPECIAL_PRTSCR:
         if (!is_shift && !is_up) {
           keyboard_toggle_keyboard_type();
-          if (s_on_kbd_cb) s_on_kbd_cb(EVENT_OSD_KEYBOARD_TYPE, 0);
+          zxosd_on_key_event(EVENT_OSD_KEYBOARD_TYPE);
         }
         break;
 
@@ -604,9 +604,8 @@ static void fill_key(uint16_t sc, uint32_t n)
   }
 }
 
-void keyboard_init(keyboard_event_cb on_kbd_cb, bool send_echo)
+void keyboard_init(bool send_echo)
 {
-  s_on_kbd_cb = on_kbd_cb;
   ps2_kbd_init();
 
   if (send_echo) {
@@ -628,17 +627,20 @@ bool keyboard_started(void)
   return s_is_started;
 }
 
-void keyboard_handle(void)
+bool keyboard_handle(void)
 {
+  bool activity = false;
   uint32_t n = millis();
   if (ps2_kbd_available()) {
     uint16_t c = ps2_kbd_read();
     fill_key(c, n);
-    if (s_on_kbd_cb) {
-      s_on_kbd_cb(EVENT_OSD_SCANCODE, c);
+    if (s_osd_overlay) {
+      zxosd_update_scancode(c);
     }
+    activity = true;
   }
   process_delayed_keypress();
+  return activity;
 }
 
 void keyboard_set_key(uint8_t key, bool pressed)
@@ -720,15 +722,15 @@ void keyboard_do_pause(void)
 {
   s_is_wait = !s_is_wait;
   s_matrix[ZX_K_WAIT] = s_is_wait;
-  if (s_on_kbd_cb) s_on_kbd_cb(EVENT_OSD_PAUSE, 0);
+  zxosd_on_key_event(EVENT_OSD_PAUSE);
 }
 
 void keyboard_toggle_osd_overlay(void)
 {
   s_osd_overlay = !s_osd_overlay;
   s_matrix[ZX_K_OSD_OVERLAY] = s_osd_overlay;
-  if (s_osd_overlay && s_on_kbd_cb) {
-    s_on_kbd_cb(EVENT_OSD_OVERLAY, 0);
+  if (s_osd_overlay) {
+    zxosd_init_overlay();
   }
 }
 
@@ -736,9 +738,6 @@ void keyboard_set_osd_popup(bool val)
 {
   s_osd_popup = val;
   s_matrix[ZX_K_OSD_POPUP] = s_osd_popup;
-  if (s_osd_popup && s_on_kbd_cb) {
-    s_on_kbd_cb(EVENT_OSD_POPUP, 0);
-  }
 }
 
 void keyboard_set_rombank(uint8_t bank)
@@ -950,4 +949,38 @@ void keyboard_reset_osd_controls(void)
 bool keyboard_get_is_menu(void)
 {
   return s_is_menu || s_is_win || (s_is_ctrl && s_is_alt);
+}
+
+void keyboard_apply_joy(uint8_t data)
+{
+  switch (s_joy_mode) {
+    case 1: // sinclair 1
+      s_matrix[ZX_K_1] = bitRead(data, 1); // L
+      s_matrix[ZX_K_2] = bitRead(data, 0); // R
+      s_matrix[ZX_K_3] = bitRead(data, 2); // D
+      s_matrix[ZX_K_4] = bitRead(data, 3); // U
+      s_matrix[ZX_K_5] = bitRead(data, 4); // F
+      break;
+    case 2: // sinclair 2
+      s_matrix[ZX_K_6] = bitRead(data, 1); // L
+      s_matrix[ZX_K_7] = bitRead(data, 0); // R
+      s_matrix[ZX_K_8] = bitRead(data, 2); // D
+      s_matrix[ZX_K_9] = bitRead(data, 3); // U
+      s_matrix[ZX_K_0] = bitRead(data, 4); // F
+      break;
+    case 3: // cursor
+      s_matrix[ZX_K_5] = bitRead(data, 1); // L
+      s_matrix[ZX_K_6] = bitRead(data, 2); // D
+      s_matrix[ZX_K_7] = bitRead(data, 3); // U
+      s_matrix[ZX_K_8] = bitRead(data, 0); // R
+      s_matrix[ZX_K_0] = bitRead(data, 4); // F
+      break;
+    case 4: // qaop
+      s_matrix[ZX_K_Q] = bitRead(data, 3); // U
+      s_matrix[ZX_K_A] = bitRead(data, 2); // D
+      s_matrix[ZX_K_O] = bitRead(data, 1); // L
+      s_matrix[ZX_K_P] = bitRead(data, 0); // R
+      s_matrix[ZX_K_M] = bitRead(data, 4); // F
+      break;
+  }
 }

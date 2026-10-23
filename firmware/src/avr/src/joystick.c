@@ -1,5 +1,7 @@
 #include "joystick.h"
 #include "hal.h"
+#include "keyboard.h"
+#include "zxosd.h"
 
 #define SC_BTN_UP    0x0001
 #define SC_BTN_DOWN  0x0002
@@ -11,16 +13,14 @@
 #define SC_BTN_START 0x0080
 #define SC_CTL_ON    0x1000
 
-static joystick_event_cb s_on_joy_cb = 0;
 static bool s_is_started = false;
 static uint8_t s_last_joy_flags = 0;
 static uint16_t s_sega_state = 0;
 static uint32_t s_sega_last_read_time = 0;
 static bool s_sega_six_button_mode = false;
 
-void joystick_init(joystick_event_cb on_joy_cb)
+void joystick_init(void)
 {
-  s_on_joy_cb = on_joy_cb;
 
   // Strobe pin (PC1) as output HIGH
   DDRC |= (1 << PC1);
@@ -160,9 +160,10 @@ void joystick_handle(bool joy_type)
     if (flags & (1 << ZX_JOY_A))     osd_joy |= (1 << 6);
     if (flags & (1 << ZX_JOY_B))     osd_joy |= (1 << 7);
 
-    if (s_on_joy_cb) {
-      s_on_joy_cb(EVENT_OSD_JOY_DATA, osd_joy);
+    if (keyboard_get_is_osd_overlay()) {
+      zxosd_update_joy_state(osd_joy);
     }
+    keyboard_apply_joy(osd_joy);
   }
 
   // Transmit current state to FPGA
