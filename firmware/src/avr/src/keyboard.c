@@ -448,7 +448,7 @@ static void fill_key(uint16_t sc, uint32_t n)
           else if (code == PS2_KEY_R_ARROW) s_cursor_right = !is_up;
 
           s_matrix[ZX_K_CS] = !is_up;
-          if (!is_up) send_cs();
+          if (!is_up && !s_osd_overlay) send_cs();
           s_matrix[desc.zx1] = !is_up;
           process_capsed_key(code, is_up);
         }
@@ -660,10 +660,8 @@ bool keyboard_handle(void)
     uint8_t scancode = c & 0xFF;
     if (scancode == PS2_KEY_BAT || scancode == PS2_KEY_ECHO) {
       s_kbd_detected = true;
-      s_last_activity_time = n;
     } else if (scancode != 0) {
       s_kbd_detected = true;
-      s_last_activity_time = n;
       fill_key(c, n);
       if (s_osd_overlay) {
         zxosd_update_scancode(c);
@@ -672,17 +670,9 @@ bool keyboard_handle(void)
     }
   }
 
-  // Periodic keyboard probe
+  // Periodic keyboard probe (only while keyboard is not yet detected)
   if (!s_kbd_detected) {
     if (n - s_last_probe_time >= 1500) {
-      s_last_probe_time = n;
-      if (!ps2_kbd_is_tx_busy()) {
-        ps2_kbd_echo();
-      }
-    }
-  } else {
-    // If idle for 5s, verify keyboard is still alive (supports hot-unplug / KVM switch)
-    if (n - s_last_activity_time >= 5000 && n - s_last_probe_time >= 5000) {
       s_last_probe_time = n;
       if (!ps2_kbd_is_tx_busy()) {
         ps2_kbd_echo();

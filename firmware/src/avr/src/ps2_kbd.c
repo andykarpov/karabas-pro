@@ -27,8 +27,6 @@
 #define KC_EXTEND1  0xE1
 #define KC_LOCK     0xED
 
-#define KEY_IGNORE  0xBB
-
 // Single-byte scan code set 2 to key ID table
 static const uint8_t PROGMEM s_single_key[][2] = {
   { 0x77, PS2_KEY_NUM },
@@ -157,6 +155,7 @@ static volatile uint8_t s_last_sent = 0;
 static volatile uint8_t s_now_send = 0;
 static volatile uint8_t s_tx_ready = 0;
 static volatile uint32_t s_tx_start_time = 0;
+static volatile uint8_t s_resend_count = 0;
 
 static uint8_t s_led_lock = 0;
 static uint8_t s_keystatus = 0;
@@ -331,7 +330,10 @@ void ps2_kbd_isr(void)
 static uint8_t decode_scancode(uint8_t value)
 {
   uint8_t state = 6;
-  if (value != KC_RESEND) s_ps2_mode &= ~MODE_LAST_VALID;
+  if (value != KC_RESEND) {
+    s_ps2_mode &= ~MODE_LAST_VALID;
+    s_resend_count = 0;
+  }
   if ((s_ps2_mode & MODE_WAIT_RESP) && value < 0xF0) return state;
   if (s_ps2_mode & MODE_E1) return 2;
 
@@ -342,10 +344,12 @@ static uint8_t decode_scancode(uint8_t value)
       state = 0x0C;
       break;
     case KC_RESEND:
-      if (s_ps2_mode & MODE_LAST_VALID) {
+      if ((s_ps2_mode & MODE_LAST_VALID) && s_resend_count < 3) {
+        s_resend_count++;
         s_now_send = s_last_sent;
         state = 0x10;
       } else {
+        s_resend_count = 0;
         state = 0;
       }
       break;
@@ -361,11 +365,8 @@ static uint8_t decode_scancode(uint8_t value)
       state = 0;
       break;
     case KC_ECHO:
+      s_bytes_expected = 0;
       state = 4;
-      if ((s_ps2_mode & MODE_LAST_VALID) && s_last_sent != KC_ECHO) {
-        s_now_send = KC_ECHO;
-        state |= 0x10;
-      }
       break;
     case KC_BAT:
       s_bytes_expected = 0;
@@ -406,7 +407,6 @@ void ps2_kbd_init(void)
 void ps2_kbd_echo(void)
 {
   send_byte(KC_ECHO);
-  send_byte(KEY_IGNORE);
   send_next();
 }
 
@@ -417,9 +417,7 @@ void ps2_kbd_set_lock(uint8_t leds)
   if (leds & PS2_LOCK_CAPS) s_keystatus |= (PS2_CAPS >> 8);
 
   send_byte(KC_LOCK);
-  send_byte(KEY_IGNORE);
   send_byte(s_led_lock);
-  send_byte(KEY_IGNORE);
   send_next();
 }
 
