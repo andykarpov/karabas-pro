@@ -3,9 +3,9 @@ import os
 
 Import("env")
 
-# Generate BUILD_VER if not already defined via command line or environment
+# Generate BUILD_VER in UTC if not already defined via command line or environment
 # Format: YYMMDDHH (e.g. 26102400)
-build_ver = os.environ.get("BUILD_VER", datetime.datetime.now().strftime("%y%m%d%H"))
+build_ver = os.environ.get("BUILD_VER", datetime.datetime.now(datetime.timezone.utc).strftime("%y%m%d%H"))
 
 # Check if BUILD_VER already exists in CPPDEFINES
 has_build_ver = False
