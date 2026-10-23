@@ -47,8 +47,16 @@ typedef bool boolean;
 #define digitalPinToInterrupt(p) (((p) == 2) ? 0 : (((p) == 3) ? 1 : NOT_AN_INTERRUPT))
 #endif
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void hal_attach_interrupt(uint8_t pin, void (*handler)(void), uint8_t mode);
 void hal_detach_interrupt(uint8_t pin);
+
+#ifdef __cplusplus
+}
+#endif
 
 #define attachInterrupt(pin, handler, mode) hal_attach_interrupt(pin, handler, mode)
 #define detachInterrupt(pin) hal_detach_interrupt(pin)
@@ -164,35 +172,32 @@ static inline uint8_t hal_gpio_read(uint8_t pin) {
 #define digitalRead(pin) hal_gpio_read(pin)
 #endif
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 // Delays & tick
 void delay_ms(uint16_t ms);
 void delay_us(uint16_t us);
 void hal_timer_init(void);
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 void setup(void);
 void loop(void);
-#ifdef __cplusplus
-}
-#endif
 
 #ifndef ARDUINO
 static inline void delay(uint16_t ms) { delay_ms(ms); }
 static inline void delayMicroseconds(uint16_t us) { delay_us(us); }
 uint32_t millis(void);
 #else
-extern "C" {
-  void delay(unsigned long ms);
-  void delayMicroseconds(unsigned int us);
-  unsigned long millis(void);
-}
+void delay(unsigned long ms);
+void delayMicroseconds(unsigned int us);
+unsigned long millis(void);
 #endif
 
 // SPI Master
 void hal_spi_init(void);
 uint8_t hal_spi_transfer(uint8_t data);
+void spi_send(uint8_t cmd, uint8_t addr, uint8_t data);
 
 static inline void hal_spi_cs_low(void)  { PORTD &= ~(1 << PD7); }
 static inline void hal_spi_cs_high(void) { PORTD |=  (1 << PD7); }
@@ -211,5 +216,9 @@ uint16_t hal_adc_read(uint8_t channel);
 // GPIO Fast Helpers
 static inline void hal_led1_set(bool on) { if (on) PORTC |= (1 << PC2); else PORTC &= ~(1 << PC2); }
 static inline void hal_led2_set(bool on) { if (on) PORTC |= (1 << PC1); else PORTC &= ~(1 << PC1); }
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // __HAL_H__

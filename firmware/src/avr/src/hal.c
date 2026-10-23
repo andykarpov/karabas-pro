@@ -240,10 +240,12 @@ uint16_t hal_adc_read(uint8_t channel)
   return ADC;
 }
 
+#ifdef __cplusplus
 extern "C" void __cxa_pure_virtual(void)
 {
   while (1);
 }
+#endif
 
 /****************************************************************************/
 // External Interrupts (INT0 / PD2, INT1 / PD3)
