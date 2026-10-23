@@ -25,7 +25,7 @@ const uint8_t default_eeprom[] __attribute__((used, section(".eeprom"))) = {
   0,                  // 0x0F: EEPROM_JOY_MODE_ADDRESS
   EEPROM_VALUE_FALSE, // 0x10: EEPROM_DIVMMC_ADDRESS
   EEPROM_VALUE_FALSE, // 0x11: EEPROM_NEMOIDE_ADDRESS
-  EEPROM_VALUE_TRUE,  // 0x12: EEPROM_LED_OVERRIDE_ADDRESS (10 = enabled)
+  EEPROM_VALUE_FALSE, // 0x12: EEPROM_LED_OVERRIDE_ADDRESS (20 = disabled for Rev D+)
   EEPROM_VALUE_TRUE,  // 0x13: EEPROM_HW_BUTTONS_ADDRESS  (10 = enabled)
 };
 
@@ -34,7 +34,7 @@ static bool s_kbd_detected = false;
 static uint32_t s_last_probe_time = 0;
 static uint32_t s_last_activity_time = 0;
 
-static bool s_is_led_override = true;
+static bool s_is_led_override = false;
 static bool s_use_hw_buttons = true;
 
 static bool s_matrix[ZX_MATRIX_FULL_SIZE];
