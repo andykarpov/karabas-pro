@@ -1,0 +1,78 @@
+name: Release Firmware
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag_name:
+        description: 'Release Tag (e.g. v2.1.0)'
+        required: true
+        default: 'v2.1.0'
+
+jobs:
+  release:
+    name: Build & Publish Release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install PlatformIO
+        run: |
+          python -m pip install --upgrade pip
+          pip install platformio
+
+      - name: Determine Version Tag
+        id: vars
+        run: |
+          if [ -n "${{ github.event.inputs.tag_name }}" ]; then
+            TAG="${{ github.event.inputs.tag_name }}"
+          else
+            TAG="${{ github.ref_name }}"
+          fi
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+
+      - name: Build Universal AVR Firmware
+        working-directory: firmware/src/avr
+        run: |
+          pio run
+
+      - name: Package Firmware Bundle
+        run: |
+          TAG="${{ steps.vars.outputs.tag }}"
+          ARCHIVE_DIR="karabas_pro_firmware_${TAG}"
+          mkdir -p "$ARCHIVE_DIR"
+
+          cp firmware/src/avr/.pio/build/ATmega328/karabas_pro.hex "$ARCHIVE_DIR/"
+          cp firmware/src/avr/.pio/build/ATmega328/karabas_pro.eep "$ARCHIVE_DIR/"
+          cp firmware/src/avr/.pio/build/ATmega328/karabas_pro_revA.eep "$ARCHIVE_DIR/"
+          cp firmware/src/avr/.pio/build/ATmega328/karabas_pro_revC.eep "$ARCHIVE_DIR/"
+          cp firmware/src/avr/.pio/build/ATmega328/karabas_pro_revD.eep "$ARCHIVE_DIR/"
+          cp firmware/releases/profi/README.md "$ARCHIVE_DIR/README.md"
+
+          zip -r "${ARCHIVE_DIR}.zip" "$ARCHIVE_DIR"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.vars.outputs.tag }}
+          name: Karabas Pro Firmware ${{ steps.vars.outputs.tag }}
+          generate_release_notes: true
+          files: |
+            karabas_pro_firmware_${{ steps.vars.outputs.tag }}.zip
+            firmware/src/avr/.pio/build/ATmega328/karabas_pro.hex
+            firmware/src/avr/.pio/build/ATmega328/karabas_pro.eep
+            firmware/src/avr/.pio/build/ATmega328/karabas_pro_revA.eep
+            firmware/src/avr/.pio/build/ATmega328/karabas_pro_revC.eep
+            firmware/src/avr/.pio/build/ATmega328/karabas_pro_revD.eep

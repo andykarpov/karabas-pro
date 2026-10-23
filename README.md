@@ -1,5 +1,7 @@
 # Karabas-Pro
 
+[![Build AVR Firmware](https://github.com/andykarpov/karabas-pro/actions/workflows/build-avr.yml/badge.svg)](https://github.com/andykarpov/karabas-pro/actions/workflows/build-avr.yml)
+
 **Yet another FPGA ZX Spectrum clone ;)**
 
 ## Intro
@@ -49,6 +51,23 @@ The idea was to make a smaller Profi (Профи) ZX Spectrum clone, with real F
 **Profi firmware** [Download a Profi firmware](https://github.com/andykarpov/karabas-pro/tree/master/firmware/releases/profi).
 
 **Donations** [See DONATIONS.md](https://github.com/andykarpov/karabas-pro/blob/master/DONATIONS.md).
+
+## Development & Building
+
+### AVR Firmware
+The ATmega328P supervisor firmware is built using [PlatformIO](https://platformio.org/):
+
+```bash
+cd firmware/src/avr
+pio run
+```
+
+This compiles the universal firmware, generates all revision-specific `.eep` files, and automatically syncs them to `firmware/releases/`.
+
+To automatically rebuild and stage updated firmware binaries whenever you commit AVR changes, install the git hooks:
+```bash
+./scripts/install-hooks.sh
+```
 
 ### Pre-production renders:
 
