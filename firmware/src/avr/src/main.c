@@ -35,20 +35,14 @@ Ukraine, 2021 - 2026
 
 static bool s_init_done = false;
 
-#if ALLOW_LED_OVERRIDE
 static bool s_led1_state = false;
 static bool s_led2_state = false;
 static bool s_led1_overwrite = false;
 static bool s_led2_overwrite = false;
 static uint32_t s_tl1 = 0;
-#else
 static bool s_blink_state = false;
-#endif
 
-#if USE_HW_BUTTONS
 static uint32_t s_tb = 0;
-#endif
-
 static uint32_t s_tl = 0;
 static uint32_t s_tl2 = 0;
 
@@ -89,14 +83,14 @@ static void process_in_cmd(uint8_t cmd, uint8_t addr, uint8_t data)
     zxosd_set_fpga_build_num(addr, data);
   }
 
-#if ALLOW_LED_OVERRIDE
   if (cmd == CMD_LED_WRITE) {
-    s_led1_state     = bitRead(data, 0);
-    s_led2_state     = bitRead(data, 1);
-    s_led1_overwrite = bitRead(data, 2);
-    s_led2_overwrite = bitRead(data, 3);
+    if (keyboard_get_led_override()) {
+      s_led1_state     = bitRead(data, 0);
+      s_led2_state     = bitRead(data, 1);
+      s_led1_overwrite = bitRead(data, 2);
+      s_led2_overwrite = bitRead(data, 3);
+    }
   }
-#endif
 
   if (cmd == CMD_RTC) {
     rtc_set_data(addr, data);
@@ -140,7 +134,7 @@ int main(void)
   PORTD |=  (1 << PD2) | (1 << PD4) | (1 << PD3) | (1 << PD5);
 
   // 2. Subsystem inits
-  keyboard_init(SEND_ECHO_ON_START);
+  keyboard_init();
   mouse_init();
   rtc_init();
   joystick_init();
@@ -170,11 +164,11 @@ int main(void)
     // Process keyboard & trigger LED1 activity if key was pressed
     if (keyboard_handle()) {
       s_tl = n;
-#if ALLOW_LED_OVERRIDE
-      if (!s_led1_overwrite) led1_set(true);
-#else
-      led1_set(true);
-#endif
+      if (keyboard_get_led_override()) {
+        if (!s_led1_overwrite) led1_set(true);
+      } else {
+        led1_set(true);
+      }
     }
 
     zxosd_handle();
@@ -183,57 +177,57 @@ int main(void)
     rtc_handle();
     joystick_handle(keyboard_get_joy_type());
 
-#if USE_HW_BUTTONS
-    if (n - s_tb >= 100) {
-      bool btn1 = (hal_adc_read(6) < 100);
-      bool btn2 = (hal_adc_read(7) < 100);
+    if (keyboard_get_hw_buttons()) {
+      if (n - s_tb >= 100) {
+        bool btn1 = (hal_adc_read(6) < 100);
+        bool btn2 = (hal_adc_read(7) < 100);
 
-      keyboard_set_key(ZX_K_RESET, btn2);
-      keyboard_set_key(ZX_K_MAGICK, btn1);
+        keyboard_set_key(ZX_K_RESET, btn2);
+        keyboard_set_key(ZX_K_MAGICK, btn1);
 
-      s_tb = n;
-    }
-#endif
-
-#if ALLOW_LED_OVERRIDE
-    if (s_led1_overwrite) {
-      if (s_led1_state) {
-        led1_set(true);
+        s_tb = n;
       }
-      if (n - s_tl1 >= 100) {
-        s_tl1 = n;
-        if (!s_led1_state) led1_set(false);
-      }
-    } else {
-      if (n - s_tl >= 100) led1_set(false);
     }
 
-    if (s_led2_overwrite) {
-      if (s_led2_state) {
+    if (keyboard_get_led_override()) {
+      if (s_led1_overwrite) {
+        if (s_led1_state) {
+          led1_set(true);
+        }
+        if (n - s_tl1 >= 100) {
+          s_tl1 = n;
+          if (!s_led1_state) led1_set(false);
+        }
+      } else {
+        if (n - s_tl >= 100) led1_set(false);
+      }
+
+      if (s_led2_overwrite) {
+        if (s_led2_state) {
+          led2_set(true);
+        }
+        if (n - s_tl2 >= 100) {
+          s_tl2 = n;
+          if (!s_led2_state) led2_set(false);
+        }
+      } else {
         led2_set(true);
       }
-      if (n - s_tl2 >= 100) {
-        s_tl2 = n;
-        if (!s_led2_state) led2_set(false);
-      }
     } else {
-      led2_set(true);
-    }
-#else
-    if (keyboard_get_pause()) {
-      if (n - s_tl2 >= 500) {
-        s_tl2 = n;
-        s_blink_state = !s_blink_state;
-        led2_set(s_blink_state);
+      if (keyboard_get_pause()) {
+        if (n - s_tl2 >= 500) {
+          s_tl2 = n;
+          s_blink_state = !s_blink_state;
+          led2_set(s_blink_state);
+        }
+      } else {
+        led2_set(true);
       }
-    } else {
-      led2_set(true);
-    }
 
-    if (n - s_tl >= 100) {
-      led1_set(false);
+      if (n - s_tl >= 100) {
+        led1_set(false);
+      }
     }
-#endif
 
     keyboard_reset_osd_controls();
   }

@@ -252,14 +252,14 @@ static void print_logo(uint8_t x, uint8_t y)
   osd_write(0xc8); osd_write(0xc9);
 
   osd_set_pos(x + 8, y + 2);
-  osd_write(0xba); osd_write(0xbb);
-  osd_write(0xbc); osd_write(0xbd);
-  osd_write(0xbe); osd_write(0xbf);
+  osd_write(0xba); osd_write(0xbb); // P
+  osd_write(0xb4); osd_write(0xb5); // R
+  osd_write(0xbc); osd_write(0xbd); // O
 
   osd_set_pos(x + 8, y + 3);
-  osd_write(0xca); osd_write(0xcb);
-  osd_write(0xcc); osd_write(0xcd);
-  osd_write(0xce); osd_write(0xcf);
+  osd_write(0xca); osd_write(0xcb); // P
+  osd_write(0xc4); osd_write(0xc5); // R
+  osd_write(0xcc); osd_write(0xcd); // O
 
   osd_set_color(OSD_COLOR_WHITE, OSD_COLOR_BLACK);
   print_rev();

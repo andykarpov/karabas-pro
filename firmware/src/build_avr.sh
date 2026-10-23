@@ -2,86 +2,27 @@
 
 export PATH=$HOME/.platformio/penv/bin:$PATH
 
-echo "Building AVR sources"
+echo "Building universal AVR firmware"
 
 cd avr
 
 BUILD_VER=`date +%y%m%d%H`
 echo "Build version: $BUILD_VER"
 
-# without hw buttons, without echo
 pio run -t clean
-export PLATFORMIO_BUILD_FLAGS="-DUSE_HW_BUTTONS=0 -DMOUSE_POLL_TYPE=0 -DALLOW_LED_OVERRIDE=1 -DSEND_ECHO_ON_START=0 -DBUILD_VER=$BUILD_VER -Wall"
+export PLATFORMIO_BUILD_FLAGS="-DBUILD_VER=$BUILD_VER -Wall"
 pio run
-cp .pio/build/ATmega328/firmware.hex ../../releases/profi/avr/karabas_pro_revA.hex
-cp .pio/build/ATmega328/firmware.hex ../../releases/profi_plus3e/avr/karabas_pro_revA.hex
 
-# without hw buttons, with echo
-pio run -t clean
-export PLATFORMIO_BUILD_FLAGS="-DUSE_HW_BUTTONS=0 -DMOUSE_POLL_TYPE=0 -DALLOW_LED_OVERRIDE=1 -DSEND_ECHO_ON_START=1 -DBUILD_VER=$BUILD_VER -Wall"
-pio run
-cp .pio/build/ATmega328/firmware.hex ../../releases/profi/avr/karabas_pro_revA_usb.hex
-cp .pio/build/ATmega328/firmware.hex ../../releases/profi_plus3e/avr/karabas_pro_revA_usb.hex
+# Extract EEPROM Intel HEX file
+~/.platformio/packages/toolchain-atmelavr/bin/avr-objcopy -O ihex -j .eeprom --set-section-flags=.eeprom=alloc,load --no-change-warnings --change-section-lma .eeprom=0 .pio/build/ATmega328/firmware.elf .pio/build/ATmega328/firmware.eep
 
-# hw buttons + disabled led override, without echo, EN
-pio run -t clean
-export PLATFORMIO_BUILD_FLAGS="-DLANG=0 -DUSE_HW_BUTTONS=1 -DMOUSE_POLL_TYPE=0 -DALLOW_LED_OVERRIDE=0 -DSEND_ECHO_ON_START=0 -DBUILD_VER=$BUILD_VER -Wall"
-pio run
-cp .pio/build/ATmega328/firmware.hex ../../releases/profi/avr/karabas_pro_revD.hex
-cp .pio/build/ATmega328/firmware.hex ../../releases/profi_plus3e/avr/karabas_pro_revD.hex
+# Distribute universal firmware to release folders
+TARGET_DIRS="../../releases/profi/avr ../../releases/profi_plus3e/avr ../../releases/pong ../../releases/rk86"
 
-# hw buttons + disabled led override, without echo, RU
-pio run -t clean
-export PLATFORMIO_BUILD_FLAGS="-DLANG=1 -DUSE_HW_BUTTONS=1 -DMOUSE_POLL_TYPE=0 -DALLOW_LED_OVERRIDE=0 -DSEND_ECHO_ON_START=0 -DBUILD_VER=$BUILD_VER -Wall"
-pio run
-cp .pio/build/ATmega328/firmware.hex ../../releases/profi/avr/karabas_pro_revD_ru.hex
-cp .pio/build/ATmega328/firmware.hex ../../releases/profi_plus3e/avr/karabas_pro_revD_ru.hex
-
-# hw buttons + disabled led override, without echo, UA
-pio run -t clean
-export PLATFORMIO_BUILD_FLAGS="-DLANG=2 -DUSE_HW_BUTTONS=1 -DMOUSE_POLL_TYPE=0 -DALLOW_LED_OVERRIDE=0 -DSEND_ECHO_ON_START=0 -DBUILD_VER=$BUILD_VER -Wall"
-pio run
-cp .pio/build/ATmega328/firmware.hex ../../releases/profi/avr/karabas_pro_revD_ua.hex
-cp .pio/build/ATmega328/firmware.hex ../../releases/profi_plus3e/avr/karabas_pro_revD_ua.hex
-
-# hw buttons + disabled led override, with echo, EN
-pio run -t clean
-export PLATFORMIO_BUILD_FLAGS="-DLANG=0 -DUSE_HW_BUTTONS=1 -DMOUSE_POLL_TYPE=0 -DALLOW_LED_OVERRIDE=0 -DSEND_ECHO_ON_START=1 -DBUILD_VER=$BUILD_VER -Wall"
-pio run
-cp .pio/build/ATmega328/firmware.hex ../../releases/profi/avr/karabas_pro_revD_usb.hex
-cp .pio/build/ATmega328/firmware.hex ../../releases/profi_plus3e/avr/karabas_pro_revD_usb.hex
-
-# hw buttons + disabled led override, with echo, RU
-pio run -t clean
-export PLATFORMIO_BUILD_FLAGS="-DLANG=1 -DUSE_HW_BUTTONS=1 -DMOUSE_POLL_TYPE=0 -DALLOW_LED_OVERRIDE=0 -DSEND_ECHO_ON_START=1 -DBUILD_VER=$BUILD_VER -Wall"
-pio run
-cp .pio/build/ATmega328/firmware.hex ../../releases/profi/avr/karabas_pro_revD_usb_ru.hex
-cp .pio/build/ATmega328/firmware.hex ../../releases/profi_plus3e/avr/karabas_pro_revD_usb_ru.hex
-
-# hw buttons + disabled led override, with echo, UA
-pio run -t clean
-export PLATFORMIO_BUILD_FLAGS="-DLANG=2 -DUSE_HW_BUTTONS=1 -DMOUSE_POLL_TYPE=0 -DALLOW_LED_OVERRIDE=0 -DSEND_ECHO_ON_START=1 -DBUILD_VER=$BUILD_VER -Wall"
-pio run
-cp .pio/build/ATmega328/firmware.hex ../../releases/profi/avr/karabas_pro_revD_usb_ua.hex
-cp .pio/build/ATmega328/firmware.hex ../../releases/profi_plus3e/avr/karabas_pro_revD_usb_ua.hex
-
-# hw buttons, without echo
-pio run -t clean
-export PLATFORMIO_BUILD_FLAGS="-DUSE_HW_BUTTONS=1 -DMOUSE_POLL_TYPE=0 -DALLOW_LED_OVERRIDE=1 -DSEND_ECHO_ON_START=0 -DBUILD_VER=$BUILD_VER -Wall"
-pio run
-cp .pio/build/ATmega328/firmware.hex ../../releases/profi/avr/karabas_pro.hex
-cp .pio/build/ATmega328/firmware.hex ../../releases/pong/karabas_pro.hex
-cp .pio/build/ATmega328/firmware.hex ../../releases/rk86/karabas_pro.hex
-cp .pio/build/ATmega328/firmware.hex ../../releases/profi_plus3e/avr/karabas_pro.hex
-
-# hw buttons, with echo
-pio run -t clean
-export PLATFORMIO_BUILD_FLAGS="-DUSE_HW_BUTTONS=1 -DMOUSE_POLL_TYPE=0 -DALLOW_LED_OVERRIDE=1 -DSEND_ECHO_ON_START=1 -DBUILD_VER=$BUILD_VER -Wall"
-pio run
-cp .pio/build/ATmega328/firmware.hex ../../releases/profi/avr/karabas_pro_usb.hex
-cp .pio/build/ATmega328/firmware.hex ../../releases/pong/karabas_pro_usb.hex
-cp .pio/build/ATmega328/firmware.hex ../../releases/rk86/karabas_pro_usb.hex
-cp .pio/build/ATmega328/firmware.hex ../../releases/profi_plus3e/avr/karabas_pro_usb.hex
+for DIR in $TARGET_DIRS; do
+  cp .pio/build/ATmega328/firmware.hex "$DIR/karabas_pro.hex"
+  cp .pio/build/ATmega328/firmware.eep "$DIR/karabas_pro.eep"
+done
 
 pio run -t clean
 
