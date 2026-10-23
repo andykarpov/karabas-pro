@@ -1,8 +1,9 @@
 #include "rtc.h"
 #include "hal.h"
 #include "utils.h"
+#include "keyboard.h"
+#include "zxosd.h"
 
-static rtc_event_cb s_on_time_cb = 0;
 static bool s_is_started = false;
 
 static int s_rtc_year = 2000;
@@ -31,10 +32,9 @@ static inline void rtc_send_reg(uint8_t reg, uint8_t data)
   spi_send(CMD_RTC, reg, data);
 }
 
-void rtc_init(rtc_event_cb on_time_cb)
+void rtc_init(void)
 {
   hal_twi_init();
-  s_on_time_cb = on_time_cb;
 
   // Check if clock is running (bit 7 of reg 0 == 0)
   uint8_t sec_reg = 0;
@@ -94,8 +94,8 @@ void rtc_handle(void)
 
     rtc_send_time();
 
-    if (s_on_time_cb) {
-      s_on_time_cb();
+    if (keyboard_get_is_osd_overlay()) {
+      zxosd_update_time();
     }
 
     s_tr = n;

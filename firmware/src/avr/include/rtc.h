@@ -13,9 +13,7 @@
 extern "C" {
 #endif
 
-typedef void (*rtc_event_cb)(void);
-
-void rtc_init(rtc_event_cb on_time_cb);
+void rtc_init(void);
 bool rtc_started(void);
 void rtc_handle(void);
 

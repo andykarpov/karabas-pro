@@ -15,15 +15,11 @@
 #define ZX_JOY_A     6
 #define ZX_JOY_B     7
 
-#define EVENT_OSD_JOY_DATA 1
-
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-typedef void (*joystick_event_cb)(uint8_t evt, uint8_t data);
-
-void joystick_init(joystick_event_cb on_joy_cb);
+void joystick_init(void);
 bool joystick_started(void);
 void joystick_handle(bool joy_type);
 uint8_t joystick_get_state(void);

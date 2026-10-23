@@ -9,16 +9,11 @@
 #define ADDR_MOUSE_Y 0x0B
 #define ADDR_MOUSE_Z 0x0C
 
-#define EVENT_OSD_MOUSE_SWAPPED 0
-#define EVENT_OSD_MOUSE_DATA    1
-
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-typedef void (*mouse_event_cb)(uint8_t evt);
-
-void mouse_init(mouse_event_cb on_mouse_cb);
+void mouse_init(void);
 bool mouse_started(void);
 void mouse_handle(bool menu);
 
