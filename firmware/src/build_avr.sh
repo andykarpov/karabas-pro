@@ -16,6 +16,7 @@ pio run
 # Generate revision-specific EEPROM Intel HEX files:
 # Byte 0x12: LED override (10 = enabled, 20 = disabled)
 # Byte 0x13: HW buttons   (10 = enabled, 20 = disabled)
+# Byte 0x14: Language     (0 = EN, 1 = RU, 2 = UA)
 python3 -c "
 def make_hex(data):
     lines = []
@@ -30,10 +31,10 @@ def make_hex(data):
 base = [0, 10, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 0, 0, 20, 20]
 
 configs = {
-    'karabas_pro_revA.eep': base + [10, 20],  # Rev.A/B: led_override=10, hw_buttons=20
-    'karabas_pro_revC.eep': base + [10, 10],  # Rev.C:   led_override=10, hw_buttons=10
-    'karabas_pro_revD.eep': base + [20, 10],  # Rev.D+:  led_override=20, hw_buttons=10
-    'karabas_pro.eep':      base + [20, 10],  # Default (Rev.D+)
+    'karabas_pro_revA.eep': base + [10, 20, 0],  # Rev.A/B: led_override=10, hw_buttons=20, lang=0
+    'karabas_pro_revC.eep': base + [10, 10, 0],  # Rev.C:   led_override=10, hw_buttons=10, lang=0
+    'karabas_pro_revD.eep': base + [20, 10, 0],  # Rev.D+:  led_override=20, hw_buttons=10, lang=0
+    'karabas_pro.eep':      base + [20, 10, 0],  # Default (Rev.D+)
 }
 
 for filename, data in configs.items():

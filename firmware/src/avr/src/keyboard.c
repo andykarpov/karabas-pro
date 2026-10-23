@@ -27,6 +27,7 @@ const uint8_t default_eeprom[] __attribute__((used, section(".eeprom"))) = {
   EEPROM_VALUE_FALSE, // 0x11: EEPROM_NEMOIDE_ADDRESS
   EEPROM_VALUE_FALSE, // 0x12: EEPROM_LED_OVERRIDE_ADDRESS (20 = disabled for Rev D+)
   EEPROM_VALUE_TRUE,  // 0x13: EEPROM_HW_BUTTONS_ADDRESS  (10 = enabled)
+  LANG_EN,            // 0x14: EEPROM_LANG_ADDRESS (0 = EN, 1 = RU, 2 = UA)
 };
 
 static bool s_is_started = false;
@@ -36,6 +37,7 @@ static uint32_t s_last_activity_time = 0;
 
 static bool s_is_led_override = false;
 static bool s_use_hw_buttons = true;
+static uint8_t s_lang = LANG_EN;
 
 static bool s_matrix[ZX_MATRIX_FULL_SIZE];
 static bool s_profi_mode = true;
@@ -174,6 +176,12 @@ static void eeprom_restore_values(void)
   s_is_nemoide     = eeprom_restore_bool(EEPROM_NEMOIDE_ADDRESS, s_is_nemoide);
   s_is_led_override = eeprom_restore_bool(EEPROM_LED_OVERRIDE_ADDRESS, s_is_led_override);
   s_use_hw_buttons  = eeprom_restore_bool(EEPROM_HW_BUTTONS_ADDRESS, s_use_hw_buttons);
+
+  s_lang = hal_eeprom_read(EEPROM_LANG_ADDRESS);
+  if (s_lang >= LANG_COUNT) {
+    s_lang = LANG_EN;
+    hal_eeprom_update(EEPROM_LANG_ADDRESS, LANG_EN);
+  }
 
   // Apply restored values to matrix
   s_matrix[ZX_K_TURBO]        = bitRead(s_turbo, 0);
@@ -963,6 +971,18 @@ void keyboard_set_hw_buttons(bool val)
 bool keyboard_get_hw_buttons(void)
 {
   return s_use_hw_buttons;
+}
+
+void keyboard_set_lang(uint8_t val)
+{
+  if (val >= LANG_COUNT) val = LANG_EN;
+  s_lang = val;
+  hal_eeprom_update(EEPROM_LANG_ADDRESS, s_lang);
+}
+
+uint8_t keyboard_get_lang(void)
+{
+  return s_lang;
 }
 
 bool keyboard_get_is_osd_overlay(void) { return s_osd_overlay; }

@@ -204,7 +204,9 @@ CPLD выполняет критическую связующую функцию
   * Драйвер OSD изолирован от C++ `Print`/`Stream`, использует прямой вывод символов.
   * Всплывающее меню настроек и инфо-строки (Popups).
   * Полноэкранный оверлей настройки часов, режимов видео и дисководов.
-  * Мультиязычность: английский ([lang_en.h](file:///home/andy/Documents/Projects/Retrocomp/ZX-Spectrum/karabas-pro-master/firmware/src/avr/lib/ZXOSD/lang_en.h)), русский ([lang_ru.h](file:///home/andy/Documents/Projects/Retrocomp/ZX-Spectrum/karabas-pro-master/firmware/src/avr/lib/ZXOSD/lang_ru.h)), украинский ([lang_ua.h](file:///home/andy/Documents/Projects/Retrocomp/ZX-Spectrum/karabas-pro-master/firmware/src/avr/lib/ZXOSD/lang_ua.h)).
+  * Runtime мультиязычность: одновременная поддержка всех 3 языков (английский, русский, украинский) в единой универсальной прошивке.
+  * Переключение языка в OSD по горячей клавише `L` (`EN -> RU -> UA -> EN`) с мгновенной перерисовкой меню.
+  * Сохранение выбранного языка в EEPROM по адресу `0x14` (`0 = EN`, `1 = RU`, `2 = UA`), по умолчанию — английский (`0`).
 
 ### Расход памяти прошивки ATmega328P:
 * **Flash:** 23 774 – 24 006 байт (~72.6% – 73.3%) в зависимости от конфигурации (исходно было 32 512 байт / 99.2%). Суммарно высвобождено **> 8.6 КБ**.
@@ -227,6 +229,7 @@ CPLD выполняет критическую связующую функцию
 | **Menu + M** | Режим маппинга джойстика (Kempston / Sinclair 1-2 / Cursor / QAOP) |
 | **Menu + D** | Включение / отключение контроллера DivMMC |
 | **Menu + N** | Включение / отключение контроллера Nemo IDE |
+| **L** (в OSD) | Переключение языка OSD (EN $\rightarrow$ RU $\rightarrow$ UA $\rightarrow$ EN) |
 | **Ctrl + Alt + Del** | Программный сброс (Reset) |
 
 ---

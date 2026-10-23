@@ -75,34 +75,99 @@ static void    set_pause(uint8_t v)     { (void)v; keyboard_do_pause(); }
 
 // Label arrays in PROGMEM
 static const char * const val_rom_bank[] PROGMEM = { msg_default, msg_pqdos, msg_flasher, msg_fdimage };
-static const char * const val_on_off[] PROGMEM   = { msg_off, msg_on };
-static const char * const val_psg_mix[] PROGMEM  = { msg_acb, msg_abc, msg_mono };
 static const char * const val_psg_type[] PROGMEM = { msg_ym, msg_ay };
-static const char * const val_video[] PROGMEM    = { msg_vga, msg_rgb };
-static const char * const val_vsync[] PROGMEM    = { msg_50hz, msg_60hz };
-static const char * const val_turbo[] PROGMEM    = { msg_off, msg_2x, msg_4x, msg_8x };
 static const char * const val_joy_type[] PROGMEM = { msg_atari, msg_sega };
-static const char * const val_joy_mode[] PROGMEM = { msg_joy_kempston, msg_joy_sinclair1, msg_joy_sinclair2, msg_joy_cursor, msg_joy_qaop };
-static const char * const val_screen[] PROGMEM   = { msg_pentagon, msg_classic };
-static const char * const val_keyboard[] PROGMEM = { msg_spectrum, msg_profi_xt };
 
-static const MenuItem s_main_menu_items[MAIN_MENU_ITEMS_COUNT] PROGMEM = {
-  { msg_rom_bank,  msg_menu_f1_f4,  5, 3, val_rom_bank, get_rombank,     set_rombank,     0 },
-  { msg_turbofdc,  msg_menu_f5,     6, 1, val_on_off,   get_turbofdc,    set_turbofdc,    0 },
-  { msg_covox,     msg_menu_f6,     7, 1, val_on_off,   get_covox,       set_covox,       0 },
-  { msg_psg_mix,   msg_menu_f7,     8, 2, val_psg_mix,  get_stereo,      set_stereo,      0 },
-  { msg_psg_type,  msg_menu_f8,     9, 1, val_psg_type, get_ssg,         set_ssg,         0 },
-  { msg_video,     msg_menu_f9,    10, 1, val_video,    get_video,       set_video,       0 },
-  { msg_vsync,     msg_menu_f10,   11, 1, val_vsync,    get_vsync,       set_vsync,       0 },
-  { msg_turbo,     msg_menu_f11,   12, 3, val_turbo,    get_turbo,       set_turbo,       get_turbo_max },
-  { msg_swap_fdd,  msg_menu_tab,   13, 1, val_on_off,   get_swap_ab,     set_swap_ab,     0 },
-  { msg_joy_type,  msg_menu_j,     14, 1, val_joy_type, get_joy_type,    set_joy_type,    0 },
-  { msg_joy_mode,  msg_menu_m,     15, 4, val_joy_mode, get_joy_mode,    set_joy_mode,    0 },
-  { msg_screen,    msg_menu_v,     16, 1, val_screen,   get_screen_mode, set_screen_mode, get_screen_mode_max },
-  { msg_divmmc,    msg_menu_d,     17, 1, val_on_off,   get_divmmc,      set_divmmc,      0 },
-  { msg_nemoide,   msg_menu_n,     18, 1, val_on_off,   get_nemoide,     set_nemoide,     0 },
-  { msg_keyboard,  msg_prtscr,     19, 1, val_keyboard, get_kbd_type,    set_kbd_type,    0 },
-  { msg_pause,     msg_pause,      20, 1, val_on_off,   get_pause,       set_pause,       0 },
+static const char * const val_on_off_en[] PROGMEM = { msg_en_off, msg_en_on };
+static const char * const val_on_off_ru[] PROGMEM = { msg_ru_off, msg_ru_on };
+static const char * const val_on_off_ua[] PROGMEM = { msg_ua_off, msg_ua_on };
+
+static const char * const val_psg_mix_en[] PROGMEM = { msg_acb, msg_abc, msg_en_mono };
+static const char * const val_psg_mix_ru[] PROGMEM = { msg_acb, msg_abc, msg_ru_mono };
+static const char * const val_psg_mix_ua[] PROGMEM = { msg_acb, msg_abc, msg_ua_mono };
+
+static const char * const val_video_en[] PROGMEM = { msg_en_vga, msg_en_rgb };
+static const char * const val_video_ru[] PROGMEM = { msg_ru_vga, msg_ru_rgb };
+static const char * const val_video_ua[] PROGMEM = { msg_ua_vga, msg_ua_rgb };
+
+static const char * const val_vsync_en[] PROGMEM = { msg_en_50hz, msg_en_60hz };
+static const char * const val_vsync_ru[] PROGMEM = { msg_ru_50hz, msg_ru_60hz };
+static const char * const val_vsync_ua[] PROGMEM = { msg_ua_50hz, msg_ua_60hz };
+
+static const char * const val_turbo_en[] PROGMEM = { msg_en_off, msg_2x, msg_4x, msg_8x };
+static const char * const val_turbo_ru[] PROGMEM = { msg_ru_off, msg_2x, msg_4x, msg_8x };
+static const char * const val_turbo_ua[] PROGMEM = { msg_ua_off, msg_2x, msg_4x, msg_8x };
+
+static const char * const val_joy_mode_en[] PROGMEM = { msg_en_joy_kempston, msg_en_joy_sinclair1, msg_en_joy_sinclair2, msg_en_joy_cursor, msg_joy_qaop };
+static const char * const val_joy_mode_ru[] PROGMEM = { msg_ru_joy_kempston, msg_ru_joy_sinclair1, msg_ru_joy_sinclair2, msg_ru_joy_cursor, msg_joy_qaop };
+static const char * const val_joy_mode_ua[] PROGMEM = { msg_ua_joy_kempston, msg_ua_joy_sinclair1, msg_ua_joy_sinclair2, msg_ua_joy_cursor, msg_joy_qaop };
+
+static const char * const val_screen_en[] PROGMEM = { msg_en_pentagon, msg_en_classic };
+static const char * const val_screen_ru[] PROGMEM = { msg_ru_pentagon, msg_ru_classic };
+static const char * const val_screen_ua[] PROGMEM = { msg_ua_pentagon, msg_ua_classic };
+
+static const char * const val_keyboard_en[] PROGMEM = { msg_en_spectrum, msg_en_profi_xt };
+static const char * const val_keyboard_ru[] PROGMEM = { msg_ru_spectrum, msg_ru_profi_xt };
+static const char * const val_keyboard_ua[] PROGMEM = { msg_ua_spectrum, msg_ua_profi_xt };
+
+static const MenuItem s_main_menu_items[LANG_COUNT][MAIN_MENU_ITEMS_COUNT] PROGMEM = {
+  // LANG_EN
+  {
+    { msg_en_rom_bank,  msg_en_menu_f1_f4,  5, 3, val_rom_bank,    get_rombank,     set_rombank,     0 },
+    { msg_en_turbofdc,  msg_en_menu_f5,     6, 1, val_on_off_en,   get_turbofdc,    set_turbofdc,    0 },
+    { msg_en_covox,     msg_en_menu_f6,     7, 1, val_on_off_en,   get_covox,       set_covox,       0 },
+    { msg_en_psg_mix,   msg_en_menu_f7,     8, 2, val_psg_mix_en,  get_stereo,      set_stereo,      0 },
+    { msg_en_psg_type,  msg_en_menu_f8,     9, 1, val_psg_type,    get_ssg,         set_ssg,         0 },
+    { msg_en_video,     msg_en_menu_f9,    10, 1, val_video_en,    get_video,       set_video,       0 },
+    { msg_en_vsync,     msg_en_menu_f10,   11, 1, val_vsync_en,    get_vsync,       set_vsync,       0 },
+    { msg_en_turbo,     msg_en_menu_f11,   12, 3, val_turbo_en,    get_turbo,       set_turbo,       get_turbo_max },
+    { msg_en_swap_fdd,  msg_en_menu_tab,   13, 1, val_on_off_en,   get_swap_ab,     set_swap_ab,     0 },
+    { msg_en_joy_type,  msg_en_menu_j,     14, 1, val_joy_type,    get_joy_type,    set_joy_type,    0 },
+    { msg_en_joy_mode,  msg_en_menu_m,     15, 4, val_joy_mode_en, get_joy_mode,    set_joy_mode,    0 },
+    { msg_en_screen,    msg_en_menu_v,     16, 1, val_screen_en,   get_screen_mode, set_screen_mode, get_screen_mode_max },
+    { msg_divmmc,       msg_en_menu_d,     17, 1, val_on_off_en,   get_divmmc,      set_divmmc,      0 },
+    { msg_nemoide,      msg_en_menu_n,     18, 1, val_on_off_en,   get_nemoide,     set_nemoide,     0 },
+    { msg_en_keyboard,  msg_prtscr,        19, 1, val_keyboard_en, get_kbd_type,    set_kbd_type,    0 },
+    { msg_en_pause,     msg_en_pause,      20, 1, val_on_off_en,   get_pause,       set_pause,       0 },
+  },
+  // LANG_RU
+  {
+    { msg_ru_rom_bank,  msg_ru_menu_f1_f4,  5, 3, val_rom_bank,    get_rombank,     set_rombank,     0 },
+    { msg_ru_turbofdc,  msg_ru_menu_f5,     6, 1, val_on_off_ru,   get_turbofdc,    set_turbofdc,    0 },
+    { msg_ru_covox,     msg_ru_menu_f6,     7, 1, val_on_off_ru,   get_covox,       set_covox,       0 },
+    { msg_ru_psg_mix,   msg_ru_menu_f7,     8, 2, val_psg_mix_ru,  get_stereo,      set_stereo,      0 },
+    { msg_ru_psg_type,  msg_ru_menu_f8,     9, 1, val_psg_type,    get_ssg,         set_ssg,         0 },
+    { msg_ru_video,     msg_ru_menu_f9,    10, 1, val_video_ru,    get_video,       set_video,       0 },
+    { msg_ru_vsync,     msg_ru_menu_f10,   11, 1, val_vsync_ru,    get_vsync,       set_vsync,       0 },
+    { msg_ru_turbo,     msg_ru_menu_f11,   12, 3, val_turbo_ru,    get_turbo,       set_turbo,       get_turbo_max },
+    { msg_ru_swap_fdd,  msg_ru_menu_tab,   13, 1, val_on_off_ru,   get_swap_ab,     set_swap_ab,     0 },
+    { msg_ru_joy_type,  msg_ru_menu_j,     14, 1, val_joy_type,    get_joy_type,    set_joy_type,    0 },
+    { msg_ru_joy_mode,  msg_ru_menu_m,     15, 4, val_joy_mode_ru, get_joy_mode,    set_joy_mode,    0 },
+    { msg_ru_screen,    msg_ru_menu_v,     16, 1, val_screen_ru,   get_screen_mode, set_screen_mode, get_screen_mode_max },
+    { msg_divmmc,       msg_ru_menu_d,     17, 1, val_on_off_ru,   get_divmmc,      set_divmmc,      0 },
+    { msg_nemoide,      msg_ru_menu_n,     18, 1, val_on_off_ru,   get_nemoide,     set_nemoide,     0 },
+    { msg_ru_keyboard,  msg_prtscr,        19, 1, val_keyboard_ru, get_kbd_type,    set_kbd_type,    0 },
+    { msg_ru_pause,     msg_ru_pause,      20, 1, val_on_off_ru,   get_pause,       set_pause,       0 },
+  },
+  // LANG_UA
+  {
+    { msg_ua_rom_bank,  msg_ua_menu_f1_f4,  5, 3, val_rom_bank,    get_rombank,     set_rombank,     0 },
+    { msg_ua_turbofdc,  msg_ua_menu_f5,     6, 1, val_on_off_ua,   get_turbofdc,    set_turbofdc,    0 },
+    { msg_ua_covox,     msg_ua_menu_f6,     7, 1, val_on_off_ua,   get_covox,       set_covox,       0 },
+    { msg_ua_psg_mix,   msg_ua_menu_f7,     8, 2, val_psg_mix_ua,  get_stereo,      set_stereo,      0 },
+    { msg_ua_psg_type,  msg_ua_menu_f8,     9, 1, val_psg_type,    get_ssg,         set_ssg,         0 },
+    { msg_ua_video,     msg_ua_menu_f9,    10, 1, val_video_ua,    get_video,       set_video,       0 },
+    { msg_ua_vsync,     msg_ua_menu_f10,   11, 1, val_vsync_ua,    get_vsync,       set_vsync,       0 },
+    { msg_ua_turbo,     msg_ua_menu_f11,   12, 3, val_turbo_ua,    get_turbo,       set_turbo,       get_turbo_max },
+    { msg_ua_swap_fdd,  msg_ua_menu_tab,   13, 1, val_on_off_ua,   get_swap_ab,     set_swap_ab,     0 },
+    { msg_ua_joy_type,  msg_ua_menu_j,     14, 1, val_joy_type,    get_joy_type,    set_joy_type,    0 },
+    { msg_ua_joy_mode,  msg_ua_menu_m,     15, 4, val_joy_mode_ua, get_joy_mode,    set_joy_mode,    0 },
+    { msg_ua_screen,    msg_ua_menu_v,     16, 1, val_screen_ua,   get_screen_mode, set_screen_mode, get_screen_mode_max },
+    { msg_divmmc,       msg_ua_menu_d,     17, 1, val_on_off_ua,   get_divmmc,      set_divmmc,      0 },
+    { msg_nemoide,      msg_ua_menu_n,     18, 1, val_on_off_ua,   get_nemoide,     set_nemoide,     0 },
+    { msg_ua_keyboard,  msg_prtscr,        19, 1, val_keyboard_ua, get_kbd_type,    set_kbd_type,    0 },
+    { msg_ua_pause,     msg_ua_pause,      20, 1, val_on_off_ua,   get_pause,       set_pause,       0 },
+  }
 };
 
 typedef uint16_t (*rtc_get_fn)(void);
@@ -132,25 +197,194 @@ static void     set_rtc_year(uint16_t v) { rtc_set_year((int)v); }
 static uint16_t get_rtc_dow(void)        { return rtc_get_week(); }
 static void     set_rtc_dow(uint16_t v)  { rtc_set_week((uint8_t)v); }
 
-static const char * const val_months[] PROGMEM = {
-  msg_month_jan, msg_month_feb, msg_month_mar, msg_month_apr,
-  msg_month_may, msg_month_jun, msg_month_jul, msg_month_aug,
-  msg_month_sep, msg_month_oct, msg_month_nov, msg_month_dec
+static const char * const val_months[LANG_COUNT][12] PROGMEM = {
+  { msg_en_month_jan, msg_en_month_feb, msg_en_month_mar, msg_en_month_apr,
+    msg_en_month_may, msg_en_month_jun, msg_en_month_jul, msg_en_month_aug,
+    msg_en_month_sep, msg_en_month_oct, msg_en_month_nov, msg_en_month_dec },
+  { msg_ru_month_jan, msg_ru_month_feb, msg_ru_month_mar, msg_ru_month_apr,
+    msg_ru_month_may, msg_ru_month_jun, msg_ru_month_jul, msg_ru_month_aug,
+    msg_ru_month_sep, msg_ru_month_oct, msg_ru_month_nov, msg_ru_month_dec },
+  { msg_ua_month_jan, msg_ua_month_feb, msg_ua_month_mar, msg_ua_month_apr,
+    msg_ua_month_may, msg_ua_month_jun, msg_ua_month_jul, msg_ua_month_aug,
+    msg_ua_month_sep, msg_ua_month_oct, msg_ua_month_nov, msg_ua_month_dec }
 };
 
-static const char * const val_dows[] PROGMEM = {
-  msg_dow_sun, msg_dow_mon, msg_dow_tue, msg_dow_wed, msg_dow_thu, msg_dow_fri, msg_dow_sat
+static const char * const val_dows[LANG_COUNT][7] PROGMEM = {
+  { msg_en_dow_sun, msg_en_dow_mon, msg_en_dow_tue, msg_en_dow_wed, msg_en_dow_thu, msg_en_dow_fri, msg_en_dow_sat },
+  { msg_ru_dow_sun, msg_ru_dow_mon, msg_ru_dow_tue, msg_ru_dow_wed, msg_ru_dow_thu, msg_ru_dow_fri, msg_ru_dow_sat },
+  { msg_ua_dow_sun, msg_ua_dow_mon, msg_ua_dow_tue, msg_ua_dow_wed, msg_ua_dow_thu, msg_ua_dow_fri, msg_ua_dow_sat }
 };
 
-static const RtcField s_rtc_fields[RTC_FIELDS_COUNT] PROGMEM = {
-  { msg_hours,    7,  0,    23,   get_rtc_hour,  set_rtc_hour },
-  { msg_minutes,  8,  0,    59,   get_rtc_min,   set_rtc_min },
-  { msg_seconds,  9,  0,    59,   get_rtc_sec,   set_rtc_sec },
-  { msg_day,     11,  1,    31,   get_rtc_day,   set_rtc_day },
-  { msg_month,   12,  1,    12,   get_rtc_month, set_rtc_month },
-  { msg_year,    13,  2000, 4095, get_rtc_year,  set_rtc_year },
-  { msg_dow,     15,  1,    7,    get_rtc_dow,   set_rtc_dow },
+static const RtcField s_rtc_fields[LANG_COUNT][RTC_FIELDS_COUNT] PROGMEM = {
+  // LANG_EN
+  {
+    { msg_en_hours,    7,  0,    23,   get_rtc_hour,  set_rtc_hour },
+    { msg_en_minutes,  8,  0,    59,   get_rtc_min,   set_rtc_min },
+    { msg_en_seconds,  9,  0,    59,   get_rtc_sec,   set_rtc_sec },
+    { msg_en_day,     11,  1,    31,   get_rtc_day,   set_rtc_day },
+    { msg_en_month,   12,  1,    12,   get_rtc_month, set_rtc_month },
+    { msg_en_year,    13,  2000, 4095, get_rtc_year,  set_rtc_year },
+    { msg_en_dow,     15,  1,    7,    get_rtc_dow,   set_rtc_dow },
+  },
+  // LANG_RU
+  {
+    { msg_ru_hours,    7,  0,    23,   get_rtc_hour,  set_rtc_hour },
+    { msg_ru_minutes,  8,  0,    59,   get_rtc_min,   set_rtc_min },
+    { msg_ru_seconds,  9,  0,    59,   get_rtc_sec,   set_rtc_sec },
+    { msg_ru_day,     11,  1,    31,   get_rtc_day,   set_rtc_day },
+    { msg_ru_month,   12,  1,    12,   get_rtc_month, set_rtc_month },
+    { msg_ru_year,    13,  2000, 4095, get_rtc_year,  set_rtc_year },
+    { msg_ru_dow,     15,  1,    7,    get_rtc_dow,   set_rtc_dow },
+  },
+  // LANG_UA
+  {
+    { msg_ua_hours,    7,  0,    23,   get_rtc_hour,  set_rtc_hour },
+    { msg_ua_minutes,  8,  0,    59,   get_rtc_min,   set_rtc_min },
+    { msg_ua_seconds,  9,  0,    59,   get_rtc_sec,   set_rtc_sec },
+    { msg_ua_day,     11,  1,    31,   get_rtc_day,   set_rtc_day },
+    { msg_ua_month,   12,  1,    12,   get_rtc_month, set_rtc_month },
+    { msg_ua_year,    13,  2000, 4095, get_rtc_year,  set_rtc_year },
+    { msg_ua_dow,     15,  1,    7,    get_rtc_dow,   set_rtc_dow },
+  }
 };
+
+typedef enum {
+  MSG_FPGA,
+  MSG_AVR,
+  MSG_ETUP_RTC,
+  MSG_NFO,
+  MSG_BOUT,
+  MSG_ANG,
+  MSG_PRESS,
+  MSG_TO_RETURN,
+  MSG_TO_REBOOT,
+  MSG_MENU_ESC,
+  MSG_TO_TOGGLE_OSD,
+  MSG_RTC_SETUP,
+  MSG_PLEASE_USE_ARROWS,
+  MSG_AND,
+  MSG_ABOUT,
+  MSG_KARABAS_DEVELOPERS_ARE,
+  MSG_SPECIAL_THANKS_TO,
+  MSG_SYSTEM_INFO,
+  MSG_FPGA_BUILD,
+  MSG_AVR_BUILD,
+  MSG_PCB_REVISION,
+  MSG_DAC_TYPE,
+  MSG_UPTIME,
+  MSG_DEBUG_INFO,
+  MSG_SCANCODE,
+  MSG_MOUSE,
+  MSG_PORT_1F,
+  MSG_ONE_DAY,
+  MSG_MANY_DAYS,
+  MSG_COUNT
+} MsgId;
+
+static const char * const s_messages[LANG_COUNT][MSG_COUNT] PROGMEM = {
+  // LANG_EN
+  {
+    msg_en_fpga,
+    msg_en_avr,
+    msg_en_etup_rtc,
+    msg_en_nfo,
+    msg_en_bout,
+    msg_en_ang,
+    msg_en_press,
+    msg_en_to_return,
+    msg_en_to_reboot,
+    msg_en_menu_esc,
+    msg_en_to_toggle_osd,
+    msg_en_rtc_setup,
+    msg_en_please_use_arrows,
+    msg_en_and,
+    msg_en_about,
+    msg_en_karabas_developers_are,
+    msg_en_special_thanks_to,
+    msg_en_system_info,
+    msg_en_fpga_build,
+    msg_en_avr_build,
+    msg_en_pcb_revision,
+    msg_en_dac_type,
+    msg_en_uptime,
+    msg_en_debug_info,
+    msg_en_scancode,
+    msg_en_mouse,
+    msg_en_port_1f,
+    msg_en_one_day,
+    msg_en_many_days,
+  },
+  // LANG_RU
+  {
+    msg_ru_fpga,
+    msg_ru_avr,
+    msg_ru_etup_rtc,
+    msg_ru_nfo,
+    msg_ru_bout,
+    msg_ru_ang,
+    msg_ru_press,
+    msg_ru_to_return,
+    msg_ru_to_reboot,
+    msg_ru_menu_esc,
+    msg_ru_to_toggle_osd,
+    msg_ru_rtc_setup,
+    msg_ru_please_use_arrows,
+    msg_ru_and,
+    msg_ru_about,
+    msg_ru_karabas_developers_are,
+    msg_ru_special_thanks_to,
+    msg_ru_system_info,
+    msg_ru_fpga_build,
+    msg_ru_avr_build,
+    msg_ru_pcb_revision,
+    msg_ru_dac_type,
+    msg_ru_uptime,
+    msg_ru_debug_info,
+    msg_ru_scancode,
+    msg_ru_mouse,
+    msg_ru_port_1f,
+    msg_ru_one_day,
+    msg_ru_many_days,
+  },
+  // LANG_UA
+  {
+    msg_ua_fpga,
+    msg_ua_avr,
+    msg_ua_etup_rtc,
+    msg_ua_nfo,
+    msg_ua_bout,
+    msg_ua_ang,
+    msg_ua_press,
+    msg_ua_to_return,
+    msg_ua_to_reboot,
+    msg_ua_menu_esc,
+    msg_ua_to_toggle_osd,
+    msg_ua_rtc_setup,
+    msg_ua_please_use_arrows,
+    msg_ua_and,
+    msg_ua_about,
+    msg_ua_karabas_developers_are,
+    msg_ua_special_thanks_to,
+    msg_ua_system_info,
+    msg_ua_fpga_build,
+    msg_ua_avr_build,
+    msg_ua_pcb_revision,
+    msg_ua_dac_type,
+    msg_ua_uptime,
+    msg_ua_debug_info,
+    msg_ua_scancode,
+    msg_ua_mouse,
+    msg_ua_port_1f,
+    msg_ua_one_day,
+    msg_ua_many_days,
+  }
+};
+
+static uint8_t s_lang = LANG_EN;
+
+static inline const char * msg(MsgId id) {
+  return (const char *)pgm_read_ptr(&s_messages[s_lang][id]);
+}
 
 typedef enum {
   STATE_MAIN = 0,
@@ -271,13 +505,13 @@ static void print_header(void)
 
   osd_set_color(OSD_COLOR_GREY, OSD_COLOR_BLACK);
   osd_set_pos(19, 2);
-  osd_print_p(msg_fpga);
+  osd_print_p(msg(MSG_FPGA));
   for (uint8_t i = 0; i < 8; i++) {
     osd_write(s_fpga_build_num[i]);
   }
 
   osd_set_pos(20, 3);
-  osd_print_p(msg_avr);
+  osd_print_p(msg(MSG_AVR));
   if (s_avr_build_num) osd_print(s_avr_build_num);
 
   osd_set_color(OSD_COLOR_WHITE, OSD_COLOR_BLACK);
@@ -291,9 +525,9 @@ static void popup_footer(void)
   osd_set_color(OSD_COLOR_WHITE, OSD_COLOR_BLACK);
   print_line(22);
   osd_set_pos(0, 23);
-  text(msg_press);
+  text(msg(MSG_PRESS));
   hint(msg_esc);
-  text(msg_to_return);
+  text(msg(MSG_TO_RETURN));
 }
 
 static void render_menu_item_value(uint8_t idx, bool is_active)
@@ -301,7 +535,7 @@ static void render_menu_item_value(uint8_t idx, bool is_active)
   if (idx >= MAIN_MENU_ITEMS_COUNT) return;
 
   MenuItem item;
-  memcpy_P(&item, &s_main_menu_items[idx], sizeof(MenuItem));
+  memcpy_P(&item, &s_main_menu_items[s_lang][idx], sizeof(MenuItem));
 
   if (!keyboard_get_is_osd_popup()) {
     if (s_osd_state != STATE_MAIN) return;
@@ -328,7 +562,7 @@ static void render_menu_item(uint8_t idx, bool is_active)
   if (idx >= MAIN_MENU_ITEMS_COUNT) return;
 
   MenuItem item;
-  memcpy_P(&item, &s_main_menu_items[idx], sizeof(MenuItem));
+  memcpy_P(&item, &s_main_menu_items[s_lang][idx], sizeof(MenuItem));
 
   osd_set_pos(0, item.y_pos);
   param(item.title);
@@ -344,7 +578,7 @@ static void change_menu_item(uint8_t idx, int8_t dir)
   if (idx >= MAIN_MENU_ITEMS_COUNT) return;
 
   MenuItem item;
-  memcpy_P(&item, &s_main_menu_items[idx], sizeof(MenuItem));
+  memcpy_P(&item, &s_main_menu_items[s_lang][idx], sizeof(MenuItem));
 
   uint8_t max_v = item.get_max ? item.get_max() : item.max_val;
   uint8_t cur_v = item.get_val();
@@ -368,14 +602,14 @@ static void render_rtc_field_value(uint8_t idx, bool is_active)
   highlight(is_active);
 
   RtcField f;
-  memcpy_P(&f, &s_rtc_fields[idx], sizeof(RtcField));
+  memcpy_P(&f, &s_rtc_fields[s_lang][idx], sizeof(RtcField));
   osd_set_pos(10, f.y_pos);
 
   uint16_t val = f.get_val();
 
   if (idx == 4) { // Month
     if (val >= 1 && val <= 12) {
-      const char *m = (const char *)pgm_read_ptr(&val_months[val - 1]);
+      const char *m = (const char *)pgm_read_ptr(&val_months[s_lang][val - 1]);
       osd_print_p(m);
     } else {
       osd_print_p(msg_unknown);
@@ -384,7 +618,7 @@ static void render_rtc_field_value(uint8_t idx, bool is_active)
     print_space();
   } else if (idx == 6) { // DOW
     if (val >= 1 && val <= 7) {
-      const char *d = (const char *)pgm_read_ptr(&val_dows[val - 1]);
+      const char *d = (const char *)pgm_read_ptr(&val_dows[s_lang][val - 1]);
       osd_print_p(d);
     } else {
       osd_print_p(msg_unknown);
@@ -407,7 +641,7 @@ static void change_rtc_field(uint8_t idx, int8_t dir)
   if (idx >= RTC_FIELDS_COUNT) return;
 
   RtcField f;
-  memcpy_P(&f, &s_rtc_fields[idx], sizeof(RtcField));
+  memcpy_P(&f, &s_rtc_fields[s_lang][idx], sizeof(RtcField));
   int32_t val = (int32_t)f.get_val();
 
   if (dir < 0) {
@@ -430,25 +664,25 @@ static void init_rtc_overlay(void)
   print_header();
 
   osd_set_pos(0, 5);
-  text(msg_rtc_setup);
+  text(msg(MSG_RTC_SETUP));
 
   for (uint8_t i = 0; i < RTC_FIELDS_COUNT; i++) {
     RtcField f;
-    memcpy_P(&f, &s_rtc_fields[i], sizeof(RtcField));
+    memcpy_P(&f, &s_rtc_fields[s_lang][i], sizeof(RtcField));
     osd_set_pos(0, f.y_pos);
     param(f.title);
     render_rtc_field_value(i, i == s_osd_rtc_state);
   }
 
   osd_set_pos(0, 17);
-  text(msg_please_use_arrows);
+  text(msg(MSG_PLEASE_USE_ARROWS));
   osd_set_color(OSD_COLOR_CYAN_I, OSD_COLOR_BLACK); osd_write(17);
-  text(msg_and);
+  text(msg(MSG_AND));
   osd_set_color(OSD_COLOR_CYAN_I, OSD_COLOR_BLACK); osd_write(16);
   osd_set_pos(0, 18);
   text(msg_to_change_values);
   osd_set_color(OSD_COLOR_CYAN_I, OSD_COLOR_BLACK); osd_write(30);
-  text(msg_and);
+  text(msg(MSG_AND));
   osd_set_color(OSD_COLOR_CYAN_I, OSD_COLOR_BLACK); osd_write(31);
   osd_set_pos(0, 19);
   text(msg_to_navigate);
@@ -464,11 +698,11 @@ static void init_about_overlay(void)
   print_header();
 
   osd_set_pos(0, 5);
-  text(msg_about);
+  text(msg(MSG_ABOUT));
 
   osd_set_pos(0, 7);
   osd_set_color(OSD_COLOR_BLUE_I, OSD_COLOR_BLACK);
-  osd_print_p(msg_karabas_developers_are);
+  osd_print_p(msg(MSG_KARABAS_DEVELOPERS_ARE));
 
   typedef struct { const char *name; const char *skills; } DevInfo;
   static const DevInfo devs[] PROGMEM = {
@@ -490,7 +724,7 @@ static void init_about_overlay(void)
 
   osd_set_pos(0, 14);
   osd_set_color(OSD_COLOR_BLUE_I, OSD_COLOR_BLACK);
-  osd_print_p(msg_special_thanks_to);
+  osd_print_p(msg(MSG_SPECIAL_THANKS_TO));
 
   static const char * const thanks[] PROGMEM = {
     msg_dev_kalantaj, msg_dev_tankuk, msg_dev_xdemox, msg_dev_dumpkin, msg_dev_kasper
@@ -525,8 +759,8 @@ static void update_uptime(void)
   osd_set_color(OSD_COLOR_WHITE, OSD_COLOR_BLACK);
   if (days > 0) {
     osd_print_num(days, 10);
-    osd_print_p(days > 1 ? msg_many_days : msg_one_day);
-    osd_print_p(msg_and);
+    osd_print_p(days > 1 ? msg(MSG_MANY_DAYS) : msg(MSG_ONE_DAY));
+    osd_print_p(msg(MSG_AND));
   }
   if (hours < 10) osd_print_p(msg_0);
   osd_print_num(hours, 10);
@@ -546,49 +780,49 @@ static void init_info_overlay(void)
   print_header();
 
   osd_set_pos(0, 5);
-  text(msg_system_info);
+  text(msg(MSG_SYSTEM_INFO));
 
   uint8_t y = 14;
 
   osd_set_pos(0, 7);
-  text(msg_fpga_build);
+  text(msg(MSG_FPGA_BUILD));
   osd_set_pos(y, 7);
   for (uint8_t i = 0; i < 8; i++) {
     osd_write(s_fpga_build_num[i]);
   }
 
   osd_set_pos(0, 8);
-  text(msg_avr_build);
+  text(msg(MSG_AVR_BUILD));
   osd_set_pos(y, 8);
   if (s_avr_build_num) osd_print(s_avr_build_num);
 
   osd_set_pos(0, 9);
-  text(msg_pcb_revision);
+  text(msg(MSG_PCB_REVISION));
   osd_set_pos(y, 9);
   print_rev();
 
   // DAC Type
   osd_set_color(OSD_COLOR_WHITE, OSD_COLOR_BLACK);
-  osd_set_pos(0, 10); osd_print_p(msg_dac_type);
+  osd_set_pos(0, 10); osd_print_p(msg(MSG_DAC_TYPE));
   osd_set_pos(y, 10); osd_print_p(msg_tda1543);
   if (bitRead(s_fpga_cfg, 0) == 1) {
     osd_print_p(msg_a);
   }
 
   // Uptime
-  osd_set_pos(0, 11); text(msg_uptime);
+  osd_set_pos(0, 11); text(msg(MSG_UPTIME));
   update_uptime();
 
   osd_set_pos(0, 13);
-  text(msg_debug_info);
+  text(msg(MSG_DEBUG_INFO));
 
-  osd_set_pos(0, 15); text(msg_scancode);
+  osd_set_pos(0, 15); text(msg(MSG_SCANCODE));
   zxosd_update_scancode(0);
 
-  osd_set_pos(0, 16); text(msg_mouse);
+  osd_set_pos(0, 16); text(msg(MSG_MOUSE));
   zxosd_update_mouse(0, 0, 0);
 
-  osd_set_pos(0, 17); text(msg_port_1f);
+  osd_set_pos(0, 17); text(msg(MSG_PORT_1F));
   zxosd_update_joy_state(0);
 
   popup_footer();
@@ -597,6 +831,8 @@ static void init_info_overlay(void)
 void zxosd_init(void)
 {
   osd_init();
+  s_lang = keyboard_get_lang();
+  if (s_lang >= LANG_COUNT) s_lang = LANG_EN;
   s_tstart = millis();
   s_is_started = true;
 }
@@ -627,13 +863,14 @@ void zxosd_init_overlay(void)
   }
 
   osd_set_pos(0, 22);
-  flash(msg_s); text(msg_etup_rtc); text(msg_space);
-  flash(msg_i); text(msg_nfo); flash(msg_a); text(msg_bout);
+  flash(msg_s); text(msg(MSG_ETUP_RTC)); text(msg_space);
+  flash(msg_i); text(msg(MSG_NFO)); flash(msg_a); text(msg(MSG_BOUT));
+  text(msg_space); flash(msg_l); text(msg(MSG_ANG));
 
   print_line(23);
 
-  osd_set_pos(0, 24); text(msg_press); hint(msg_ctrl_alt_del); text(msg_to_reboot);
-  osd_set_pos(0, 25); text(msg_press); hint(msg_menu_esc); text(msg_to_toggle_osd);
+  osd_set_pos(0, 24); text(msg(MSG_PRESS)); hint(msg_ctrl_alt_del); text(msg(MSG_TO_REBOOT));
+  osd_set_pos(0, 25); text(msg(MSG_PRESS)); hint(msg(MSG_MENU_ESC)); text(msg(MSG_TO_TOGGLE_OSD));
 }
 
 void zxosd_init_popup(uint8_t event_type)
@@ -649,7 +886,7 @@ void zxosd_init_popup(uint8_t event_type)
   int8_t item_idx = zxosd_event_to_menu_item(event_type);
   if (item_idx >= 0) {
     MenuItem item;
-    memcpy_P(&item, &s_main_menu_items[item_idx], sizeof(MenuItem));
+    memcpy_P(&item, &s_main_menu_items[s_lang][item_idx], sizeof(MenuItem));
 
     osd_set_color(OSD_COLOR_WHITE, OSD_COLOR_BLACK);
     osd_set_pos(0, 5);
@@ -733,6 +970,11 @@ void zxosd_handle(void)
       if (keyboard_get_key(ZX_K_S)) s_osd_state = STATE_RTC;
       if (keyboard_get_key(ZX_K_A)) s_osd_state = STATE_ABOUT;
       if (keyboard_get_key(ZX_K_I)) s_osd_state = STATE_INFO;
+      if (keyboard_get_key(ZX_K_L)) {
+        s_lang = (s_lang + 1) % LANG_COUNT;
+        keyboard_set_lang(s_lang);
+        zxosd_init_overlay();
+      }
 
       if (keyboard_get_is_cursor_left()) {
         change_menu_item(s_osd_main_state, -1);
