@@ -1,0 +1,120 @@
+name: Build AVR Firmware
+
+on:
+  push:
+    branches: [ master ]
+    paths:
+      - 'firmware/src/avr/**'
+      - 'firmware/src/build_avr.sh'
+      - 'firmware/releases/**'
+      - '.github/workflows/build-avr.yml'
+  pull_request:
+    branches: [ master ]
+    paths:
+      - 'firmware/src/avr/**'
+      - 'firmware/src/build_avr.sh'
+      - 'firmware/releases/**'
+      - '.github/workflows/build-avr.yml'
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build & Verify Firmware
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install PlatformIO
+        run: |
+          python -m pip install --upgrade pip
+          pip install platformio
+
+      - name: Cache PlatformIO packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.platformio
+          key: ${{ runner.os }}-platformio-${{ hashFiles('firmware/src/avr/platformio.ini') }}
+          restore-keys: |
+            ${{ runner.os }}-platformio-
+
+      - name: Build AVR Firmware
+        working-directory: firmware/src/avr
+        run: |
+          pio run
+
+      - name: Verify Memory Footprint & Generate Summary
+        working-directory: firmware/src/avr
+        run: |
+          python3 -c '
+          import os, re, subprocess
+
+          size_tool = os.path.expanduser("~/.platformio/packages/toolchain-atmelavr/bin/avr-size")
+          elf = ".pio/build/ATmega328/firmware.elf"
+          out = subprocess.check_output([size_tool, "-C", "--mcu=atmega328p", elf]).decode()
+          print(out)
+
+          prog_m = re.search(r"Program:\s+(\d+)\s+bytes\s+\(([\d.]+%)\s+Full\)", out)
+          data_m = re.search(r"Data:\s+(\d+)\s+bytes\s+\(([\d.]+%)\s+Full\)", out)
+          eep_m  = re.search(r"EEPROM:\s+(\d+)\s+bytes\s+\(([\d.]+%)\s+Full\)", out)
+
+          flash_bytes = int(prog_m.group(1))
+          flash_pct = prog_m.group(2)
+          ram_bytes = int(data_m.group(1))
+          ram_pct = data_m.group(2)
+          eep_bytes = int(eep_m.group(1))
+
+          summary_path = os.environ.get("GITHUB_STEP_SUMMARY")
+          if summary_path:
+              with open(summary_path, "a") as f:
+                  f.write(f"""## 🛠️ AVR Firmware Build Summary
+
+          | Resource | Used (Bytes) | Total (Bytes) | Usage (%) | Status |
+          |---|---|---|---|---|
+          | **Flash (Program)** | {flash_bytes:,} | 32,768 | {flash_pct} | {"✅ OK" if flash_bytes <= 32768 else "❌ OVERFLOW"} |
+          | **SRAM (Data)** | {ram_bytes:,} | 2,048 | {ram_pct} | {"✅ OK" if ram_bytes <= 2048 else "❌ OVERFLOW"} |
+          | **EEPROM** | {eep_bytes:,} | 1,024 | {eep_m.group(2)} | ✅ OK |
+
+          ### 📦 Artifacts
+          - `karabas_pro.hex` — Universal AVR firmware (EN/RU/UA multilingual runtime)
+          - `karabas_pro.eep` — Default EEPROM configuration (Rev. D+)
+          - `karabas_pro_revA.eep` — EEPROM for PCB Rev. A / Rev. B
+          - `karabas_pro_revC.eep` — EEPROM for PCB Rev. C
+          - `karabas_pro_revD.eep` — EEPROM for PCB Rev. D+
+          """)
+
+          if flash_bytes > 32768:
+              raise SystemExit(f"Flash limit exceeded: {flash_bytes} > 32768")
+          if ram_bytes > 2048:
+              raise SystemExit(f"RAM limit exceeded: {ram_bytes} > 2048")
+          '
+
+      - name: Check Release Binaries Drift
+        run: |
+          DIFF=$(git status --porcelain firmware/releases/)
+          if [ -n "$DIFF" ]; then
+            echo "::error::Release binaries in firmware/releases/ are out of date with firmware sources!"
+            echo "Please run 'pio run' in firmware/src/avr or use the pre-commit hook to update releases."
+            git status firmware/releases/
+            git diff firmware/releases/
+            exit 1
+          fi
+          echo "Release binaries in firmware/releases/ are up-to-date."
+
+      - name: Upload Firmware Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: karabas-pro-avr-firmware
+          path: |
+            firmware/src/avr/.pio/build/ATmega328/karabas_pro.hex
+            firmware/src/avr/.pio/build/ATmega328/karabas_pro.eep
+            firmware/src/avr/.pio/build/ATmega328/karabas_pro_revA.eep
+            firmware/src/avr/.pio/build/ATmega328/karabas_pro_revC.eep
+            firmware/src/avr/.pio/build/ATmega328/karabas_pro_revD.eep

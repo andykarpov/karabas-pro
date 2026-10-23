@@ -1,0 +1,35 @@
+#!/bin/sh
+# Git pre-commit hook to automatically rebuild AVR firmware and sync releases
+
+set -e
+
+# Check if any staged files are in AVR firmware sources
+STAGED_AVR_FILES=$(git diff --cached --name-only | grep -E '^firmware/src/(avr/|build_avr.sh)' || true)
+
+if [ -n "$STAGED_AVR_FILES" ]; then
+    echo "=========================================================="
+    echo "[pre-commit] AVR firmware changes detected:"
+    echo "$STAGED_AVR_FILES"
+    echo "[pre-commit] Rebuilding universal AVR firmware..."
+    echo "=========================================================="
+
+    export PATH="$HOME/.platformio/penv/bin:$PATH"
+    
+    if ! command -v pio >/dev/null 2>&1; then
+        echo "[pre-commit] WARNING: PlatformIO ('pio') not found in PATH."
+        echo "[pre-commit] Skipping automatic firmware build."
+        exit 0
+    fi
+
+    # Run build from firmware/src/avr
+    (cd firmware/src/avr && pio run)
+
+    # Stage any updated release binaries and EEPROMs
+    git add firmware/releases/
+
+    echo "=========================================================="
+    echo "[pre-commit] Release binaries updated and staged."
+    echo "=========================================================="
+fi
+
+exit 0
