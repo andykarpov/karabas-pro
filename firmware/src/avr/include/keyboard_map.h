@@ -1,12 +1,12 @@
-#ifndef __ZXKEYBOARD_MAP_H__
-#define __ZXKEYBOARD_MAP_H__
+#ifndef __KEYBOARD_MAP_H__
+#define __KEYBOARD_MAP_H__
 
 #include <stdint.h>
 #include <avr/pgmspace.h>
-#include <PS2KeyAdvanced.h>
-#include "ZXKeyboard.h"
+#include "ps2_kbd.h"
+#include "keyboard.h"
 
-enum KeyType : uint8_t {
+typedef enum {
   KT_NONE = 0,
   KT_DIRECT,          // Single matrix key: matrix[zx1] = !is_up (e.g. A-Z, 0-9, Space, Enter)
   KT_COMBO,           // Two matrix keys: matrix[zx1] = !is_up, matrix[zx2] = !is_up (e.g. F1-F12, KP*, KP-, KP+)
@@ -29,15 +29,15 @@ enum KeyType : uint8_t {
   KT_EDIT_HOME_END,   // Home (K+BIT6), End (L+BIT6): Profi only
   KT_SPECIAL_PAUSE,   // Pause -> doPause()
   KT_SPECIAL_PRTSCR,  // PrtScr -> toggleKeyboardType()
-};
+} KeyType;
 
-struct KeyDesc {
+typedef struct {
   uint8_t type;
   uint8_t zx1;
   uint8_t zx2;
-};
+} KeyDesc;
 
-enum HotkeyAction : uint8_t {
+typedef enum {
   HK_NONE = 0,
   HK_OSD_OVERLAY,    // ESC
   HK_SWAP_AB,        // Tab
@@ -58,14 +58,14 @@ enum HotkeyAction : uint8_t {
   HK_VSYNC,          // F10
   HK_TURBO,          // F11
   HK_MAGIC,          // F12
-};
+} HotkeyAction;
 
-struct HotkeyEntry {
+typedef struct {
   uint8_t code;
   uint8_t action;
-};
+} HotkeyEntry;
 
-// 20 hotkey definitions when modifier (Menu / Win / Ctrl+Alt) is held
+// 19 hotkey definitions when modifier (Menu / Win / Ctrl+Alt) is held
 static const HotkeyEntry s_hotkey_map[] PROGMEM = {
   { PS2_KEY_ESC,     HK_OSD_OVERLAY },
   { PS2_KEY_TAB,     HK_SWAP_AB },
@@ -203,4 +203,4 @@ static const KeyDesc s_key_map[109] PROGMEM = {
   /* 0x6C F12          */ { KT_COMBO, ZX_K_W, ZX_K_SS },
 };
 
-#endif // __ZXKEYBOARD_MAP_H__
+#endif // __KEYBOARD_MAP_H__
