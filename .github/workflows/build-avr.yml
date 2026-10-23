@@ -45,8 +45,33 @@ jobs:
             ${{ runner.os }}-platformio-
 
       - name: Build AVR Firmware
-        working-directory: firmware/src/avr
         run: |
+          # Extract BUILD_VER from committed karabas_pro.hex to ensure reproducible drift check
+          COMMITTED_VER=$(python3 -c "
+          import re
+          mem = {}
+          try:
+              with open('firmware/releases/profi/avr/karabas_pro.hex') as f:
+                  for line in f:
+                      if line.startswith(':') and line[7:9] == '00':
+                          count = int(line[1:3], 16)
+                          addr = int(line[3:7], 16)
+                          data = bytes.fromhex(line[9:9+count*2])
+                          for i, b in enumerate(data):
+                              mem[addr + i] = b
+              b = bytearray(max(mem.keys()) + 1)
+              for addr, val in mem.items():
+                  b[addr] = val
+              m = re.search(rb'\d{8}', bytes(b))
+              print(m.group(0).decode() if m else '')
+          except Exception:
+              print('')
+          ")
+          if [ -n "$COMMITTED_VER" ]; then
+            echo "Using committed BUILD_VER: $COMMITTED_VER"
+            export BUILD_VER="$COMMITTED_VER"
+          fi
+          cd firmware/src/avr
           pio run
 
       - name: Verify Memory Footprint & Generate Summary
