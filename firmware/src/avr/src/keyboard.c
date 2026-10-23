@@ -4,8 +4,38 @@
 #include "hal.h"
 #include "zxosd.h"
 #include <avr/pgmspace.h>
+#include <avr/eeprom.h>
+
+const uint8_t default_eeprom[] __attribute__((used, section(".eeprom"))) = {
+  0,                  // 0x00: EEPROM_TURBO_ADDRESS
+  EEPROM_VALUE_TRUE,  // 0x01: EEPROM_MODE_ADDRESS (profi_mode = true)
+  EEPROM_VALUE_FALSE, // 0x02: EEPROM_SW1_ADDRESS
+  EEPROM_VALUE_FALSE, // 0x03: EEPROM_SW2_ADDRESS
+  EEPROM_VALUE_FALSE, // 0x04: EEPROM_SW3_ADDRESS
+  EEPROM_VALUE_FALSE, // 0x05: EEPROM_SW4_ADDRESS
+  EEPROM_VALUE_FALSE, // 0x06: EEPROM_SW5_ADDRESS
+  EEPROM_VALUE_FALSE, // 0x07: EEPROM_SW6_ADDRESS
+  EEPROM_VALUE_FALSE, // 0x08: EEPROM_SW7_ADDRESS
+  EEPROM_VALUE_FALSE, // 0x09: EEPROM_SW8_ADDRESS
+  EEPROM_VALUE_FALSE, // 0x0A: EEPROM_SW9_ADDRESS
+  EEPROM_VALUE_FALSE, // 0x0B: EEPROM_SW10_ADDRESS
+  EEPROM_VALUE_FALSE, // 0x0C: EEPROM_MOUSE_SWAP_ADDRESS
+  EEPROM_VALUE_FALSE, // 0x0D: EEPROM_JOY_TYPE_ADDRESS
+  0,                  // 0x0E: EEPROM_SCREEN_MODE_ADDRESS
+  0,                  // 0x0F: EEPROM_JOY_MODE_ADDRESS
+  EEPROM_VALUE_FALSE, // 0x10: EEPROM_DIVMMC_ADDRESS
+  EEPROM_VALUE_FALSE, // 0x11: EEPROM_NEMOIDE_ADDRESS
+  EEPROM_VALUE_TRUE,  // 0x12: EEPROM_LED_OVERRIDE_ADDRESS (10 = enabled)
+  EEPROM_VALUE_TRUE,  // 0x13: EEPROM_HW_BUTTONS_ADDRESS  (10 = enabled)
+};
 
 static bool s_is_started = false;
+static bool s_kbd_detected = false;
+static uint32_t s_last_probe_time = 0;
+static uint32_t s_last_activity_time = 0;
+
+static bool s_is_led_override = true;
+static bool s_use_hw_buttons = true;
 
 static bool s_matrix[ZX_MATRIX_FULL_SIZE];
 static bool s_profi_mode = true;
@@ -140,8 +170,10 @@ static void eeprom_restore_values(void)
     hal_eeprom_update(EEPROM_JOY_MODE_ADDRESS, 0);
   }
 
-  s_is_divmmc  = eeprom_restore_bool(EEPROM_DIVMMC_ADDRESS, s_is_divmmc);
-  s_is_nemoide = eeprom_restore_bool(EEPROM_NEMOIDE_ADDRESS, s_is_nemoide);
+  s_is_divmmc      = eeprom_restore_bool(EEPROM_DIVMMC_ADDRESS, s_is_divmmc);
+  s_is_nemoide     = eeprom_restore_bool(EEPROM_NEMOIDE_ADDRESS, s_is_nemoide);
+  s_is_led_override = eeprom_restore_bool(EEPROM_LED_OVERRIDE_ADDRESS, s_is_led_override);
+  s_use_hw_buttons  = eeprom_restore_bool(EEPROM_HW_BUTTONS_ADDRESS, s_use_hw_buttons);
 
   // Apply restored values to matrix
   s_matrix[ZX_K_TURBO]        = bitRead(s_turbo, 0);
@@ -181,13 +213,11 @@ static uint8_t get_matrix_byte(uint8_t pos)
 
 static void send_cs(void)
 {
-#if !SEND_ECHO_ON_START
   uint8_t cs_data = get_matrix_byte(0);
   uint8_t end_data = get_matrix_byte(5);
   spi_send(CMD_KEYBOARD, 1, cs_data);
   spi_send(CMD_KEYBOARD, 6, end_data);
   delay_ms(20);
-#endif
 }
 
 static void send_macros(uint8_t code, uint8_t zxkey)
@@ -604,22 +634,15 @@ static void fill_key(uint16_t sc, uint32_t n)
   }
 }
 
-void keyboard_init(bool send_echo)
+void keyboard_init(void)
 {
   ps2_kbd_init();
-
-  if (send_echo) {
-    ps2_kbd_echo();
-    delay_ms(6);
-    uint16_t c = ps2_kbd_read();
-    if ((c & 0xFF) == PS2_KEY_ECHO || (c & 0xFF) == PS2_KEY_BAT) {
-      ps2_kbd_set_lock(PS2_LOCK_SCROLL);
-    }
-  }
-
   keyboard_clear(ZX_MATRIX_FULL_SIZE);
   eeprom_restore_values();
   s_is_started = true;
+  s_kbd_detected = false;
+  s_last_probe_time = 0;
+  s_last_activity_time = 0;
 }
 
 bool keyboard_started(void)
@@ -631,14 +654,47 @@ bool keyboard_handle(void)
 {
   bool activity = false;
   uint32_t n = millis();
+
   if (ps2_kbd_available()) {
     uint16_t c = ps2_kbd_read();
-    fill_key(c, n);
-    if (s_osd_overlay) {
-      zxosd_update_scancode(c);
+    uint8_t scancode = c & 0xFF;
+    if (scancode == PS2_KEY_BAT || scancode == PS2_KEY_ECHO) {
+      s_kbd_detected = true;
+      s_last_activity_time = n;
+    } else if (scancode != 0) {
+      s_kbd_detected = true;
+      s_last_activity_time = n;
+      fill_key(c, n);
+      if (s_osd_overlay) {
+        zxosd_update_scancode(c);
+      }
+      activity = true;
     }
-    activity = true;
   }
+
+  // Periodic keyboard probe
+  if (!s_kbd_detected) {
+    if (n - s_last_probe_time >= 1500) {
+      s_last_probe_time = n;
+      if (!ps2_kbd_is_tx_busy()) {
+        ps2_kbd_echo();
+      }
+    }
+  } else {
+    // If idle for 5s, verify keyboard is still alive (supports hot-unplug / KVM switch)
+    if (n - s_last_activity_time >= 5000 && n - s_last_probe_time >= 5000) {
+      s_last_probe_time = n;
+      if (!ps2_kbd_is_tx_busy()) {
+        ps2_kbd_echo();
+      }
+    }
+  }
+
+  // If TX timed out, keyboard was disconnected or unresponsive
+  if (ps2_kbd_check_tx_timeout()) {
+    s_kbd_detected = false;
+  }
+
   process_delayed_keypress();
   return activity;
 }
@@ -691,6 +747,9 @@ void keyboard_do_reset(void)
 
 void keyboard_do_full_reset(void)
 {
+  ps2_kbd_init();
+  s_kbd_detected = false;
+  s_last_probe_time = 0;
   keyboard_clear(ZX_MATRIX_SIZE);
   s_matrix[ZX_K_RESET] = 1;
   keyboard_transmit();
@@ -892,6 +951,28 @@ void keyboard_toggle_nemoide(void)
 bool keyboard_get_nemoide(void)
 {
   return s_is_nemoide;
+}
+
+void keyboard_set_led_override(bool val)
+{
+  s_is_led_override = val;
+  eeprom_store_bool(EEPROM_LED_OVERRIDE_ADDRESS, val);
+}
+
+bool keyboard_get_led_override(void)
+{
+  return s_is_led_override;
+}
+
+void keyboard_set_hw_buttons(bool val)
+{
+  s_use_hw_buttons = val;
+  eeprom_store_bool(EEPROM_HW_BUTTONS_ADDRESS, val);
+}
+
+bool keyboard_get_hw_buttons(void)
+{
+  return s_use_hw_buttons;
 }
 
 bool keyboard_get_is_osd_overlay(void) { return s_osd_overlay; }

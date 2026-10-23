@@ -142,6 +142,8 @@ void ps2_kbd_echo(void);
 void ps2_kbd_set_lock(uint8_t leds);
 bool ps2_kbd_available(void);
 uint16_t ps2_kbd_read(void);
+bool ps2_kbd_check_tx_timeout(void);
+bool ps2_kbd_is_tx_busy(void);
 
 #ifdef __cplusplus
 }

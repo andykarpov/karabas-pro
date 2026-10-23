@@ -156,6 +156,7 @@ static volatile uint8_t s_tx_tail = 0;
 static volatile uint8_t s_last_sent = 0;
 static volatile uint8_t s_now_send = 0;
 static volatile uint8_t s_tx_ready = 0;
+static volatile uint32_t s_tx_start_time = 0;
 
 static uint8_t s_led_lock = 0;
 static uint8_t s_keystatus = 0;
@@ -179,6 +180,7 @@ static void send_now(uint8_t data)
   s_bitcount = 0;
   s_parity = 0;
   s_ps2_mode |= (MODE_BUSY | MODE_TX);
+  s_tx_start_time = millis();
 
   hal_detach_interrupt(PIN_KBD_CLK);
 
@@ -251,13 +253,22 @@ static void send_bit(void)
 
 void ps2_kbd_isr(void)
 {
+  uint32_t now_ms = millis();
   if (s_ps2_mode & MODE_TX) {
-    send_bit();
-    return;
+    if (now_ms - s_tx_start_time > 25) {
+      s_ps2_mode &= ~(MODE_BUSY | MODE_TX);
+      s_bitcount = 0;
+      s_tx_head = s_tx_tail;
+      kbd_clk_high();
+      kbd_dat_high();
+      return;
+    } else {
+      send_bit();
+      return;
+    }
   }
 
   static uint32_t prev_ms = 0;
-  uint32_t now_ms = millis();
   if (now_ms - prev_ms > 250) {
     s_bitcount = 0;
     s_shiftdata = 0;
@@ -412,13 +423,39 @@ void ps2_kbd_set_lock(uint8_t leds)
   send_next();
 }
 
+bool ps2_kbd_check_tx_timeout(void)
+{
+  if (s_ps2_mode & MODE_TX) {
+    if (millis() - s_tx_start_time > 25) {
+      uint8_t sreg = SREG;
+      cli();
+      s_ps2_mode &= ~(MODE_BUSY | MODE_TX);
+      s_bitcount = 0;
+      s_tx_head = s_tx_tail;
+      kbd_clk_high();
+      kbd_dat_high();
+      SREG = sreg;
+      return true;
+    }
+  }
+  return false;
+}
+
+bool ps2_kbd_is_tx_busy(void)
+{
+  ps2_kbd_check_tx_timeout();
+  return (s_ps2_mode & (MODE_BUSY | MODE_TX)) != 0;
+}
+
 bool ps2_kbd_available(void)
 {
+  ps2_kbd_check_tx_timeout();
   return (s_rx_head != s_rx_tail);
 }
 
 uint16_t ps2_kbd_read(void)
 {
+  ps2_kbd_check_tx_timeout();
   if (s_rx_head == s_rx_tail) return 0;
 
   uint8_t next = s_rx_tail + 1;

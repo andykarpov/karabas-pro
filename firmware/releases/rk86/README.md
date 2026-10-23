@@ -10,11 +10,13 @@
 ### For PCB rev.C and up:
 
 1) Open Quartus Programmer file karabas_pro_rk86.cdf
-2) Check all chips you want to flash (EPM3128, EP4CE6 and it's configuration device EPCS16), then click Program butt
+2) Check all chips you want to flash (EPM3128, EP4CE6 and it's configuration device EPCS16), then click Program button
 
 ## How to flash the AVR microcontroller:
 
 Use any available programmer, like avrdude.
+
+A single universal firmware (`karabas_pro.hex`) supports all PCB revisions, native PS/2 keyboards, USB keyboards (via passive adapters), and KVM switches.
 
 **Fusebits**
 
@@ -24,4 +26,4 @@ Use any available programmer, like avrdude.
 
 ### Example usage:
 
-`avrdude -c usbasp -p m328p -U flash:w:karabas_pro.hex -U lfuse:w:0xFF:m -U hfuse:w:0xD7:m`
+`avrdude -c usbasp -p m328p -U flash:w:karabas_pro.hex -U eeprom:w:karabas_pro.eep -U lfuse:w:0xFF:m -U hfuse:w:0xD7:m`
