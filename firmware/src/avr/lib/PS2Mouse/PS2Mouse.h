@@ -1,7 +1,7 @@
 #ifndef PS2_MOUSE_H_
 #define PS2_MOUSE_H_
 
-#include "Arduino.h"
+#include <hal.h>
 
 #define BUFFER_SIZE 16
 

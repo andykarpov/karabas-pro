@@ -141,7 +141,7 @@
 // Harvard architecture settings for PROGMEM
 // Add separate for EACH architecture as easier to maintain
 // AVR (includes Teensy 2.0)
-#if defined( ARDUINO_ARCH_AVR )
+#if defined( ARDUINO_ARCH_AVR ) || defined( __AVR__ )
 #define PS2_SUPPORTED           1
 #define PS2_REQUIRES_PROGMEM    1
 #define PS2_CLEAR_PENDING_IRQ   1

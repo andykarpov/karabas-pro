@@ -6,47 +6,32 @@
  version 2 as published by the Free Software Foundation.
  */
 
-// STL headers
-// C headers
+#include <stdint.h>
+#include <stddef.h>
 #include <avr/pgmspace.h>
-// Framework headers
-// Library headers
-#include <SPI.h>
-// Project headers
-// This component's header
-#include <OSD.h>
-#include <Arduino.h>
-
-/****************************************************************************/
+#include "OSD.h"
 
 // Commands
+static const uint8_t CMD_OSD = 0x20;
 
-const uint8_t CMD_OSD = 0x20;
+static const uint8_t ADDR_CLEAR     = 0x0F;
+static const uint8_t ADDR_SET_POS_X = 0x10;
+static const uint8_t ADDR_SET_POS_Y = 0x11;
+static const uint8_t ADDR_CHAR      = 0x12;
+static const uint8_t ADDR_ATTR      = 0x13;
+static const uint8_t ADDR_NOOP      = 0x14;
 
-const uint8_t ADDR_CLEAR = 0x0F;
-const uint8_t ADDR_SET_POS_X = 0x10;
-const uint8_t ADDR_SET_POS_Y = 0x11;
-const uint8_t ADDR_CHAR = 0x12;
-const uint8_t ADDR_ATTR = 0x13;
-const uint8_t ADDR_NOOP = 0x14;
-
-const uint8_t SIZE_X = 32;
-const uint8_t SIZE_Y = 26;
-
-/****************************************************************************/
+static const uint8_t SIZE_X = 32;
+static const uint8_t SIZE_Y = 26;
 
 OSD::OSD(void)
 {
 }
 
-/****************************************************************************/
-
 void OSD::begin(m_cb act)
 {
   action = act;
 }
-
-/****************************************************************************/
 
 void OSD::setPos(uint8_t x, uint8_t y)
 {
@@ -64,8 +49,6 @@ void OSD::setPos(uint8_t x, uint8_t y)
   }
 }
 
-/****************************************************************************/
-
 void OSD::clear(void)
 {
   fill(0);
@@ -73,9 +56,9 @@ void OSD::clear(void)
 
 void OSD::fill(uint8_t chr)
 {
-  setPos(0,0);
-  for (uint8_t y=0; y<SIZE_Y; y++) {
-    for (uint8_t x=0; x<SIZE_X; x++) {
+  setPos(0, 0);
+  for (uint8_t y = 0; y < SIZE_Y; y++) {
+    for (uint8_t x = 0; x < SIZE_X; x++) {
       write(chr);
     }
   }
@@ -83,66 +66,98 @@ void OSD::fill(uint8_t chr)
 
 void OSD::fill(uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2, uint8_t chr)
 {
-    setPos(x1, y1);
-    for (uint8_t y=y1; y<=y2; y++) {
-        setPos(x1, y);
-        for (uint8_t x=x1; x<=x2; x++) {
-            write(chr);
-        }
+  for (uint8_t y = y1; y <= y2; y++) {
+    setPos(x1, y);
+    for (uint8_t x = x1; x <= x2; x++) {
+      write(chr);
     }
+  }
 }
 
 void OSD::frame(uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2, uint8_t thickness)
 {
-    setPos(x1,y1);
-    for(uint8_t y=y1; y<=y2; y++) {
-        setPos(x1, y);
-        for(uint8_t x=x1; x<=x2; x++) {
-	    if (y==y1 && x==x1) {
-                write(thickness ? 201 : 218); // lt
-            }
-            else if (y==y2 && x==x1) {
-                write(thickness ? 200 : 192); // lb
-            }
-            else if (y==y1 && x==x2) {
-                write(thickness ? 187 : 191); // rt
-            }
-            else if (y==y2 && x==x2) {
-                write(thickness ? 188 : 217); // rb
-            }
-            else if (y==y1 || y == y2) {
-                write(thickness ? 205 : 196); // t / b
-            }
-            else if ((x==x1 && y>y1 && y<y2) || (x==x2 && y>y1 && y<y2)) {
-                setPos(x,y);
-                write(thickness ? 186 : 179); // l / r
-            }
-        }
+  for (uint8_t y = y1; y <= y2; y++) {
+    setPos(x1, y);
+    for (uint8_t x = x1; x <= x2; x++) {
+      if (y == y1 && x == x1) {
+        write(thickness ? 201 : 218); // lt
+      } else if (y == y2 && x == x1) {
+        write(thickness ? 200 : 192); // lb
+      } else if (y == y1 && x == x2) {
+        write(thickness ? 187 : 191); // rt
+      } else if (y == y2 && x == x2) {
+        write(thickness ? 188 : 217); // rb
+      } else if (y == y1 || y == y2) {
+        write(thickness ? 205 : 196); // t / b
+      } else if ((x == x1 && y > y1 && y < y2) || (x == x2 && y > y1 && y < y2)) {
+        setPos(x, y);
+        write(thickness ? 186 : 179); // l / r
+      }
     }
+  }
 }
-
-/****************************************************************************/
 
 size_t OSD::write(uint8_t chr)
 {
-  uint8_t color = fg_color << 4;  
+  if (!action) return 0;
+  uint8_t color = fg_color << 4;
   action(CMD_OSD, ADDR_SET_POS_X, current_x);
   action(CMD_OSD, ADDR_SET_POS_Y, current_y);
-//  action(CMD_CHAR, chr-32);
   action(CMD_OSD, ADDR_CHAR, chr);
   action(CMD_OSD, ADDR_ATTR, bg_color + color);
-  setPos(current_x+1, current_y);
-  return 1; 
+  setPos(current_x + 1, current_y);
+  return 1;
 }
 
-/****************************************************************************/
+void OSD::print(const char *str)
+{
+  if (!str) return;
+  while (*str) {
+    write((uint8_t)*str++);
+  }
+}
+
+void OSD::print_P(const char *pgm_str)
+{
+  if (!pgm_str) return;
+  char c;
+  while ((c = pgm_read_byte(pgm_str++))) {
+    write((uint8_t)c);
+  }
+}
+
+void OSD::print(uint32_t n, uint8_t base)
+{
+  if (base < 2 || base > 16) base = 10;
+  char buf[12];
+  char *str = &buf[sizeof(buf) - 1];
+  *str = '\0';
+
+  if (n == 0) {
+    write('0');
+    return;
+  }
+
+  while (n > 0) {
+    uint8_t m = n % base;
+    n /= base;
+    *(--str) = (m < 10) ? ('0' + m) : ('A' + m - 10);
+  }
+  print(str);
+}
+
+void OSD::print(int32_t n, uint8_t base)
+{
+  if (base == 10 && n < 0) {
+    write('-');
+    print((uint32_t)(-n), 10);
+  } else {
+    print((uint32_t)n, base);
+  }
+}
 
 void OSD::setColor(uint8_t color, uint8_t bgcolor)
 {
-    fg_color = color;
-    bg_color = bgcolor;
+  fg_color = color;
+  bg_color = bgcolor;
 }
-
-/****************************************************************************/
-
-// vim:cin:ai:sts=2 sw=2 ft=cpp

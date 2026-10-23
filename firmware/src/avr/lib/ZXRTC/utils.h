@@ -1,7 +1,7 @@
 #ifndef utils_h
 #define utils_h
 
-#include "Arduino.h"
+#include <stdint.h>
 
 uint8_t bin2bcd(uint8_t val);
 uint8_t bcd2bin(uint8_t val);

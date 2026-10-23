@@ -21,8 +21,7 @@ AVR firmware for Karabas-Pro
 Ukraine, 2021 - 2023
 */
 
-#include "Arduino.h"
-#include <SPI.h>
+#include "hal.h"
 #include "config.h"
 #include "ZXKeyboard.h"
 #include "ZXMouse.h"
@@ -49,8 +48,6 @@ bool boot_popup = true;
 
 unsigned long tl, tl1, tl2, tb, tb1, tb2, tpopup = 0; // last time
 
-SPISettings settingsA(1000000, MSBFIRST, SPI_MODE0); // SPI transmission settings
-
 void spi_send(uint8_t cmd, uint8_t addr, uint8_t data);
 void process_in_cmd(uint8_t cmd, uint8_t addr, uint8_t data);
 void update_led(uint8_t led, bool state);
@@ -59,13 +56,11 @@ void loop();
 
 void spi_send(uint8_t cmd, uint8_t addr, uint8_t data)
 {
-  SPI.beginTransaction(settingsA);
-  digitalWrite(PIN_SS, LOW);
-  uint8_t rx_cmd = SPI.transfer(cmd);
-  uint8_t rx_addr = SPI.transfer(addr);
-  uint8_t rx_data = SPI.transfer(data);
-  digitalWrite(PIN_SS, HIGH);
-  SPI.endTransaction();
+  hal_spi_cs_low();
+  uint8_t rx_cmd = hal_spi_transfer(cmd);
+  uint8_t rx_addr = hal_spi_transfer(addr);
+  uint8_t rx_data = hal_spi_transfer(data);
+  hal_spi_cs_high();
   if (rx_cmd > 0) {
     process_in_cmd(rx_cmd, rx_addr, rx_data);
   }
@@ -111,11 +106,15 @@ void process_in_cmd(uint8_t cmd, uint8_t addr, uint8_t data)
 // update led state
 void update_led(uint8_t led, bool state)
 {
-  if (led == PIN_LED2 && zxkbd.getJoyType()) {
-    digitalWrite(PIN_LED2, HIGH);
-    return;
+  if (led == PIN_LED2) {
+    if (zxkbd.getJoyType()) {
+      hal_led2_set(true);
+    } else {
+      hal_led2_set(state);
+    }
+  } else if (led == PIN_LED1) {
+    hal_led1_set(state);
   }
-  digitalWrite(led, state);
 }
 
 // update OSD by keyboard events
@@ -128,53 +127,25 @@ void on_keyboard (uint8_t event_type, uint16_t scancode)
 
   if (!zxosd.started()) return;
 
+  int8_t item_idx = ZXOSD::eventToMenuItem(event_type);
+
   // overlay has more priority than popup
   if (zxkbd.getIsOsdOverlay()) {
-    switch (event_type) {
-      case ZXKeyboard::EVENT_OSD_OVERLAY:  zxosd.initOverlay(); break;
-      case ZXKeyboard::EVENT_OSD_SCANCODE: zxosd.updateScancode(scancode); break;
-      case ZXKeyboard::EVENT_OSD_JOYSTICK: zxosd.updateJoystick(); break;
-      case ZXKeyboard::EVENT_OSD_JOYSTICK_MODE: zxosd.updateJoystickMode(); break;
-      case ZXKeyboard::EVENT_OSD_SWAP_AB:  zxosd.updateSwapAB(); break;
-      case ZXKeyboard::EVENT_OSD_ROMBANK:  zxosd.updateRombank(); break;
-      case ZXKeyboard::EVENT_OSD_TURBOFDC: zxosd.updateTurbofdc(); break;
-      case ZXKeyboard::EVENT_OSD_COVOX:    zxosd.updateCovox(); break;
-      case ZXKeyboard::EVENT_OSD_STEREO:   zxosd.updateStereo(); break;
-      case ZXKeyboard::EVENT_OSD_SSG:      zxosd.updateSsg(); break;
-      case ZXKeyboard::EVENT_OSD_VIDEO:    zxosd.updateVideo(); break;
-      case ZXKeyboard::EVENT_OSD_VSYNC:    zxosd.updateVsync(); break;
-      case ZXKeyboard::EVENT_OSD_KEYBOARD_TYPE:  zxosd.updateKeyboardType(); break;
-      case ZXKeyboard::EVENT_OSD_PAUSE:  zxosd.updatePause(); break;
-      case ZXKeyboard::EVENT_OSD_TURBO:  zxosd.updateTurbo(); break;
-      case ZXKeyboard::EVENT_OSD_SCREEN_MODE: zxosd.updateScreenMode(); break;
-      case ZXKeyboard::EVENT_OSD_DIVMMC: zxosd.updateDivmmc(); break;
-      case ZXKeyboard::EVENT_OSD_NEMOIDE: zxosd.updateNemoIDE(); break;
+    if (event_type == ZXKeyboard::EVENT_OSD_OVERLAY) {
+      zxosd.initOverlay();
+    } else if (event_type == ZXKeyboard::EVENT_OSD_SCANCODE) {
+      zxosd.updateScancode(scancode);
+    } else if (item_idx >= 0) {
+      zxosd.updateItem((uint8_t)item_idx);
     }
   } else {
-    switch (event_type) {
-      case ZXKeyboard::EVENT_OSD_SWAP_AB:
-      case ZXKeyboard::EVENT_OSD_ROMBANK:
-      case ZXKeyboard::EVENT_OSD_TURBOFDC:
-      case ZXKeyboard::EVENT_OSD_COVOX:
-      case ZXKeyboard::EVENT_OSD_STEREO:
-      case ZXKeyboard::EVENT_OSD_SSG:
-      case ZXKeyboard::EVENT_OSD_VIDEO:
-      case ZXKeyboard::EVENT_OSD_VSYNC:
-      case ZXKeyboard::EVENT_OSD_JOYSTICK:
-      case ZXKeyboard::EVENT_OSD_JOYSTICK_MODE:
-      case ZXKeyboard::EVENT_OSD_KEYBOARD_TYPE:
-      case ZXKeyboard::EVENT_OSD_PAUSE:
-      case ZXKeyboard::EVENT_OSD_TURBO:
-      case ZXKeyboard::EVENT_OSD_SCREEN_MODE: 
-      case ZXKeyboard::EVENT_OSD_DIVMMC:
-      case ZXKeyboard::EVENT_OSD_NEMOIDE:
-        tpopup = millis();
-        if (!zxkbd.getIsOsdPopup()) {
-          zxosd.clear();
-        }
-        zxkbd.setOsdPopup(true);
-        zxosd.initPopup(event_type);
-      break;
+    if (item_idx >= 0) {
+      tpopup = millis();
+      if (!zxkbd.getIsOsdPopup()) {
+        zxosd.clear();
+      }
+      zxkbd.setOsdPopup(true);
+      zxosd.initPopup(event_type);
     }
   }
 }
@@ -256,36 +227,22 @@ void on_joystick(uint8_t evt, uint8_t data)
 // initial setup
 void setup()
 {
-  pinMode(PIN_JOY_RIGHT, OUTPUT);
-  digitalWrite(PIN_JOY_RIGHT, LOW);
-  SPI.begin();
+  // Joy right / SS as output low initially
+  DDRB |= (1 << PB2);
+  PORTB &= ~(1 << PB2);
 
-  // set up fast ADC
-  // Bit 7 - ADEN: ADC Enable
-  // Bit 6 - ADSC: ADC Start Conversion
-  // Bit 5 - ADATE: ADC Auto Trigger Enable
-  // Bit 4 - ADIF: ADC Interrupt Flag
-  // Bit 3 - ADIE: ADC Interrupt Enable
-  // Bits 2:0 - ADPS[2:0]: ADC Prescaler Select Bits
-  ADCSRA = (ADCSRA & B11111000) | 4;
+  // Setup hardware SPI and ADC
+  hal_spi_init();
+  hal_adc_init();
 
-  pinMode(PIN_SS, OUTPUT);
-  digitalWrite(PIN_SS, HIGH);
+  // LEDs as outputs, initially HIGH (off)
+  DDRC |= (1 << PC2) | (1 << PC1);
+  hal_led1_set(true);
+  hal_led2_set(true);
 
-  pinMode(PIN_LED1, OUTPUT);
-  digitalWrite(PIN_LED1, HIGH);
-
-  pinMode(PIN_LED2, OUTPUT);
-  digitalWrite(PIN_LED2, HIGH);
-
-  pinMode(PIN_BTN1, INPUT_PULLUP);
-  pinMode(PIN_BTN2, INPUT_PULLUP);
-
-  pinMode(PIN_KBD_CLK, INPUT_PULLUP);
-  pinMode(PIN_KBD_DAT, INPUT_PULLUP);
-  
-  pinMode(PIN_MOUSE_CLK, INPUT_PULLUP);
-  pinMode(PIN_MOUSE_DAT, INPUT_PULLUP);
+  // Keyboard and mouse pins as input with pullup
+  DDRD &= ~((1 << PD2) | (1 << PD4) | (1 << PD3) | (1 << PD5));
+  PORTD |=  (1 << PD2) | (1 << PD4) | (1 << PD3) | (1 << PD5);
 
   zxkbd.begin(spi_send, on_keyboard, SEND_ECHO_ON_START);
   zxmouse.begin(spi_send, on_mouse);
@@ -318,7 +275,7 @@ void setup()
   zxosd.initPopup(ZXKeyboard::EVENT_OSD_POPUP);
   boot_popup = true;
 
-  digitalWrite(PIN_LED1, LOW);
+  hal_led1_set(false);
 }
 
 
@@ -338,8 +295,8 @@ void loop()
 #if USE_HW_BUTTONS
   if (n - tb >= 100) {
 
-    bool btn1 = (analogRead(PIN_BTN1) < 100);
-    bool btn2 = (analogRead(PIN_BTN2) < 100);
+    bool btn1 = (hal_adc_read(6) < 100);
+    bool btn2 = (hal_adc_read(7) < 100);
 
     //if (btn2) zxkbd.doReset();
     //if (btn1) zxkbd.doMagic();
@@ -405,3 +362,15 @@ void loop()
   delayMicroseconds(1);
 
 }
+
+#if !defined(ARDUINO)
+int main(void)
+{
+  hal_timer_init();
+  setup();
+  for (;;) {
+    loop();
+  }
+  return 0;
+}
+#endif

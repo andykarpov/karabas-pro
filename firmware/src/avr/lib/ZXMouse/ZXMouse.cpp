@@ -11,9 +11,7 @@
 #include <avr/pgmspace.h>
 // Framework headers
 // Library headers
-#include <Arduino.h>
-// Project headers
-// This component's header
+#include <hal.h>
 #include <ZXMouse.h>
 
 /****************************************************************************/
