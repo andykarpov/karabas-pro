@@ -1,5 +1,5 @@
 #include "utils.h"
-#include "Arduino.h"
+#include "hal.h"
 
 uint8_t bin2bcd(uint8_t val) {
   return val + 6 * (val / 10);

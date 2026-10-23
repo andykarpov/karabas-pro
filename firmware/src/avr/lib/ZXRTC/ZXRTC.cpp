@@ -10,14 +10,9 @@
 // C headers
 #include <avr/pgmspace.h>
 // Framework headers
-// Library headers
-#include <SPI.h>
-// Project headers
-// This component's header
+#include <hal.h>
 #include <ZXRTC.h>
-#include <Arduino.h>
 #include <utils.h>
-#include <EEPROM.h>
 
 /****************************************************************************/
 
@@ -128,11 +123,11 @@ void ZXRTC::sendAll() {
       case 7: send(reg, rtc_is_bcd ? bin2bcd(rtc_day) : rtc_day); break;
       case 8: send(reg, rtc_is_bcd ? bin2bcd(rtc_month) : rtc_month); break;
       case 9: send(reg, rtc_is_bcd ? bin2bcd(get_year(rtc_year)) : get_year(rtc_year)); break;
-      case 0xA: data = EEPROM.read(EEPROM_RTC_OFFSET + reg); bitClear(data, 7); send(reg, data); break;
-      case 0xB: data = EEPROM.read(EEPROM_RTC_OFFSET + reg); send(reg, data); break;
+      case 0xA: data = hal_eeprom_read(EEPROM_RTC_OFFSET + reg); bitClear(data, 7); send(reg, data); break;
+      case 0xB: data = hal_eeprom_read(EEPROM_RTC_OFFSET + reg); send(reg, data); break;
       case 0xC: send(reg, 0x0); break;
       case 0xD: send(reg, 0x80); break;
-      default: send(reg, EEPROM.read(EEPROM_RTC_OFFSET + reg));
+      default: send(reg, hal_eeprom_read(EEPROM_RTC_OFFSET + reg));
       //default: send(reg, reg); // test!!!
     }
   }
@@ -156,11 +151,11 @@ void ZXRTC::setData(uint8_t addr, uint8_t data) {
       case 7: rtc_day = rtc_is_bcd ? bcd2bin(data) : data; rtc.setDay(rtc_day); break;
       case 8: rtc_month = rtc_is_bcd ? bcd2bin(data) : data; rtc.setMonth(rtc_month); break;
       case 9: rtc_year = 2000 + (rtc_is_bcd ? bcd2bin(data) : data); rtc.setYear(rtc_year); break;
-      case 0xA: bitClear(data, 7); EEPROM.update(EEPROM_RTC_OFFSET + addr, data); break;
-      case 0xB: rtc_is_bcd = !bitRead(data, 2); rtc_is_24h = bitRead(data, 1); EEPROM.update(EEPROM_RTC_OFFSET + addr, data); break;
+      case 0xA: bitClear(data, 7); hal_eeprom_update(EEPROM_RTC_OFFSET + addr, data); break;
+      case 0xB: rtc_is_bcd = !bitRead(data, 2); rtc_is_24h = bitRead(data, 1); hal_eeprom_update(EEPROM_RTC_OFFSET + addr, data); break;
       case 0xC: // C and D are read-only registers
       case 0xD: break;
-      default: EEPROM.update(EEPROM_RTC_OFFSET + addr, data);
+      default: hal_eeprom_update(EEPROM_RTC_OFFSET + addr, data);
     }
 }
 
@@ -175,7 +170,7 @@ void ZXRTC::readAll() {
   rtc_seconds = rtc.getSeconds();
 
   // read is_bcd, is_24h
-  uint8_t reg_b = EEPROM.read(EEPROM_RTC_OFFSET + 0xB);
+  uint8_t reg_b = hal_eeprom_read(EEPROM_RTC_OFFSET + 0xB);
   rtc_is_bcd = !bitRead(reg_b, 2);
   rtc_is_24h = bitRead(reg_b, 1);
 }

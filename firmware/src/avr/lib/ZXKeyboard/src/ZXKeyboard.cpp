@@ -10,13 +10,8 @@
 // C headers
 #include <avr/pgmspace.h>
 // Framework headers
-// Library headers
-#include <SPI.h>
-// Project headers
-// This component's header
+#include <hal.h>
 #include <ZXKeyboard.h>
-#include <Arduino.h>
-#include <EEPROM.h>
 
 /****************************************************************************/
 
@@ -224,7 +219,7 @@ void ZXKeyboard::toggleVsync() {
 void ZXKeyboard::setTurbo(uint8_t val) {
   // menu + F11 = turbo swith 0 1 2 3
   turbo = val;
-  EEPROM.update(EEPROM_TURBO_ADDRESS, turbo);
+  hal_eeprom_update(EEPROM_TURBO_ADDRESS, turbo);
   matrix[ZX_K_TURBO] = bitRead(turbo, 0);
   matrix[ZX_K_TURBO2] = bitRead(turbo, 1);
 }
@@ -259,7 +254,7 @@ void ZXKeyboard::toggleKeyboardType() {
 void ZXKeyboard::setScreenMode(uint8_t val) {
   val = constrain(val, 0, max_screen_mode);
   screen_mode = val;
-  EEPROM.update(EEPROM_SCREEN_MODE_ADDRESS, val);
+  hal_eeprom_update(EEPROM_SCREEN_MODE_ADDRESS, val);
   matrix[ZX_K_SCREEN_MODE0] = bitRead(val, 0);
   matrix[ZX_K_SCREEN_MODE1] = bitRead(val, 1);
 }
@@ -267,7 +262,7 @@ void ZXKeyboard::setScreenMode(uint8_t val) {
 void ZXKeyboard::setJoyMode(uint8_t val) {
   val = constrain(val, 0, 4);
   joy_mode = val;
-  EEPROM.update(EEPROM_JOY_MODE_ADDRESS, val);
+  hal_eeprom_update(EEPROM_JOY_MODE_ADDRESS, val);
   matrix[ZX_K_JOY_MODE0] = bitRead(val, 0);
   matrix[ZX_K_JOY_MODE1] = bitRead(val, 1);
   matrix[ZX_K_JOY_MODE2] = bitRead(val, 2);
@@ -1207,38 +1202,38 @@ void ZXKeyboard::clear(int clear_size)
 
 bool ZXKeyboard::eepromRestoreBool(int addr, bool default_value)
 {
-  byte val;
-  val = EEPROM.read(addr);
+  uint8_t val;
+  val = hal_eeprom_read(addr);
   if ((val == EEPROM_VALUE_TRUE) || (val == EEPROM_VALUE_FALSE)) {
     return (val == EEPROM_VALUE_TRUE) ? true : false;
   } else {
-    EEPROM.update(addr, (default_value ? EEPROM_VALUE_TRUE : EEPROM_VALUE_FALSE));
+    hal_eeprom_update(addr, (default_value ? EEPROM_VALUE_TRUE : EEPROM_VALUE_FALSE));
     return default_value;
   }
 }
 
 void ZXKeyboard::eepromStoreBool(int addr, bool value)
 {
-  byte val = (value ? EEPROM_VALUE_TRUE : EEPROM_VALUE_FALSE);
-  EEPROM.update(addr, val);
+  uint8_t val = (value ? EEPROM_VALUE_TRUE : EEPROM_VALUE_FALSE);
+  hal_eeprom_update(addr, val);
 }
 
 uint8_t ZXKeyboard::eepromRestoreInt(int addr, uint8_t default_value)
 {
-  return EEPROM.read(addr);
+  return hal_eeprom_read(addr);
 }
 
 void ZXKeyboard::eepromStoreInt(int addr, uint8_t value)
 {
-  EEPROM.update(addr, value);
+  hal_eeprom_update(addr, value);
 }
 
 void ZXKeyboard::eepromRestoreValues()
 {
-  turbo = EEPROM.read(EEPROM_TURBO_ADDRESS);
+  turbo = hal_eeprom_read(EEPROM_TURBO_ADDRESS);
   if (turbo > max_turbo) {
     turbo = max_turbo;
-    EEPROM.update(EEPROM_TURBO_ADDRESS, turbo);
+    hal_eeprom_update(EEPROM_TURBO_ADDRESS, turbo);
   }
   profi_mode = eepromRestoreBool(EEPROM_MODE_ADDRESS, profi_mode);
   is_sw1 = eepromRestoreBool(EEPROM_SW1_ADDRESS, is_sw1);
@@ -1253,16 +1248,16 @@ void ZXKeyboard::eepromRestoreValues()
   is_sw10 = eepromRestoreBool(EEPROM_SW10_ADDRESS, is_sw10);
   is_mouse_swap = eepromRestoreBool(EEPROM_MOUSE_SWAP_ADDRESS, is_mouse_swap);
   joy_type = eepromRestoreBool(EEPROM_JOY_TYPE_ADDRESS, joy_type);
-  screen_mode = EEPROM.read(EEPROM_SCREEN_MODE_ADDRESS);
+  screen_mode = hal_eeprom_read(EEPROM_SCREEN_MODE_ADDRESS);
   if (screen_mode > max_screen_mode) {
     screen_mode = 0;
-    EEPROM.update(EEPROM_SCREEN_MODE_ADDRESS, 0);
+    hal_eeprom_update(EEPROM_SCREEN_MODE_ADDRESS, 0);
   }
   screen_mode = constrain(screen_mode, 0, max_screen_mode);
-  joy_mode = EEPROM.read(EEPROM_JOY_MODE_ADDRESS);
+  joy_mode = hal_eeprom_read(EEPROM_JOY_MODE_ADDRESS);
   if (joy_mode > 4) {
     joy_mode = 0;
-    EEPROM.update(EEPROM_JOY_MODE_ADDRESS, 0);
+    hal_eeprom_update(EEPROM_JOY_MODE_ADDRESS, 0);
   }
   joy_mode = constrain(joy_mode, 0, 4);
   is_divmmc = eepromRestoreBool(EEPROM_DIVMMC_ADDRESS, is_divmmc);

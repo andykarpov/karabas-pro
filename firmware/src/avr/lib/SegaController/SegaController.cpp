@@ -26,7 +26,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#include "Arduino.h"
+#include <hal.h>
 #include "SegaController.h"
 
 SegaController::SegaController()

@@ -1,5 +1,5 @@
 #include "PS2Mouse.h"
-#include "Arduino.h"
+#include <hal.h>
 
 #define INTELLI_MOUSE 3
 #define SCALING_1_TO_1 0xE6

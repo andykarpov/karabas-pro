@@ -131,7 +131,7 @@
   License along with this library; if not, write to the Free Software
   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
-#include <Arduino.h>
+#include <hal.h>
 // Internal headers for library defines/codes/etc
 #include "PS2KeyAdvanced.h"
 #include "PS2KeyCode.h"

@@ -29,7 +29,7 @@
 #ifndef SegaController_h
 #define SegaController_h
 
-#include <Arduino.h>
+#include <hal.h>
 
 enum
 {

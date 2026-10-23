@@ -12,11 +12,7 @@
 // STL headers
 // C headers
 // Framework headers
-#if ARDUINO < 100
-#include <WProgram.h>
-#else
-#include <Arduino.h>
-#endif
+#include <hal.h>
 
 // Library headers
 // Project headers
