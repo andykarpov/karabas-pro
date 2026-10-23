@@ -188,7 +188,14 @@ CPLD выполняет критическую связующую функцию
   * Системный таймер 1 мс на базе Timer0 CTC для отсчета `millis()` и точных микросекундных задержек.
   * Быстрый АЦП (prescaler 64) для аппаратных кнопок `BTN1` и `BTN2` (ADC6 / ADC7).
   * Прямые векторы прерываний `INT0_vect` (клавиатура, PD2) и `INT1_vect` (мышь, PD3) без оверхеда `WInterrupts.c`.
-* **PS/2 Keyboard Subsystem ([ZXKeyboard](file:///home/andy/Documents/Projects/Retrocomp/ZX-Spectrum/karabas-pro-master/firmware/src/avr/lib/ZXKeyboard)):** Приём XT/AT скан-кодов, трансляция в матрицу клавиатуры ZX Spectrum (5x8) + расширенные клавиши Profi. Хранение настроек в EEPROM через `<avr/eeprom.h>`.
+* **PS/2 Keyboard Subsystem ([ZXKeyboard](file:///home/andy/Documents/Projects/Retrocomp/ZX-Spectrum/karabas-pro-master/firmware/src/avr/lib/ZXKeyboard)):**
+  * Приём XT/AT скан-кодов, трансляция в матрицу клавиатуры ZX Spectrum (5x8) + расширенные клавиши Profi.
+  * Двухуровневый LUT-движок трансляции скан-кодов ([ZXKeyboardMap.h](file:///home/andy/Documents/Projects/Retrocomp/ZX-Spectrum/karabas-pro-master/firmware/src/avr/lib/ZXKeyboard/src/ZXKeyboardMap.h)):
+    * Таблица хоткеев `s_hotkey_map[19]` для комбинаций OSD с модификаторами (`Menu` / `Win` / `Ctrl+Alt`).
+    * Прямая индексная таблица `s_key_map[109]` в `PROGMEM` ($O(1)$ доступ по скан-коду).
+    * Поддержка макросов Extended Mode (`sendMacros`) для ввода спецсимволов (`[`, `]`, `{`, `}`, `~`, `|`, `\`) в режиме ZX Spectrum.
+    * Замена 700-строчного процедурного `switch` на декларативную модель сократила размер прошивки более чем на 2.3 КБ.
+  * Хранение настроек в EEPROM через `<avr/eeprom.h>`.
 * **PS/2 Mouse Subsystem ([ZXMouse](file:///home/andy/Documents/Projects/Retrocomp/ZX-Spectrum/karabas-pro-master/firmware/src/avr/lib/ZXMouse), [PS2Mouse](file:///home/andy/Documents/Projects/Retrocomp/ZX-Spectrum/karabas-pro-master/firmware/src/avr/lib/PS2Mouse)):** Поддержка Kempston Mouse (координаты X, Y, кнопки, колесо Z) и эмуляция Serial Microsoft Mouse (COM).
 * **Джойстики ([ZXJoystick](file:///home/andy/Documents/Projects/Retrocomp/ZX-Spectrum/karabas-pro-master/firmware/src/avr/lib/ZXJoystick), [SegaController](file:///home/andy/Documents/Projects/Retrocomp/ZX-Spectrum/karabas-pro-master/firmware/src/avr/lib/SegaController)):** Поддержка стандартного Atari/Kempston джойстика и опрос 3-/6-кнопочных геймпадов SEGA Mega Drive (переключение мультиплексора Select).
 * **RTC Subsystem ([ZXRTC](file:///home/andy/Documents/Projects/Retrocomp/ZX-Spectrum/karabas-pro-master/firmware/src/avr/lib/ZXRTC), [RTC/DS1307](file:///home/andy/Documents/Projects/Retrocomp/ZX-Spectrum/karabas-pro-master/firmware/src/avr/lib/RTC)):** Обмен по аппаратному TWI с микросхемой DS1307, хранение настроек в NVRAM, передача времени в FPGA через SPI.
@@ -200,8 +207,8 @@ CPLD выполняет критическую связующую функцию
   * Мультиязычность: английский ([lang_en.h](file:///home/andy/Documents/Projects/Retrocomp/ZX-Spectrum/karabas-pro-master/firmware/src/avr/lib/ZXOSD/lang_en.h)), русский ([lang_ru.h](file:///home/andy/Documents/Projects/Retrocomp/ZX-Spectrum/karabas-pro-master/firmware/src/avr/lib/ZXOSD/lang_ru.h)), украинский ([lang_ua.h](file:///home/andy/Documents/Projects/Retrocomp/ZX-Spectrum/karabas-pro-master/firmware/src/avr/lib/ZXOSD/lang_ua.h)).
 
 ### Расход памяти прошивки ATmega328P:
-* **Flash:** 26 084 – 26 238 байт (~79.6% – 80.1%) в зависимости от конфигурации (исходно было 32 512 байт / 99.2%). Высвобождено **> 6.4 КБ**.
-* **SRAM:** 884 – 888 байт (43.2%) из 2048 байт. Свободно более 1.1 КБ оперативной памяти.
+* **Flash:** 23 774 – 24 006 байт (~72.6% – 73.3%) в зависимости от конфигурации (исходно было 32 512 байт / 99.2%). Суммарно высвобождено **> 8.6 КБ**.
+* **SRAM:** 884 – 888 байт (43.2% – 43.4%) из 2048 байт. Свободно более 1.15 КБ оперативной памяти.
 
 ### Горячие клавиши OSD:
 | Комбинация | Действие |

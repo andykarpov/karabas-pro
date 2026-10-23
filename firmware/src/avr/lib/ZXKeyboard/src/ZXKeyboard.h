@@ -227,6 +227,7 @@ private:
   void processCapsedKey(int key, bool up);
 
   void fill(uint16_t sc, unsigned long n);
+  bool handleHotkey(uint8_t code, unsigned long n, bool is_up);
   void delayedKeypress(uint8_t key, uint8_t zxkey1, uint8_t zxkey2, bool up);
   void processDelayedKeypress();
   void sendMacros(uint8_t code, uint8_t zxkey);

@@ -12,6 +12,7 @@
 // Framework headers
 #include <hal.h>
 #include <ZXKeyboard.h>
+#include "ZXKeyboardMap.h"
 
 /****************************************************************************/
 
@@ -291,6 +292,100 @@ void ZXKeyboard::toggleNemoIDE() {
 }
 
 
+bool ZXKeyboard::handleHotkey(uint8_t code, unsigned long n, bool is_up)
+{
+  if (!getIsMenu()) return false;
+
+  for (uint8_t i = 0; i < HOTKEY_COUNT; i++) {
+    uint8_t hk_code = pgm_read_byte(&s_hotkey_map[i].code);
+    if (hk_code == code) {
+      if (!is_up) {
+        uint8_t action = pgm_read_byte(&s_hotkey_map[i].action);
+        switch (action) {
+          case HK_OSD_OVERLAY:
+            if (n - tosd > 200) {
+              toggleOsdOverlay();
+              tosd = n;
+            }
+            break;
+          case HK_SWAP_AB:
+            toggleSwapAB();
+            event(EVENT_OSD_SWAP_AB, 0);
+            break;
+          case HK_DIVMMC:
+            toggleDivmmc();
+            event(EVENT_OSD_DIVMMC, 0);
+            break;
+          case HK_JOYSTICK:
+            toggleJoyType();
+            event(EVENT_OSD_JOYSTICK, 0);
+            break;
+          case HK_JOYSTICK_MODE:
+            joy_mode = (joy_mode < 4) ? joy_mode + 1 : 0;
+            setJoyMode(joy_mode);
+            event(EVENT_OSD_JOYSTICK_MODE, 0);
+            break;
+          case HK_NEMOIDE:
+            toggleNemoIDE();
+            event(EVENT_OSD_NEMOIDE, 0);
+            break;
+          case HK_SCREEN_MODE:
+            screen_mode = (screen_mode < max_screen_mode) ? screen_mode + 1 : 0;
+            setScreenMode(screen_mode);
+            event(EVENT_OSD_SCREEN_MODE, 0);
+            break;
+          case HK_ROMBANK_0:
+          case HK_ROMBANK_1:
+          case HK_ROMBANK_2:
+          case HK_ROMBANK_3: {
+            uint8_t b = action - HK_ROMBANK_0;
+            setRombank(b);
+            event(EVENT_OSD_ROMBANK, b);
+            break;
+          }
+          case HK_TURBOFDC:
+            toggleTurbofdc();
+            event(EVENT_OSD_TURBOFDC, 0);
+            break;
+          case HK_COVOX:
+            toggleCovox();
+            event(EVENT_OSD_COVOX, 0);
+            break;
+          case HK_STEREO: {
+            uint8_t stereo = (is_sw7 ? 1 : 0) | (is_sw9 ? 2 : 0);
+            stereo = (stereo < 2) ? stereo + 1 : 0;
+            toggleStereo(stereo);
+            event(EVENT_OSD_STEREO, 0);
+            break;
+          }
+          case HK_SSG:
+            toggleSsg();
+            event(EVENT_OSD_SSG, 0);
+            break;
+          case HK_VIDEO:
+            toggleVideo();
+            event(EVENT_OSD_VIDEO, 0);
+            break;
+          case HK_VSYNC:
+            toggleVsync();
+            event(EVENT_OSD_VSYNC, 0);
+            break;
+          case HK_TURBO:
+            turbo = (turbo < max_turbo) ? turbo + 1 : 0;
+            setTurbo(turbo);
+            event(EVENT_OSD_TURBO, turbo);
+            break;
+          case HK_MAGIC:
+            doMagic();
+            break;
+        }
+      }
+      return true;
+    }
+  }
+  return false;
+}
+
 // transform PS/2 scancodes into internal matrix of pressed keys
 void ZXKeyboard::fill(uint16_t sc, unsigned long n)
 {
@@ -320,651 +415,196 @@ void ZXKeyboard::fill(uint16_t sc, unsigned long n)
     return;
   }
 
-  switch (code) {
+  // Check hotkeys first when modifier (Menu / Win / Ctrl+Alt) is held
+  if (handleHotkey(code, n, is_up)) {
+    return;
+  }
 
-    // Pause -> Wait
-    case PS2_KEY_PAUSE:
-      doPause();
-    break;
+  if (code < sizeof(s_key_map) / sizeof(s_key_map[0])) {
+    KeyDesc desc;
+    desc.type = pgm_read_byte(&s_key_map[code].type);
+    desc.zx1  = pgm_read_byte(&s_key_map[code].zx1);
+    desc.zx2  = pgm_read_byte(&s_key_map[code].zx2);
 
-    // Shift -> SS for Profi, CS for ZX
-    case PS2_KEY_L_SHIFT:
-    case PS2_KEY_R_SHIFT:
-      matrix[profi_mode ? ZX_K_SS : ZX_K_CS] = !is_up;
-      is_shift = !is_up;
-      break;
+    switch (desc.type) {
+      case KT_DIRECT:
+        matrix[desc.zx1] = !is_up;
+        if (desc.zx1 == ZX_K_ENT) {
+          is_enter = !is_up;
+        }
+        break;
 
-    // Ctrl -> CS for Profi, SS for ZX
-    case PS2_KEY_L_CTRL:
-    case PS2_KEY_R_CTRL:
-      matrix[profi_mode ? ZX_K_CS : ZX_K_SS] = !is_up;
-      is_ctrl = !is_up;
-      break;
+      case KT_COMBO:
+        matrix[desc.zx1] = !is_up;
+        matrix[desc.zx2] = !is_up;
+        break;
 
-    // Alt (L) -> SS+Enter for Profi, SS+CS for ZX
-    case PS2_KEY_L_ALT:
-      if (!is_ctrl || is_up) {
-        matrix[ZX_K_SS] = !is_up;
-        matrix[profi_mode ? ZX_K_ENT : ZX_K_CS] = !is_up;
-        if (!profi_mode) {
+      case KT_CURSOR:
+        if (!is_shift) {
+          if (code == PS2_KEY_UP_ARROW) cursor_up = !is_up;
+          else if (code == PS2_KEY_DN_ARROW) cursor_down = !is_up;
+          else if (code == PS2_KEY_L_ARROW) cursor_left = !is_up;
+          else if (code == PS2_KEY_R_ARROW) cursor_right = !is_up;
+
+          matrix[ZX_K_CS] = !is_up;
+          if (!is_up) { sendCS(); }
+          matrix[desc.zx1] = !is_up;
           processCapsedKey(code, is_up);
         }
-      }
-      is_alt = !is_up;
-      break;
+        break;
 
-    // Alt (R) -> SS + Space for Profi, SS+CS for ZX
-    case PS2_KEY_R_ALT:
-      if (!is_ctrl || is_up) {
+      case KT_SHIFT_PAIR:
         matrix[ZX_K_SS] = !is_up;
-        matrix[profi_mode ? ZX_K_SP : ZX_K_CS] = !is_up;
+        matrix[is_shift ? desc.zx2 : desc.zx1] = !is_up;
+        if (is_up) {
+          matrix[desc.zx1] = false;
+          matrix[desc.zx2] = false;
+        }
+        is_ss_used = is_shift;
+        break;
+
+      case KT_MACRO_BRACKET: {
+        uint8_t zx = is_shift ? desc.zx2 : desc.zx1;
         if (!profi_mode) {
-          processCapsedKey(code, is_up);
-        }
-      }
-      is_alt = !is_up;
-      break;
-
-    // Del -> P+b6 for Profi, SS+C for ZX
-    case PS2_KEY_DELETE:
-      if (!is_shift) {
-        if (profi_mode) {
-          matrix[ZX_K_P] = !is_up;
-          matrix[ZX_K_BIT6] = !is_up;
+          if (!is_up) {
+            sendMacros(code, zx);
+          }
         } else {
           matrix[ZX_K_SS] = !is_up;
-          matrix[ZX_K_C] =  !is_up;
-        }
-        is_del = !is_up;
-      }
-      break;
-
-    // Win
-    case PS2_KEY_L_GUI:
-    case PS2_KEY_R_GUI:
-      is_win = !is_up;
-    break;
-
-    // Menu
-    case PS2_KEY_MENU:
-      is_menu = !is_up;
-      break;
-
-    // Ins -> O+b6 for Profi, SS+A for ZX
-    case PS2_KEY_INSERT:
-      if (!is_shift) {
-        if (profi_mode) {
-          matrix[ZX_K_O] = !is_up;
-          matrix[ZX_K_BIT6] = !is_up;
-        } else {
-          matrix[ZX_K_SS] = !is_up;
-          matrix[ZX_K_A] =  !is_up;
-        }
-      }
-      break;
-
-    // Cursor -> CS + 5,6,7,8
-    case PS2_KEY_UP_ARROW:
-      if (!is_shift) {
-        cursor_up = !is_up;
-        matrix[ZX_K_CS] = !is_up;
-        if (!is_up) { sendCS(); }
-        matrix[ZX_K_7] = !is_up;
-        processCapsedKey(code, is_up);
-      }
-      break;
-    case PS2_KEY_DN_ARROW:
-      if (!is_shift) {
-        cursor_down = !is_up;
-        matrix[ZX_K_CS] = !is_up;
-        if (!is_up) { sendCS(); }
-        matrix[ZX_K_6] = !is_up;
-        processCapsedKey(code, is_up);
-      }
-      break;
-    case PS2_KEY_L_ARROW:
-      if (!is_shift) {
-        cursor_left = !is_up;
-        matrix[ZX_K_CS] = !is_up;
-        if (!is_up) { sendCS(); }
-        matrix[ZX_K_5] = !is_up;
-        processCapsedKey(code, is_up);
-      }
-      break;
-    case PS2_KEY_R_ARROW:
-      if (!is_shift) {
-        cursor_right = !is_up;
-        matrix[ZX_K_CS] = !is_up;
-        if (!is_up) { sendCS(); }
-        matrix[ZX_K_8] = !is_up;
-        processCapsedKey(code, is_up);
-      }
-      break;
-
-    // ESC -> CS+1 for Profi, CS+SPACE for ZX
-    case PS2_KEY_ESC:
-
-      if (is_menu || is_win || (is_ctrl && is_alt)) {
-        if (!is_up) {
-          // menu + ESC = OSD_OVERLAY
-          if (n - tosd > 200) {
-            toggleOsdOverlay();
-            tosd = n;
+          matrix[zx] = !is_up;
+          if (is_up) {
+            matrix[desc.zx1] = false;
+            matrix[desc.zx2] = false;
           }
         }
-      } else {
+        break;
+      }
+
+      case KT_SINGLE_QUOTE:
+        if (is_shift && !is_up) {
+          sendMacros(code, ZX_K_A);
+        }
+        if (!is_shift && delayed_matrix_size == 0) {
+          matrix[ZX_K_SS] = !is_up;
+          matrix[ZX_K_X] = !is_up;
+        }
+        is_ss_used = is_shift;
+        break;
+
+      case KT_MODIFIER_SHIFT:
+        matrix[profi_mode ? ZX_K_SS : ZX_K_CS] = !is_up;
+        is_shift = !is_up;
+        break;
+
+      case KT_MODIFIER_CTRL:
+        matrix[profi_mode ? ZX_K_CS : ZX_K_SS] = !is_up;
+        is_ctrl = !is_up;
+        break;
+
+      case KT_MODIFIER_ALT:
+        if (!is_ctrl || is_up) {
+          matrix[ZX_K_SS] = !is_up;
+          matrix[profi_mode ? desc.zx1 : ZX_K_CS] = !is_up;
+          if (!profi_mode) {
+            processCapsedKey(code, is_up);
+          }
+        }
+        is_alt = !is_up;
+        break;
+
+      case KT_MODIFIER_WIN:
+        is_win = !is_up;
+        break;
+
+      case KT_MODIFIER_MENU:
+        is_menu = !is_up;
+        break;
+
+      case KT_EDIT_ESC:
         is_esc = !is_up;
         matrix[ZX_K_CS] = !is_up;
         matrix[profi_mode ? ZX_K_1 : ZX_K_SP] = !is_up;
         processCapsedKey(code, is_up);
-      }
-      break;
+        break;
 
-    // Backspace -> CS+0
-    case PS2_KEY_BS:
-      matrix[ZX_K_CS] = !is_up;
-      matrix[ZX_K_0] = !is_up;
-      processCapsedKey(code, is_up);
-      is_bksp = !is_up;
-      break;
+      case KT_EDIT_BS:
+        matrix[ZX_K_CS] = !is_up;
+        matrix[ZX_K_0] = !is_up;
+        processCapsedKey(code, is_up);
+        is_bksp = !is_up;
+        break;
 
-    // Enter
-    case PS2_KEY_ENTER:
-    case PS2_KEY_KP_ENTER:
-      matrix[ZX_K_ENT] = !is_up;
-      is_enter = !is_up;
-      break;
-
-    // Space
-    case PS2_KEY_SPACE:
-      matrix[ZX_K_SP] = !is_up;
-      break;
-
-    // Letters & numbers
-    case PS2_KEY_A: matrix[ZX_K_A] = !is_up; break;
-    case PS2_KEY_B: matrix[ZX_K_B] = !is_up; break;
-    case PS2_KEY_C: matrix[ZX_K_C] = !is_up; break;
-    case PS2_KEY_D: 
-      if (is_menu || is_win || (is_ctrl && is_alt)) {
-        if (!is_up) {
-          toggleDivmmc();
-          event(EVENT_OSD_DIVMMC, 0);
-        }
-      } else {
-        matrix[ZX_K_D] = !is_up; 
-      }
-    break;
-    case PS2_KEY_E: matrix[ZX_K_E] = !is_up; break;
-    case PS2_KEY_F: matrix[ZX_K_F] = !is_up; break;
-    case PS2_KEY_G: matrix[ZX_K_G] = !is_up; break;
-    case PS2_KEY_H: matrix[ZX_K_H] = !is_up; break;
-    case PS2_KEY_I: matrix[ZX_K_I] = !is_up; break;
-    case PS2_KEY_J: 
-      if (is_menu || is_win || (is_ctrl && is_alt)) {
-        if (!is_up) {
-          toggleJoyType();
-          event(EVENT_OSD_JOYSTICK, 0);
-        }
-      } else {
-        matrix[ZX_K_J] = !is_up; 
-      }
-    break;
-    case PS2_KEY_K: matrix[ZX_K_K] = !is_up; break;
-    case PS2_KEY_L: matrix[ZX_K_L] = !is_up; break;
-    case PS2_KEY_M: 
-      if (is_menu || is_win || (is_ctrl && is_alt)) {
-        if (!is_up) {
-          joy_mode++;
-          if (joy_mode > 4) {
-            joy_mode = 0;
+      case KT_EDIT_DEL:
+        if (!is_shift) {
+          if (profi_mode) {
+            matrix[desc.zx1] = !is_up;
+            matrix[ZX_K_BIT6] = !is_up;
+          } else {
+            matrix[ZX_K_SS] = !is_up;
+            matrix[desc.zx2] = !is_up;
           }
-          setJoyMode(joy_mode);
-          event(EVENT_OSD_JOYSTICK_MODE, 0);
+          is_del = !is_up;
         }
-      } else {
-        matrix[ZX_K_M] = !is_up; 
-      }
-    break;
-    case PS2_KEY_N: 
-      if (is_menu || is_win || (is_ctrl && is_alt)) {
-        if (!is_up) {
-          toggleNemoIDE();
-          event(EVENT_OSD_NEMOIDE, 0);
-        }
-      } else {
-        matrix[ZX_K_N] = !is_up; 
-      }
-      break;
-    case PS2_KEY_O: matrix[ZX_K_O] = !is_up; break;
-    case PS2_KEY_P: matrix[ZX_K_P] = !is_up; break;
-    case PS2_KEY_Q: matrix[ZX_K_Q] = !is_up; break;
-    case PS2_KEY_R: matrix[ZX_K_R] = !is_up; break;
-    case PS2_KEY_S: matrix[ZX_K_S] = !is_up; break;
-    case PS2_KEY_T: matrix[ZX_K_T] = !is_up; break;
-    case PS2_KEY_U: matrix[ZX_K_U] = !is_up; break;
-    case PS2_KEY_V: 
-      if (is_menu || is_win || (is_ctrl && is_alt)) {
-        if (!is_up) {
-          screen_mode++;
-          if (screen_mode > max_screen_mode) {
-            screen_mode = 0;
+        break;
+
+      case KT_EDIT_INS:
+        if (!is_shift) {
+          if (profi_mode) {
+            matrix[desc.zx1] = !is_up;
+            matrix[ZX_K_BIT6] = !is_up;
+          } else {
+            matrix[ZX_K_SS] = !is_up;
+            matrix[desc.zx2] = !is_up;
           }
-          setScreenMode(screen_mode);
-          event(EVENT_OSD_SCREEN_MODE, 0);
         }
-      } else {
-        matrix[ZX_K_V] = !is_up; 
-      }      
-      break;
-    case PS2_KEY_W: matrix[ZX_K_W] = !is_up; break;
-    case PS2_KEY_X: matrix[ZX_K_X] = !is_up; break;
-    case PS2_KEY_Y: matrix[ZX_K_Y] = !is_up; break;
-    case PS2_KEY_Z: matrix[ZX_K_Z] = !is_up; break;
+        break;
 
-    // digits
-    case PS2_KEY_0: matrix[ZX_K_0] = !is_up; break;
-    case PS2_KEY_1: matrix[ZX_K_1] = !is_up; break;
-    case PS2_KEY_2: matrix[ZX_K_2] = !is_up; break;
-    case PS2_KEY_3: matrix[ZX_K_3] = !is_up; break;
-    case PS2_KEY_4: matrix[ZX_K_4] = !is_up; break;
-    case PS2_KEY_5: matrix[ZX_K_5] = !is_up; break;
-    case PS2_KEY_6: matrix[ZX_K_6] = !is_up; break;
-    case PS2_KEY_7: matrix[ZX_K_7] = !is_up; break;
-    case PS2_KEY_8: matrix[ZX_K_8] = !is_up; break;
-    case PS2_KEY_9: matrix[ZX_K_9] = !is_up; break;
-
-    // Keypad digits
-    case PS2_KEY_KP0: matrix[ZX_K_0] = !is_up; break;
-    case PS2_KEY_KP1: matrix[ZX_K_1] = !is_up; break;
-    case PS2_KEY_KP2: matrix[ZX_K_2] = !is_up; break;
-    case PS2_KEY_KP3: matrix[ZX_K_3] = !is_up; break;
-    case PS2_KEY_KP4: matrix[ZX_K_4] = !is_up; break;
-    case PS2_KEY_KP5: matrix[ZX_K_5] = !is_up; break;
-    case PS2_KEY_KP6: matrix[ZX_K_6] = !is_up; break;
-    case PS2_KEY_KP7: matrix[ZX_K_7] = !is_up; break;
-    case PS2_KEY_KP8: matrix[ZX_K_8] = !is_up; break;
-    case PS2_KEY_KP9: matrix[ZX_K_9] = !is_up; break;
-
-    // '/" -> SS+P / SS+7
-    case PS2_KEY_APOS:
-      matrix[ZX_K_SS] = !is_up;
-      matrix[is_shift ? ZX_K_P : ZX_K_7] = !is_up;
-      if (is_up) {
-        matrix[ZX_K_P] = false;
-        matrix[ZX_K_7] = false;
-      }
-      is_ss_used = is_shift;
-      break;
-
-    // ,/< -> SS+N / SS+R
-    case PS2_KEY_COMMA:
-      matrix[ZX_K_SS] = !is_up;
-      matrix[is_shift ? ZX_K_R : ZX_K_N] = !is_up;
-      if (is_up) {
-        matrix[ZX_K_R] = false;
-        matrix[ZX_K_N] = false;
-      }
-      is_ss_used = is_shift;
-      break;
-
-    // ./> -> SS+M / SS+T
-    case PS2_KEY_DOT:
-    case PS2_KEY_KP_DOT:
-      matrix[ZX_K_SS] = !is_up;
-      matrix[is_shift ? ZX_K_T : ZX_K_M] = !is_up;
-      if (is_up) {
-        matrix[ZX_K_T] = false;
-        matrix[ZX_K_M] = false;
-      }
-      is_ss_used = is_shift;
-      break;
-
-    // ;/: -> SS+O / SS+Z
-    case PS2_KEY_SEMI:
-      matrix[ZX_K_SS] = !is_up;
-      matrix[is_shift ? ZX_K_Z : ZX_K_O] = !is_up;
-      if (is_up) {
-        matrix[ZX_K_Z] = false;
-        matrix[ZX_K_O] = false;
-      }
-      is_ss_used = is_shift;
-      break;
-
-    // [,{ -> SS+Y / SS+F
-    case PS2_KEY_OPEN_SQ:
-      if (!profi_mode) {
-        if (!is_up) {
-          sendMacros(code, is_shift ? ZX_K_F : ZX_K_Y);
-        }
-      } else {
-        matrix[ZX_K_SS] = !is_up;
-        matrix[is_shift ? ZX_K_F : ZX_K_Y] = !is_up;
-        if (is_up) {
-          matrix[ZX_K_F] = false;
-          matrix[ZX_K_Y] = false;
-        }
-      }
-      break;
-
-    // ],} -> SS+U / SS+G
-    case PS2_KEY_CLOSE_SQ:
-      if (!profi_mode) {
-        if (!is_up) {
-          sendMacros(code, is_shift ? ZX_K_G : ZX_K_U);
-        }
-      } else {
-        matrix[ZX_K_SS] = !is_up;
-        matrix[is_shift ? ZX_K_G : ZX_K_U] = !is_up;
-        if (is_up) {
-          matrix[ZX_K_G] = false;
-          matrix[ZX_K_U] = false;
-        }
-      }
-      break;
-
-    // /,? -> SS+V / SS+C
-    case PS2_KEY_DIV:
-    case PS2_KEY_KP_DIV:
-      matrix[ZX_K_SS] = !is_up;
-      matrix[is_shift ? ZX_K_C : ZX_K_V] = !is_up;
-      if (is_up) {
-        matrix[ZX_K_C] = false;
-        matrix[ZX_K_V] = false;
-      }
-      is_ss_used = is_shift;
-      break;
-
-    // \,| -> SS+D / SS+S
-    case PS2_KEY_BACK:
-      if (!profi_mode) {
-        if (!is_up) {
-          sendMacros(code, is_shift ? ZX_K_S : ZX_K_D);
-        }
-      } else {
-        matrix[ZX_K_SS] = !is_up;
-        matrix[is_shift ? ZX_K_S : ZX_K_D] = !is_up;
-        if (is_up) {
-          matrix[ZX_K_S] = false;
-          matrix[ZX_K_D] = false;
-        }
-      }
-      break;
-
-    // =,+ -> SS+L / SS+K
-    case PS2_KEY_EQUAL:
-      matrix[ZX_K_SS] = !is_up;
-      matrix[is_shift ? ZX_K_K : ZX_K_L] = !is_up;
-      if (is_up) {
-        matrix[ZX_K_K] = false;
-        matrix[ZX_K_L] = false;
-      }
-      is_ss_used = is_shift;
-      break;
-
-    // -,_ -> SS+J / SS+0
-    case PS2_KEY_MINUS:
-      matrix[ZX_K_SS] = !is_up;
-      matrix[is_shift ? ZX_K_0 : ZX_K_J] = !is_up;
-      if (is_up) {
-        matrix[ZX_K_0] = false;
-        matrix[ZX_K_J] = false;
-      }
-      is_ss_used = is_shift;
-      break;
-
-    // `,~ -> SS+X / SS+A
-    case PS2_KEY_SINGLE:
-      if (is_shift and !is_up) {
-        sendMacros(code, is_shift ? ZX_K_A : ZX_K_X);
-      }
-      if (!is_shift and delayed_matrix_size == 0) {
-        matrix[ZX_K_SS] = !is_up;
-        matrix[ZX_K_X] = !is_up;
-      }
-      is_ss_used = is_shift;
-      break;
-
-    // Keypad * -> SS+B
-    case PS2_KEY_KP_TIMES:
-      matrix[ZX_K_SS] = !is_up;
-      matrix[ZX_K_B] = !is_up;
-      break;
-
-    // Keypad - -> SS+J
-    case PS2_KEY_KP_MINUS:
-      matrix[ZX_K_SS] = !is_up;
-      matrix[ZX_K_J] = !is_up;
-      break;
-
-    // Keypad + -> SS+K
-    case PS2_KEY_KP_PLUS:
-      matrix[ZX_K_SS] = !is_up;
-      matrix[ZX_K_K] = !is_up;
-      break;
-
-    // Tab
-    case PS2_KEY_TAB:
-      if (is_menu || is_win || (is_ctrl && is_alt)) {
-        if (!is_up) {
-          toggleSwapAB();
-          event(EVENT_OSD_SWAP_AB, 0);
-        }
-      } else {
+      case KT_EDIT_TAB:
         matrix[ZX_K_CS] = !is_up;
         matrix[ZX_K_I] = !is_up;
         processCapsedKey(code, is_up);
-      }
-      break;
+        break;
 
-    // CapsLock
-    case PS2_KEY_CAPS:
-      matrix[ZX_K_CS] = !is_up;
-      matrix[ZX_K_SS] = !is_up;
-      processCapsedKey(code, is_up);
-      //doCaps();
-      break;
+      case KT_EDIT_CAPS:
+        matrix[ZX_K_CS] = !is_up;
+        matrix[ZX_K_SS] = !is_up;
+        processCapsedKey(code, is_up);
+        break;
 
-    // PgUp -> M+BIT6 for Profi, CS+3 for ZX
-    case PS2_KEY_PGUP:
-      if (!is_shift) {
-        if (profi_mode) {
-          matrix[ZX_K_M] = !is_up;
-          matrix[ZX_K_BIT6] = !is_up;
-        } else {
-          matrix[ZX_K_CS] = !is_up;
-          matrix[ZX_K_3] = !is_up;
-          processCapsedKey(code, is_up);
-        }
-      }
-      break;
-
-    // PgDn -> N+BIT6 for Profi, CS+4 for ZX
-    case PS2_KEY_PGDN:
-      if (!is_shift) {
-        if (profi_mode) {
-          matrix[ZX_K_N] = !is_up;
-          matrix[ZX_K_BIT6] = !is_up;
-        } else {
-          matrix[ZX_K_CS] = !is_up;
-          matrix[ZX_K_4] = !is_up;
-          processCapsedKey(code, is_up);
-        }
-      }
-      break;
-
-    // Home -> K+BIT6 for Profi
-    case PS2_KEY_HOME:
-      if (!is_shift) {
-        matrix[ZX_K_K] = !is_up;
-        matrix[ZX_K_BIT6] = !is_up;
-      }
-      break;
-
-    // End -> L+BIT6 for Profi
-    case PS2_KEY_END:
-      if (!is_shift) {
-        matrix[ZX_K_L] = !is_up;
-        matrix[ZX_K_BIT6] = !is_up;
-      }
-      break;
-
-    // Fn keys
-    case PS2_KEY_F1:
-      if (is_menu || is_win || (is_ctrl && is_alt)) {
-        if (!is_up) {
-          // menu + F1, ctrl+alt = ROMSET 00
-          setRombank(0);
-          event(EVENT_OSD_ROMBANK, 0);
-        }
-      } else {
-        matrix[ZX_K_A] = !is_up; matrix[ZX_K_BIT6] = !is_up;
-      }
-      break;
-    case PS2_KEY_F2:
-      if (is_menu || is_win || (is_ctrl && is_alt)) {
-        if (!is_up) {
-          // menu + F2 = ROMSET 01
-          setRombank(1);
-          event(EVENT_OSD_ROMBANK, 1);
-        }
-      } else {
-        matrix[ZX_K_B] = !is_up; matrix[ZX_K_BIT6] = !is_up; 
-      }
-      break;
-    case PS2_KEY_F3:
-      if (is_menu || is_win || (is_ctrl && is_alt)) {
-        if (!is_up) {
-          // menu + F3 = ROMSET 10
-          setRombank(2);
-          event(EVENT_OSD_ROMBANK, 2);
-        }
-      } else {
-        matrix[ZX_K_C] = !is_up; matrix[ZX_K_BIT6] = !is_up; 
-      }
-      break;
-    case PS2_KEY_F4:
-      if (is_menu || is_win || (is_ctrl && is_alt)) {
-        if (!is_up) {
-          // menu + F4 = ROMSET 11
-          setRombank(3);         
-          event(EVENT_OSD_ROMBANK, 3);
-        }
-      } else {
-        matrix[ZX_K_D] = !is_up; matrix[ZX_K_BIT6] = !is_up; 
-      }
-      break;
-    case PS2_KEY_F5:
-      if (is_menu || is_win || (is_ctrl && is_alt)) {
-        if (!is_up) {
-          toggleTurbofdc();
-          event(EVENT_OSD_TURBOFDC, 0);
-        }
-      } else {
-        matrix[ZX_K_E] = !is_up; matrix[ZX_K_BIT6] = !is_up; 
-      }
-      break;
-
-    case PS2_KEY_F6: 
-      if (is_menu || is_win || (is_ctrl && is_alt)) {
-        if (!is_up) {
-          toggleCovox();
-          event(EVENT_OSD_COVOX, 0);
-        }
-      } else {
-        matrix[ZX_K_F] = !is_up; matrix[ZX_K_BIT6] = !is_up;
-      }
-      break;
-    case PS2_KEY_F7: 
-      if (is_menu || is_win || (is_ctrl && is_alt)) {
-        if (!is_up) {
-          uint8_t stereo = 0;
-          bitWrite(stereo, 0, is_sw7);
-          bitWrite(stereo, 1, is_sw9);
-          if (stereo < 2) {
-            stereo++; 
+      case KT_EDIT_PAGE:
+        if (!is_shift) {
+          if (profi_mode) {
+            matrix[desc.zx1] = !is_up;
+            matrix[ZX_K_BIT6] = !is_up;
+          } else {
+            matrix[ZX_K_CS] = !is_up;
+            matrix[desc.zx2] = !is_up;
+            processCapsedKey(code, is_up);
           }
-          else {
-            stereo = 0;
-          }
-          toggleStereo(stereo);
-          event(EVENT_OSD_STEREO, 0);
         }
-      } else {
-        matrix[ZX_K_G] = !is_up; matrix[ZX_K_BIT6] = !is_up; 
-      }
-      break;
-    case PS2_KEY_F8: 
-      if (is_menu || (is_ctrl && is_alt)) {
-        if (!is_up) {
-          toggleSsg();
-          event(EVENT_OSD_SSG, 0);
-        }
-      } else {
-        matrix[ZX_K_H] = !is_up; matrix[ZX_K_BIT6] = !is_up;
-      }
-      break;
-    case PS2_KEY_F9: 
-      if (is_menu || is_win || (is_ctrl && is_alt)) {
-        if (!is_up) {
-          toggleVideo();
-          event(EVENT_OSD_VIDEO, 0);
-        }
-      } else {
-          matrix[ZX_K_I] = !is_up; matrix[ZX_K_BIT6] = !is_up;
-      }
-      break;
-    case PS2_KEY_F10: 
-      if (is_menu || is_win || (is_ctrl && is_alt)) {
-        if (!is_up) {
-          toggleVsync();
-          event(EVENT_OSD_VSYNC, 0);
-        }
-      } else {
-        matrix[ZX_K_J] = !is_up; matrix[ZX_K_BIT6] = !is_up;
-      }
-      break;    
-    case PS2_KEY_F11:
-      if (is_menu || is_win || (is_ctrl && is_alt)) {
-        if (!is_up) {
-          turbo++;
-          if (turbo > max_turbo) turbo = 0;
-          setTurbo(turbo);
-          event(EVENT_OSD_TURBO, turbo);
-        }
-      } else {
-        matrix[ZX_K_Q] = !is_up; matrix[ZX_K_SS] = !is_up;
-      }
-      break;
-    case PS2_KEY_F12:
-      if (is_menu || is_win || (is_ctrl && is_alt)) {
-        if (!is_up) {
-          // menu + F12 = magic
-          doMagic();
-        }
-      } else {
-        matrix[ZX_K_W] = !is_up; matrix[ZX_K_SS] = !is_up;
-      }
-      break;
+        break;
 
-    // Scroll Lock -> Nothing
-    case PS2_KEY_SCROLL:
-      // TODO
-    break;
+      case KT_EDIT_HOME_END:
+        if (!is_shift) {
+          matrix[desc.zx1] = !is_up;
+          matrix[desc.zx2] = !is_up;
+        }
+        break;
 
-    // PrtScr -> Mode profi / zx
-    case PS2_KEY_PRTSCR:
-      if (!is_shift) {
-        if (!is_up) {
+      case KT_SPECIAL_PAUSE:
+        doPause();
+        break;
+
+      case KT_SPECIAL_PRTSCR:
+        if (!is_shift && !is_up) {
           toggleKeyboardType();
           event(EVENT_OSD_KEYBOARD_TYPE, 0);
         }
-      }
-    break;
+        break;
 
-      // TODO:
-      // Windows L / Home -> SS+F
-      // Windiws R / End -> SS+G
-
+      default:
+        break;
+    }
   }
 
   if (is_ss_used && capsed_keys_size == 0) {
