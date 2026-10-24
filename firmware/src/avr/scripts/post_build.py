@@ -10,8 +10,8 @@ def make_hex(data):
         raw = [len(chunk), (addr >> 8) & 0xFF, addr & 0xFF, 0] + list(chunk)
         csum = (-sum(raw)) & 0xFF
         lines.append(':' + ''.join(f'{b:02X}' for b in raw) + f'{csum:02X}')
-    lines.append(':00000001FF\n')
-    return '\n'.join(lines)
+    lines.append(':00000001FF')
+    return '\n'.join(lines) + '\n'
 
 def post_build_action(source, target, env):
     build_dir = env.subst("$BUILD_DIR")
@@ -20,8 +20,11 @@ def post_build_action(source, target, env):
 
     print("[Post-Build] Generating revision-specific EEPROM HEX files...")
 
-    # Copy firmware.hex to karabas_pro.hex in build dir
-    shutil.copy2(firmware_hex, karabas_pro_hex)
+    # Normalize line endings to LF for git reproducibility across platforms
+    with open(firmware_hex, "rb") as f:
+        hex_data = f.read().replace(b"\r\n", b"\n")
+    with open(karabas_pro_hex, "wb") as f:
+        f.write(hex_data)
 
     # Base EEPROM configuration (0x00 to 0x11):
     base = [0, 10, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 0, 0, 20, 20]

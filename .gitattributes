@@ -1,0 +1,22 @@
+# Auto-detect text files and normalize line endings to LF on commit
+* text=auto eol=lf
+
+# Explicitly normalize firmware HEX and EEPROM files to LF
+*.hex text eol=lf
+*.eep text eol=lf
+
+# Common source and build files
+*.c text eol=lf
+*.h text eol=lf
+*.cpp text eol=lf
+*.hpp text eol=lf
+*.s text eol=lf
+*.asm text eol=lf
+*.vhd text eol=lf
+*.v text eol=lf
+*.py text eol=lf
+*.sh text eol=lf
+*.ini text eol=lf
+*.md text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
