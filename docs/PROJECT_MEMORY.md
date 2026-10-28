@@ -178,39 +178,43 @@ CPLD выполняет критическую связующую функцию
 
 Проект PlatformIO: [firmware/src/avr](file:///home/andy/Documents/Projects/Retrocomp/ZX-Spectrum/karabas-pro-master/firmware/src/avr).
 
-Стек компиляции: **чистый bare-metal `avr-gcc` / `avr-libc`** (Arduino Framework полностью исключен, освобождено > 6.4 КБ Flash).
+Стек компиляции: **чистый bare-metal C (`gnu11`) / `avr-gcc` / `avr-libc`** (Arduino Framework и C++ runtime полностью исключены, внешняя папка `lib/` удалена, освобождено > 10 КБ Flash).
 
 Микроконтроллер выступает в роли сервисного супервизора системы:
-* **Аппаратный слой HAL ([include/hal.h](file:///home/andy/Documents/Projects/Retrocomp/ZX-Spectrum/karabas-pro-master/firmware/src/avr/include/hal.h), [src/hal.cpp](file:///home/andy/Documents/Projects/Retrocomp/ZX-Spectrum/karabas-pro-master/firmware/src/avr/src/hal.cpp)):**
+* **Аппаратный слой HAL ([include/hal.h](file:///home/andy/Documents/Projects/Retrocomp/ZX-Spectrum/karabas-pro-master/firmware/src/avr/include/hal.h), [src/hal.c](file:///home/andy/Documents/Projects/Retrocomp/ZX-Spectrum/karabas-pro-master/firmware/src/avr/src/hal.c)):**
   * Прямой 1-тактовый доступ к GPIO через регистры `PORTx`/`DDRx`/`PINx`.
   * Регистровый SPI-мастер на 1 МГц (Mode 0) с защитой от сброса master-режима при внешних манипуляциях на PB2/SS.
   * Аппаратный I2C/TWI мастер с таймаутами для работы с RTC DS1307 (~150 байт вместо 2 КБ библиотеки `SBWire`).
-  * Системный таймер 1 мс на базе Timer0 CTC для отсчета `millis()` и точных микросекундных задержек.
+  * Системный таймер 1 мс на базе Timer0 CTC для отсчета системного времени и микросекундных задержек.
   * Быстрый АЦП (prescaler 64) для аппаратных кнопок `BTN1` и `BTN2` (ADC6 / ADC7).
-  * Прямые векторы прерываний `INT0_vect` (клавиатура, PD2) и `INT1_vect` (мышь, PD3) без оверхеда `WInterrupts.c`.
-* **PS/2 Keyboard Subsystem ([ZXKeyboard](file:///home/andy/Documents/Projects/Retrocomp/ZX-Spectrum/karabas-pro-master/firmware/src/avr/lib/ZXKeyboard)):**
+  * Прямые векторы прерываний `INT0_vect` (клавиатура, PD2) и `INT1_vect` (мышь, PD3) без оверхеда Arduino `attachInterrupt`.
+* **Подсистема PS/2 клавиатуры ([include/keyboard.h](file:///home/andy/Documents/Projects/Retrocomp/ZX-Spectrum/karabas-pro-master/firmware/src/avr/include/keyboard.h), [src/keyboard.c](file:///home/andy/Documents/Projects/Retrocomp/ZX-Spectrum/karabas-pro-master/firmware/src/avr/src/keyboard.c), [src/ps2_kbd.c](file:///home/andy/Documents/Projects/Retrocomp/ZX-Spectrum/karabas-pro-master/firmware/src/avr/src/ps2_kbd.c)):**
   * Приём XT/AT скан-кодов, трансляция в матрицу клавиатуры ZX Spectrum (5x8) + расширенные клавиши Profi.
-  * Двухуровневый LUT-движок трансляции скан-кодов ([ZXKeyboardMap.h](file:///home/andy/Documents/Projects/Retrocomp/ZX-Spectrum/karabas-pro-master/firmware/src/avr/lib/ZXKeyboard/src/ZXKeyboardMap.h)):
+  * Двухуровневый LUT-движок трансляции скан-кодов ([include/keyboard_map.h](file:///home/andy/Documents/Projects/Retrocomp/ZX-Spectrum/karabas-pro-master/firmware/src/avr/include/keyboard_map.h)):
     * Таблица хоткеев `s_hotkey_map[19]` для комбинаций OSD с модификаторами (`Menu` / `Win` / `Ctrl+Alt`).
     * Прямая индексная таблица `s_key_map[109]` в `PROGMEM` ($O(1)$ доступ по скан-коду).
     * Поддержка макросов Extended Mode (`sendMacros`) для ввода спецсимволов (`[`, `]`, `{`, `}`, `~`, `|`, `\`) в режиме ZX Spectrum.
-    * Замена 700-строчного процедурного `switch` на декларативную модель сократила размер прошивки более чем на 2.3 КБ.
-  * Хранение настроек в EEPROM через `<avr/eeprom.h>`.
-* **PS/2 Mouse Subsystem ([ZXMouse](file:///home/andy/Documents/Projects/Retrocomp/ZX-Spectrum/karabas-pro-master/firmware/src/avr/lib/ZXMouse), [PS2Mouse](file:///home/andy/Documents/Projects/Retrocomp/ZX-Spectrum/karabas-pro-master/firmware/src/avr/lib/PS2Mouse)):** Поддержка Kempston Mouse (координаты X, Y, кнопки, колесо Z) и эмуляция Serial Microsoft Mouse (COM).
-* **Джойстики ([ZXJoystick](file:///home/andy/Documents/Projects/Retrocomp/ZX-Spectrum/karabas-pro-master/firmware/src/avr/lib/ZXJoystick), [SegaController](file:///home/andy/Documents/Projects/Retrocomp/ZX-Spectrum/karabas-pro-master/firmware/src/avr/lib/SegaController)):** Поддержка стандартного Atari/Kempston джойстика и опрос 3-/6-кнопочных геймпадов SEGA Mega Drive (переключение мультиплексора Select).
-* **RTC Subsystem ([ZXRTC](file:///home/andy/Documents/Projects/Retrocomp/ZX-Spectrum/karabas-pro-master/firmware/src/avr/lib/ZXRTC), [RTC/DS1307](file:///home/andy/Documents/Projects/Retrocomp/ZX-Spectrum/karabas-pro-master/firmware/src/avr/lib/RTC)):** Обмен по аппаратному TWI с микросхемой DS1307, хранение настроек в NVRAM, передача времени в FPGA через SPI.
-* **OSD Engine ([ZXOSD](file:///home/andy/Documents/Projects/Retrocomp/ZX-Spectrum/karabas-pro-master/firmware/src/avr/lib/ZXOSD), [OSD](file:///home/andy/Documents/Projects/Retrocomp/ZX-Spectrum/karabas-pro-master/firmware/src/avr/lib/OSD)):**
-  * Полноценная Data-driven архитектура меню: 16 дескрипторов пунктов главного меню и 7 полей RTC размещены в `PROGMEM`.
-  * Драйвер OSD изолирован от C++ `Print`/`Stream`, использует прямой вывод символов.
+* **Подсистема PS/2 мыши ([include/mouse.h](file:///home/andy/Documents/Projects/Retrocomp/ZX-Spectrum/karabas-pro-master/firmware/src/avr/include/mouse.h), [src/mouse.c](file:///home/andy/Documents/Projects/Retrocomp/ZX-Spectrum/karabas-pro-master/firmware/src/avr/src/mouse.c)):**
+  * Поддержка Kempston Mouse (координаты X, Y, кнопки, колесо Z) и эмуляция Serial Microsoft Mouse (COM).
+* **Подсистема джойстиков ([include/joystick.h](file:///home/andy/Documents/Projects/Retrocomp/ZX-Spectrum/karabas-pro-master/firmware/src/avr/include/joystick.h), [src/joystick.c](file:///home/andy/Documents/Projects/Retrocomp/ZX-Spectrum/karabas-pro-master/firmware/src/avr/src/joystick.c)):**
+  * Поддержка стандартного Atari/Kempston джойстика и опрос 3-/6-кнопочных геймпадов SEGA Mega Drive (управление мультиплексором Select).
+* **Подсистема RTC ([include/rtc.h](file:///home/andy/Documents/Projects/Retrocomp/ZX-Spectrum/karabas-pro-master/firmware/src/avr/include/rtc.h), [src/rtc.c](file:///home/andy/Documents/Projects/Retrocomp/ZX-Spectrum/karabas-pro-master/firmware/src/avr/src/rtc.c)):**
+  * Обмен по аппаратному TWI с микросхемой DS1307 пакетами (burst read), хранение настроек в NVRAM, передача времени в FPGA через SPI.
+* **Экранное меню OSD ([include/zxosd.h](file:///home/andy/Documents/Projects/Retrocomp/ZX-Spectrum/karabas-pro-master/firmware/src/avr/include/zxosd.h), [src/zxosd.c](file:///home/andy/Documents/Projects/Retrocomp/ZX-Spectrum/karabas-pro-master/firmware/src/avr/src/zxosd.c), [src/osd.c](file:///home/andy/Documents/Projects/Retrocomp/ZX-Spectrum/karabas-pro-master/firmware/src/avr/src/osd.c)):**
+  * Data-driven архитектура меню: 16 дескрипторов пунктов главного меню и 7 полей RTC размещены в `PROGMEM`.
+  * Драйвер OSD изолирован от C++ потоков, использует прямой вывод символов.
   * Всплывающее меню настроек и инфо-строки (Popups).
-  * Полноэкранный оверлей настройки часов, режимов видео и дисководов.
-  * Runtime мультиязычность: одновременная поддержка всех 3 языков (английский, русский, украинский) в единой универсальной прошивке.
+  * Полноэкранный оверлей настройки часов, режимов видео и накопителей.
+  * **Runtime мультиязычность:** одновременная поддержка всех 3 языков (английский, русский, украинский) в единой прошивке.
   * Переключение языка в OSD по горячей клавише `L` (`EN -> RU -> UA -> EN`) с мгновенной перерисовкой меню.
-  * Сохранение выбранного языка в EEPROM по адресу `0x14` (`0 = EN`, `1 = RU`, `2 = UA`), по умолчанию — английский (`0`).
+  * Сохранение выбранного языка в EEPROM по адресу `0x14` (`0 = EN`, `1 = RU`, `2 = UA`).
+* **Универсальная сборка и EEPROM ревизий:**
+  * Собирается единый универсальный бинарник `karabas_pro.hex`.
+  * Особенности аппаратных ревизий плат (тип ЦАП TDA1543 / TDA1543A, наличие обвязки магнитофона, активность кнопок) задаются через компактные файлы EEPROM (`.eep`), генерируемые автоматически при сборке.
 
 ### Расход памяти прошивки ATmega328P:
-* **Flash:** 23 774 – 24 006 байт (~72.6% – 73.3%) в зависимости от конфигурации (исходно было 32 512 байт / 99.2%). Суммарно высвобождено **> 8.6 КБ**.
-* **SRAM:** 884 – 888 байт (43.2% – 43.4%) из 2048 байт. Свободно более 1.15 КБ оперативной памяти.
+* **Flash:** ~21.7 КБ (~66% из 32 КБ). Свободно свыше 10 КБ программной памяти.
+* **SRAM:** ~500 байт (~24.5% из 2048 байт). Свободно ~1.5 КБ оперативной памяти.
 
 ### Горячие клавиши OSD:
 | Комбинация | Действие |
@@ -327,12 +331,18 @@ CPLD выполняет критическую связующую функцию
 
 ## 9. Сборочный конвейер и инструментарий (Toolchain & Build System)
 
-Для сборки всех компонентов Karabas-Pro используются стандартные скрипты в каталоге [firmware/src](file:///home/andy/Documents/Projects/Retrocomp/ZX-Spectrum/karabas-pro-master/firmware/src):
+Для сборки всех компонентов Karabas-Pro используются стандартные скрипты и системы сборки:
 
-* **Общий скрипт:** [build.sh](file:///home/andy/Documents/Projects/Retrocomp/ZX-Spectrum/karabas-pro-master/firmware/src/build.sh) — запускает последовательную сборку AVR, ядер FPGA, CPLD и альтернативных ядер.
-* **Сборка микроконтроллера:** [build_avr.sh](file:///home/andy/Documents/Projects/Retrocomp/ZX-Spectrum/karabas-pro-master/firmware/src/build_avr.sh)
-  * Использует PlatformIO CLI (`pio run`).
-  * Генерирует варианты `.hex` для всех комбинаций: Rev.A/Rev.D, с/без аппаратных кнопок, языки интерфейса OSD (EN, RU, UA), эмуляция USB/Echo.
+* **Сборка микроконтроллера AVR (PlatformIO):**
+  * Каталог проекта: [firmware/src/avr](file:///home/andy/Documents/Projects/Retrocomp/ZX-Spectrum/karabas-pro-master/firmware/src/avr).
+  * Команда сборки: `pio run` (или `cd firmware/src/avr && pio run`).
+  * Скрипт пре-билда: [scripts/pre_build.py](file:///home/andy/Documents/Projects/Retrocomp/ZX-Spectrum/karabas-pro-master/firmware/src/avr/scripts/pre_build.py) генерирует штамп версии `BUILD_VER` (формат `YYMMDDHH`), хэш Git-коммита и флаги сборки. Поддерживает переменную окружения `BUILD_VER` для детерминированных CI сборок.
+  * Скрипт пост-билда: [scripts/post_build.py](file:///home/andy/Documents/Projects/Retrocomp/ZX-Spectrum/karabas-pro-master/firmware/src/avr/scripts/post_build.py) автоматически формирует ревизионные образы EEPROM (`.eep`) для всех поддерживаемых плат (Rev.A, Rev.D, Rev.E, Rev.EU и др.) и синхронизирует итоговые `.hex` и `.eep` файлы в [firmware/releases](file:///home/andy/Documents/Projects/Retrocomp/ZX-Spectrum/karabas-pro-master/firmware/releases).
+  * Локальный pre-commit хук: установка через [`./scripts/install-hooks.sh`](file:///home/andy/Documents/Projects/Retrocomp/ZX-Spectrum/karabas-pro-master/scripts/install-hooks.sh) подключает [`.githooks/pre-commit`](file:///home/andy/Documents/Projects/Retrocomp/ZX-Spectrum/karabas-pro-master/.githooks/pre-commit), автоматически пересобирающий и добавляющий в коммит бинарники при правках AVR кода.
+* **Непрерывная интеграция CI/CD (GitHub Actions):**
+  * [`.github/workflows/build-avr.yml`](file:///home/andy/Documents/Projects/Retrocomp/ZX-Spectrum/karabas-pro-master/.github/workflows/build-avr.yml) — сборка прошивки AVR на push и PR в `master`, проверка дрейфа бинарников (`git diff --exit-code firmware/releases`), загрузка артефактов сборки.
+  * [`.github/workflows/release.yml`](file:///home/andy/Documents/Projects/Retrocomp/ZX-Spectrum/karabas-pro-master/.github/workflows/release.yml) — автоматическая сборка и публикация релиза с архивами прошивок при создании тегов `v*`.
+  * Нормализация переводов строк: [`.gitattributes`](file:///home/andy/Documents/Projects/Retrocomp/ZX-Spectrum/karabas-pro-master/.gitattributes) принудительно задаёт окончания строк LF для файлов `.hex`, `.eep` и исходников.
 * **Сборка CPLD:** [build_cpld.sh](file:///home/andy/Documents/Projects/Retrocomp/ZX-Spectrum/karabas-pro-master/firmware/src/build_cpld.sh)
   * Использует Intel Quartus Prime (`quartus_map`, `quartus_fit`, `quartus_asm`).
   * Выходной файл: `karabas_pro_cpld.pof`.
@@ -346,6 +356,8 @@ CPLD выполняет критическую связующую функцию
 
 ```
 karabas-pro/
+├── .github/                   # CI/CD автоматизация (GitHub Actions workflows)
+├── .githooks/                 # Git-хуки разработчика (pre-commit компилятор)
 ├── docs/                      # Документация, схемы в PDF, интерактивные BOM (iBOM), фото плат
 │   ├── PROJECT_MEMORY.md      # Данная база знаний проекта
 │   ├── karabas-pro-revER.pdf  # Принципиальная электрическая схема последней ревизии
@@ -356,14 +368,18 @@ karabas-pro/
 │   ├── revEU/                 # Текущая версия (Rev.Ї - шелкография UA)
 │   ├── revER/                 # Версия Rev.Ё (шелкография RU)
 │   ├── revE/, revD/, revDS/   # Предыдущие аппаратные ревизии
+│   ├── revF/                  # Проект следующего поколения платы (Rev.F: RP2040 + EP4CE22)
 │   ├── tapeMod_revA/          # Дочерний модуль магнитофона
 │   └── gerbers/               # Готовые архивы Gerber-файлов для заказа плат
 ├── firmware/                  # Исходные коды и релизы прошивок
 │   ├── src/
-│   │   ├── avr/               # Исходники C++ для ATmega328P (PlatformIO)
+│   │   ├── avr/               # Чистый C (gnu11) супервизора ATmega328P (PlatformIO)
+│   │   │   ├── src/           # Модули: main.c, hal.c, keyboard.c, zxosd.c, rtc.c, mouse.c, joystick.c
+│   │   │   ├── include/       # Заголовочные файлы и таблицы LUT клавиатуры
+│   │   │   └── scripts/       # Python скрипты pre_build.py и post_build.py
 │   │   ├── cpld/              # VHDL проект CPLD EPM3128ATC100
-│   │   └── fpga/              # VHDL проекты FPGA (profi, pong, rk86, profi_plus3e)
-│   └── releases/              # Скомпилированные бинарники (.jic, .sof, .pof, .hex)
+│   │   └── fpga/              # VHDL проекты FPGA (profi, pong, rk86, profi_plus3e, uart)
+│   └── releases/              # Скомпилированные бинарники (.jic, .sof, .pof, .hex, .eep)
 ├── software/                  # Софт для ZX Spectrum / Profi
 │   └── profi/
 │       ├── net-tools/         # Сетевые утилиты под ESP8266 (uGophy, netman, weather)
@@ -371,5 +387,32 @@ karabas-pro/
 │       ├── pq-dos/            # Образы дискет и драйверы PQ-DOS
 │       ├── rtc/               # Драйвер RTC для CP/M
 │       └── tools/             # Утилиты копирования и распаковки (karabas_boot, unFDI)
+├── scripts/                   # Вспомогательные скрипты репозитория (install-hooks.sh)
 └── cases/                     # 3D-модели корпусов (STL, SCAD) под габариты 3.5" FDD
 ```
+
+---
+
+## 11. Модель ветвления и состояние репозитория (Git Branching Model)
+
+* **`master`** — основная стабильная ветка. Содержит все проверенные схемы ревизий A..EU, актуальные ядра FPGA (Profi 5.06), CPLD и единую универсальную bare-metal C-прошивку AVR со встроенным OSD на трёх языках.
+* **`revF` (`origin/revF`)** — специализированная ветка разработки следующего поколения Karabas-Pro (**Rev.F**):
+  * Переход на FPGA Altera Cyclone IV **EP4CE22**.
+  * Замена MCU ATmega328P на **Raspberry Pi RP2040** (dual ARM Cortex-M0+).
+  * Замена аудио-ЦАП TDA1543 на **PCM5102A** (I2S).
+  * Подключение ESP8266 напрямую к RP2040.
+  * Новые KiCad-проекты плат и схем в [pcb/revF](file:///home/andy/Documents/Projects/Retrocomp/ZX-Spectrum/karabas-pro-master/pcb/revF).
+  * Новые ядра: загрузочное ядро (boot core) и ядро игровой приставки Dendy/NES.
+* **`stable_ula128` (`origin/stable_ula128`)** — ветка точной аппаратной эмуляции классического ZX Spectrum 128:
+  * Введение видеорежима и таймингов ULA 128 (в дополнение к Pentagon и Classic) в видеоконтроллере FPGA.
+  * Интеграция конфигурации `profi_plus3e` (+3E BIOS + DivMMC).
+  * Оптимизированный пакет ядер Z80 `T80_Pack.vhd`.
+  * Удержание вейтов на 14 МГц в TR-DOS.
+  * Тестовое UART-ядро для EP4CE10.
+* **`origin/MemConfig`** — архивная экспериментальная ветка (май 2023 г.) по динамической конфигурации страниц памяти через порты `#008B`, `#108B`–`#138B`, `#218B`.
+* **История завершённых и влитых фич (Merged Features):**
+  * `feature/ci-build-automation` (октябрь 2026): CI/CD пайплайн в GitHub Actions, хуки pre-commit/post-build, `.gitattributes`.
+  * `refactor/avr-baremetal-hal` (октябрь 2026): рефакторинг AVR на чистый C, bare-metal HAL, PROGMEM LUT клавиатуры и OSD.
+  * `divmmc` (июль 2023, PR #86 / `5e18f61`): контроллер DivMMC и ESXDOS.
+  * `nemoide` (август 2023, PR #94 / `f1e17be`): контроллер Nemo IDE и образ IS-DOS.
+  * `fdd_swap_fix` (сентябрь 2023, PR #104 / `1eea2fa`): виртуальный своп приводов дисководов A/B.
