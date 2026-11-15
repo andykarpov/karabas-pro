@@ -1,0 +1,125 @@
+name: Build FPGA & CPLD
+
+on:
+  push:
+    branches: [ master ]
+    paths:
+      - 'firmware/src/fpga/profi/**'
+      - 'firmware/src/cpld/**'
+      - 'docker/quartus13/**'
+      - '.github/workflows/build-fpga.yml'
+  pull_request:
+    branches: [ master ]
+    paths:
+      - 'firmware/src/fpga/profi/**'
+      - 'firmware/src/cpld/**'
+      - 'docker/quartus13/**'
+      - '.github/workflows/build-fpga.yml'
+  workflow_dispatch:
+
+env:
+  # Trimmed Quartus II 13.0sp1 tree (see docker/quartus13/README.md), kept as a
+  # release asset of a private repository: it is not redistributed publicly.
+  QUARTUS_DIST_REPO: andykarpov/quartus13-dist
+  QUARTUS_DIST_TAG: quartus-13.0sp1-min-1
+  QUARTUS_DIST_FILE: quartus-13.0sp1-min-linux64.tar.xz
+  QUARTUS_DIST_SHA256: 6b5ee5c3c5602403ff83ce599b2fb2d22dca79248ddfe9d30e5ffe9a9e133b4c
+  IMAGE: karabas-quartus:13.0sp1
+
+jobs:
+  build:
+    name: ${{ matrix.name }}
+    runs-on: ubuntu-22.04
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: profi-ep4ce10
+            dir: firmware/src/fpga/profi/syn/ep4ce10
+            project: karabas_pro_ep4ce10
+            targets: all jic
+          - name: profi-ep4ce6
+            dir: firmware/src/fpga/profi/syn/ep4ce6
+            project: karabas_pro_ep4ce6
+            targets: all jic
+          - name: profi-ep3c10
+            dir: firmware/src/fpga/profi/syn/ep3c10
+            project: karabas_pro_ep3c10
+            targets: all jic
+          - name: cpld-epm3128
+            dir: firmware/src/cpld/syn
+            project: karabas_pro_cpld
+            targets: all
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Restore Quartus tarball from cache
+        id: cache
+        uses: actions/cache@v4
+        with:
+          path: docker/quartus13/${{ env.QUARTUS_DIST_FILE }}
+          key: quartus-dist-${{ env.QUARTUS_DIST_SHA256 }}
+
+      - name: Download Quartus tarball
+        if: steps.cache.outputs.cache-hit != 'true'
+        env:
+          GH_TOKEN: ${{ secrets.QUARTUS_DIST_TOKEN }}
+        run: |
+          if [ -z "$GH_TOKEN" ]; then
+            echo "::error::Secret QUARTUS_DIST_TOKEN is not set (read access to $QUARTUS_DIST_REPO)"
+            exit 1
+          fi
+          gh release download "$QUARTUS_DIST_TAG" -R "$QUARTUS_DIST_REPO" \
+            --pattern "$QUARTUS_DIST_FILE" --dir docker/quartus13
+
+      - name: Verify Quartus tarball
+        run: echo "$QUARTUS_DIST_SHA256  docker/quartus13/$QUARTUS_DIST_FILE" | sha256sum -c -
+
+      - name: Build Quartus image
+        run: docker build -q -t "$IMAGE" docker/quartus13
+
+      - name: Build ${{ matrix.name }}
+        run: |
+          docker run --rm --network none -u "$(id -u):$(id -g)" \
+            -v "$PWD:/work" -w "/work/${{ matrix.dir }}" "$IMAGE" \
+            make ${{ matrix.targets }} 2>&1 | tee build.log
+          test "${PIPESTATUS[0]}" -eq 0
+
+      - name: Summary
+        if: always()
+        working-directory: ${{ matrix.dir }}
+        run: |
+          P=${{ matrix.project }}
+          {
+            echo "### ${{ matrix.name }}"
+            if [ -f "$P.fit.summary" ]; then
+              echo '```'
+              grep -E 'Fitter Status|Device|Total logic elements|Total macrocells|Total pins|Total memory bits|Total PLLs' "$P.fit.summary"
+              echo '```'
+            fi
+            if [ -f "$P.sta.rpt" ]; then
+              for s in Setup Hold; do
+                echo "**$s (Slow 85C)**"
+                echo '```'
+                awk "/; Slow .*85C Model $s Summary/{f=1} f&&/^\+/{n++} f{print} n==3{exit}" "$P.sta.rpt"
+                echo '```'
+              done
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.name }}
+          if-no-files-found: warn
+          path: |
+            ${{ matrix.dir }}/*.sof
+            ${{ matrix.dir }}/*.pof
+            ${{ matrix.dir }}/*.rbf
+            ${{ matrix.dir }}/*.jic
+            ${{ matrix.dir }}/*.rpt
+            ${{ matrix.dir }}/*.summary
+            build.log
