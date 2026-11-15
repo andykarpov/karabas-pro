@@ -1,0 +1,38 @@
+# Profi core simulation
+
+GHDL testbenches for parts of the Profi core that can be checked without
+hardware.
+
+## Scandoubler
+
+```sh
+firmware/src/fpga/profi/sim/run_scandoubler.sh
+```
+
+The real `video` controller drives the OSD `overlay` and the `scandoubler`
+in all six screen modes (Pentagon / Classic at 50 / 60 Hz, Profi at 50 / 60 Hz).
+The bench measures the VGA output of the third frame:
+
+- line period and horizontal sync width, in CLK cycles;
+- the active window and the paper area in x (from the start of HSYNC);
+- lines per frame, vertical sync width, the active lines and the paper lines
+  (from the start of VSYNC);
+- `pairs bad`: VGA line pairs whose two copies of an input line differ.
+
+Expected result:
+
+```
+pentagon50 line period=896 hsync=107 | act x 159..876 paper x 262..773 | lines/frame=640 vsync=2 act lines 36..629 paper lines 142..525 | pairs bad 0/297
+pentagon60 line period=896 hsync=107 | act x 159..876 paper x 262..773 | lines/frame=528 vsync=2 act lines 36..517 paper lines 86..469 | pairs bad 0/241
+classic50  line period=896 hsync=107 | act x 159..876 paper x 262..773 | lines/frame=624 vsync=2 act lines 36..613 paper lines 134..517 | pairs bad 0/289
+classic60  line period=896 hsync=107 | act x 159..876 paper x 262..773 | lines/frame=512 vsync=2 act lines 36..501 paper lines 78..461 | pairs bad 0/233
+profi50    line period=768 hsync=92 | act x 138..751 paper x 189..700 | lines/frame=624 vsync=2 act lines 36..613 paper lines 86..565 | pairs bad 0/289
+profi60    line period=768 hsync=92 | act x 138..751 paper x 189..700 | lines/frame=528 vsync=2 act lines 36..517 paper lines 38..517 | pairs bad 0/241
+```
+
+The border is the same on both sides of the paper: 103 clocks for Spectrum, 51
+for Profi. If a change in the video path moves the picture, adjust
+`SPEC_PAPER` / `PROF_PAPER` in `rtl/video/scandoubler.vhd`.
+
+`ip_models.vhd` contains behavioural models of the Quartus IP used by the
+overlay. `mkroms.py` converts their ROM contents for GHDL.
