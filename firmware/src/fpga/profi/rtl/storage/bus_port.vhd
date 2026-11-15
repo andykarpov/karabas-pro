@@ -56,6 +56,10 @@ signal cnt			: std_logic_vector(1 downto 0) := "00";
 signal prev_clk_cpu : std_logic := '0';
 signal bus_a_reg	: std_logic_vector(15 downto 0);
 signal bus_d_reg	: std_logic_vector(7 downto 0);
+-- CPU-side bus signals registered in the clk_bus domain before the 84/72 MHz
+-- domain samples them (see the process below)
+signal bus_a_pre	: std_logic_vector(15 downto 0);
+signal bus_d_pre	: std_logic_vector(7 downto 0);
 signal fdd_id : std_logic_vector(1 downto 0);
 begin
 	
@@ -68,22 +72,39 @@ begin
 	fdd_id <= "00" when bus_di(1 downto 0) = "01" else
 				 "01" when bus_di(1 downto 0) = "00" else
 				  bus_di(1 downto 0);
-	process (CLK, BUS_HDD_CS_N, BUS_FDC_NCS, BUS_CSFF, BUS_CS3FX, BUS_RWE, BUS_RWW, BUS_WWE, BUS_WWC, BUS_FDC_STEP, BUS_RD_N, BUS_WR_N, bus_a, bus_di)
-	begin 
-		if CLK'event and CLK = '1' then
-			if cnt = "10" and BUS_nemo_ebl_n ='0' then
-					bus_a_reg <= BUS_nemo_ebl_n & BUS_FDC_NCS & BUS_CSFF & BUS_nemo_cs1 & BUS_RDH & BUS_IOR & 
-									 BUS_IOW & BUS_WRH & BUS_FDC_STEP & BUS_RD_N & BUS_WR_N & BUS_A7 & BUS_A(1 downto 0) & BUS_nemo_cs1 & BUS_nemo_cs0;
-			elsif cnt = "10" then 
-					bus_a_reg <= BUS_HDD_CS_N & BUS_FDC_NCS & BUS_CSFF & BUS_CS3FX & BUS_RWE & BUS_RWW & 
-									 BUS_WWE & BUS_WWC & BUS_FDC_STEP & BUS_RD_N & BUS_WR_N & bus_a;
-			end if;
-			-- OCH: fix fdd swap 
-			if BUS_CSFF = '0' and FDC_SWAP = '1' then
-				bus_d_reg <= bus_di(7 downto 2) & fdd_id;
+	-- The CPU and its decoders run on clk_cpu, gated from the falling edge of
+	-- clk_bus. Sampling them straight into the 84/72 MHz domain left about half
+	-- a 28/24 MHz period minus the clk_cpu gate skew, which did not close in
+	-- timing, so a frame could carry a strobe and an address from different
+	-- moments. Register them on the next rising edge of clk_bus first (adds
+	-- half a clk_bus period of latency), so the 84/72 MHz domain only sees
+	-- stable, mutually consistent values.
+	process (CLK_BUS)
+	begin
+		if CLK_BUS'event and CLK_BUS = '1' then
+			if BUS_nemo_ebl_n = '0' then
+				bus_a_pre <= BUS_nemo_ebl_n & BUS_FDC_NCS & BUS_CSFF & BUS_nemo_cs1 & BUS_RDH & BUS_IOR &
+								 BUS_IOW & BUS_WRH & BUS_FDC_STEP & BUS_RD_N & BUS_WR_N & BUS_A7 & BUS_A(1 downto 0) & BUS_nemo_cs1 & BUS_nemo_cs0;
 			else
-				bus_d_reg <= bus_di;
+				bus_a_pre <= BUS_HDD_CS_N & BUS_FDC_NCS & BUS_CSFF & BUS_CS3FX & BUS_RWE & BUS_RWW &
+								 BUS_WWE & BUS_WWC & BUS_FDC_STEP & BUS_RD_N & BUS_WR_N & bus_a;
 			end if;
+			-- OCH: fix fdd swap
+			if BUS_CSFF = '0' and FDC_SWAP = '1' then
+				bus_d_pre <= bus_di(7 downto 2) & fdd_id;
+			else
+				bus_d_pre <= bus_di;
+			end if;
+		end if;
+	end process;
+
+	process (CLK)
+	begin
+		if CLK'event and CLK = '1' then
+			if cnt = "10" then
+				bus_a_reg <= bus_a_pre;
+			end if;
+			bus_d_reg <= bus_d_pre;
 		end if;
 	end process;
 
