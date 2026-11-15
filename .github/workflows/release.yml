@@ -1,5 +1,11 @@
 name: Release Firmware
 
+# Publishes karabas-pro-<tag>.zip, packed by scripts/package_release.sh from the
+# binaries committed in firmware/releases/profi (they reach master via PRs).
+#
+# If the release for the tag already exists (e.g. created by hand), its title
+# and notes are left alone; the zip is only added when it is not there yet.
+
 on:
   push:
     tags:
@@ -7,71 +13,48 @@ on:
   workflow_dispatch:
     inputs:
       tag_name:
-        description: 'Release Tag (e.g. v2.1.0)'
+        description: 'Existing release tag (e.g. v26102401-romain2A1b02)'
         required: true
-        default: 'v2.1.0'
+      title:
+        description: 'Release title for a new release (default: "Build <tag>")'
+        required: false
 
 jobs:
   release:
-    name: Build & Publish Release
+    name: Package & Publish Release
     runs-on: ubuntu-latest
     permissions:
       contents: write
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-
-      - name: Install PlatformIO
-        run: |
-          python -m pip install --upgrade pip
-          pip install platformio
-
-      - name: Determine Version Tag
+      - name: Determine tag
         id: vars
-        run: |
-          if [ -n "${{ github.event.inputs.tag_name }}" ]; then
-            TAG="${{ github.event.inputs.tag_name }}"
-          else
-            TAG="${{ github.ref_name }}"
-          fi
-          echo "tag=$TAG" >> $GITHUB_OUTPUT
+        env:
+          INPUT_TAG: ${{ github.event.inputs.tag_name }}
+        run: echo "tag=${INPUT_TAG:-$GITHUB_REF_NAME}" >> "$GITHUB_OUTPUT"
 
-      - name: Build Universal AVR Firmware
-        working-directory: firmware/src/avr
-        run: |
-          pio run
-
-      - name: Package Firmware Bundle
-        run: |
-          TAG="${{ steps.vars.outputs.tag }}"
-          ARCHIVE_DIR="karabas_pro_firmware_${TAG}"
-          mkdir -p "$ARCHIVE_DIR"
-
-          cp firmware/src/avr/.pio/build/ATmega328/karabas_pro.hex "$ARCHIVE_DIR/"
-          cp firmware/src/avr/.pio/build/ATmega328/karabas_pro.eep "$ARCHIVE_DIR/"
-          cp firmware/src/avr/.pio/build/ATmega328/karabas_pro_revA.eep "$ARCHIVE_DIR/"
-          cp firmware/src/avr/.pio/build/ATmega328/karabas_pro_revC.eep "$ARCHIVE_DIR/"
-          cp firmware/src/avr/.pio/build/ATmega328/karabas_pro_revD.eep "$ARCHIVE_DIR/"
-          cp firmware/releases/profi/README.md "$ARCHIVE_DIR/README.md"
-
-          zip -r "${ARCHIVE_DIR}.zip" "$ARCHIVE_DIR"
-
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
+      - name: Checkout tag
+        uses: actions/checkout@v4
         with:
-          tag_name: ${{ steps.vars.outputs.tag }}
-          name: Karabas Pro Firmware ${{ steps.vars.outputs.tag }}
-          generate_release_notes: true
-          files: |
-            karabas_pro_firmware_${{ steps.vars.outputs.tag }}.zip
-            firmware/src/avr/.pio/build/ATmega328/karabas_pro.hex
-            firmware/src/avr/.pio/build/ATmega328/karabas_pro.eep
-            firmware/src/avr/.pio/build/ATmega328/karabas_pro_revA.eep
-            firmware/src/avr/.pio/build/ATmega328/karabas_pro_revC.eep
-            firmware/src/avr/.pio/build/ATmega328/karabas_pro_revD.eep
+          ref: refs/tags/${{ steps.vars.outputs.tag }}
+
+      - name: Package bundle
+        run: scripts/package_release.sh "${{ steps.vars.outputs.tag }}" .
+
+      - name: Publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.vars.outputs.tag }}
+          TITLE: ${{ github.event.inputs.title }}
+        run: |
+          ZIP="karabas-pro-$TAG.zip"
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            if gh release view "$TAG" --json assets --jq '.assets[].name' | grep -qxF "$ZIP"; then
+              echo "Release $TAG already has $ZIP, nothing to do"
+            else
+              gh release upload "$TAG" "$ZIP"
+            fi
+          else
+            gh release create "$TAG" "$ZIP" --verify-tag \
+              --title "${TITLE:-Build $TAG}" --generate-notes
+          fi

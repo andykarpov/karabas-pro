@@ -1,0 +1,149 @@
+2.A1
+- new build script
+
+2.A
+- added IS-DOS loader
+
+2.921
+- fixed AY bzzzzz during CP/M loader :)
+
+2.92
+- fixed CP/M loader
+
+2.91
+- added drive change menu on main screen
+- added help window (h or F1 keys)
+
+2.9
+- added screensaver (by trefi^kpacku), ported to PROFI screen by dr.max
+- minor UI tweaks (statusbar clock in sound test)
+
+2.85
+- boot now starts from the current drive
+- added hotkey (b - Load boot)
+- minor visual improvements
+
+2.84
+- fixed drive initialization
+
+2.831
+- removed debug di:halt in error handling :)
+
+2.83
+- added FAT32 partition detection
+
+2.82
+- fixed drive initialization
+
+2.81
+- fixed change drive inside TRD or SCL image
+
+2.8
+- added CF support in Simplorer
+
+2.71
+- fixed TR-DOS128 startup
+
+2.7
+- added SCL image extraction to RAMDISK
+- added TRD and SCL navigation and startup in Simplorer
+- added RAMDISK drive detection
+
+2.6
+- added GRF picture viewer
+
+2.52
+- removed forced exit from Simplorer when validating HOBETA/SPG (single FAT32 descriptor case).
+
+2.5
+- added TRD disk image extraction to RAMDISK
+
+2.4
+- added RAMDISK initialization
+- added check for Symbol Shift key on SPG/HOBETA startup (turbo off)
+
+2.33
+- fixed border and screen flicker on ZX SPECTRUM modes startup
+
+2.32
+- fixed SPG startup
+- fixed border and screen flicker on SPG/HOBETA startup
+
+2.31
+- fixed border and screen flicker on SPG/HOBETA startup
+
+2.3
+- added SPG support
+
+2.201
+- fixed split line blinking in Simplorer
+
+2.20
+- added PgUp and PgDn (also left and right cursor keys) in Simplorer
+
+2.18
+- added hotkeys (s - Simplorer, a - About, S - Speed test, k - Keyboard test, c - CMOS view)
+
+2.17dev
+- clock fix
+- palette fix
+- speed test fix
+
+2.13dev
+- added GLUCK RTC
+
+2.12dev
+- PROFI Plus support
+- statusbar
+
+2.11dev
+- added clock
+- modify Simplorer (navigation bar e.t.c)
+- ready for run SPG :) (not yet))
+
+2.0
+- added Simple Explorer aka Simplorer (sd navigation and run hobeta's code blocks)
+- modify ayfx
+- some bugfixes
+
+1.03
+- changed tr-dos rom file. (RAM disk start page at #37)
+
+1.02
+- fixed hobeta loader
+
+1.01
+- added basic48 system variables in hobeta's loader
+
+1.00
+- added loading karabas_boot.$c hobeta boot
+
+0.52
+- fixed squeak in palette test
+- keyboard ayfx volume down 
+
+0.51
+- fixed noise in covox&beeper tests
+
+0.5
+- added AY/YM test
+- added keyboard pressing sound fx
+
+0.495
+- optimize HDD/CF driver
+
+0.494
+- modify HDD/CF driver
+
+0.493
+- fixed cp/m loader for PROFI (?)
+
+0.492
+- fixed cp/m loader for PROFI (?)
+
+0.491
+- fixed cp/m loader for PROFI (?)
+
+0.49
+- added colorize pressed keys in Keyboard Test
+- added detect Symbol Shift pressed on enter ZX SPECTRUM modes (for turbo off)
