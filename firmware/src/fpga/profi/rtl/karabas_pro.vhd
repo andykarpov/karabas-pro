@@ -365,6 +365,11 @@ signal loader_reset 	: std_logic := '0';
 signal loader_done 	: std_logic := '0';
 signal dos_act			: std_logic := '1';
 signal clk_cpu			: std_logic;
+signal clk_cpu_en		: std_logic;
+-- keep the CPU clock enable as a separate node, so clk_bus passes through a single
+-- AND gate on its way to clk_cpu instead of being merged into a chain of LUTs
+attribute keep : boolean;
+attribute keep of clk_cpu_en : signal is true;
 signal selector		: std_logic_vector(7 downto 0);
 signal mux				: std_logic_vector(3 downto 0);
 signal speaker 		: std_logic := '0';
@@ -1203,13 +1208,15 @@ cpu_wait_n <= '1';
 max_turbo <= "10";
 
 --OCH: automap = '0' and cs_nemo_ports = '0' - not contend DIVMMC and NEMO ports in CLASSIC screen mode
-clk_cpu <= '0' when kb_wait = '1' or  (kb_screen_mode = "01" and memory_contention = '1' and automap = '0' and cs_nemo_ports = '0' and DS80 = '0') or WAIT_IO = '0' else 
-	clk_bus when fdd_wait='1' and turbo_mode = "11" and turbo_mode <= max_turbo else 
+clk_cpu_en <= '0' when kb_wait = '1' or  (kb_screen_mode = "01" and memory_contention = '1' and automap = '0' and cs_nemo_ports = '0' and DS80 = '0') or WAIT_IO = '0' else 
+	'1' when fdd_wait='1' and turbo_mode = "11" and turbo_mode <= max_turbo else 
 	-- OCH: disable turbo in trdos to be sure what all programming delays are original
 	-- 06.09.2023:OCH: fixed turbo mode by adding all condition when it can be enabled, i'm not sure about ds80 = 1 but let it be
-	clk_bus and ena_div2 when fdd_wait='1' and turbo_mode = "10" and turbo_mode <= max_turbo else 
-	clk_bus and ena_div4 when fdd_wait='1' and turbo_mode = "01" and turbo_mode <= max_turbo else 
-	clk_bus and ena_div8;
+	ena_div2 when fdd_wait='1' and turbo_mode = "10" and turbo_mode <= max_turbo else 
+	ena_div4 when fdd_wait='1' and turbo_mode = "01" and turbo_mode <= max_turbo else 
+	ena_div8;
+
+clk_cpu <= clk_bus and clk_cpu_en;
 
 -- одновибратор - по спаду /IORQ отсчитывает 400нс вейта проца 
 -- для работы периферии в турбе или в режиме расширенного экрана 
