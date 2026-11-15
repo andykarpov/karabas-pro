@@ -38,10 +38,12 @@
 // synopsys translate_on
 module rom_font1 (
 	address,
+	clken,
 	clock,
 	q);
 
 	input	[10:0]  address;
+	input	  clken;
 	input	  clock;
 	output	[7:0]  q;
 `ifndef ALTERA_RESERVED_QIS
@@ -67,7 +69,7 @@ module rom_font1 (
 				.byteena_a (1'b1),
 				.byteena_b (1'b1),
 				.clock1 (1'b1),
-				.clocken0 (1'b1),
+				.clocken0 (clken),
 				.clocken1 (1'b1),
 				.clocken2 (1'b1),
 				.clocken3 (1'b1),
@@ -81,8 +83,8 @@ module rom_font1 (
 				.wren_b (1'b0));
 	defparam
 		altsyncram_component.address_aclr_a = "NONE",
-		altsyncram_component.clock_enable_input_a = "BYPASS",
-		altsyncram_component.clock_enable_output_a = "BYPASS",
+		altsyncram_component.clock_enable_input_a = "NORMAL",
+		altsyncram_component.clock_enable_output_a = "NORMAL",
 `ifdef NO_PLI
 		altsyncram_component.init_file = "../../rtl/video/font.rif"
 `else

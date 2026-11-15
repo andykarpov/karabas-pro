@@ -246,8 +246,7 @@ set_global_assignment -name VERILOG_FILE ../../rtl/video/rom_font1.v
 set_global_assignment -name VERILOG_FILE ../../rtl/video/screen1.v
 set_global_assignment -name VERILOG_FILE ../../rtl/video/rom_font2.v
 set_global_assignment -name VERILOG_FILE ../../rtl/video/screen2.v
-set_global_assignment -name VHDL_FILE ../../rtl/video/vga_pal.vhd
-set_global_assignment -name QIP_FILE ../../rtl/video/linebuf.qip
+set_global_assignment -name VHDL_FILE ../../rtl/video/scandoubler.vhd
 set_global_assignment -name SYSTEMVERILOG_FILE ../../rtl/sound/turbosound/ym2149.sv
 set_global_assignment -name VHDL_FILE ../../rtl/sound/turbosound/turbosound.vhd
 set_global_assignment -name SYSTEMVERILOG_FILE ../../rtl/sound/turbosound/saa1099.sv

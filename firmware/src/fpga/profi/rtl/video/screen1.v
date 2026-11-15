@@ -39,6 +39,7 @@
 module screen1 (
 	data,
 	rdaddress,
+	rdclken,
 	rdclock,
 	wraddress,
 	wrclock,
@@ -47,6 +48,7 @@ module screen1 (
 
 	input	[15:0]  data;
 	input	[9:0]  rdaddress;
+	input	  rdclken;
 	input	  rdclock;
 	input	[9:0]  wraddress;
 	input	  wrclock;
@@ -79,7 +81,7 @@ module screen1 (
 				.byteena_a (1'b1),
 				.byteena_b (1'b1),
 				.clocken0 (1'b1),
-				.clocken1 (1'b1),
+				.clocken1 (rdclken),
 				.clocken2 (1'b1),
 				.clocken3 (1'b1),
 				.data_b ({16{1'b1}}),
@@ -92,7 +94,7 @@ module screen1 (
 		altsyncram_component.address_aclr_b = "NONE",
 		altsyncram_component.address_reg_b = "CLOCK1",
 		altsyncram_component.clock_enable_input_a = "BYPASS",
-		altsyncram_component.clock_enable_input_b = "BYPASS",
+		altsyncram_component.clock_enable_input_b = "NORMAL",
 		altsyncram_component.clock_enable_output_b = "BYPASS",
 		altsyncram_component.intended_device_family = "Cyclone III",
 		altsyncram_component.lpm_type = "altsyncram",
