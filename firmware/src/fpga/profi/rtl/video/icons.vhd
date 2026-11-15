@@ -5,9 +5,8 @@ use IEEE.std_logic_unsigned.all;
 
 entity icons is
 	port (
-		CLK		: in std_logic;
-		CLK2 		: in std_logic;
-		CLK4 		: in std_logic;
+		CLK		: in std_logic;  -- clk_bus
+		DIV2 		: in std_logic;  -- clk_div2 as data: '0' = OSD step
 		RGB_I 	: in std_logic_vector(8 downto 0);
 		RGB_O 	: out std_logic_vector(8 downto 0);
 		DS80		: in std_logic;
@@ -59,6 +58,8 @@ architecture rtl of icons is
 	 signal icons_h8 : std_logic := '0';
 	 
 	 signal icon_pos : std_logic_vector(2 downto 0);
+	 signal icon_pos_reg : std_logic_vector(2 downto 0) := "000";
+	 constant CNT_DONE : std_logic_vector(20 downto 0) := (others => '1');
 	 
 	 signal cnt_icon_fd : std_logic_vector(20 downto 0) := (others => '1');
 	 signal cnt_icon_sd : std_logic_vector(20 downto 0) := (others => '1'); 
@@ -84,10 +85,18 @@ begin
 	 paper_icon_sd <= '1' when icons_h = '1' and vcnt >= icons_start_v + icon_h and vcnt < icons_start_v + 2*icon_h else '0';
 	 paper_icon_cf <= '1' when icons_h = '1' and vcnt >= icons_start_v + 2*icon_h and vcnt < icons_start_v + 3*icon_h else '0';
 	 
+	 -- icon row inside the icon column, kept outside it (was a latch)
 	 icon_pos <= "000" when paper_icon_fd = '1' else
 					 "001" when paper_icon_sd = '1' else 
 					 "010" when paper_icon_cf = '1' else 
-					 icon_pos;
+					 icon_pos_reg;
+
+	 process (CLK)
+	 begin
+		if rising_edge(CLK) then
+			icon_pos_reg <= icon_pos;
+		end if;
+	 end process;
 	 
 	 -- адрес иконок для чтения
 	 -- 0-1: 0...63,      0-2: 64...127,    1-1: 128...191,   1-2: 192...255,   2-1: 256...319,   2-2: 320...384,
@@ -117,32 +126,33 @@ begin
 	 icon_addr <= icon_y(3) & icon_pos &  not(icon_x(3)) & icon_y(2 downto 0) & icon_x(2 downto 0) when DS80='1' else 
 					  icon_y(3) & icon_pos &  icon_x(3) & icon_y(2 downto 0) & icon_x(2 downto 0); --spectrum pos shifter 8 px
 
-	 process(CLK, CLK2, STATUS_FD, STATUS_SD, STATUS_CF)
+	 -- activity indicators: shown for 2^21 OSD steps after the last access
+	 process(CLK)
 	 begin 
 		if (rising_edge(CLK)) then
-			if (CLK2 = '0') then
+			if (DIV2 = '0') then
 				if (STATUS_FD = '1') then 
 					cnt_icon_fd <= (others => '0');
-				elsif (cnt_icon_fd < "111111111111111111111") then 
+				elsif (cnt_icon_fd /= CNT_DONE) then 
 					cnt_icon_fd <= cnt_icon_fd + 1;
 				end if;
 				if (STATUS_SD = '1') then 
 					cnt_icon_sd <= (others => '0');
-				elsif (cnt_icon_sd < "111111111111111111111") then 
+				elsif (cnt_icon_sd /= CNT_DONE) then 
 					cnt_icon_sd <= cnt_icon_sd + 1;
 				end if;
 				if (STATUS_CF = '1') then 
 					cnt_icon_cf <= (others => '0');
-				elsif (cnt_icon_cf < "111111111111111111111") then 
+				elsif (cnt_icon_cf /= CNT_DONE) then 
 					cnt_icon_cf <= cnt_icon_cf + 1;
 				end if;
 			end if;
 		end if;
 	 end process;
 	 
-	 is_icon_fd <= '1' when cnt_icon_fd < "111111111111111111111" else '0';
-	 is_icon_sd <= '1' when cnt_icon_sd < "111111111111111111111" else '0';
-	 is_icon_cf <= '1' when cnt_icon_cf < "111111111111111111111" else '0';
+	 is_icon_fd <= '1' when cnt_icon_fd /= CNT_DONE else '0';
+	 is_icon_sd <= '1' when cnt_icon_sd /= CNT_DONE else '0';
+	 is_icon_cf <= '1' when cnt_icon_cf /= CNT_DONE else '0';
 
     -- формирование RGB
     RGB_O <= 

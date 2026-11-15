@@ -740,8 +740,7 @@ generic map (
 )
 port map (
 	CLK 				=> clk_bus,
-	CLK2 				=> clk_div2,
-	CLK4 				=> clk_div4,
+	DIV2 				=> clk_div2,
 	DS80				=> ds80,
 	RGB_I 			=> vid_rgb,
 	RGB_O 			=> vid_rgb_osd,
@@ -763,20 +762,21 @@ port map (
 );
 
 -- Scandoubler	
-U9: entity work.vga_pal 
+U9: entity work.scandoubler
 port map (
-	RGB_IN 			=> vid_rgb_osd,
-	KSI_IN 			=> vid_vsync,
-	SSI_IN 			=> vid_hsync,
-	CLK 				=> clk_div2,
-	CLK2 				=> clk_bus,
+	CLK 				=> clk_bus,
+	CE 				=> clk_div2,
+	DS80				=> ds80,
 	EN 				=> vid_scandoubler_enable,
-	DS80				=> ds80,		
+	RGB_IN 			=> vid_rgb_osd,
+	HSYNC_IN 		=> vid_hsync,
+	VSYNC_IN 		=> vid_vsync,
+	VCNT_IN 			=> vid_vcnt,
 	RGB_O(8 downto 6)	=> VGA_R,
 	RGB_O(5 downto 3)	=> VGA_G,
 	RGB_O(2 downto 0)	=> VGA_B,
-	VSYNC_VGA		=> VGA_VS,
-	HSYNC_VGA		=> VGA_HS
+	HSYNC_O			=> VGA_HS,
+	VSYNC_O			=> VGA_VS
 );
 
 -- SPI flash parallel interface
