@@ -2,6 +2,10 @@
 
 export PATH=/opt/altera/quartus/bin:$HOME/.platformio/penv/bin:$PATH
 
+# Quartus 13 wrappers default to 32-bit binaries (linux/), which fail to start on
+# modern 64-bit distros; the wrapper then re-execs itself forever. Force linux64/.
+export QUARTUS_64BIT=1
+
 echo "Building Profi FPGA JIC for EP4CE6"
 
 cd fpga/profi/syn/ep4ce6
@@ -52,6 +56,8 @@ cp karabas_pro_ep3c10_tda1543.jic ../../../../../releases/profi/ep3c10/karabas_p
 cp karabas_pro_ep3c10_tda1543a.jic ../../../../../releases/profi/ep3c10/karabas_pro_ep3c10_tda1543a.jic
 cp karabas_pro_ep3c10_revDS_tda1543.jic ../../../../../releases/profi/ep3c10/karabas_pro_ep3c10_revDS_tda1543.jic
 cp karabas_pro_ep3c10_revDS_tda1543a.jic ../../../../../releases/profi/ep3c10/karabas_pro_ep3c10_revDS_tda1543a.jic
+cp karabas_pro_ep3c10_revE_tda1543.jic ../../../../../releases/profi/ep3c10/karabas_pro_ep3c10_revE_tda1543.jic
+cp karabas_pro_ep3c10_revE_tda1543a.jic ../../../../../releases/profi/ep3c10/karabas_pro_ep3c10_revE_tda1543a.jic
 
 make clean
 

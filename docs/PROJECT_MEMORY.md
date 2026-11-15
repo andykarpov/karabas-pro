@@ -342,6 +342,7 @@ CPLD выполняет критическую связующую функцию
 * **Непрерывная интеграция CI/CD (GitHub Actions):**
   * [`.github/workflows/build-avr.yml`](file:///home/andy/Documents/Projects/Retrocomp/ZX-Spectrum/karabas-pro-master/.github/workflows/build-avr.yml) — сборка прошивки AVR на push и PR в `master`, проверка дрейфа бинарников (`git diff --exit-code firmware/releases`), загрузка артефактов сборки.
   * [`.github/workflows/release.yml`](file:///home/andy/Documents/Projects/Retrocomp/ZX-Spectrum/karabas-pro-master/.github/workflows/release.yml) — автоматическая сборка и публикация релиза с архивами прошивок при создании тегов `v*`.
+  * **Правило релизов:** любые изменения в `master`, включая обновления ROM (ROMain, flashtool и т.п.), пересобранные `.jic`/`.sof`/`.rbf` и прочие бинарники в `firmware/releases/`, вносятся **только через Pull Request** из отдельной ветки. Прямой push в `master` запрещён (ветка защищена на GitHub). Релизный тег `v*` ставится на коммит в `master` после merge PR.
   * Нормализация переводов строк: [`.gitattributes`](file:///home/andy/Documents/Projects/Retrocomp/ZX-Spectrum/karabas-pro-master/.gitattributes) принудительно задаёт окончания строк LF для файлов `.hex`, `.eep` и исходников.
 * **Сборка CPLD:** [build_cpld.sh](file:///home/andy/Documents/Projects/Retrocomp/ZX-Spectrum/karabas-pro-master/firmware/src/build_cpld.sh)
   * Использует Intel Quartus Prime (`quartus_map`, `quartus_fit`, `quartus_asm`).
