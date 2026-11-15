@@ -71,6 +71,11 @@ jobs:
             echo "::error::Secret QUARTUS_DIST_TOKEN is not set (read access to $QUARTUS_DIST_REPO)"
             exit 1
           fi
+          # A private repo the token cannot read looks like "not found"
+          if ! gh api "repos/$QUARTUS_DIST_REPO" --silent 2>/dev/null; then
+            echo "::error::QUARTUS_DIST_TOKEN cannot read $QUARTUS_DIST_REPO: check that the token is not expired, that its repository access includes that repo and that Contents is Read-only"
+            exit 1
+          fi
           gh release download "$QUARTUS_DIST_TAG" -R "$QUARTUS_DIST_REPO" \
             --pattern "$QUARTUS_DIST_FILE" --dir docker/quartus13
 
