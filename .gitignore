@@ -65,3 +65,7 @@ karabas-pro-*-backups/
 *.ghw
 *.cf
 
+
+# Quartus tarball for docker/quartus13 (private, see docker/quartus13/README.md)
+docker/quartus13/*.tar.xz
+docker/quartus13/*.tar.xz.sha256
