@@ -346,8 +346,6 @@ signal clk_bus			: std_logic := '0';
 signal clk_bus_port	: std_logic := '0';
 signal clk_div2		: std_logic := '0';
 signal clk_div4		: std_logic := '0';
-signal clk_div8		: std_logic := '0';
-signal clk_div16		: std_logic := '0';
 signal clk_i2s 		: std_logic := '0';
 
 signal ena_div2	: std_logic := '0';
@@ -1138,31 +1136,16 @@ port map(
 -------------------------------------------------------------------------------
 -- clocks
 
+-- clk_div2 is a real clock (14/12 MHz). clk_div4 is only used as an enable,
+-- so it toggles in the clk_bus domain at the same edge where the old ripple
+-- divider (clocked by clk_div2) did: when clk_div2 goes 0 -> 1.
 process (clk_bus)
 begin 
 	if (clk_bus'event and clk_bus = '1') then 
 		clk_div2 <= not(clk_div2);
-	end if;
-end process;
-
-process (clk_div2)
-begin 
-	if (clk_div2'event and clk_div2 = '1') then 
-		clk_div4 <= not(clk_div4);
-	end if;
-end process;
-
-process (clk_div4)
-begin 
-	if (clk_div4'event and clk_div4 = '1') then 
-		clk_div8 <= not(clk_div8);
-	end if;
-end process;
-
-process (clk_div8)
-begin 
-	if (clk_div8'event and clk_div8 = '1') then 
-		clk_div16 <= not(clk_div16);
+		if clk_div2 = '0' then
+			clk_div4 <= not(clk_div4);
+		end if;
 	end if;
 end process;
 
@@ -1224,17 +1207,20 @@ clk_cpu <= clk_bus and clk_cpu_en;
 WAIT_IO <= WAIT_C(1);
 WAIT_C_STOP <=WAIT_C(1) and not WAIT_C(0);
 WAIT_EN <= reset or not turbo_mode(1);
-process (ena_div2, cpu_mreq_n, WAIT_EN, WAIT_C_STOP) 	
+-- clocked by clk_bus at the edges where ena_div2 used to fall (ena_cnt(0) 1 -> 0)
+process (clk_bus) 	
 	begin					
-		if ena_div2'event and ena_div2='0' then
-			if WAIT_EN = '1' then	
-				WAIT_C <= "11";
-			elsif cpu_mreq_n='1' then
-				WAIT_C <= "11"; --WAIT MREQ = 0
-			elsif WAIT_C_STOP='0' then
-				WAIT_C <= WAIT_C + "01"; --COUNT
-			elsif WAIT_C_STOP='1' then
-				WAIT_C <= WAIT_C; --STOP
+		if clk_bus'event and clk_bus = '0' then
+			if ena_cnt(0) = '1' then
+				if WAIT_EN = '1' then	
+					WAIT_C <= "11";
+				elsif cpu_mreq_n='1' then
+					WAIT_C <= "11"; --WAIT MREQ = 0
+				elsif WAIT_C_STOP='0' then
+					WAIT_C <= WAIT_C + "01"; --COUNT
+				elsif WAIT_C_STOP='1' then
+					WAIT_C <= WAIT_C; --STOP
+				end if;
 			end if;
 		end if;
 	end process;
@@ -1479,17 +1465,20 @@ RT_F1 <= RT_F1_1 and RT_F1_2;
 P0 <='0' when (cpu_a_bus(7)='1' and cpu_a_bus(4 downto 0)="00011" and cpu_iorq_n='0') and ((cpm='1' and rom14='1') or (dos_act='1' and rom14='0')) else '1';
 fdd_cs_n <= RT_F1 and P0;
 
-process (ena_div4, reset)
+-- clocked by clk_bus at the edges where ena_div4 used to rise (ena_cnt(1:0) 10 -> 11)
+process (clk_bus, reset)
 begin
 	if reset='1' then
 		fdd_cnt <= x"FF";
-	elsif ena_div4'event and ena_div4='1' then
-		if fdd_cs_n='0' and ((cpu_rd_n='0') or (cpu_wr_n='0')) then
-			fdd_cnt <= x"00";
-		elsif fdd_cnt <= x"7F" then
-			fdd_cnt <= fdd_cnt + 1;
-		else
-			fdd_cnt <= x"FF";
+	elsif clk_bus'event and clk_bus = '0' then
+		if ena_cnt(1 downto 0) = "10" then
+			if fdd_cs_n='0' and ((cpu_rd_n='0') or (cpu_wr_n='0')) then
+				fdd_cnt <= x"00";
+			elsif fdd_cnt <= x"7F" then
+				fdd_cnt <= fdd_cnt + 1;
+			else
+				fdd_cnt <= x"FF";
+			end if;
 		end if;
 	end if;
 end process;

@@ -180,6 +180,9 @@ set_global_assignment -name PHYSICAL_SYNTHESIS_MAP_LOGIC_TO_MEMORY_FOR_AREA ON
 set_global_assignment -name CYCLONEII_OPTIMIZATION_TECHNIQUE AREA
 set_global_assignment -name ALLOW_POWER_UP_DONT_CARE OFF
 set_instance_assignment -name GLOBAL_SIGNAL "GLOBAL CLOCK" -to CLK_50MHZ
+# clk_cpu (gated CPU clock) also feeds data inputs; keep every fanout on the
+# global network so T80 and memory registers do not see local-route skew
+set_instance_assignment -name GLOBAL_SIGNAL "GLOBAL CLOCK" -to clk_cpu
 
 
 
