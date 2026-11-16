@@ -112,7 +112,7 @@ architecture rtl of karabas_pro is
 signal board_revision : std_logic_vector(7 downto 0);
 
 -- CPU
-signal cpu_reset_n	: std_logic;
+signal cpu_reset_n	: std_logic := '0';
 signal cpu_clk			: std_logic;
 signal cpu_a_bus		: std_logic_vector(15 downto 0);
 signal cpu_do_bus		: std_logic_vector(7 downto 0);
@@ -357,7 +357,8 @@ signal ena_div16	: std_logic := '0';
 signal ena_cnt		: std_logic_vector(3 downto 0) := "0000";
 
 -- System
-signal reset			: std_logic;
+signal reset			: std_logic := '1';
+signal reset_d			: std_logic;
 signal areset			: std_logic;
 signal locked_tri 	: std_logic := '0';
 signal loader_act		: std_logic := '1';
@@ -1195,9 +1196,19 @@ begin
 	end if;
 end process;
 
-reset <= areset or kb_reset or loader_reset or loader_act or board_reset; -- hot reset
+-- hot reset. Most modules use reset (and the CPU cpu_reset_n) as an
+-- asynchronous reset, so both are registers: an OR of several registers can
+-- glitch when its inputs change on the same edge. They are asserted from the
+-- configuration on and follow reset_d one clk_bus later.
+reset_d <= areset or kb_reset or loader_reset or loader_act or board_reset;
 
-cpu_reset_n <= not(reset) and not(loader_reset); -- CPU reset
+process (clk_bus)
+begin
+	if rising_edge(clk_bus) then
+		reset <= reset_d;
+		cpu_reset_n <= not reset_d; -- CPU reset (reset_d includes loader_reset)
+	end if;
+end process;
 cpu_inta_n <= cpu_iorq_n or cpu_m1_n;	-- INTA
 
 -- 11.07.2013:OCH: implementation of nmi signal for DIVMMC
