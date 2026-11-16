@@ -121,8 +121,8 @@ architecture RTL of avr is
 	-- rtc data from atmega
 	 signal rtcr_a 			: std_logic_vector(7 downto 0);
 	 signal rtcr_d 			: std_logic_vector(7 downto 0);
-	 signal last_rtcr_a 		: std_logic_vector(7 downto 0);
-	 signal last_rtcr_d 		: std_logic_vector(7 downto 0);
+	 signal rtcr_new 			: std_logic := '0'; -- one-clock strobe: a CMD_RTC packet has arrived
+	 signal rtcr_pend 		: std_logic := '0'; -- that packet still has to be written into the rtc ram
 	 
 	-- spi fifo 
 	signal queue_di			: std_logic_vector(23 downto 0);
@@ -195,6 +195,7 @@ begin
 	process (CLK, spi_do_valid, spi_do)
 	begin
 		if (rising_edge(CLK)) then
+			rtcr_new <= '0';
 			if spi_do_valid = '1' then
 				fpga_init_req <= '0';
 				tx_build <= '0';
@@ -280,6 +281,7 @@ begin
 					when CMD_RTC =>						
 						rtcr_a <= spi_do(15 downto 8);
 						rtcr_d <= spi_do(7 downto 0);
+						rtcr_new <= '1';
 
 					-- init
 					when CMD_INIT => 
@@ -540,10 +542,13 @@ begin
 					queue_di <= CMD_RTC & RTC_A & RTC_DI;
 					qstate <= rtc_wr_ack;
 				
-				-- RTC write request end
+				-- RTC write request end: one packet per CPU write, so wait
+				-- until the write strobe is over before looking for new events
 				when rtc_wr_ack => 
 					queue_wr_req <= '0';
-					qstate <= idle;
+					if RTC_WR_N = '1' or RTC_CS = '0' then
+						qstate <= idle;
+					end if;
 					
 				-- LED write request
 				when led_req => 
@@ -565,22 +570,31 @@ begin
 	end process;
 	
 	-- write RTC registers into ram from host / atmega
-	process (N_RESET, CLK, RTC_WR_N, RTC_CS, RTC_A, RTC_DI, rtcr_a, last_rtcr_a, rtcr_d, last_rtcr_d) 
+	-- The host (CPU) write has priority. A register sent by the avr is written
+	-- once, when its CMD_RTC packet arrives (or right after a host write that
+	-- was in progress at that moment), not on every clock: otherwise a host
+	-- write to the same register was overwritten with the old avr value.
+	process (N_RESET, CLK)
 	begin 
 		if N_RESET = '0' then 
 			rtcw_wr <= '0';
+			rtcr_pend <= '0';
 		elsif rising_edge(CLK) then
 			rtcw_wr <= '0';
+			if rtcr_new = '1' then
+				rtcr_pend <= '1';
+			end if;
 			if avr_ready = '1' and RTC_WR_N = '0' AND RTC_CS = '1' then
 				-- rtc mem write by host
 				rtcw_wr <= '1';
 				rtcw_a <= RTC_A;
 				rtcw_di <= RTC_DI;
-			else 
+			elsif rtcr_new = '1' or rtcr_pend = '1' then
 				-- rtc mem write by avr
 				rtcw_wr <= '1';
 				rtcw_a <= rtcr_a;
 				rtcw_di <= rtcr_d;
+				rtcr_pend <= '0';
 			end if;
 		end if;
 	end process;
