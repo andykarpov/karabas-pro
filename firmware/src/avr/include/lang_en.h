@@ -6,9 +6,8 @@
 const static char msg_en_fpga[] PROGMEM = {"FPGA "};
 const static char msg_en_avr[] PROGMEM = {"AVR "};
 const static char msg_en_rom_bank[] PROGMEM = {"ROM Bank"};
-const static char msg_en_menu_f1_f4[] PROGMEM = {"Menu+F1-F4"};
+const static char msg_en_menu_f1_f5[] PROGMEM = {"Menu+F1-F5"};
 const static char msg_en_turbofdc[] PROGMEM = {"Turbo FDC"};
-const static char msg_en_menu_f5[] PROGMEM = {"Menu+F5"};
 const static char msg_en_covox[] PROGMEM = {"COVOX"};
 const static char msg_en_menu_f6[] PROGMEM = {"Menu+F6"};
 const static char msg_en_psg_mix[] PROGMEM = {"PSG mix"};
