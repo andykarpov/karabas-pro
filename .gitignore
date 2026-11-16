@@ -69,3 +69,6 @@ karabas-pro-*-backups/
 # Quartus tarball for docker/quartus13 (private, see docker/quartus13/README.md)
 docker/quartus13/*.tar.xz
 docker/quartus13/*.tar.xz.sha256
+
+# Local build outputs (firmware/src/build*.sh), packed by scripts/package_release.sh
+firmware/build/

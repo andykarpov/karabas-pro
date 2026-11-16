@@ -16,6 +16,8 @@ on:
       - 'docker/quartus13/**'
       - '.github/workflows/build-fpga.yml'
   workflow_dispatch:
+  # used by release.yml (needs the QUARTUS_DIST_TOKEN secret: call with `secrets: inherit`)
+  workflow_call:
 
 env:
   # Trimmed Quartus II 13.0sp1 tree (see docker/quartus13/README.md), kept as a
@@ -89,7 +91,7 @@ jobs:
         run: |
           docker run --rm --network none -u "$(id -u):$(id -g)" \
             -v "$PWD:/work" -w "/work/${{ matrix.dir }}" "$IMAGE" \
-            make ${{ matrix.targets }} 2>&1 | tee build.log
+            make ${{ matrix.targets }} 2>&1 | tee "${{ matrix.dir }}/build.log"
           test "${PIPESTATUS[0]}" -eq 0
 
       - name: Summary
@@ -127,4 +129,4 @@ jobs:
             ${{ matrix.dir }}/*.jic
             ${{ matrix.dir }}/*.rpt
             ${{ matrix.dir }}/*.summary
-            build.log
+            ${{ matrix.dir }}/build.log
