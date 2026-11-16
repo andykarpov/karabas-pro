@@ -1,4 +1,4 @@
-name: Simulate video path
+name: GHDL simulation
 
 # GHDL benches (firmware/src/fpga/profi/sim):
 # - video controller -> OSD overlay -> scandoubler in all six screen modes,
@@ -6,29 +6,8 @@ name: Simulate video path
 # - avr.vhd RTC handling, audio_mixer against a model, tda1543 decoded;
 # - memory.vhd in the +3e mode against the ZX Spectrum +3 memory map.
 
+# Manual only: Actions -> GHDL simulation -> Run workflow.
 on:
-  push:
-    branches: [ master ]
-    paths:
-      - 'firmware/src/fpga/profi/rtl/video/**'
-      - 'firmware/src/fpga/profi/rtl/avr/**'
-      - 'firmware/src/fpga/profi/rtl/spi/**'
-      - 'firmware/src/fpga/profi/rtl/sound/**'
-      - 'firmware/src/fpga/profi/rtl/dac/**'
-      - 'firmware/src/fpga/profi/rtl/memory/**'
-      - 'firmware/src/fpga/profi/sim/**'
-      - '.github/workflows/sim.yml'
-  pull_request:
-    branches: [ master ]
-    paths:
-      - 'firmware/src/fpga/profi/rtl/video/**'
-      - 'firmware/src/fpga/profi/rtl/avr/**'
-      - 'firmware/src/fpga/profi/rtl/spi/**'
-      - 'firmware/src/fpga/profi/rtl/sound/**'
-      - 'firmware/src/fpga/profi/rtl/dac/**'
-      - 'firmware/src/fpga/profi/rtl/memory/**'
-      - 'firmware/src/fpga/profi/sim/**'
-      - '.github/workflows/sim.yml'
   workflow_dispatch:
 
 jobs:
