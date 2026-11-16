@@ -48,7 +48,7 @@ The idea was to make a smaller Profi (Профи) ZX Spectrum clone, with real F
 
 **PCB changelog:** [PCB changelog](https://github.com/andykarpov/karabas-pro/blob/master/CHANGELOG-PCB.md).
 
-**Profi firmware** [Download a Profi firmware](https://github.com/andykarpov/karabas-pro/tree/master/firmware/releases/profi).
+**Profi firmware** [Download the latest release](https://github.com/andykarpov/karabas-pro/releases/latest) (`karabas-pro-<version>.zip`, see [firmware/releases](https://github.com/andykarpov/karabas-pro/tree/master/firmware/releases) for what is inside).
 
 **Donations** [See DONATIONS.md](https://github.com/andykarpov/karabas-pro/blob/master/DONATIONS.md).
 
@@ -62,12 +62,15 @@ cd firmware/src/avr
 pio run
 ```
 
-This compiles the universal firmware, generates all revision-specific `.eep` files, and automatically syncs them to `firmware/releases/`.
+This compiles the universal firmware and generates all revision-specific `.eep` files in `.pio/build/ATmega328/`.
 
-To automatically rebuild and stage updated firmware binaries whenever you commit AVR changes, install the git hooks:
-```bash
-./scripts/install-hooks.sh
-```
+### FPGA and CPLD
+The Profi cores and the CPLD are built with Quartus II 13.0sp1 in a Docker image, see [docker/quartus13](docker/quartus13/README.md).
+`firmware/src/build.sh` builds AVR, FPGA and CPLD into `firmware/build/`; `scripts/package_release.sh <name> firmware/build` packs a release zip from it.
+
+### Releases
+Binaries are not stored in the repository. CI builds every pull request and every merge into `master` (Actions artifacts).
+A release is made from the Actions tab: **Release Firmware → Run workflow** on `master`. It builds the FPGA cores, the CPLD and the AVR firmware from one commit, packs `karabas-pro-<tag>.zip` and publishes it. The tag defaults to `v<BUILD_VER>` (the AVR build number, `YYMMDDHH` UTC) and the title to `Build <BUILD_VER>`; both can be set when starting the run.
 
 ### Pre-production renders:
 

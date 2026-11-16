@@ -1,60 +1,142 @@
 name: Release Firmware
 
-# Publishes karabas-pro-<tag>.zip, packed by scripts/package_release.sh from the
-# binaries committed in firmware/releases/profi (they reach master via PRs).
+# Builds the Profi FPGA cores, the CPLD and the AVR firmware from one commit,
+# packs karabas-pro-<tag>.zip (scripts/package_release.sh) and publishes it as
+# a GitHub release. Nothing is committed: the binaries live only in releases.
 #
-# If the release for the tag already exists (e.g. created by hand), its title
-# and notes are left alone; the zip is only added when it is not there yet.
+# Run it from the Actions tab ("Run workflow" on master). All inputs are
+# optional:
+#   tag    default v<BUILD_VER>, BUILD_VER = UTC time YYMMDDHH, the same number
+#          that is compiled into the AVR firmware
+#   title  default "Build <BUILD_VER>"
+#   dry_run build and pack only: the zip is kept as an artifact of the run,
+#          nothing is published
+# Pushing a v* tag also builds and releases that tag.
 
 on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag (default: v<BUILD_VER>)'
+        required: false
+        default: ''
+      title:
+        description: 'Release title (default: Build <BUILD_VER>)'
+        required: false
+        default: ''
+      dry_run:
+        description: 'Dry run: build and pack, do not publish'
+        type: boolean
+        required: false
+        default: false
   push:
     tags:
       - 'v*'
-  workflow_dispatch:
-    inputs:
-      tag_name:
-        description: 'Existing release tag (e.g. v26102401-romain2A1b02)'
-        required: true
-      title:
-        description: 'Release title for a new release (default: "Build <tag>")'
-        required: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release
+  cancel-in-progress: false
 
 jobs:
-  release:
-    name: Package & Publish Release
+  version:
+    name: Version
+    runs-on: ubuntu-latest
+    outputs:
+      build_ver: ${{ steps.v.outputs.build_ver }}
+      tag: ${{ steps.v.outputs.tag }}
+      title: ${{ steps.v.outputs.title }}
+    steps:
+      - id: v
+        env:
+          GH_TOKEN: ${{ github.token }}
+          IN_TAG: ${{ inputs.tag }}
+          IN_TITLE: ${{ inputs.title }}
+        run: |
+          if [ "$GITHUB_EVENT_NAME" = workflow_dispatch ] && [ "$GITHUB_REF" != refs/heads/master ]; then
+            echo "::error::Releases are made from master only (got $GITHUB_REF)"
+            exit 1
+          fi
+          BUILD_VER=$(date -u +%y%m%d%H)
+          if [ "$GITHUB_EVENT_NAME" = push ]; then
+            TAG=$GITHUB_REF_NAME
+          else
+            TAG=${IN_TAG:-v$BUILD_VER}
+            if gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/$TAG" --silent 2>/dev/null; then
+              echo "::error::Tag $TAG already exists"
+              exit 1
+            fi
+          fi
+          TITLE=${IN_TITLE:-Build $BUILD_VER}
+          {
+            echo "build_ver=$BUILD_VER"
+            echo "tag=$TAG"
+            echo "title=$TITLE"
+          } >> "$GITHUB_OUTPUT"
+          echo "### Release $TAG: \"$TITLE\", AVR BUILD_VER $BUILD_VER, commit $GITHUB_SHA" >> "$GITHUB_STEP_SUMMARY"
+
+  fpga:
+    name: FPGA & CPLD
+    needs: version
+    uses: ./.github/workflows/build-fpga.yml
+    secrets: inherit
+
+  avr:
+    name: AVR
+    needs: version
+    uses: ./.github/workflows/build-avr.yml
+    with:
+      build_ver: ${{ needs.version.outputs.build_ver }}
+
+  publish:
+    name: Package & Publish
+    needs: [version, fpga, avr]
     runs-on: ubuntu-latest
     permissions:
       contents: write
-
+    env:
+      GH_TOKEN: ${{ github.token }}
+      TAG: ${{ needs.version.outputs.tag }}
+      TITLE: ${{ needs.version.outputs.title }}
+      BUILD_VER: ${{ needs.version.outputs.build_ver }}
     steps:
-      - name: Determine tag
-        id: vars
-        env:
-          INPUT_TAG: ${{ github.event.inputs.tag_name }}
-        run: echo "tag=${INPUT_TAG:-$GITHUB_REF_NAME}" >> "$GITHUB_OUTPUT"
-
-      - name: Checkout tag
+      - name: Checkout
         uses: actions/checkout@v4
-        with:
-          ref: refs/tags/${{ steps.vars.outputs.tag }}
 
-      - name: Package bundle
-        run: scripts/package_release.sh "${{ steps.vars.outputs.tag }}" .
+      - name: Download build outputs
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Check AVR build number
+        run: |
+          GOT=$(cat artifacts/karabas-pro-avr-firmware/build_ver.txt)
+          if [ "$GOT" != "$BUILD_VER" ]; then
+            echo "::error::AVR firmware was built as $GOT, expected $BUILD_VER"
+            exit 1
+          fi
+
+      - name: Package
+        run: scripts/package_release.sh "$TAG" artifacts .
+
+      - name: Keep the zip (dry run)
+        if: inputs.dry_run
+        uses: actions/upload-artifact@v4
+        with:
+          name: karabas-pro-${{ needs.version.outputs.tag }}
+          path: karabas-pro-${{ needs.version.outputs.tag }}.zip
 
       - name: Publish
-        env:
-          GH_TOKEN: ${{ github.token }}
-          TAG: ${{ steps.vars.outputs.tag }}
-          TITLE: ${{ github.event.inputs.title }}
+        if: ${{ !inputs.dry_run }}
         run: |
           ZIP="karabas-pro-$TAG.zip"
+          NOTES="AVR firmware build $BUILD_VER, commit $GITHUB_SHA."
           if gh release view "$TAG" >/dev/null 2>&1; then
-            if gh release view "$TAG" --json assets --jq '.assets[].name' | grep -qxF "$ZIP"; then
-              echo "Release $TAG already has $ZIP, nothing to do"
-            else
-              gh release upload "$TAG" "$ZIP"
-            fi
+            # a release made by hand for a pushed tag: only add the zip
+            gh release upload "$TAG" "$ZIP" --clobber
           else
-            gh release create "$TAG" "$ZIP" --verify-tag \
-              --title "${TITLE:-Build $TAG}" --generate-notes
+            gh release create "$TAG" "$ZIP" --target "$GITHUB_SHA" \
+              --title "$TITLE" --notes "$NOTES" --generate-notes
           fi

@@ -1,72 +1,19 @@
 #!/bin/sh
+# Build the Profi FPGA cores (EP4CE10, EP4CE6, EP3C10) in the Quartus image
+# (docker/quartus13/README.md) and collect the outputs in
+# firmware/build/profi-<device>/, the same layout as the CI artifacts.
+set -e
+cd "$(dirname "$0")"
+FW=$(cd .. && pwd)
+IMAGE=${QUARTUS_IMAGE:-karabas-quartus:13.0sp1}
 
-export PATH=/opt/altera/quartus/bin:$PATH
-
-echo "Building Profi FPGA sources for EP4CE6"
-
-cd fpga/profi/syn/ep4ce6
-
-make clean
-make all
-make jic
-
-cp karabas_pro_ep4ce6_tda1543.jic ../../../../../releases/profi/ep4ce6/karabas_pro_ep4ce6_tda1543.jic
-cp karabas_pro_ep4ce6_tda1543a.jic ../../../../../releases/profi/ep4ce6/karabas_pro_ep4ce6_tda1543a.jic
-cp karabas_pro_ep4ce6_revDS_tda1543.jic ../../../../../releases/profi/ep4ce6/karabas_pro_ep4ce6_revDS_tda1543.jic
-cp karabas_pro_ep4ce6_revDS_tda1543a.jic ../../../../../releases/profi/ep4ce6/karabas_pro_ep4ce6_revDS_tda1543a.jic
-cp karabas_pro_ep4ce6.rbf ../../../../../releases/profi/ep4ce6/karabas_pro_ep4ce6.rbf
-cp karabas_pro_ep4ce6.sof ../../../../../releases/profi/ep4ce6/karabas_pro_ep4ce6.sof
-
-make clean
-
-echo "Done"
-
-cd ../../../../
-
-echo "Building Profi FPGA sources for EP4CE10"
-
-cd fpga/profi/syn/ep4ce10
-
-make clean
-make all
-make jic
-
-cp karabas_pro_ep4ce10_tda1543.jic ../../../../../releases/profi/ep4ce10/karabas_pro_ep4ce10_tda1543.jic
-cp karabas_pro_ep4ce10_tda1543a.jic ../../../../../releases/profi/ep4ce10/karabas_pro_ep4ce10_tda1543a.jic
-cp karabas_pro_ep4ce10_revDS_tda1543.jic ../../../../../releases/profi/ep4ce10/karabas_pro_ep4ce10_revDS_tda1543.jic
-cp karabas_pro_ep4ce10_revDS_tda1543a.jic ../../../../../releases/profi/ep4ce10/karabas_pro_ep4ce10_revDS_tda1543a.jic
-cp karabas_pro_ep4ce10_revE_tda1543.jic ../../../../../releases/profi/ep4ce10/karabas_pro_ep4ce10_revE_tda1543.jic
-cp karabas_pro_ep4ce10_revE_tda1543a.jic ../../../../../releases/profi/ep4ce10/karabas_pro_ep4ce10_revE_tda1543a.jic
-cp karabas_pro_ep4ce10_revEU_tda1543.jic ../../../../../releases/profi/ep4ce10/karabas_pro_ep4ce10_revEU_tda1543.jic
-cp karabas_pro_ep4ce10_revEU_tda1543a.jic ../../../../../releases/profi/ep4ce10/karabas_pro_ep4ce10_revEU_tda1543a.jic
-cp karabas_pro_ep4ce10.rbf ../../../../../releases/profi/ep4ce10/karabas_pro_ep4ce10.rbf
-cp karabas_pro_ep4ce10.sof ../../../../../releases/profi/ep4ce10/karabas_pro_ep4ce10.sof
-
-make clean
-
-echo "Done"
-
-cd ../../../../
-
-echo "Building Profi FPGA sources for EP3C10"
-
-cd fpga/profi/syn/ep3c10
-
-make clean
-make all
-make jic
-
-cp karabas_pro_ep3c10_tda1543.jic ../../../../../releases/profi/ep3c10/karabas_pro_ep3c10_tda1543.jic
-cp karabas_pro_ep3c10_tda1543a.jic ../../../../../releases/profi/ep3c10/karabas_pro_ep3c10_tda1543a.jic
-cp karabas_pro_ep3c10_revDS_tda1543.jic ../../../../../releases/profi/ep3c10/karabas_pro_ep3c10_revDS_tda1543.jic
-cp karabas_pro_ep3c10_revDS_tda1543a.jic ../../../../../releases/profi/ep3c10/karabas_pro_ep3c10_revDS_tda1543a.jic
-cp karabas_pro_ep3c10.rbf ../../../../../releases/profi/ep3c10/karabas_pro_ep3c10.rbf
-cp karabas_pro_ep3c10.sof ../../../../../releases/profi/ep3c10/karabas_pro_ep3c10.sof
-cp karabas_pro_ep3c10_revE_tda1543.jic ../../../../../releases/profi/ep3c10/karabas_pro_ep3c10_revE_tda1543.jic
-cp karabas_pro_ep3c10_revE_tda1543a.jic ../../../../../releases/profi/ep3c10/karabas_pro_ep3c10_revE_tda1543a.jic
-
-make clean
-
-echo "Done"
-
-cd ../../../../
+for dev in ep4ce10 ep4ce6 ep3c10; do
+	echo "Building Profi FPGA sources for $dev"
+	docker run --rm --network none -u "$(id -u):$(id -g)" -v "$FW:/work" \
+		-w "/work/src/fpga/profi/syn/$dev" "$IMAGE" sh -c 'make clean && make all jic'
+	out="$FW/build/profi-$dev"
+	rm -rf "$out"; mkdir -p "$out"
+	cp fpga/profi/syn/$dev/*.sof fpga/profi/syn/$dev/*.rbf fpga/profi/syn/$dev/*.jic \
+	   fpga/profi/syn/$dev/*.rpt fpga/profi/syn/$dev/*.summary "$out/"
+done
+echo "Done: $FW/build"

@@ -1,5 +1,4 @@
 import os
-import shutil
 
 Import("env")
 
@@ -41,24 +40,6 @@ def post_build_action(source, target, env):
         filepath = os.path.join(build_dir, filename)
         with open(filepath, 'w') as f:
             f.write(make_hex(data))
-
-    # Sync to release directories if enabled
-    sync_releases = os.environ.get("SYNC_RELEASES", "1") == "1"
-    if sync_releases:
-        project_dir = env.subst("$PROJECT_DIR")
-        target_dirs = [
-            os.path.normpath(os.path.join(project_dir, "../../releases/profi/avr")),
-            os.path.normpath(os.path.join(project_dir, "../../releases/profi_plus3e/avr")),
-            os.path.normpath(os.path.join(project_dir, "../../releases/pong")),
-            os.path.normpath(os.path.join(project_dir, "../../releases/rk86")),
-        ]
-
-        for target_dir in target_dirs:
-            if os.path.isdir(target_dir):
-                print(f"[Post-Build] Syncing firmware and EEPROMs to {target_dir}...")
-                shutil.copy2(karabas_pro_hex, os.path.join(target_dir, "karabas_pro.hex"))
-                for filename in configs.keys():
-                    shutil.copy2(os.path.join(build_dir, filename), os.path.join(target_dir, filename))
 
     print("[Post-Build] Done.")
 

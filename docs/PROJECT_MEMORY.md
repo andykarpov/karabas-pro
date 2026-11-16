@@ -151,8 +151,8 @@ flowchart TD
 
 ### 2. Дополнительные конфигурации ядер
 * **Profi Plus3e:** Модификация ядра Profi с интеграцией BIOS ZX Spectrum +3e и поддержкой ESXDOS через DivMMC.
-* **Radio-86RK (РК86):** Полная реализация советского ПЭВМ «Радио-86РК» на том же железе Karabas-Pro ([firmware/releases/rk86](file:///home/andy/Documents/Projects/Retrocomp/ZX-Spectrum/karabas-pro-master/firmware/releases/rk86)).
-* **Pong:** Аппаратная тестовая игра Pong для проверки видеовыхода и звукового тракта ([firmware/releases/pong](file:///home/andy/Documents/Projects/Retrocomp/ZX-Spectrum/karabas-pro-master/firmware/releases/pong)).
+* **Radio-86RK (РК86):** Полная реализация советского ПЭВМ «Радио-86РК» на том же железе Karabas-Pro (исходники `firmware/src/fpga/rk86`; бинарники пока только в истории git и старых релизах, см. `docs/BACKLOG.md`).
+* **Pong:** Аппаратная тестовая игра Pong для проверки видеовыхода и звукового тракта (бинарники пока только в истории git и старых релизах, см. `docs/BACKLOG.md`).
 * **UART:** Специализированное ядро для тестирования и отладки последовательного канала.
 
 ---
@@ -337,19 +337,18 @@ CPLD выполняет критическую связующую функцию
   * Каталог проекта: [firmware/src/avr](file:///home/andy/Documents/Projects/Retrocomp/ZX-Spectrum/karabas-pro-master/firmware/src/avr).
   * Команда сборки: `pio run` (или `cd firmware/src/avr && pio run`).
   * Скрипт пре-билда: [scripts/pre_build.py](file:///home/andy/Documents/Projects/Retrocomp/ZX-Spectrum/karabas-pro-master/firmware/src/avr/scripts/pre_build.py) генерирует штамп версии `BUILD_VER` (формат `YYMMDDHH`), хэш Git-коммита и флаги сборки. Поддерживает переменную окружения `BUILD_VER` для детерминированных CI сборок.
-  * Скрипт пост-билда: [scripts/post_build.py](file:///home/andy/Documents/Projects/Retrocomp/ZX-Spectrum/karabas-pro-master/firmware/src/avr/scripts/post_build.py) автоматически формирует ревизионные образы EEPROM (`.eep`) для всех поддерживаемых плат (Rev.A, Rev.D, Rev.E, Rev.EU и др.) и синхронизирует итоговые `.hex` и `.eep` файлы в [firmware/releases](file:///home/andy/Documents/Projects/Retrocomp/ZX-Spectrum/karabas-pro-master/firmware/releases).
-  * Локальный pre-commit хук: установка через [`./scripts/install-hooks.sh`](file:///home/andy/Documents/Projects/Retrocomp/ZX-Spectrum/karabas-pro-master/scripts/install-hooks.sh) подключает [`.githooks/pre-commit`](file:///home/andy/Documents/Projects/Retrocomp/ZX-Spectrum/karabas-pro-master/.githooks/pre-commit), автоматически пересобирающий и добавляющий в коммит бинарники при правках AVR кода.
+  * Скрипт пост-билда: [scripts/post_build.py](file:///home/andy/Documents/Projects/Retrocomp/ZX-Spectrum/karabas-pro-master/firmware/src/avr/scripts/post_build.py) формирует ревизионные образы EEPROM (`.eep`) для всех поддерживаемых плат рядом с `karabas_pro.hex` в `.pio/build/ATmega328/`. Номер сборки `BUILD_VER` (`YYMMDDHH`, UTC) задаётся переменной окружения или берётся из текущего времени (`scripts/pre_build.py`).
 * **Непрерывная интеграция CI/CD (GitHub Actions):**
-  * [`.github/workflows/build-avr.yml`](file:///home/andy/Documents/Projects/Retrocomp/ZX-Spectrum/karabas-pro-master/.github/workflows/build-avr.yml) — сборка прошивки AVR на push и PR в `master`, проверка дрейфа бинарников (`git diff --exit-code firmware/releases`), загрузка артефактов сборки.
-  * [`.github/workflows/release.yml`](file:///home/andy/Documents/Projects/Retrocomp/ZX-Spectrum/karabas-pro-master/.github/workflows/release.yml) — на тег `v*` (или вручную) публикует `karabas-pro-<tag>.zip`, собранный [`scripts/package_release.sh`](file:///home/andy/Documents/Projects/Retrocomp/ZX-Spectrum/karabas-pro-master/scripts/package_release.sh) из закоммиченных файлов: `firmware/releases/profi/{README.md,avr,ep3c10,ep4ce6,ep4ce10,epm3128,rom}` + `software/wifi` и `software/pqdos` из `software/profi/net-tools/release`. Ничего не пересобирает. Если релиз уже создан вручную, заголовок и описание не трогает, zip добавляет только при его отсутствии. Без тега релиз создаётся с заголовком `Build <tag>`.
-  * `firmware/releases/profi/rom/` — ROM-образы, которые кладутся в релизный архив (ROMain, PQ-DOS, FDImage, fatall, karabas_boot). Хранятся без EOL-конвертации (локальный `.gitattributes`). При обновлении ROMain заменить папку `rom/ROMain_<версия>/` (образы + changelog.txt).
-  * [`.github/workflows/build-fpga.yml`](file:///home/andy/Documents/Projects/Retrocomp/ZX-Spectrum/karabas-pro-master/.github/workflows/build-fpga.yml) — сборка Profi (ep4ce10, ep4ce6, ep3c10) и CPLD в Docker-образе Quartus 13.0sp1 (см. `docker/quartus13/README.md`), сводка ресурсов и таймингов в summary.
-  * **Правило релизов:** любые изменения в `master`, включая обновления ROM (ROMain, flashtool и т.п.), пересобранные `.jic`/`.sof`/`.rbf` и прочие бинарники в `firmware/releases/`, вносятся **только через Pull Request** из отдельной ветки. Прямой push в `master` запрещён (ветка защищена на GitHub). Релизный тег `v*` ставится на коммит в `master` после merge PR.
+  * [`.github/workflows/build-avr.yml`](file:///home/andy/Documents/Projects/Retrocomp/ZX-Spectrum/karabas-pro-master/.github/workflows/build-avr.yml) — сборка прошивки AVR на push и PR в `master`, сводка по памяти, артефакт `karabas-pro-avr-firmware` (`.hex`, `.eep`, `build_ver.txt`). Вызывается и из `release.yml` с заданным `BUILD_VER`.
+  * [`.github/workflows/release.yml`](file:///home/andy/Documents/Projects/Retrocomp/ZX-Spectrum/karabas-pro-master/.github/workflows/release.yml) — релиз собирается в CI, бинарники в репозитории не хранятся. Запуск вручную (Actions → Release Firmware → Run workflow, только `master`) или пушем тега `v*`. Собирает FPGA/CPLD (`build-fpga.yml`) и AVR (`build-avr.yml`) с одного коммита, пакует `karabas-pro-<tag>.zip` через [`scripts/package_release.sh`](file:///home/andy/Documents/Projects/Retrocomp/ZX-Spectrum/karabas-pro-master/scripts/package_release.sh) и публикует релиз. Тег по умолчанию `v<BUILD_VER>` (номер сборки AVR), заголовок `Build <BUILD_VER>`; оба можно задать при запуске. Суффиксы вроде `-romain…` больше не используются: при обновлении ПЗУ просто выпускается новый релиз, что изменилось — пишется в описании.
+  * `firmware/releases/profi/` — статическая часть релиза: `README.md` (инструкция по прошивке), `rom/` (ROMain, PQ-DOS, FDImage, fatall, karabas_boot; без EOL-конвертации, локальный `.gitattributes`), `ep*/*.cdf` (цепочки Quartus Programmer). При обновлении ROMain заменить `rom/ROMain_<версия>/` (образы + changelog.txt) вместе с ROM в `firmware/src/fpga/profi/rom/`.
+  * [`.github/workflows/build-fpga.yml`](file:///home/andy/Documents/Projects/Retrocomp/ZX-Spectrum/karabas-pro-master/.github/workflows/build-fpga.yml) — сборка Profi (ep4ce10, ep4ce6, ep3c10) и CPLD в Docker-образе Quartus 13.0sp1 (см. `docker/quartus13/README.md`), сводка ресурсов и таймингов в summary, артефакты `profi-<chip>` и `cpld-epm3128`. Вызывается и из `release.yml`.
+  * **Правило релизов:** любые изменения в `master`, включая обновления ROM (ROMain, flashtool и т.п.), вносятся **только через Pull Request** из отдельной ветки. Прямой push в `master` запрещён (ветка защищена на GitHub). Релиз делается из `master` workflow `release.yml` после merge.
   * Нормализация переводов строк: [`.gitattributes`](file:///home/andy/Documents/Projects/Retrocomp/ZX-Spectrum/karabas-pro-master/.gitattributes) принудительно задаёт окончания строк LF для файлов `.hex`, `.eep` и исходников.
-* **Сборка CPLD:** [build_cpld.sh](file:///home/andy/Documents/Projects/Retrocomp/ZX-Spectrum/karabas-pro-master/firmware/src/build_cpld.sh)
+* **Сборка CPLD:** [build_cpld.sh](file:///home/andy/Documents/Projects/Retrocomp/ZX-Spectrum/karabas-pro-master/firmware/src/build_cpld.sh) (в Docker-образе `karabas-quartus:13.0sp1`, результат в `firmware/build/cpld-epm3128/`)
   * Использует Intel Quartus Prime (`quartus_map`, `quartus_fit`, `quartus_asm`).
   * Выходной файл: `karabas_pro_cpld.pof`.
-* **Сборка FPGA ядер:** [build_profi.sh](file:///home/andy/Documents/Projects/Retrocomp/ZX-Spectrum/karabas-pro-master/firmware/src/build_profi.sh) и [rom_update.sh](file:///home/andy/Documents/Projects/Retrocomp/ZX-Spectrum/karabas-pro-master/firmware/src/rom_update.sh)
+* **Сборка FPGA ядер:** [build_profi.sh](file:///home/andy/Documents/Projects/Retrocomp/ZX-Spectrum/karabas-pro-master/firmware/src/build_profi.sh) (в Docker-образе, результат в `firmware/build/profi-<chip>/`; `firmware/src/build.sh` собирает AVR + FPGA + CPLD, `scripts/package_release.sh <name> firmware/build` пакует zip локально)
   * Таргеты: `EP4CE10`, `EP4CE6`, `EP3C10`.
   * Генерирует `.sof` (JTAG RAM), `.rbf` (сырой бинарник), и `.jic` (Flash Configuration Image для TDA1543 / TDA1543A для всех ревизий плат).
 
@@ -360,7 +359,6 @@ CPLD выполняет критическую связующую функцию
 ```
 karabas-pro/
 ├── .github/                   # CI/CD автоматизация (GitHub Actions workflows)
-├── .githooks/                 # Git-хуки разработчика (pre-commit компилятор)
 ├── docs/                      # Документация, схемы в PDF, интерактивные BOM (iBOM), фото плат
 │   ├── PROJECT_MEMORY.md      # Данная база знаний проекта
 │   ├── karabas-pro-revER.pdf  # Принципиальная электрическая схема последней ревизии
@@ -382,7 +380,7 @@ karabas-pro/
 │   │   │   └── scripts/       # Python скрипты pre_build.py и post_build.py
 │   │   ├── cpld/              # VHDL проект CPLD EPM3128ATC100
 │   │   └── fpga/              # VHDL проекты FPGA (profi, pong, rk86, profi_plus3e, uart)
-│   └── releases/              # Скомпилированные бинарники (.jic, .sof, .pof, .hex, .eep)
+│   └── releases/              # Статическая часть релиза (README, rom/, .cdf); бинарники — в GitHub Releases
 ├── software/                  # Софт для ZX Spectrum / Profi
 │   └── profi/
 │       ├── net-tools/         # Сетевые утилиты под ESP8266 (uGophy, netman, weather)
@@ -390,7 +388,7 @@ karabas-pro/
 │       ├── pq-dos/            # Образы дискет и драйверы PQ-DOS
 │       ├── rtc/               # Драйвер RTC для CP/M
 │       └── tools/             # Утилиты копирования и распаковки (karabas_boot, unFDI)
-├── scripts/                   # Вспомогательные скрипты репозитория (install-hooks.sh)
+├── scripts/                   # Вспомогательные скрипты репозитория (package_release.sh)
 └── cases/                     # 3D-модели корпусов (STL, SCAD) под габариты 3.5" FDD
 ```
 
