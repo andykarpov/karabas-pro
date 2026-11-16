@@ -8,28 +8,26 @@ derive_pll_clocks
 # clock uncertainty
 derive_clock_uncertainty
 
-# клоки, порожденные дизайном
+# клоки, порожденные дизайном: нет (clk_div2 и clk_div4 — только сигналы разрешения)
 # TODO: стробы CPU, используемые как клоки (T80a M1_n, WR_n_i, MREQ), пока не описаны
 
-create_generated_clock -name {clk_14} -divide_by 2 -source [get_pins {U2|altpll_component|auto_generated|pll1|clk[2]}] [get_registers {clk_div2}]
-create_generated_clock -name {clk_12} -divide_by 2 -source [get_pins {U2|altpll_component|auto_generated|pll1|clk[3]}] [get_registers {clk_div2}] -add
 
 # описание отношений между клоками
 # Режимы тактирования (ds80 переключает оба altclkctrl одновременно):
-#   ds80=0: clk_bus = 28 МГц (pll c2) -> clk_14;  clk_bus_port = 84 МГц (pll c0)
-#   ds80=1: clk_bus = 24 МГц (pll c3) -> clk_12;  clk_bus_port = 72 МГц (pll c1)
+#   ds80=0: clk_bus = 28 МГц (pll c2), clk_bus_port = 84 МГц (pll c0)
+#   ds80=1: clk_bus = 24 МГц (pll c3), clk_bus_port = 72 МГц (pll c1)
 # Клоки разных режимов никогда не работают одновременно, пути между ними
-# не существуют (например 72 <- 28 или 24 <- 14).
+# не существуют (например 72 <- 28 или 84 <- 24).
 set_clock_groups -exclusive \
-	-group {U2|altpll_component|auto_generated|pll1|clk[0] U2|altpll_component|auto_generated|pll1|clk[2] clk_14} \
-	-group {U2|altpll_component|auto_generated|pll1|clk[1] U2|altpll_component|auto_generated|pll1|clk[3] clk_12}
+	-group {U2|altpll_component|auto_generated|pll1|clk[0] U2|altpll_component|auto_generated|pll1|clk[2]} \
+	-group {U2|altpll_component|auto_generated|pll1|clk[1] U2|altpll_component|auto_generated|pll1|clk[3]}
 
 # AVR_SCK асинхронен всем внутренним клокам. Обмен с SPI-доменом идёт через
 # синхронизаторы spi_slave (do_valid_A..D, di_req_o_A..D, wren_*): данные
 # do_buffer_reg / di_reg стабильны всё время, пока строб проходит синхронизатор.
 set_clock_groups -asynchronous \
 	-group {AVR_SCK} \
-	-group {CLK_50MHZ U2|altpll_component|auto_generated|pll1|clk[*] clk_14 clk_12}
+	-group {CLK_50MHZ U2|altpll_component|auto_generated|pll1|clk[*]}
 
 # описание путей, которые не нужно анализировать
 set_false_path -from [get_registers {port_dffd_reg[*]}] -to *

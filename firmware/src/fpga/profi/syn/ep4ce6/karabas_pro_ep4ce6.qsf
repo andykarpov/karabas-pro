@@ -208,6 +208,7 @@ set_global_assignment -name PRE_FLOW_SCRIPT_FILE "quartus_sh:generate_messages.t
 
 
 set_global_assignment -name OPTIMIZE_HOLD_TIMING "ALL PATHS"
+set_global_assignment -name FITTER_EFFORT "STANDARD FIT"
 set_global_assignment -name OPTIMIZE_MULTI_CORNER_TIMING ON
 
 
