@@ -58,6 +58,7 @@ architecture tda1543_arch of tda1543 is
 signal shift_reg : std_logic_vector(47 downto 0) := (others => '0');
 signal cnt : std_logic_vector(5 downto 0) := (others => '0');
 signal cnt_clk : std_logic_vector(1 downto 0) := (others => '0');
+signal last_r0 : std_logic := '0'; -- LSB of the previous right sample (I2S sends it after the WS edge)
 
 begin
 
@@ -124,17 +125,22 @@ process (RESET, CLK_BUS, cnt_clk, CS, DAC_TYPE, shift_reg, DATA_L, DATA_R)
 begin
 	if (RESET = '1' or CS = '0') then
 		shift_reg <= (others => '0');
+		last_r0 <= '0';
 	elsif (CLK_BUS'event and CLK_BUS = '0' and cnt_clk = "00") then
 		case DAC_TYPE is 
 			when '0' =>
 				if cnt = 0 then 
-					shift_reg(47 downto 16) <= DATA_R(0) & DATA_L(15 downto 1) & DATA_L(0) & DATA_R(15 downto 1); -- LSB R + L + LSB L + R
+					-- I2S: the bit after the WS edge is the LSB of the previous word, so the
+					-- frame is: previous R LSB, L15..L1, L0 (after WS -> right), R15..R1
+					shift_reg(47 downto 16) <= last_r0 & DATA_L(15 downto 1) & DATA_L(0) & DATA_R(15 downto 1);
+					last_r0 <= DATA_R(0);
 				else 
 					shift_reg <= shift_reg(46 downto 0) & '0';
 				end if;
 			when '1' => 
 				if cnt = 0 then 
-					shift_reg <= DATA_L(15 downto 8) & DATA_L & DATA_R(15 downto 8) & DATA_R; -- MSB L + L + MSB R + R
+					-- LSB-justified 24-bit slots: 8 sign bits + 16 data bits per channel
+					shift_reg <= (7 downto 0 => DATA_L(15)) & DATA_L & (7 downto 0 => DATA_R(15)) & DATA_R;
 				else 
 					shift_reg <= shift_reg(46 downto 0) & '0';
 				end if;			

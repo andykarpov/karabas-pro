@@ -45,12 +45,13 @@ begin
 
 	process (I_CLK, I_RESET, I_CS, I_DOS, I_CPM, I_IORQ_N, I_WR_N)
 	begin
+		-- 0x80 is silence for an 8-bit PCM DAC (the mixer centres covox samples)
 		if I_RESET = '1' or I_CS = '0' then
-			outa_reg <= (others => '0');
-			outb_reg <= (others => '0');		
-			outc_reg <= (others => '0');
-			outd_reg <= (others => '0');
-			outfb_reg <= (others => '0');	
+			outa_reg <= x"80";
+			outb_reg <= x"80";
+			outc_reg <= x"80";
+			outd_reg <= x"80";
+			outfb_reg <= x"80";
 		elsif I_CLK'event and I_CLK = '1' and I_DOS = '0' and I_CPM='0' and I_CS = '1' and  I_IORQ_N = '0' and I_WR_N = '0' then
 			case I_ADDR is 
 				when x"0F" => outa_reg <= I_DATA;

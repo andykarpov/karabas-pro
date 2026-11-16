@@ -327,11 +327,13 @@ signal covox_fb		: std_logic_vector(7 downto 0);
 -- Output audio
 signal audio_l			: std_logic_vector(15 downto 0);
 signal audio_r			: std_logic_vector(15 downto 0);
-signal audio_mono		: std_logic_vector(15 downto 0);
+signal audio_mute		: std_logic;
 signal audio_dac_type: std_logic := '0'; -- 0 = TDA1543, 1 = TDA1543A
 
 -- SAA1099
 signal saa_wr_n		: std_logic;
+signal acc8			: std_logic_vector(16 downto 0) := (others => '0');
+signal ce_8			: std_logic;
 signal saa_out_l		: std_logic_vector(7 downto 0);
 signal saa_out_r		: std_logic_vector(7 downto 0);
 
@@ -873,8 +875,8 @@ port map (
 G_SAA1099: if enable_saa1099 generate
 U14: saa1099
 port map(
-	clk_sys			=> clk_8,
-	ce					=> '1',
+	clk_sys			=> clk_bus,
+	ce					=> ce_8,
 	rst_n				=> not reset,
 	cs_n				=> '0',
 	a0					=> cpu_a_bus(8),		-- 0=data, 1=address
@@ -1136,6 +1138,22 @@ port map(
 	
 -------------------------------------------------------------------------------
 -- clocks
+
+-- 8 MHz clock enable on clk_bus for the SAA1099 (it used to run on its own
+-- clk_8, with the CPU writes and its output crossing clock domains):
+-- a phase accumulator, 8 / 28 * 2^16 = 18725 and 8 / 24 * 2^16 = 21845
+-- (8.00018 / 7.99988 MHz on average, one clk_bus of jitter).
+process (clk_bus)
+begin
+	if rising_edge(clk_bus) then
+		if ds80 = '1' then
+			acc8 <= ('0' & acc8(15 downto 0)) + 21845;
+		else
+			acc8 <= ('0' & acc8(15 downto 0)) + 18725;
+		end if;
+	end if;
+end process;
+ce_8 <= acc8(16);
 
 -- clk_div2 is a real clock (14/12 MHz). clk_div4 is only used as an enable,
 -- so it toggles in the clk_bus domain at the same edge where the old ripple
@@ -1604,69 +1622,32 @@ speaker <= port_xxfe_reg(4);
 BUZZER <= speaker;
 tape_in_monitor <= not(TAPE_IN) when tape_in_out_enable = '1' else '0';
 
-audio_mono <= 	
-				("0000" & speaker & "00000000000") +
---				("00000" & tape_in_monitor & "0000000000") +				
-				("0000"  & ssg_cn0_a &     "0000") + 
-				("0000"  & ssg_cn0_b &     "0000") + 
-				("0000"  & ssg_cn0_c &     "0000") + 
-				("0000"  & ssg_cn1_a &     "0000") + 
-				("0000"  & ssg_cn1_b &     "0000") + 
-				("0000"  & ssg_cn1_c &     "0000") + 
-				("0000"  & covox_a &       "0000") + 
-				("0000"  & covox_b &       "0000") + 
-				("0000"  & covox_c &       "0000") + 
-				("0000"  & covox_d &       "0000") + 
-				("0000"  & covox_fb &      "0000") + 
-				("0000"  & saa_out_l &     "0000") + 				
-				("0000"  & saa_out_r &     "0000");
+audio_mute <= loader_act or kb_wait or sound_off;
 
-audio_l <= "0000000000000000" when loader_act = '1' or kb_wait = '1' or sound_off = '1' else 
-				audio_mono when soft_sw(9) = '1' else
-				("000" & speaker & "000000000000") + -- ACB: L = A + C/2
---				("00000" & tape_in_monitor & "0000000000") +	
-				("000"  & ssg_cn0_a &     "00000") + 
-				("0000"  & ssg_cn0_c &     "0000") + 
-				("000"  & ssg_cn1_a &     "00000") + 
-				("0000"  & ssg_cn1_c &     "0000") + 
-				("000"  & covox_a &       "00000") + 
-				("000"  & covox_b &       "00000") + 
-				("000"  & covox_fb &      "00000") + 
-				("000"  & saa_out_l  &    "00000") when soft_sw(7) = '0' else 
-				("000" & speaker & "000000000000") +  -- ABC: L = A + B/2
---				("00000" & tape_in_monitor & "0000000000") +	
-				("000"  & ssg_cn0_a &     "00000") + 
-				("0000"  & ssg_cn0_b &     "0000") + 
-				("000"  & ssg_cn1_a &     "00000") + 
-				("0000"  & ssg_cn1_b &     "0000") + 
-				("000"  & covox_a &       "00000") + 
-				("000"  & covox_b &       "00000") + 
-				("000"  & covox_fb &      "00000") + 
-				("000"  & saa_out_l  &    "00000");
-				
-audio_r <= "0000000000000000" when loader_act = '1' or kb_wait = '1' or sound_off = '1' else 
-				audio_mono when soft_sw(9) = '1' else
-				("000" & speaker & "000000000000") + -- ACB: R = B + C/2
---				("00000" & tape_in_monitor & "0000000000") +	
-				("000"  & ssg_cn0_b &     "00000") + 
-				("0000"  & ssg_cn0_c &     "0000") + 
-				("000"  & ssg_cn1_b &     "00000") + 
-				("0000"  & ssg_cn1_c &     "0000") + 
-				("000"  & covox_c &       "00000") + 
-				("000"  & covox_d &       "00000") + 
-				("000"  & covox_fb &      "00000") + 
-				("000"  & saa_out_r &     "00000") when soft_sw(7) = '0' else
-				("000" & speaker & "000000000000") + -- ABC: R = C + B/2
---				("00000" & tape_in_monitor & "0000000000") +	
-				("000"  & ssg_cn0_c &     "00000") + 
-				("0000"  & ssg_cn0_b &     "0000") + 
-				("000"  & ssg_cn1_c &     "00000") + 
-				("0000"  & ssg_cn1_b &     "0000") + 
-				("000"  & covox_c &       "00000") + 
-				("000"  & covox_d &       "00000") + 
-				("000"  & covox_fb &      "00000") + 
-				("000"  & saa_out_r &     "00000");
-				
+U_MIXER: entity work.audio_mixer
+port map (
+	CLK 				=> clk_bus,
+	MUTE 				=> audio_mute,
+	MONO 				=> soft_sw(9),
+	ABC 				=> soft_sw(7),
+	SPEAKER 			=> speaker,
+	SSG0_A 			=> ssg_cn0_a,
+	SSG0_B 			=> ssg_cn0_b,
+	SSG0_C 			=> ssg_cn0_c,
+	SSG1_A 			=> ssg_cn1_a,
+	SSG1_B 			=> ssg_cn1_b,
+	SSG1_C 			=> ssg_cn1_c,
+	COVOX_A 			=> covox_a,
+	COVOX_B 			=> covox_b,
+	COVOX_C 			=> covox_c,
+	COVOX_D 			=> covox_d,
+	COVOX_FB 		=> covox_fb,
+	SAA_L 			=> saa_out_l,
+	SAA_R 			=> saa_out_r,
+	AUDIO_L 			=> audio_l,
+	AUDIO_R 			=> audio_r
+);
+
 -- Tape Out: 1/0 for revDS, open collector output for revA,B,C,D
 TAPE_OUT <= port_xxfe_reg(3) when tape_in_out_enable = '1' else '0' when port_xxfe_reg(3) = '0' else 'Z';
 				
