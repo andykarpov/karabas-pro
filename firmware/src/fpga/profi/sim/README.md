@@ -64,6 +64,24 @@ ZX Spectrum +3 memory map: the ROM page `#1FFD(2) & #7FFD(4)` read from SRAM
 the special mode (`#1FFD(0) = 1`: 0-1-2-3, 4-5-6-7, 4-5-6-3, 4-7-6-3), no writes
 to the ROM and the chip select of a 6 MB board.
 
+## Whole core boot with the +3e ROM
+
+```sh
+firmware/src/fpga/profi/sim/run_boot.sh [RUN_MS]   # default 500, about 30 minutes
+```
+
+`tb_boot.vhd` runs the whole `karabas_pro` top level (T80, memory, ports,
+video, AVR link) from power-on with the ROM bank +3e selected. `top_models.vhd`
+stands in for the PLLs, the clock muxes, the Verilog AY and the loader (the SRAM
+model already holds the +3e ROM at `#150000`). The bench reports `#7FFD`,
+`#1FFD` and the CPU address every millisecond and writes the screen of banks 5
+and 7 at the end; `render_screen.py` turns it into a PNG. Not in CI because of
+its run time; the script caps the memory with `systemd-run` when it can.
+
+With 500 ms at 14 MHz the ROM tests the eight RAM banks (`#7FFD` 07..00), sets
+`#1FFD = 04`, prints the copyright lines of +3e v1.43 and then polls the SD card
+on port `#57` (no card in the bench).
+
 ## Models
 
 `ip_models.vhd` contains behavioural models of the Quartus IP used by the
