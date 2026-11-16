@@ -67,7 +67,7 @@ to the ROM and the chip select of a 6 MB board.
 ## Whole core boot with the +3e ROM
 
 ```sh
-firmware/src/fpga/profi/sim/run_boot.sh [RUN_MS]   # default 500, about 30 minutes
+firmware/src/fpga/profi/sim/run_boot.sh [RUN_MS]   # default 1250, about 1.5 hours
 ```
 
 `tb_boot.vhd` runs the whole `karabas_pro` top level (T80, memory, ports,
@@ -78,9 +78,11 @@ model already holds the +3e ROM at `#150000`). The bench reports `#7FFD`,
 and 7 at the end; `render_screen.py` turns it into a PNG. Not in CI because of
 its run time; the script caps the memory with `systemd-run` when it can.
 
-With 500 ms at 14 MHz the ROM tests the eight RAM banks (`#7FFD` 07..00), sets
-`#1FFD = 04`, prints the copyright lines of +3e v1.43 and then polls the SD card
-on port `#57` (no card in the bench).
+At 14 MHz the ROM tests the eight RAM banks (`#7FFD` 07..00), sets
+`#1FFD = 04` and prints the copyright lines of +3e v1.43 (about 400 ms), polls
+the SD card on port `#57` until it times out (no card in the bench), then shows
+"Physical drives: 0 floppy, 0 MMC" and the main menu "128 +2e" (about 1200 ms;
+the ROM says +2e because there is no floppy controller).
 
 ## Models
 
