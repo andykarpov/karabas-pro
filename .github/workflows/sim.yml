@@ -1,0 +1,36 @@
+name: Simulate video path
+
+# GHDL bench: video controller -> OSD overlay -> scandoubler in all six screen
+# modes, compared with firmware/src/fpga/profi/sim/expected_scandoubler.txt.
+
+on:
+  push:
+    branches: [ master ]
+    paths:
+      - 'firmware/src/fpga/profi/rtl/video/**'
+      - 'firmware/src/fpga/profi/sim/**'
+      - '.github/workflows/sim.yml'
+  pull_request:
+    branches: [ master ]
+    paths:
+      - 'firmware/src/fpga/profi/rtl/video/**'
+      - 'firmware/src/fpga/profi/sim/**'
+      - '.github/workflows/sim.yml'
+  workflow_dispatch:
+
+jobs:
+  scandoubler:
+    name: scandoubler (GHDL)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install GHDL
+        run: sudo apt-get update -q && sudo apt-get install -y -q ghdl
+
+      - name: Run the bench
+        run: |
+          ghdl --version | head -1
+          firmware/src/fpga/profi/sim/run_scandoubler.sh "$RUNNER_TEMP/sim" | tee sim.log
+          { echo '### Scandoubler timing (GHDL)'; echo '```'; grep -E '^(pentagon|classic|profi)' sim.log; echo '```'; tail -1 sim.log; } >> "$GITHUB_STEP_SUMMARY"

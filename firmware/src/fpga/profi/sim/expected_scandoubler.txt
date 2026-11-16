@@ -1,0 +1,6 @@
+pentagon50 line period=896 hsync=107 | act x 159..876 paper x 262..773 | lines/frame=640 vsync=2 act lines 36..629 paper lines 142..525 | pairs bad 0/297
+pentagon60 line period=896 hsync=107 | act x 159..876 paper x 262..773 | lines/frame=528 vsync=2 act lines 36..517 paper lines 86..469 | pairs bad 0/241
+classic50  line period=896 hsync=107 | act x 159..876 paper x 262..773 | lines/frame=624 vsync=2 act lines 36..613 paper lines 134..517 | pairs bad 0/289
+classic60  line period=896 hsync=107 | act x 159..876 paper x 262..773 | lines/frame=512 vsync=2 act lines 36..501 paper lines 78..461 | pairs bad 0/233
+profi50    line period=768 hsync=92 | act x 138..751 paper x 189..700 | lines/frame=624 vsync=2 act lines 36..613 paper lines 86..565 | pairs bad 0/289
+profi60    line period=768 hsync=92 | act x 138..751 paper x 189..700 | lines/frame=528 vsync=2 act lines 36..517 paper lines 38..517 | pairs bad 0/241
