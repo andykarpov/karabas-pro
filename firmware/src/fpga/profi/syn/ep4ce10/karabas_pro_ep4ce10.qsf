@@ -208,6 +208,7 @@ set_global_assignment -name PRE_FLOW_SCRIPT_FILE "quartus_sh:generate_messages.t
 set_parameter -name enable_saa1099 true
 set_parameter -name enable_zifi_uart true
 set_parameter -name enable_osd_icons true
+set_parameter -name enable_plus3e true
 
 set_global_assignment -name OPTIMIZE_HOLD_TIMING "ALL PATHS"
 set_global_assignment -name FITTER_EFFORT "STANDARD FIT"

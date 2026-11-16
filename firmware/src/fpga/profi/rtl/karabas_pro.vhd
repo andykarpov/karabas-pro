@@ -34,7 +34,8 @@ entity karabas_pro is
 		enable_zxuno_uart2 : boolean := false; -- uart 2 (enabled for ep4ce10 via qsf settings)
 		enable_zifi_uart   : boolean := false;  -- zifi (enabled for ep4ce10 via qsf settings)
 		enable_saa1099 	 : boolean := false; -- saa1099 (enabled for ep4ce10 via qsf settings)
-		enable_osd_icons   : boolean := false  -- osd icons (enabled for ep4ce10 via qsf settings)
+		enable_osd_icons   : boolean := false; -- osd icons (enabled for ep4ce10 via qsf settings)
+		enable_plus3e      : boolean := false  -- ZX Spectrum +3 mode for the +3e ROM bank (via qsf settings)
 	);
 port (
 	-- Clock (50MHz)
@@ -232,6 +233,9 @@ signal zc_miso			: std_logic;
 
 --- DivMMC
 signal divmmc_en		: std_logic;
+signal divmmc_en_avr	: std_logic;
+signal plus3e_avr		: std_logic;
+signal plus3e			: std_logic; -- ROM bank +3e: ZX Spectrum +3 paging, no TR-DOS / DivMMC / Profi ports
 signal automap			: std_logic;
 --signal detect			: std_logic;
 signal port_e3_reg   : std_logic_vector(7 downto 0);
@@ -687,6 +691,10 @@ port map (
 	-- rom
 	ROM_BANK 		=> rom14,      -- 0 B128, 1 B48
 	EXT_ROM_BANK   => ext_rom_bank_pq,
+	PLUS3E 			=> plus3e,
+	P3_ROM 			=> port_1ffd_reg(2) & port_7ffd_reg(4),
+	P3_ALLRAM 		=> port_1ffd_reg(0),
+	P3_RAMCFG 		=> port_1ffd_reg(2 downto 1),
 	
 	-- contended memory signals
 	COUNT_BLOCK		=> count_block,
@@ -941,8 +949,9 @@ port map (
 	 OSD_COMMAND	=> osd_command,
 	 MAX_TURBO 		=> max_turbo,
 	 SCREEN_MODE   => kb_screen_mode,
-	 DIVMMC_EN 		=> divmmc_en,
+	 DIVMMC_EN 		=> divmmc_en_avr,
 	 NEMOIDE_EN 	=> nemoide_en,
+	 PLUS3E 			=> plus3e_avr,
 	 
 	 LOADED 			=> kb_loaded,
 	 
@@ -1128,6 +1137,7 @@ port map(
 	SOFT_SW2 => soft_sw(2),
 	SOFT_SW3 => soft_sw(3),
 	SOFT_SW4 => soft_sw(4),
+	PLUS3E => plus3e,
 	
 	AUDIO_DAC_TYPE => audio_dac_type,
 	ROM_BANK => ext_rom_bank,
@@ -1404,7 +1414,13 @@ sco 	<= port_dffd_reg(3); -- Выбор положения окна проеци
 
 -- Extended memory for 1MB (default) or 6MB boards
 --ram_ext <= port_1ffd_reg(7) & port_1ffd_reg(4) & port_dffd_reg(2 downto 0); -- kay512+ profi 1024
-ram_ext <= port_7ffd_reg(6) & port_7ffd_reg(7) & port_dffd_reg(2 downto 0); -- pent 512 + profi 1024
+ram_ext <= "00000" when plus3e = '1' else -- +3: 128K, #7FFD bits 7..6 unused
+			  port_7ffd_reg(6) & port_7ffd_reg(7) & port_dffd_reg(2 downto 0); -- pent 512 + profi 1024
+
+-- ROM bank +3e: ZX Spectrum +3 mode (#1FFD paging). TR-DOS, DivMMC and the Profi
+-- #DFFD port are off, so CP/M, ds80 and the PQ-DOS ports (#008B / #018B) stay off too.
+plus3e <= plus3e_avr when enable_plus3e else '0';
+divmmc_en <= divmmc_en_avr and not plus3e;
 
 -- OCH: change decoding of #FE port when Nemo enabled  
 cs_xxfe <= '1' when (cpu_iorq_n = '0' and cpu_a_bus(0) = '0' and nemoide_en = '0') or 
@@ -1412,12 +1428,15 @@ cs_xxfe <= '1' when (cpu_iorq_n = '0' and cpu_a_bus(0) = '0' and nemoide_en = '0
 cs_xx7e <= '1' when cs_xxfe = '1' and cpu_a_bus(7) = '0' else '0';
 cs_eff7 <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and cpu_a_bus = X"EFF7" else '0';
 cs_fffd <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and cpu_a_bus = X"FFFD" and fd_port = '1' else '0';
-cs_dffd <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and cpu_a_bus = X"DFFD" and fd_port = '1' and lock_dffd = '0' else '0';
+cs_dffd <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and cpu_a_bus = X"DFFD" and fd_port = '1' and lock_dffd = '0' and plus3e = '0' else '0';
 cs_7ffd <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and cpu_a_bus = X"7FFD" and fd_port = '1' else '0';
-cs_1ffd <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and cpu_a_bus = X"1FFD" and fd_port = '1' else '0';
+-- #1FFD: +3 decoding (A15..A12 = 0001, A1 = 0), used in the +3e mode only
+cs_1ffd <= '1' when cpu_iorq_n = '0' and cpu_m1_n = '1' and cpu_a_bus(15 downto 12) = "0001" and cpu_a_bus(1) = '0' and fd_port = '1' and plus3e = '1' else '0';
 -- OCH: change decoding of #FD port when Nemo enabled
-cs_xxfd <= '1' when (cpu_iorq_n = '0' and cpu_m1_n = '1' and cpu_a_bus(15) = '0' and cpu_a_bus(1) = '0' and nemoide_en = '0') or
-						  (cpu_iorq_n = '0' and cpu_m1_n = '1' and cpu_a_bus(15) = '0' and cpu_a_bus(7 downto 0) = x"FD" and nemoide_en = '1') else '0';
+-- +3: #7FFD also needs A14 = 1, otherwise a write to #1FFD lands in #7FFD
+cs_xxfd <= '1' when ((cpu_iorq_n = '0' and cpu_m1_n = '1' and cpu_a_bus(15) = '0' and cpu_a_bus(1) = '0' and nemoide_en = '0') or
+						  (cpu_iorq_n = '0' and cpu_m1_n = '1' and cpu_a_bus(15) = '0' and cpu_a_bus(7 downto 0) = x"FD" and nemoide_en = '1')) and
+						  (plus3e = '0' or cpu_a_bus(14) = '1') else '0';
 						  
 -- Регистры SPI-FLASH
 cs_xxC7 <= '1' when cpu_iorq_n = '0' and cpu_a_bus (7 downto 0) = X"C7" and cpm='1' and rom14='1' and ds80='1' else '0';
@@ -1571,7 +1590,7 @@ begin
 			end if;
 			
 			-- #1FFD
-			if cs_1ffd = '1' and cpu_wr_n = '0' then -- #1FFD
+			if cs_1ffd = '1' and cpu_wr_n = '0' and port_7ffd_reg(5) = '0' then -- #1FFD, locked by #7FFD bit 5
 			  port_1ffd_reg <= cpu_do_bus;
 			end if;
 
@@ -1622,6 +1641,11 @@ begin
 			if (((cpu_m1_n = '0' and cpu_mreq_n = '0' and cpu_a_bus(15 downto 8) = X"3D" and (rom14 = '1' or unlock_128 = '1')) or 
 			(cpu_nmi_n = '0'  and DS80 = '0')) and port_dffd_reg(4) = '0') or (onrom = '1') then dos_act <= '1';
 			elsif ((cpu_m1_n = '0' and cpu_mreq_n = '0' and cpu_a_bus(15 downto 14) /= "00") or (port_dffd_reg(4) = '1')) then dos_act <= '0'; end if;
+
+			-- +3e: no TR-DOS
+			if plus3e = '1' then
+				dos_act <= '0';
+			end if;
 				
 	end if;
 end process;

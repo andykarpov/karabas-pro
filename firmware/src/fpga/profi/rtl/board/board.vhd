@@ -15,6 +15,7 @@ port (
 	SOFT_SW2 		: in std_logic;
 	SOFT_SW3			: in std_logic;
 	SOFT_SW4 		: in std_logic;
+	PLUS3E 			: in std_logic := '0';
 	
 	AUDIO_DAC_TYPE : out std_logic := '0';
 	ROM_BANK 		: buffer std_logic_vector(1 downto 0) := "00";
@@ -27,7 +28,7 @@ end board;
 
 architecture rtl of board is
 
-signal old_rom_bank		: std_logic_vector(1 downto 0) := "00";
+signal old_rom_bank		: std_logic_vector(2 downto 0) := "000";
 signal reset_cnt			: std_logic_vector(4 downto 0) := "10000";
 
 begin
@@ -37,11 +38,11 @@ AUDIO_DAC_TYPE <= CFG(0);
 ROM_BANK <= soft_sw4 & soft_sw3; 
 TAPE_IN_OUT_EN <= CFG(2);
 
-process (CLK, old_rom_bank, ROM_BANK, reset_cnt)
+process (CLK, old_rom_bank, ROM_BANK, PLUS3E, reset_cnt)
 begin
 	if CLK'event and CLK = '1' then
-		if (old_rom_bank /= ROM_BANK) then 
-			old_rom_bank <= ROM_BANK;
+		if (old_rom_bank /= PLUS3E & ROM_BANK) then 
+			old_rom_bank <= PLUS3E & ROM_BANK;
 			reset_cnt <= "00000";
 		end if;
 		if (reset_cnt /= "10000") then 

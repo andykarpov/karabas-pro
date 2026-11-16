@@ -3,7 +3,8 @@ name: Simulate video path
 # GHDL benches (firmware/src/fpga/profi/sim):
 # - video controller -> OSD overlay -> scandoubler in all six screen modes,
 #   compared with expected_scandoubler.txt;
-# - avr.vhd RTC handling, audio_mixer against a model, tda1543 decoded.
+# - avr.vhd RTC handling, audio_mixer against a model, tda1543 decoded;
+# - memory.vhd in the +3e mode against the ZX Spectrum +3 memory map.
 
 on:
   push:
@@ -14,6 +15,7 @@ on:
       - 'firmware/src/fpga/profi/rtl/spi/**'
       - 'firmware/src/fpga/profi/rtl/sound/**'
       - 'firmware/src/fpga/profi/rtl/dac/**'
+      - 'firmware/src/fpga/profi/rtl/memory/**'
       - 'firmware/src/fpga/profi/sim/**'
       - '.github/workflows/sim.yml'
   pull_request:
@@ -24,6 +26,7 @@ on:
       - 'firmware/src/fpga/profi/rtl/spi/**'
       - 'firmware/src/fpga/profi/rtl/sound/**'
       - 'firmware/src/fpga/profi/rtl/dac/**'
+      - 'firmware/src/fpga/profi/rtl/memory/**'
       - 'firmware/src/fpga/profi/sim/**'
       - '.github/workflows/sim.yml'
   workflow_dispatch:
@@ -59,3 +62,18 @@ jobs:
         run: |
           firmware/src/fpga/profi/sim/run_avr_audio.sh "$RUNNER_TEMP/sim" | tee sim.log
           { echo '### avr RTC + audio (GHDL)'; echo '```'; cat sim.log; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+
+  plus3e:
+    name: +3e memory map (GHDL)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install GHDL
+        run: sudo apt-get update -q && sudo apt-get install -y -q ghdl
+
+      - name: Run the bench
+        run: |
+          firmware/src/fpga/profi/sim/run_plus3e.sh "$RUNNER_TEMP/sim" | tee sim.log
+          { echo '### +3e memory map (GHDL)'; echo '```'; cat sim.log; echo '```'; } >> "$GITHUB_STEP_SUMMARY"

@@ -63,6 +63,12 @@ port (
 	ROM_BANK : in std_logic := '0';
 	EXT_ROM_BANK : in std_logic_vector(1 downto 0) := "00";
 	
+	-- ZX Spectrum +3 mode (ROM bank +3e)
+	PLUS3E		: in std_logic := '0';
+	P3_ROM		: in std_logic_vector(1 downto 0) := "00"; -- #1FFD(2) & #7FFD(4)
+	P3_ALLRAM	: in std_logic := '0'; -- #1FFD(0): special paging, RAM in all four segments
+	P3_RAMCFG	: in std_logic_vector(1 downto 0) := "00"; -- #1FFD(2 downto 1): special paging config
+	
 	COUNT_BLOCK : in std_logic := '0'; -- paper = '0' and (not (chr_col_cnt(2) and hor_cnt(0)));
 	CONTENDED   : out std_logic := '0';
 	
@@ -85,6 +91,8 @@ architecture RTL of memory is
 	
 	signal rom_page : std_logic_vector(1 downto 0) := "00";
 	signal ram_page : std_logic_vector(8 downto 0) := "000000000";
+	signal rom_seg  : std_logic_vector(4 downto 0); -- MA(20 downto 16) of the rom
+	signal p3_page  : std_logic_vector(2 downto 0); -- +3 special paging bank
 
 	signal vbus_req	: std_logic := '1';
 	signal vbus_mode	: std_logic := '1';	
@@ -191,7 +199,7 @@ begin
 		"1010000" when is_romDIVMMC = '1' and vbus_mode = '0' else -- DIVMMC rom
 		"11" & REG_E3(5 downto 1) when is_ramDIVMMC = '1' and vbus_mode = '0' else -- DIVMMC ram 512 kB from #X180000 SRAM
 ---
-		"100" & EXT_ROM_BANK(1 downto 0) & rom_page(1 downto 0) when is_rom = '1' and vbus_mode = '0' else -- rom from sram high bank 
+		rom_seg & rom_page(1 downto 0) when is_rom = '1' and vbus_mode = '0' else -- rom from sram high bank 
 		ram_page(6 downto 0) when vbus_mode = '0' else 
 		"00001" & VID_PAGE & '1' when vbus_mode = '1' and DS80 = '0' else -- spectrum screen
 		"00001" & VID_PAGE & '0' when vbus_mode = '1' and DS80 = '1' and vid_rd = '0' else -- profi bitmap 
@@ -232,7 +240,7 @@ begin
 	is_romDIVMMC <= '1' when DIVMMC_EN = '1' and N_MREQ = '0' and (AUTOMAP ='1' or REG_E3(7) = '1') and A(15 downto 13) = "000" else '0';
 	is_ramDIVMMC <= '1' when DIVMMC_EN = '1' and N_MREQ = '0' and (AUTOMAP ='1' or REG_E3(7) = '1') and A(15 downto 13) = "001" else '0';
 	
-	is_rom <= '1' when N_MREQ = '0' and A(15 downto 14)  = "00"  and WOROM = '0' else '0';
+	is_rom <= '1' when N_MREQ = '0' and A(15 downto 14)  = "00"  and WOROM = '0' and (PLUS3E = '0' or P3_ALLRAM = '0') else '0';
 	is_ram <= '1' when N_MREQ = '0' and is_rom = '0' else '0';	
 	
 	-- 00 - bank 0, CPM
@@ -240,14 +248,36 @@ begin
 	-- 10 - bank 2, Basic-128
 	-- 11 - bank 3, Basic-48
 
-	rom_page <= (not(TRDOS)) & ROM_BANK when DIVMMC_EN = '0' else "11";
+	rom_page <= P3_ROM when PLUS3E = '1' else
+					(not(TRDOS)) & ROM_BANK when DIVMMC_EN = '0' else "11";
+
+	-- rom banks 0..3 at #100000-#13FFFF, +3e at #150000-#15FFFF
+	rom_seg <= "10101" when PLUS3E = '1' else "100" & EXT_ROM_BANK;
+
+	-- +3 special paging: 0-1-2-3, 4-5-6-7, 4-5-6-3, 4-7-6-3
+	process (mux, P3_RAMCFG)
+	begin
+		case mux is
+			when "00" => if P3_RAMCFG = "00" then p3_page <= "000"; else p3_page <= "100"; end if;
+			when "01" => case P3_RAMCFG is
+								when "00" => p3_page <= "001";
+								when "11" => p3_page <= "111";
+								when others => p3_page <= "101";
+							 end case;
+			when "10" => if P3_RAMCFG = "00" then p3_page <= "010"; else p3_page <= "110"; end if;
+			when others => if P3_RAMCFG = "01" then p3_page <= "111"; else p3_page <= "011"; end if;
+		end case;
+	end process;
 			
 	N_OE <= '0' when (is_ram = '1' or is_rom = '1') and N_RD = '0' else '1';
 		
 	mux <= A(15 downto 14);
 		
-	process (mux, RAM_EXT, RAM_BANK, SCR, SCO, RAM_6MB)
+	process (mux, RAM_EXT, RAM_BANK, SCR, SCO, RAM_6MB, PLUS3E, P3_ALLRAM, p3_page)
 	begin
+		if PLUS3E = '1' and P3_ALLRAM = '1' then
+			ram_page <= "000000" & p3_page;
+		else
 		case mux is
 			when "00" => ram_page <= "000000000";                 -- Seg0 ROM 0000-3FFF or Seg0 RAM 0000-3FFF				
 			when "01" => if SCO='0' then 
@@ -275,6 +305,7 @@ begin
 							 end if;
 			when others => null;
 		end case;
+		end if;
 	end process;
 	
 	-- on the CPU clock: CLK2X with the CPU clock enable (was clocked by clk_cpu)

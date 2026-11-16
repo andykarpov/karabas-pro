@@ -51,6 +51,19 @@ firmware/src/fpga/profi/sim/run_avr_audio.sh
 The script exits with an error if a check fails. `avr_ip_models.vhd` holds
 models of the RTC RAM, the SPI queue and the message ROM.
 
+## +3e memory map
+
+```sh
+firmware/src/fpga/profi/sim/run_plus3e.sh
+```
+
+`tb_plus3e.vhd` drives `memory.vhd` with `PLUS3E = '1'`, random `#1FFD` /
+`#7FFD` values, addresses and RAM bank, and checks every CPU access against the
+ZX Spectrum +3 memory map: the ROM page `#1FFD(2) & #7FFD(4)` read from SRAM
+`#150000`, banks 5 / 2 / `#7FFD(2..0)` in the normal mode, the four layouts of
+the special mode (`#1FFD(0) = 1`: 0-1-2-3, 4-5-6-7, 4-5-6-3, 4-7-6-3), no writes
+to the ROM and the chip select of a 6 MB board.
+
 ## Models
 
 `ip_models.vhd` contains behavioural models of the Quartus IP used by the
