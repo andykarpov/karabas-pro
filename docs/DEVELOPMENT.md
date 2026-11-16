@@ -65,7 +65,7 @@ docker build -t karabas-quartus:13.0sp1 docker/quartus13
 |---|---|---|---|
 | `build-fpga.yml` | PR и push в `master`, если тронуты `firmware/src/fpga/profi`, `firmware/src/cpld`, `docker/quartus13` | Собирает ep4ce10/ep4ce6/ep3c10 (`make all jic`) и CPLD в Docker-образе | Артефакты `profi-<чип>` (jic, sof, rbf, отчёты) и `cpld-epm3128` (pof). В summary — занятость LE и таблицы setup/hold |
 | `build-avr.yml` | PR и push в `master`, если тронут `firmware/src/avr` | `pio run` | Артефакт `karabas-pro-avr-firmware` (hex, eep, `build_ver.txt`), сводка по памяти |
-| `sim.yml` | PR и push в `master`, если тронуты `rtl/video`, `rtl/avr`, `rtl/spi`, `rtl/sound`, `rtl/dac` или `firmware/src/fpga/profi/sim` | GHDL: развёртка скандаблера во всех 6 режимах, RTC в `avr.vhd`, микшер и ЦАП | Результаты в summary |
+| `sim.yml` («GHDL simulation») | только вручную: Actions → GHDL simulation → Run workflow | GHDL: развёртка скандаблера во всех 6 режимах, RTC в `avr.vhd`, микшер и ЦАП, карта памяти +3e | Результаты в summary |
 | `release.yml` | Вручную или push тега `v*` | Собирает всё и публикует релиз | Релиз `karabas-pro-<tag>.zip` |
 
 Артефакты хранятся 90 дней: Actions → нужный запуск → Artifacts. Это и есть тестовые
