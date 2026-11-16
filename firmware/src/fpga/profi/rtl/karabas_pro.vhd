@@ -630,6 +630,7 @@ port map (
 	CLK2X 			=> clk_bus,
 	CLKX 				=> clk_div2,
 	CLK_CPU 			=> clk_cpu,
+	CPU_CE 			=> clk_cpu_en,
 	-- cpu signals
 	A 					=> cpu_a_bus,
 	D 					=> cpu_do_bus,
@@ -1006,7 +1007,7 @@ port map (
 U20: entity work.serial_mouse
 port map(
 	CLK 				=> clk_bus,
-	CLKEN 			=> clk_cpu,
+	CLKEN 			=> clk_cpu_en,
 	N_RESET 			=> not(reset),
 	A 					=> cpu_a_bus,
 	DI					=> cpu_do_bus,

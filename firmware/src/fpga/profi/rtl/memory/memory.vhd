@@ -12,6 +12,7 @@ port (
 	CLK2X 		: in std_logic;
 	CLKX	   	: in std_logic;
 	CLK_CPU 		: in std_logic;
+	CPU_CE 		: in std_logic := '1'; -- clk_cpu rises at this CLK2X edge (clk_cpu = CLK2X and CPU_CE)
 
 	A           : in std_logic_vector(15 downto 0); -- address bus
 	D 				: in std_logic_vector(7 downto 0);
@@ -101,6 +102,8 @@ architecture RTL of memory is
 	signal mux : std_logic_vector(1 downto 0);
 	
 	signal block_reg : std_logic := '0';
+	signal ce : std_logic_vector(1 to 3);                  -- N_CE1..3
+	signal ce_q : std_logic_vector(1 to 3) := "011";
 	signal page_cont : std_logic := '0';
 	
 	-- DIVMMC
@@ -129,32 +132,47 @@ begin
 	-- селектор чипов
 	-- 3 чипа = 6МБ, из которых 2МБ под ПЗУ, остальные 4МБ под ОЗУ
 	-- 1 чип = 2МБ, из которых 1МБ под ПЗУ, 1 МБ под ОЗУ
-	process(RAM_6MB, loader_act, is_rom, vbus_mode, is_ram, ram_page)
+	-- when no branch applies, the previous selection is kept: with a register
+	-- (ce_q) and a bypass instead of a latch
+	process(RAM_6MB, loader_act, is_rom, is_romDIVMMC, is_ramDIVMMC, vbus_mode, is_ram, ram_page, ce_q)
 	begin 
 		-- в режиме 2МБ всегда активен только первый чип
 		if (RAM_6MB = '0') then 
-			N_CE1 <= '0';
-			N_CE2 <= '1';
-			N_CE3 <= '1';
+			ce(1) <= '0';
+			ce(2) <= '1';
+			ce(3) <= '1';
 		-- 6МБ в режиме работы загрузчика или когда идет обращение к ПЗУ - всегда активен третий чип
 		-- 09.07.2023:OCH: DIVMMC work with chip #3
 		elsif (loader_act = '1' or ((is_rom = '1' or is_romDIVMMC = '1' or is_ramDIVMMC = '1') and vbus_mode = '0')) then
-			N_CE1 <= '1';
-			N_CE2 <= '1';
-			N_CE3 <= '0';
+			ce(1) <= '1';
+			ce(2) <= '1';
+			ce(3) <= '0';
 		-- 6МБ в режиме чтения видеоконтроллером всегда активен первый чип
 		elsif (vbus_mode = '1') then 
-			N_CE1 <= '0';
-			N_CE2 <= '1';
-			N_CE3 <= '1';
+			ce(1) <= '0';
+			ce(2) <= '1';
+			ce(3) <= '1';
 		-- 6МБ в режиме доступа к памяти идет выбор первого или второго чипа
 		elsif (vbus_mode = '0' and is_ram = '1') then
-			N_CE1 <= ram_page(7);
-			N_CE2 <= not ram_page(7);
-			N_CE3 <= '1';
+			ce(1) <= ram_page(7);
+			ce(2) <= not ram_page(7);
+			ce(3) <= '1';
+		else
+			ce <= ce_q;
 		end if;
 		
-	end process;					
+	end process;
+
+	process (CLK2X)
+	begin
+		if rising_edge(CLK2X) then
+			ce_q <= ce;
+		end if;
+	end process;
+
+	N_CE1 <= ce(1);
+	N_CE2 <= ce(2);
+	N_CE3 <= ce(3);					
 
 	is_buf_wr <= '1' when vbus_mode = '0' and CLK_CPU = '0' else '0';	
 	DO <= buf_md;	
@@ -259,9 +277,10 @@ begin
 		end case;
 	end process;
 	
-	process( clk_cpu )
+	-- on the CPU clock: CLK2X with the CPU clock enable (was clocked by clk_cpu)
+	process( CLK2X )
 	begin
-		if clk_cpu'event and clk_cpu = '1' then
+		if CLK2X'event and CLK2X = '1' and CPU_CE = '1' then
 			if N_MREQ = '0' or (A(0) = '0' and N_IORQ = '0')then
 				block_reg <='0';
 			else

@@ -10,7 +10,7 @@ use IEEE.numeric_std.all;
 entity serial_mouse is
 port(
 	 CLK			: in std_logic;
-	 CLKEN 		: in std_logic;
+	 CLKEN 		: in std_logic; -- clock enable: the CPU clock (clk_cpu) rises at this clk_bus edge
 	 N_RESET 	: in std_logic := '1';
 	 
     A          : in std_logic_vector(15 downto 0);
@@ -80,7 +80,8 @@ architecture RTL of serial_mouse is
 	
 	signal do_reg : std_logic_vector(7 downto 0) := "00000000";	
 	signal ctl_reg : std_logic_vector(7 downto 0) := "00000000";
-	signal status_reg : std_logic_vector(7 downto 0) := "00000101";
+	signal status_reg : std_logic_vector(7 downto 0);
+	signal rx_rdy : std_logic := '0'; -- status bit 1, RxRDY
 	
 	signal rxrdt : std_logic := '0';
 	signal txrdt : std_logic := '0';
@@ -129,6 +130,9 @@ begin
 	vv51_cs_data <= '0' when vv51_cs='0' and A(5) = '0' else '1';
 	vv51_read <= '0' when vv51_cs_data = '0' and RD_N = '0' else '1';
 	
+	-- status: only RxRDY changes; TxRDY and TxEmpty are always set (they used to be
+	-- assigned only by the reset, which made them latches)
+	status_reg <= "00000" & '1' & rx_rdy & '1'; -- TxEmpty, RxRDY, TxRDY
 	rxrdt <= '1' when status_reg(1) = '1' and ctl_reg(2) = '1' else '0'; -- RxRDY + RxEn
 	txrdt <= '1' when status_reg(0) = '1' and status_reg(2) = '0' and ctl_reg(0) = '1' else '0'; -- TxRDY + !TxEmpty + TxEn
 	
@@ -149,12 +153,12 @@ begin
 	process (N_RESET, CLK, CLKEN, MS_EVENT, prev_event, state, new_data, status_reg, ctl_reg, MS_X, MS_Y, MS_BTNS, vv51_read, cnt_wait)
 	begin
 		if N_RESET = '0' then
-			status_reg <= "00000101"; -- 5 = TxRdy + TxEmpty
+			rx_rdy <= '0';
 			state <= st_init;
 			new_data <= '0';
 			cnt_byte <= "00";
 
-		elsif CLKEN'event and CLKEN = '1' then 
+		elsif CLK'event and CLK = '1' and CLKEN = '1' then -- was clocked by clk_cpu itself
 
 			vv51_read_after <= vv51_read;
 		
@@ -170,12 +174,12 @@ begin
 					-- pause after reset
 					when st_init => 
 						cnt_byte <= "00";
-						status_reg(1) <= '0';
+						rx_rdy <= '0';
 						state <= st_prepare;
 
 					-- capture mouse buffer
 					when st_prepare =>
-						status_reg(1) <= '0';
+						rx_rdy <= '0';
 						if (new_data = '1' and ms_buf /= MS_BTNS(0) & MS_BTNS(1) & std_logic_vector(MS_Y(7 downto 6)) & std_logic_vector(MS_X(7 downto 6)) & std_logic_vector(MS_X(5 downto 0)) & std_logic_vector(MS_Y(5 downto 0))) then 
 							ms_buf <= MS_BTNS(0) & MS_BTNS(1) & std_logic_vector(MS_Y(7 downto 6)) & std_logic_vector(MS_X(7 downto 6)) & std_logic_vector(MS_X(5 downto 0)) & std_logic_vector(MS_Y(5 downto 0));
 							state <= st_byte0;
@@ -188,22 +192,22 @@ begin
 					when st_byte0 => 
 						cnt_byte <= "00";
 						cnt_wait <= "000";
-						status_reg(1) <= '0';
+						rx_rdy <= '0';
 						state <= st_byte0r;
 						
 					-- waiting for read by the CPU
 					when st_byte0r => 
 						if (vv51_read_after = '0') then
-							status_reg(1) <= '0';	
+							rx_rdy <= '0';	
 							state <= st_wait0;
 						else 
-							status_reg(1) <= '1';
+							rx_rdy <= '1';
 							state <= st_byte0r;
 						end if;
 
 					-- waiting 8 tacts in inactive state after the first mouse byte
 					when st_wait0 => 	
-						status_reg(1) <= '0';
+						rx_rdy <= '0';
 						if (cnt_wait < 7) then 
 							cnt_wait <= cnt_wait + 1;
 							state <= st_wait0;
@@ -215,22 +219,22 @@ begin
 					when st_byte1 => 
 						cnt_wait <= "000";
 						cnt_byte <= "01";
-						status_reg(1) <= '0';
+						rx_rdy <= '0';
 						state <= st_byte1r;
 						
 					-- waiting for read by CPU 
 					when st_byte1r => 
 						if (vv51_read_after = '0') then 
-							status_reg(1) <= '0';
+							rx_rdy <= '0';
 							state <= st_wait1;
 						else 
-							status_reg(1) <= '1';
+							rx_rdy <= '1';
 							state <= st_byte1r;
 						end if;
 
 					-- waiting 8 tacts in inactive state after the second mouse byte
 					when st_wait1 => 
-						status_reg(1) <= '0';
+						rx_rdy <= '0';
 						if (cnt_wait < 7) then 
 							cnt_wait <= cnt_wait + 1;
 							state <= st_wait1;
@@ -242,22 +246,22 @@ begin
 					when st_byte2 => 
 						cnt_wait <= "000";
 						cnt_byte <= "10";
-						status_reg(1) <= '0';
+						rx_rdy <= '0';
 						state <= st_byte2r;
 						
 					-- waiting for read by CPU 
 					when st_byte2r => 
 						if (vv51_read_after = '0') then 
-							status_reg(1) <= '0';
+							rx_rdy <= '0';
 							state <= st_wait2;
 						else 
-							status_reg(1) <= '1';
+							rx_rdy <= '1';
 							state <= st_byte2r;
 						end if;
 
 					-- waiting 8 tacts in inactive state after the second mouse byte
 					when st_wait2 => 
-						status_reg(1) <= '0';
+						rx_rdy <= '0';
 						if (cnt_wait < 7) then 
 							cnt_wait <= cnt_wait + 1;
 							state <= st_wait2;
