@@ -6,9 +6,8 @@
 const static char msg_ru_fpga[] PROGMEM = {"ПЛИС "};
 const static char msg_ru_avr[] PROGMEM = {"АВР "};
 const static char msg_ru_rom_bank[] PROGMEM = {"Банк ПЗУ"};
-const static char msg_ru_menu_f1_f4[] PROGMEM = {"Меню+F1-F4"};
+const static char msg_ru_menu_f1_f5[] PROGMEM = {"Меню+F1-F5"};
 const static char msg_ru_turbofdc[] PROGMEM = {"Турбо ГМД"};
-const static char msg_ru_menu_f5[] PROGMEM = {"Меню+F5"};
 const static char msg_ru_covox[] PROGMEM = {"Ковокс"};
 const static char msg_ru_menu_f6[] PROGMEM = {"Меню+F6"};
 const static char msg_ru_psg_mix[] PROGMEM = {"Микшер"};

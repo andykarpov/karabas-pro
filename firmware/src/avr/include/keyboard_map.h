@@ -50,7 +50,7 @@ typedef enum {
   HK_ROMBANK_1,      // F2
   HK_ROMBANK_2,      // F3
   HK_ROMBANK_3,      // F4
-  HK_TURBOFDC,       // F5
+  HK_ROMBANK_4,      // F5 (+3e)
   HK_COVOX,          // F6
   HK_STEREO,         // F7
   HK_SSG,            // F8
@@ -78,7 +78,7 @@ static const HotkeyEntry s_hotkey_map[] PROGMEM = {
   { PS2_KEY_F2,      HK_ROMBANK_1 },
   { PS2_KEY_F3,      HK_ROMBANK_2 },
   { PS2_KEY_F4,      HK_ROMBANK_3 },
-  { PS2_KEY_F5,      HK_TURBOFDC },
+  { PS2_KEY_F5,      HK_ROMBANK_4 },
   { PS2_KEY_F6,      HK_COVOX },
   { PS2_KEY_F7,      HK_STEREO },
   { PS2_KEY_F8,      HK_SSG },

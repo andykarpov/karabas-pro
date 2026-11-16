@@ -28,6 +28,7 @@ const uint8_t default_eeprom[] __attribute__((used, section(".eeprom"))) = {
   EEPROM_VALUE_FALSE, // 0x12: EEPROM_LED_OVERRIDE_ADDRESS (20 = disabled for Rev D+)
   EEPROM_VALUE_TRUE,  // 0x13: EEPROM_HW_BUTTONS_ADDRESS  (10 = enabled)
   LANG_EN,            // 0x14: EEPROM_LANG_ADDRESS (0 = EN, 1 = RU, 2 = UA)
+  EEPROM_VALUE_FALSE, // 0x15: EEPROM_PLUS3E_ADDRESS (ROM bank +3e)
 };
 
 static bool s_is_started = false;
@@ -56,6 +57,7 @@ static bool s_is_sw1 = false;
 static bool s_is_sw2 = false;
 static bool s_is_sw3 = false;
 static bool s_is_sw4 = false;
+static bool s_is_plus3e = false; // ROM bank 4 (+3e); sw3/sw4 keep banks 0..3
 static bool s_is_sw5 = false;
 static bool s_is_sw6 = false;
 static bool s_is_sw7 = false;
@@ -151,6 +153,7 @@ static void eeprom_restore_values(void)
   s_is_sw2       = eeprom_restore_bool(EEPROM_SW2_ADDRESS, s_is_sw2);
   s_is_sw3       = eeprom_restore_bool(EEPROM_SW3_ADDRESS, s_is_sw3);
   s_is_sw4       = eeprom_restore_bool(EEPROM_SW4_ADDRESS, s_is_sw4);
+  s_is_plus3e    = eeprom_restore_bool(EEPROM_PLUS3E_ADDRESS, s_is_plus3e);
   s_is_sw5       = eeprom_restore_bool(EEPROM_SW5_ADDRESS, s_is_sw5);
   s_is_sw6       = eeprom_restore_bool(EEPROM_SW6_ADDRESS, s_is_sw6);
   s_is_sw7       = eeprom_restore_bool(EEPROM_SW7_ADDRESS, s_is_sw7);
@@ -190,6 +193,7 @@ static void eeprom_restore_values(void)
   s_matrix[ZX_K_SW2]          = s_is_sw2;
   s_matrix[ZX_K_SW3]          = s_is_sw3;
   s_matrix[ZX_K_SW4]          = s_is_sw4;
+  s_matrix[ZX_K_PLUS3E]       = s_is_plus3e;
   s_matrix[ZX_K_SW5]          = s_is_sw5;
   s_matrix[ZX_K_SW6]          = s_is_sw6;
   s_matrix[ZX_K_SW7]          = s_is_sw7;
@@ -352,16 +356,13 @@ static bool handle_hotkey(uint8_t code, uint32_t n, bool is_up)
           case HK_ROMBANK_0:
           case HK_ROMBANK_1:
           case HK_ROMBANK_2:
-          case HK_ROMBANK_3: {
+          case HK_ROMBANK_3:
+          case HK_ROMBANK_4: {
             uint8_t b = action - HK_ROMBANK_0;
             keyboard_set_rombank(b);
             zxosd_on_key_event(EVENT_OSD_ROMBANK);
             break;
           }
-          case HK_TURBOFDC:
-            keyboard_toggle_turbofdc();
-            zxosd_on_key_event(EVENT_OSD_TURBOFDC);
-            break;
           case HK_COVOX:
             keyboard_toggle_covox();
             zxosd_on_key_event(EVENT_OSD_COVOX);
@@ -797,14 +798,21 @@ void keyboard_set_osd_popup(bool val)
   s_matrix[ZX_K_OSD_POPUP] = s_osd_popup;
 }
 
+// Banks 0..3 are selected by sw3/sw4; bank 4 (+3e) is a separate flag and
+// keeps sw3/sw4 as they were.
 void keyboard_set_rombank(uint8_t bank)
 {
-  s_is_sw3 = (bank & 1) != 0;
-  s_is_sw4 = (bank & 2) != 0;
+  s_is_plus3e = (bank == 4);
+  if (!s_is_plus3e) {
+    s_is_sw3 = (bank & 1) != 0;
+    s_is_sw4 = (bank & 2) != 0;
+  }
   eeprom_store_bool(EEPROM_SW3_ADDRESS, s_is_sw3);
   eeprom_store_bool(EEPROM_SW4_ADDRESS, s_is_sw4);
+  eeprom_store_bool(EEPROM_PLUS3E_ADDRESS, s_is_plus3e);
   s_matrix[ZX_K_SW3] = s_is_sw3;
   s_matrix[ZX_K_SW4] = s_is_sw4;
+  s_matrix[ZX_K_PLUS3E] = s_is_plus3e;
 }
 
 void keyboard_toggle_turbofdc(void)
@@ -991,6 +999,7 @@ bool keyboard_get_is_osd_popup(void)   { return s_osd_popup; }
 uint8_t keyboard_get_rombank(void)
 {
   uint8_t rombank = 0;
+  if (s_is_plus3e) return 4;
   if (s_is_sw3) rombank |= 1;
   if (s_is_sw4) rombank |= 2;
   return rombank;

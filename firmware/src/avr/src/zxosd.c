@@ -74,7 +74,7 @@ static uint8_t get_pause(void)         { return keyboard_get_pause() ? 1 : 0; }
 static void    set_pause(uint8_t v)     { (void)v; keyboard_do_pause(); }
 
 // Label arrays in PROGMEM
-static const char * const val_rom_bank[] PROGMEM = { msg_default, msg_pqdos, msg_flasher, msg_fdimage };
+static const char * const val_rom_bank[] PROGMEM = { msg_default, msg_pqdos, msg_flasher, msg_fdimage, msg_plus3e };
 static const char * const val_psg_type[] PROGMEM = { msg_ym, msg_ay };
 static const char * const val_joy_type[] PROGMEM = { msg_atari, msg_sega };
 
@@ -113,8 +113,8 @@ static const char * const val_keyboard_ua[] PROGMEM = { msg_ua_spectrum, msg_ua_
 static const MenuItem s_main_menu_items[LANG_COUNT][MAIN_MENU_ITEMS_COUNT] PROGMEM = {
   // LANG_EN
   {
-    { msg_en_rom_bank,  msg_en_menu_f1_f4,  5, 3, val_rom_bank,    get_rombank,     set_rombank,     0 },
-    { msg_en_turbofdc,  msg_en_menu_f5,     6, 1, val_on_off_en,   get_turbofdc,    set_turbofdc,    0 },
+    { msg_en_rom_bank,  msg_en_menu_f1_f5,  5, 4, val_rom_bank,    get_rombank,     set_rombank,     0 },
+    { msg_en_turbofdc,  msg_no_hotkey,      6, 1, val_on_off_en,   get_turbofdc,    set_turbofdc,    0 },
     { msg_en_covox,     msg_en_menu_f6,     7, 1, val_on_off_en,   get_covox,       set_covox,       0 },
     { msg_en_psg_mix,   msg_en_menu_f7,     8, 2, val_psg_mix_en,  get_stereo,      set_stereo,      0 },
     { msg_en_psg_type,  msg_en_menu_f8,     9, 1, val_psg_type,    get_ssg,         set_ssg,         0 },
@@ -132,8 +132,8 @@ static const MenuItem s_main_menu_items[LANG_COUNT][MAIN_MENU_ITEMS_COUNT] PROGM
   },
   // LANG_RU
   {
-    { msg_ru_rom_bank,  msg_ru_menu_f1_f4,  5, 3, val_rom_bank,    get_rombank,     set_rombank,     0 },
-    { msg_ru_turbofdc,  msg_ru_menu_f5,     6, 1, val_on_off_ru,   get_turbofdc,    set_turbofdc,    0 },
+    { msg_ru_rom_bank,  msg_ru_menu_f1_f5,  5, 4, val_rom_bank,    get_rombank,     set_rombank,     0 },
+    { msg_ru_turbofdc,  msg_no_hotkey,      6, 1, val_on_off_ru,   get_turbofdc,    set_turbofdc,    0 },
     { msg_ru_covox,     msg_ru_menu_f6,     7, 1, val_on_off_ru,   get_covox,       set_covox,       0 },
     { msg_ru_psg_mix,   msg_ru_menu_f7,     8, 2, val_psg_mix_ru,  get_stereo,      set_stereo,      0 },
     { msg_ru_psg_type,  msg_ru_menu_f8,     9, 1, val_psg_type,    get_ssg,         set_ssg,         0 },
@@ -151,8 +151,8 @@ static const MenuItem s_main_menu_items[LANG_COUNT][MAIN_MENU_ITEMS_COUNT] PROGM
   },
   // LANG_UA
   {
-    { msg_ua_rom_bank,  msg_ua_menu_f1_f4,  5, 3, val_rom_bank,    get_rombank,     set_rombank,     0 },
-    { msg_ua_turbofdc,  msg_ua_menu_f5,     6, 1, val_on_off_ua,   get_turbofdc,    set_turbofdc,    0 },
+    { msg_ua_rom_bank,  msg_ua_menu_f1_f5,  5, 4, val_rom_bank,    get_rombank,     set_rombank,     0 },
+    { msg_ua_turbofdc,  msg_no_hotkey,      6, 1, val_on_off_ua,   get_turbofdc,    set_turbofdc,    0 },
     { msg_ua_covox,     msg_ua_menu_f6,     7, 1, val_on_off_ua,   get_covox,       set_covox,       0 },
     { msg_ua_psg_mix,   msg_ua_menu_f7,     8, 2, val_psg_mix_ua,  get_stereo,      set_stereo,      0 },
     { msg_ua_psg_type,  msg_ua_menu_f8,     9, 1, val_psg_type,    get_ssg,         set_ssg,         0 },

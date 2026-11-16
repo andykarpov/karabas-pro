@@ -102,7 +102,7 @@
 #define ZX_K_DIVMMC 75
 #define ZX_K_NEMOIDE 76
 
-#define ZX_K_RESERVED2 77
+#define ZX_K_PLUS3E 77 // ROM bank +3e (packet 0x0A bit 5)
 #define ZX_K_RESERVED3 78
 #define ZX_K_RESERVED4 79
 
@@ -130,6 +130,7 @@
 #define EEPROM_LED_OVERRIDE_ADDRESS 0x12
 #define EEPROM_HW_BUTTONS_ADDRESS   0x13
 #define EEPROM_LANG_ADDRESS         0x14
+#define EEPROM_PLUS3E_ADDRESS       0x15
 
 #define LANG_EN 0
 #define LANG_RU 1

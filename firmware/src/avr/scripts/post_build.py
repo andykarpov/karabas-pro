@@ -28,12 +28,13 @@ def post_build_action(source, target, env):
     # Base EEPROM configuration (0x00 to 0x11):
     base = [0, 10, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 0, 0, 20, 20]
 
-    # Revision configurations (0x12: LED override, 0x13: HW buttons, 0x14: Language)
+    # Revision configurations (0x12: LED override, 0x13: HW buttons, 0x14: Language,
+    # 0x15: ROM bank +3e)
     configs = {
-        'karabas_pro_revA.eep': base + [10, 20, 0],  # Rev.A/B: led_override=10, hw_buttons=20, lang=0
-        'karabas_pro_revC.eep': base + [10, 10, 0],  # Rev.C:   led_override=10, hw_buttons=10, lang=0
-        'karabas_pro_revD.eep': base + [20, 10, 0],  # Rev.D+:  led_override=20, hw_buttons=10, lang=0
-        'karabas_pro.eep':      base + [20, 10, 0],  # Default (Rev.D+)
+        'karabas_pro_revA.eep': base + [10, 20, 0, 20],  # Rev.A/B: led_override=10, hw_buttons=20, lang=0, plus3e=20
+        'karabas_pro_revC.eep': base + [10, 10, 0, 20],  # Rev.C:   led_override=10, hw_buttons=10, lang=0, plus3e=20
+        'karabas_pro_revD.eep': base + [20, 10, 0, 20],  # Rev.D+:  led_override=20, hw_buttons=10, lang=0, plus3e=20
+        'karabas_pro.eep':      base + [20, 10, 0, 20],  # Default (Rev.D+)
     }
 
     for filename, data in configs.items():
