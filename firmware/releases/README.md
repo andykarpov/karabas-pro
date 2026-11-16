@@ -28,4 +28,5 @@ a release as they are:
 The binaries are built by GitHub Actions from the sources when a release is
 made (`.github/workflows/release.yml`). Older binaries, including the Pong,
 RK86 and Profi +3e cores, are still available in the git history and in the
-older releases.
+older releases. These cores were removed from the sources; the ZX Spectrum +3e
+lives on as a ROM bank of the Profi core.

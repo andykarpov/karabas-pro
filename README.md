@@ -37,8 +37,9 @@ The idea was to make a small clone of the Profi (Профи) ZX Spectrum compati
 15. An additional ROM bank with **PQ-DOS BIOS**
 16. An additional ROM bank with **Flash Tool** by **Doctor Max**, to update the FPGA firmware and ROM banks without a programmer
 17. An additional ROM bank with **FDImage Tool** by **Doctor Max**, to write TRD, SCL, PRO, TD0 and FDI images to real floppies
-18. OSD menu
-19. OSD full-screen overlay with settings, RTC setup and more
+18. An additional ROM bank with **ZX Spectrum +3e** by **Garry Lancaster** (MMC build, SD card through Z-Controller): the core switches to the +3 memory map, Menu+F5
+19. OSD menu
+20. OSD full-screen overlay with settings, RTC setup and more
 
 ## Download
 
