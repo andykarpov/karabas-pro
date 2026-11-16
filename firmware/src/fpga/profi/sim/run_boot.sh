@@ -1,15 +1,17 @@
 #!/bin/bash
 # Whole-core GHDL run of the Profi core with the ROM bank +3e (tb_boot.vhd).
-# Not in CI: 500 ms of machine time take about 30 minutes.
+# Not in CI: 1250 ms of machine time take about 1.5 hours.
 #
 # Usage: firmware/src/fpga/profi/sim/run_boot.sh [RUN_MS] [WORK_DIR]
-# Expected with RUN_MS=500: the ROM tests the eight RAM banks (#7FFD 07..00),
-# writes #1FFD = 04, prints the +3e copyright lines (screen5.png) and then
-# polls the SD card on port #57 (there is no card in the bench).
+# Expected at 14 MHz: the ROM tests the eight RAM banks (#7FFD 07..00), writes
+# #1FFD = 04 and prints the +3e copyright lines (~400 ms), polls the SD card on
+# port #57 until it times out (there is no card in the bench), then shows
+# "Physical drives: 0 floppy, 0 MMC" and the main menu "128 +2e" (~1200 ms;
+# +2e because there is no floppy controller). screen5.png has the last screen.
 set -euo pipefail
 HERE=$(cd "$(dirname "$0")" && pwd)
 RTL=$HERE/../rtl
-RUN_MS=${1:-500}
+RUN_MS=${1:-1250}
 W=${2:-$(mktemp -d)}
 mkdir -p "$W"
 cd "$W"
