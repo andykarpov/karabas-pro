@@ -34,5 +34,24 @@ The border is the same on both sides of the paper: 103 clocks for Spectrum, 51
 for Profi. If a change in the video path moves the picture, adjust
 `SPEC_PAPER` / `PROF_PAPER` in `rtl/video/scandoubler.vhd`.
 
+## avr RTC and audio
+
+```sh
+firmware/src/fpga/profi/sim/run_avr_audio.sh
+```
+
+- `tb_rtc.vhd`: `avr.vhd` with an SPI master playing the AVR. A register sent by
+  the AVR is written into the RTC RAM once, a CPU write is not overwritten
+  afterwards, and one CPU write sends exactly one `CMD_RTC` packet to the AVR.
+- `tb_audio.vhd`: `audio_mixer` against an integer model (random inputs,
+  extremes, ACB / ABC / mono / mute), and `tda1543` decoded the way the DAC
+  chips do (I2S for TDA1543, LSB-justified for TDA1543A), compared with the
+  samples it loaded.
+
+The script exits with an error if a check fails. `avr_ip_models.vhd` holds
+models of the RTC RAM, the SPI queue and the message ROM.
+
+## Models
+
 `ip_models.vhd` contains behavioural models of the Quartus IP used by the
 overlay. `mkroms.py` converts their ROM contents for GHDL.

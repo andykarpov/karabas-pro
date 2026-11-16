@@ -1,19 +1,29 @@
 name: Simulate video path
 
-# GHDL bench: video controller -> OSD overlay -> scandoubler in all six screen
-# modes, compared with firmware/src/fpga/profi/sim/expected_scandoubler.txt.
+# GHDL benches (firmware/src/fpga/profi/sim):
+# - video controller -> OSD overlay -> scandoubler in all six screen modes,
+#   compared with expected_scandoubler.txt;
+# - avr.vhd RTC handling, audio_mixer against a model, tda1543 decoded.
 
 on:
   push:
     branches: [ master ]
     paths:
       - 'firmware/src/fpga/profi/rtl/video/**'
+      - 'firmware/src/fpga/profi/rtl/avr/**'
+      - 'firmware/src/fpga/profi/rtl/spi/**'
+      - 'firmware/src/fpga/profi/rtl/sound/**'
+      - 'firmware/src/fpga/profi/rtl/dac/**'
       - 'firmware/src/fpga/profi/sim/**'
       - '.github/workflows/sim.yml'
   pull_request:
     branches: [ master ]
     paths:
       - 'firmware/src/fpga/profi/rtl/video/**'
+      - 'firmware/src/fpga/profi/rtl/avr/**'
+      - 'firmware/src/fpga/profi/rtl/spi/**'
+      - 'firmware/src/fpga/profi/rtl/sound/**'
+      - 'firmware/src/fpga/profi/rtl/dac/**'
       - 'firmware/src/fpga/profi/sim/**'
       - '.github/workflows/sim.yml'
   workflow_dispatch:
@@ -34,3 +44,18 @@ jobs:
           ghdl --version | head -1
           firmware/src/fpga/profi/sim/run_scandoubler.sh "$RUNNER_TEMP/sim" | tee sim.log
           { echo '### Scandoubler timing (GHDL)'; echo '```'; grep -E '^(pentagon|classic|profi)' sim.log; echo '```'; tail -1 sim.log; } >> "$GITHUB_STEP_SUMMARY"
+
+  avr-audio:
+    name: avr RTC + audio (GHDL)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install GHDL
+        run: sudo apt-get update -q && sudo apt-get install -y -q ghdl
+
+      - name: Run the benches
+        run: |
+          firmware/src/fpga/profi/sim/run_avr_audio.sh "$RUNNER_TEMP/sim" | tee sim.log
+          { echo '### avr RTC + audio (GHDL)'; echo '```'; cat sim.log; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
