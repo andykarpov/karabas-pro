@@ -339,6 +339,9 @@ CPLD выполняет критическую связующую функцию
   * Скрипт пре-билда: [scripts/pre_build.py](file:///home/andy/Documents/Projects/Retrocomp/ZX-Spectrum/karabas-pro-master/firmware/src/avr/scripts/pre_build.py) генерирует штамп версии `BUILD_VER` (формат `YYMMDDHH`), хэш Git-коммита и флаги сборки. Поддерживает переменную окружения `BUILD_VER` для детерминированных CI сборок.
   * Скрипт пост-билда: [scripts/post_build.py](file:///home/andy/Documents/Projects/Retrocomp/ZX-Spectrum/karabas-pro-master/firmware/src/avr/scripts/post_build.py) формирует ревизионные образы EEPROM (`.eep`) для всех поддерживаемых плат рядом с `karabas_pro.hex` в `.pio/build/ATmega328/`. Номер сборки `BUILD_VER` (`YYMMDDHH`, UTC) задаётся переменной окружения или берётся из текущего времени (`scripts/pre_build.py`).
 * **Непрерывная интеграция CI/CD (GitHub Actions):**
+  * Процесс разработки целиком (ветки, проверки, релизы): [`docs/DEVELOPMENT.md`](file:///home/andy/Documents/Projects/Retrocomp/ZX-Spectrum/karabas-pro-master/docs/DEVELOPMENT.md).
+  * [`.github/workflows/sim.yml`](file:///home/andy/Documents/Projects/Retrocomp/ZX-Spectrum/karabas-pro-master/.github/workflows/sim.yml) — GHDL-стенд видеотракта (`firmware/src/fpga/profi/sim/run_scandoubler.sh`), сравнение с `expected_scandoubler.txt`.
+  * Анализ таймингов по парам клоков: [`scripts/timing/report.sh`](file:///home/andy/Documents/Projects/Retrocomp/ZX-Spectrum/karabas-pro-master/scripts/timing/report.sh) и `scripts/timing/compare.py`.
   * [`.github/workflows/build-avr.yml`](file:///home/andy/Documents/Projects/Retrocomp/ZX-Spectrum/karabas-pro-master/.github/workflows/build-avr.yml) — сборка прошивки AVR на push и PR в `master`, сводка по памяти, артефакт `karabas-pro-avr-firmware` (`.hex`, `.eep`, `build_ver.txt`). Вызывается и из `release.yml` с заданным `BUILD_VER`.
   * [`.github/workflows/release.yml`](file:///home/andy/Documents/Projects/Retrocomp/ZX-Spectrum/karabas-pro-master/.github/workflows/release.yml) — релиз собирается в CI, бинарники в репозитории не хранятся. Запуск вручную (Actions → Release Firmware → Run workflow, только `master`) или пушем тега `v*`. Собирает FPGA/CPLD (`build-fpga.yml`) и AVR (`build-avr.yml`) с одного коммита, пакует `karabas-pro-<tag>.zip` через [`scripts/package_release.sh`](file:///home/andy/Documents/Projects/Retrocomp/ZX-Spectrum/karabas-pro-master/scripts/package_release.sh) и публикует релиз. Тег по умолчанию `v<BUILD_VER>` (номер сборки AVR), заголовок `Build <BUILD_VER>`; оба можно задать при запуске. Суффиксы вроде `-romain…` больше не используются: при обновлении ПЗУ просто выпускается новый релиз, что изменилось — пишется в описании.
   * `firmware/releases/profi/` — статическая часть релиза: `README.md` (инструкция по прошивке), `rom/` (ROMain, PQ-DOS, FDImage, fatall, karabas_boot; без EOL-конвертации, локальный `.gitattributes`), `ep*/*.cdf` (цепочки Quartus Programmer). При обновлении ROMain заменить `rom/ROMain_<версия>/` (образы + changelog.txt) вместе с ROM в `firmware/src/fpga/profi/rom/`.
@@ -388,7 +391,7 @@ karabas-pro/
 │       ├── pq-dos/            # Образы дискет и драйверы PQ-DOS
 │       ├── rtc/               # Драйвер RTC для CP/M
 │       └── tools/             # Утилиты копирования и распаковки (karabas_boot, unFDI)
-├── scripts/                   # Вспомогательные скрипты репозитория (package_release.sh)
+├── scripts/                   # package_release.sh, timing/ (отчёты TimeQuest по парам клоков)
 └── cases/                     # 3D-модели корпусов (STL, SCAD) под габариты 3.5" FDD
 ```
 

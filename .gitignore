@@ -72,3 +72,11 @@ docker/quartus13/*.tar.xz.sha256
 
 # Local build outputs (firmware/src/build*.sh), packed by scripts/package_release.sh
 firmware/build/
+
+# Timing reports from scripts/timing/report.sh
+firmware/src/fpga/profi/syn/*/timing_*.txt
+firmware/src/fpga/profi/syn/*/timing_sta.log
+firmware/src/fpga/profi/syn/*/build.log
+
+# repository scripts (the Quartus rules above ignore any "timing" directory)
+!scripts/timing/

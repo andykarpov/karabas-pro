@@ -19,7 +19,7 @@ The bench measures the VGA output of the third frame:
   (from the start of VSYNC);
 - `pairs bad`: VGA line pairs whose two copies of an input line differ.
 
-Expected result:
+Expected result (also in `expected_scandoubler.txt`; the script fails when the output differs, and CI runs it in `.github/workflows/sim.yml`):
 
 ```
 pentagon50 line period=896 hsync=107 | act x 159..876 paper x 262..773 | lines/frame=640 vsync=2 act lines 36..629 paper lines 142..525 | pairs bad 0/297
