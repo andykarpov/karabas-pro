@@ -1,10 +1,11 @@
-# Worst slack for every pair of clocks, slow and fast models, setup and hold,
+# Worst slack for every pair of clocks, slow and fast models, setup, hold,
+# recovery and removal (asynchronous resets),
 # plus every failing path (one per endpoint) in the slow model.
 #
 # Usage: quartus_sta -t pairs.tcl <project> <pairs_out> <failing_out>
 #
-# pairs_out line:   <model> <setup|hold> <to_clock> <- <from_clock> <slack>  <from_node> -> <to_node>
-# failing_out line: <setup|hold>\t<to_clock>\t<from_clock>\t<slack>\t<from_node>\t<to_node>
+# pairs_out line:   <model> <setup|hold|recovery|removal> <to_clock> <- <from_clock> <slack>  <from_node> -> <to_node>
+# failing_out line: <setup|hold|recovery|removal>\t<to_clock>\t<from_clock>\t<slack>\t<from_node>\t<to_node>
 # PLL clock names are shortened to clk[N].
 set prj [lindex $quartus(args) 0]
 set out [lindex $quartus(args) 1]
@@ -24,7 +25,7 @@ foreach model {slow fast} {
   update_timing_netlist
   set cl {}
   foreach_in_collection c [get_clocks *] { lappend cl [get_clock_info -name $c] }
-  foreach kind {setup hold} {
+  foreach kind {setup hold recovery removal} {
     foreach t $cl {
       foreach f $cl {
         foreach_in_collection x [get_timing_paths -$kind -from_clock $f -to_clock $t -npaths 1] {

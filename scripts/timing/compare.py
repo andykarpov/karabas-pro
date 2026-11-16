@@ -3,7 +3,8 @@
 
 Usage:
   compare.py NEW_PAIRS                 worst slack per corner
-  compare.py BASE_PAIRS NEW_PAIRS      worst slack per corner, base vs new, and
+  compare.py BASE_PAIRS NEW_PAIRS      worst slack per corner (setup, hold, recovery,
+                                       removal), base vs new, and
                                        every clock pair that is below 1 ns in either
 
 Clock pairs between the two clock modes ({c0 c2 clk_14} at ds80 = 0 and
