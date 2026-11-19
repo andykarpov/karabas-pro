@@ -36,6 +36,23 @@ volatile uint8_t DDRB, DDRC, DDRD, PORTB, PORTC, PORTD, SPCR, SPSR, SPDR, SREG;
 static uint64_t s_us = 0;
 static jmp_buf s_end;
 static FILE *s_log;
+
+#ifdef LINK_DEBUG
+static char s_uart[80];
+static unsigned s_uartn = 0;
+void hal_uart_init(void) {}
+void hal_uart_putc(char c)
+{
+  if (c == '\r') return;
+  if (c == '\n' || s_uartn == sizeof(s_uart) - 1) {
+    s_uart[s_uartn] = 0;
+    fprintf(s_log, "U %s\n", s_uart);
+    s_uartn = 0;
+  } else {
+    s_uart[s_uartn++] = c;
+  }
+}
+#endif
 static void scenario(void);
 
 static void tick(double us)

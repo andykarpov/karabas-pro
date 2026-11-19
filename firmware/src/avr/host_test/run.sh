@@ -18,14 +18,14 @@ W=${2:-$(mktemp -d)}
 AVR=${3:-$(cd "$HERE/.." && pwd)}
 mkdir -p "$W"
 
-build() { # $1 = avr source dir, $2 = output binary, $3 = extra flags of sim.c
+build() { # $1 = avr source dir, $2 = output binary, $3 = extra flags of sim.c and the firmware
   local src=$1 out=$2 objs=() f def
   rm -rf "$out.o"; mkdir -p "$out.o"
   for f in "$src"/src/*.c; do
     case $(basename "$f") in hal.c|ps2_kbd.c|mouse.c) continue ;; esac
     def=""
     case $(basename "$f") in link_v*.c) def="-Dlink_keys=link_keys_real" ;; esac
-    gcc -std=gnu11 -O1 -w -DBUILD_VER=HOSTTEST -Dmain=avr_main $def -I "$HERE/include" -I "$src/include" \
+    gcc -std=gnu11 -O1 -w -DBUILD_VER=HOSTTEST -Dmain=avr_main $def $3 -I "$HERE/include" -I "$src/include" \
       -c "$f" -o "$out.o/$(basename "$f").o"
     objs+=("$out.o/$(basename "$f").o")
   done
@@ -56,4 +56,16 @@ for s in a b; do
     echo "scenario $s: EEPROM / DS1307 differ at the end:" >&2; head -8 "$W/dump.$s.diff" >&2; fail=1
   fi
 done
+
+# the debug build (env ATmega328_debug): its link check reads STATUS on idle passes and must count
+# no errors on a link without errors; the same passes as the release build
+build "$AVR" "$W/v2dbg" -DLINK_DEBUG
+"$W/v2dbg" "$W/v2dbg.a.log" a
+md=$(grep -c '^M ' "$W/v2dbg.a.log"); last=$(grep '^U link checks' "$W/v2dbg.a.log" | tail -1)
+echo "debug build: $md passes, $last"
+[ "$md" = "$(grep -c '^M ' "$W/v2.a.log")" ] || { echo "debug build: $md passes" >&2; fail=1; }
+case "$last" in *" errors 0") ;; *) echo "debug build: link check failed: $last" >&2; fail=1 ;; esac
+grep -q '^U link up, SCK 8 MHz' "$W/v2dbg.a.log" || { echo "debug build: no link up line" >&2; fail=1; }
+if grep -q 'ERROR' "$W/v2dbg.a.log"; then grep -m3 'ERROR' "$W/v2dbg.a.log" >&2; fail=1; fi
+
 [ $fail = 0 ] && echo "OK: same passes, EEPROM and DS1307 on v1 and v2" || { echo "FAIL" >&2; exit 1; }

@@ -50,6 +50,25 @@ static bool s_joy_sent = false;
 
 static inline uint8_t xfer(uint8_t b) { return hal_spi_transfer(b); }
 
+#ifdef LINK_DEBUG
+// Link check of the debug build: a pass that sends nothing reads SYS STATUS (instead of SYS POLL)
+// and compares it with the answer of link_start(); every 1024 checks the counts go to the UART
+// (no millis() here: the host stand charges time per call).
+static uint8_t s_st[12];
+static uint32_t s_chk = 0, s_err = 0;
+
+static void uart_str(const char *s) { while (*s) hal_uart_putc(*s++); }
+
+static void uart_num(uint32_t v)
+{
+  char b[11];
+  uint8_t i = sizeof(b);
+  b[--i] = 0;
+  do { b[--i] = '0' + v % 10; v /= 10; } while (v);
+  uart_str(&b[i]);
+}
+#endif
+
 static void cs_end(void)
 {
   hal_spi_cs_high();
@@ -100,6 +119,12 @@ void link_start(void)
   for (uint8_t i = 0; i < 8; i++) {
     link_on_build(i, st[4 + i]);
   }
+#ifdef LINK_DEBUG
+  for (uint8_t i = 0; i < sizeof(st); i++) s_st[i] = st[i];
+  uart_str("link up, SCK ");
+  uart_num(LINK_SPI_MHZ);
+  uart_str(" MHz\r\n");
+#endif
   forget();
   s_up = true;
   link_on_init(st[3] & 0b00111111, st[3] >> 6);
@@ -111,8 +136,31 @@ void link_service(void)
 {
   link_flush();
   if (!s_sent) {
-    begin(T_SYS, SYS_POLL);
-    cs_end();
+#ifdef LINK_DEBUG
+    if (s_up) {
+      begin(T_SYS, SYS_STATUS);
+      xfer(0);
+      bool bad = false;
+      for (uint8_t i = 0; i < sizeof(s_st); i++) {
+        uint8_t b = xfer(0);
+        if (i != 3 && b != s_st[i]) bad = true; // byte 3: the config, may change
+      }
+      cs_end();
+      s_chk++;
+      if (bad) s_err++;
+      if ((s_chk & 1023) == 0) {
+        uart_str("link checks ");
+        uart_num(s_chk);
+        uart_str(" errors ");
+        uart_num(s_err);
+        uart_str("\r\n");
+      }
+    } else
+#endif
+    {
+      begin(T_SYS, SYS_POLL);
+      cs_end();
+    }
   }
   s_sent = false;
   if (s_status & ST_ZERO) return; // no FPGA on the bus now

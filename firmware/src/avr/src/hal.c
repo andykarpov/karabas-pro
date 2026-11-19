@@ -67,9 +67,22 @@ void hal_spi_init(void)
   DDRD |= (1 << PD7);
   PORTD |= (1 << PD7);
 
-  // SPE: SPI Enable, MSTR: Master, SPR0: Prescaler 16 (1 MHz at 16 MHz)
+  // SPE: SPI Enable, MSTR: Master; SCK = 16 MHz / divider (LINK_SPI_MHZ, hal.h)
+#if LINK_SPI_MHZ == 8
+  SPCR = (1 << SPE) | (1 << MSTR);
+  SPSR = (1 << SPI2X);
+#elif LINK_SPI_MHZ == 4
+  SPCR = (1 << SPE) | (1 << MSTR);
+  SPSR = 0;
+#elif LINK_SPI_MHZ == 2
+  SPCR = (1 << SPE) | (1 << MSTR) | (1 << SPR0);
+  SPSR = (1 << SPI2X);
+#elif LINK_SPI_MHZ == 1
   SPCR = (1 << SPE) | (1 << MSTR) | (1 << SPR0);
   SPSR = 0;
+#else
+#error "LINK_SPI_MHZ: 1, 2, 4 or 8"
+#endif
 }
 
 uint8_t hal_spi_transfer(uint8_t data)
@@ -79,6 +92,26 @@ uint8_t hal_spi_transfer(uint8_t data)
   while (!(SPSR & (1 << SPIF)));
   return SPDR;
 }
+
+#ifdef LINK_DEBUG
+/****************************************************************************/
+// UART TX (PD1, 115200 8N1), debug builds only (env ATmega328_debug)
+/****************************************************************************/
+
+void hal_uart_init(void)
+{
+  UCSR0A = (1 << U2X0);
+  UBRR0 = 16; // 16 MHz / (8 x 17) = 117647 baud, -2.1 % from 115200 with U2X0
+  UCSR0B = (1 << TXEN0);
+  UCSR0C = (1 << UCSZ01) | (1 << UCSZ00);
+}
+
+void hal_uart_putc(char c)
+{
+  while (!(UCSR0A & (1 << UDRE0)));
+  UDR0 = c;
+}
+#endif
 
 /****************************************************************************/
 // Hardware TWI (I2C) Master Driver

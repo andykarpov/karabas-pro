@@ -25,7 +25,9 @@ settings (`b`: ROM bank +3e over bank 1, turbo 2, Spectrum layout, Sega, ...).
 
 `run.sh` builds `BASE_REF` (the last firmware on link v1) and this checkout (link v2), runs both
 and checks: the SPI is never switched off with CS low, both reach the same number of passes,
-the EEPROM and the DS1307 are the same at the end. The logs are the input of
+the EEPROM and the DS1307 are the same at the end. It also runs the debug build
+(`-DLINK_DEBUG`, env `ATmega328_debug`) on scenario `a`: the same passes, and its link check (SYS
+STATUS on idle passes, printed by `hal_uart_putc()` as lines `U ...`) counts no errors. The logs are the input of
 `firmware/src/fpga/profi/sim/run_avr_link.sh`, which replays them into the old and the new FPGA
 module and mutates the firmware.
 

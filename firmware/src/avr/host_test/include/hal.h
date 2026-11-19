@@ -195,7 +195,15 @@ void delayMicroseconds(unsigned int us);
 unsigned long millis(void);
 #endif
 
-// SPI Master
+#ifdef LINK_DEBUG
+void hal_uart_init(void);
+void hal_uart_putc(char c); // sim.c: lines "U <text>" in the log
+#endif
+
+// SPI Master; SCK in MHz: 8 (default), 4, 2 or 1
+#ifndef LINK_SPI_MHZ
+#define LINK_SPI_MHZ 8
+#endif
 void hal_spi_init(void);
 uint8_t hal_spi_transfer(uint8_t data);
 void spi_send(uint8_t cmd, uint8_t addr, uint8_t data);

@@ -102,6 +102,9 @@ int main(void)
 
   // Setup hardware SPI and ADC
   hal_spi_init();
+#ifdef LINK_DEBUG
+  hal_uart_init();
+#endif
   hal_adc_init();
 
   // LEDs as outputs, initially HIGH (off)

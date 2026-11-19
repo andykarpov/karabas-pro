@@ -194,7 +194,16 @@ void delayMicroseconds(unsigned int us);
 unsigned long millis(void);
 #endif
 
-// SPI Master
+#ifdef LINK_DEBUG
+// UART TX on PD1 (debug builds): the link check of link_v2.c prints there
+void hal_uart_init(void);
+void hal_uart_putc(char c);
+#endif
+
+// SPI Master; SCK in MHz: 8 (default), 4, 2 or 1
+#ifndef LINK_SPI_MHZ
+#define LINK_SPI_MHZ 8
+#endif
 void hal_spi_init(void);
 uint8_t hal_spi_transfer(uint8_t data);
 
