@@ -29,11 +29,10 @@ Ukraine, 2021 - 2026
 #include "rtc.h"
 #include "zxosd.h"
 #include "utils.h"
+#include "link.h"
 
 #define STRINGIFY(s) STRINGIFY1(s)
 #define STRINGIFY1(s) #s
-
-static bool s_init_done = false;
 
 static bool s_led1_state = false;
 static bool s_led2_state = false;
@@ -46,55 +45,36 @@ static uint32_t s_tb = 0;
 static uint32_t s_tl = 0;
 static uint32_t s_tl2 = 0;
 
-static void process_in_cmd(uint8_t cmd, uint8_t addr, uint8_t data);
+// FPGA answers (link.h)
 
-void spi_send(uint8_t cmd, uint8_t addr, uint8_t data)
+void link_on_init(uint8_t cfg, uint8_t max_turbo)
 {
-  hal_spi_cs_low();
-  uint8_t rx_cmd  = hal_spi_transfer(cmd);
-  uint8_t rx_addr = hal_spi_transfer(addr);
-  uint8_t rx_data = hal_spi_transfer(data);
-  hal_spi_cs_high();
-  if (rx_cmd > 0) {
-    process_in_cmd(rx_cmd, rx_addr, rx_data);
+  keyboard_set_max_turbo(max_turbo);
+  keyboard_transmit();
+  rtc_send_all();
+  rtc_send_all();
+  keyboard_do_reset();
+  zxosd_set_fpga_cfg(cfg);
+}
+
+void link_on_build(uint8_t pos, uint8_t c)
+{
+  zxosd_set_fpga_build_num(pos, c);
+}
+
+void link_on_leds(uint8_t bits)
+{
+  if (keyboard_get_led_override()) {
+    s_led1_state     = bitRead(bits, 0);
+    s_led2_state     = bitRead(bits, 1);
+    s_led1_overwrite = bitRead(bits, 2);
+    s_led2_overwrite = bitRead(bits, 3);
   }
 }
 
-static void process_in_cmd(uint8_t cmd, uint8_t addr, uint8_t data)
+void link_on_rtc_write(uint8_t reg, uint8_t val)
 {
-  if (cmd == CMD_INIT_REQ && !s_init_done) {
-    s_init_done = true;
-    uint8_t max_turbo = data >> 6;
-    uint8_t cfg = data & 0b00111111;
-    keyboard_set_max_turbo(max_turbo);
-    keyboard_transmit();
-    rtc_send_all();
-    rtc_send_all();
-    keyboard_do_reset();
-    zxosd_set_fpga_cfg(cfg);
-  }
-
-  if (cmd == CMD_RTC_INIT_REQ && !rtc_get_init_done()) {
-    rtc_set_init_done(true);
-    rtc_send_all();
-  }
-
-  if (cmd == CMD_BUILD_REQ) {
-    zxosd_set_fpga_build_num(addr, data);
-  }
-
-  if (cmd == CMD_LED_WRITE) {
-    if (keyboard_get_led_override()) {
-      s_led1_state     = bitRead(data, 0);
-      s_led2_state     = bitRead(data, 1);
-      s_led1_overwrite = bitRead(data, 2);
-      s_led2_overwrite = bitRead(data, 3);
-    }
-  }
-
-  if (cmd == CMD_RTC) {
-    rtc_set_data(addr, data);
-  }
+  rtc_set_data(reg, val);
 }
 
 static inline void led1_set(bool state)
@@ -142,16 +122,8 @@ int main(void)
 
   zxosd_set_avr_build_num(STRINGIFY(BUILD_VER));
 
-  // 3. Waiting for FPGA init handshake
-  while (!s_init_done) {
-    spi_send(CMD_NONE, 0, 0x00);
-    spi_send(CMD_INIT_REQ, 0, 0x00);
-  }
-
-  // Request build number from FPGA
-  for (uint8_t i = 0; i < 8; i++) {
-    spi_send(CMD_BUILD_REQ, i, 0x00);
-  }
+  // 3. Waiting for the FPGA, its build number
+  link_start();
 
   // 4. Show boot splash popup
   zxosd_show_boot_popup();
@@ -182,8 +154,8 @@ int main(void)
         bool btn1 = (hal_adc_read(6) < 100);
         bool btn2 = (hal_adc_read(7) < 100);
 
-        keyboard_set_key(ZX_K_RESET, btn2);
-        keyboard_set_key(ZX_K_MAGICK, btn1);
+        link_setval(LV_RESET, btn2);
+        link_setval(LV_MAGIC, btn1);
 
         s_tb = n;
       }

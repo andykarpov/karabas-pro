@@ -4,8 +4,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#define ZX_MATRIX_FULL_SIZE 80
-#define ZX_MATRIX_SIZE      41
+#define ZX_MATRIX_SIZE      41 // the 40 keys and the 5th bit of Profi
 
 #define ZX_K_CS  0
 #define ZX_K_A   1
@@ -51,63 +50,7 @@
 // Fn keys ext bit
 #define ZX_K_BIT6  40
 
-// special signals
-#define ZX_K_RESET  41
-#define ZX_K_TURBO  42
-#define ZX_K_MAGICK 43
-#define ZX_K_IS_UP 44
-
-// WAIT signal
-#define ZX_K_WAIT 45
-
-// Soft Switches
-#define ZX_K_SW1 46
-#define ZX_K_SW2 47
-
-#define ZX_K_SCANCODE0 48
-#define ZX_K_SCANCODE1 49
-#define ZX_K_SCANCODE2 50
-#define ZX_K_SCANCODE3 51
-#define ZX_K_SCANCODE4 52
-#define ZX_K_SCANCODE5 53
-#define ZX_K_SCANCODE6 54
-#define ZX_K_SCANCODE7 55
-#define ZX_K_SCANCODE8 56
-
-#define ZX_K_SW3 57
-#define ZX_K_SW4 58
-#define ZX_K_SW5 59
-#define ZX_K_KBD_MODE 60
-
-#define ZX_K_SW6 61
-#define ZX_K_SW7 62
-#define ZX_K_SW8 63
-
-#define ZX_K_SW9 64
-#define ZX_K_SW10 65
-
-#define ZX_K_JOY_TYPE 66
-#define ZX_K_OSD_OVERLAY 67
-
-#define ZX_K_TURBO2 68
-#define ZX_K_SCREEN_MODE0 69
-#define ZX_K_SCREEN_MODE1 70
-
-#define ZX_K_OSD_POPUP 71
-
-#define ZX_K_JOY_MODE0 72
-#define ZX_K_JOY_MODE1 73
-#define ZX_K_JOY_MODE2 74
-
-#define ZX_K_DIVMMC 75
-#define ZX_K_NEMOIDE 76
-
-#define ZX_K_PLUS3E 77 // ROM bank +3e (packet 0x0A bit 5)
-#define ZX_K_RESERVED3 78
-#define ZX_K_RESERVED4 79
-
-#define CMD_KEYBOARD 0x01
-#define CMD_KBD      0x01
+// menu values and controls go through the link (link.h)
 
 #define EEPROM_TURBO_ADDRESS 0x00
 #define EEPROM_MODE_ADDRESS 0x01
@@ -175,7 +118,8 @@ bool keyboard_get_key(uint8_t key);
 void keyboard_clear(int clear_size);
 void keyboard_transmit(void);
 
-void keyboard_do_special(uint8_t key1, uint8_t key2);
+void keyboard_do_special(uint8_t lv);
+void keyboard_send_values(void);
 void keyboard_do_reset(void);
 void keyboard_do_full_reset(void);
 void keyboard_do_magic(void);

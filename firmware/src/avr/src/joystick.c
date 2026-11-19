@@ -2,6 +2,7 @@
 #include "hal.h"
 #include "keyboard.h"
 #include "zxosd.h"
+#include "link.h"
 
 #define SC_BTN_UP    0x0001
 #define SC_BTN_DOWN  0x0002
@@ -116,6 +117,7 @@ void joystick_handle(bool joy_type)
   PORTB |= (1 << PB2);
 
   uint8_t flags = 0;
+  uint16_t buttons = 0; // all buttons for the link (LJ_*)
 
   if (!joy_type) {
     // Kempston mode
@@ -125,6 +127,12 @@ void joystick_handle(bool joy_type)
     if (!(PINB & (1 << PB0))) flags |= (1 << ZX_JOY_DOWN);
     if (!(PINB & (1 << PB1))) flags |= (1 << ZX_JOY_LEFT);
     if (!(PINB & (1 << PB2))) flags |= (1 << ZX_JOY_RIGHT);
+    if (flags & (1 << ZX_JOY_FIRE))  buttons |= LJ_B;
+    if (flags & (1 << ZX_JOY_FIRE2)) buttons |= LJ_C;
+    if (flags & (1 << ZX_JOY_UP))    buttons |= LJ_UP;
+    if (flags & (1 << ZX_JOY_DOWN))  buttons |= LJ_DOWN;
+    if (flags & (1 << ZX_JOY_LEFT))  buttons |= LJ_LEFT;
+    if (flags & (1 << ZX_JOY_RIGHT)) buttons |= LJ_RIGHT;
   } else {
     // Sega mode
     uint16_t st = sega_read_state();
@@ -136,6 +144,15 @@ void joystick_handle(bool joy_type)
     if (st & SC_BTN_RIGHT) flags |= (1 << ZX_JOY_RIGHT);
     if (st & SC_BTN_A)     flags |= (1 << ZX_JOY_A);
     if (st & SC_BTN_START) flags |= (1 << ZX_JOY_B);
+    if (st & SC_CTL_ON)    buttons |= LJ_CTL_ON;
+    if (st & SC_BTN_UP)    buttons |= LJ_UP;
+    if (st & SC_BTN_DOWN)  buttons |= LJ_DOWN;
+    if (st & SC_BTN_LEFT)  buttons |= LJ_LEFT;
+    if (st & SC_BTN_RIGHT) buttons |= LJ_RIGHT;
+    if (st & SC_BTN_START) buttons |= LJ_START;
+    if (st & SC_BTN_A)     buttons |= LJ_A;
+    if (st & SC_BTN_B)     buttons |= LJ_B;
+    if (st & SC_BTN_C)     buttons |= LJ_C;
   }
 
   // Restore PB2 as output low for SPI SS
@@ -167,7 +184,7 @@ void joystick_handle(bool joy_type)
   }
 
   // Transmit current state to FPGA
-  spi_send(CMD_JOY, 0, flags);
+  link_joy(buttons);
 }
 
 uint8_t joystick_get_state(void)

@@ -197,7 +197,6 @@ unsigned long millis(void);
 // SPI Master
 void hal_spi_init(void);
 uint8_t hal_spi_transfer(uint8_t data);
-void spi_send(uint8_t cmd, uint8_t addr, uint8_t data);
 
 static inline void hal_spi_cs_low(void)  { PORTD &= ~(1 << PD7); }
 static inline void hal_spi_cs_high(void) { PORTD |=  (1 << PD7); }

@@ -3,6 +3,7 @@
 #include "utils.h"
 #include "keyboard.h"
 #include "zxosd.h"
+#include "link.h"
 
 static bool s_is_started = false;
 
@@ -29,7 +30,7 @@ static uint32_t s_tr = 0;
 
 static inline void rtc_send_reg(uint8_t reg, uint8_t data)
 {
-  spi_send(CMD_RTC, reg, data);
+  link_rtc(reg, data);
 }
 
 void rtc_init(void)
@@ -244,8 +245,6 @@ void rtc_set_day(uint8_t val)    { s_rtc_day = val; }
 void rtc_set_month(uint8_t val)  { s_rtc_month = val; }
 void rtc_set_year(int val)       { s_rtc_year = val; }
 
-bool rtc_get_init_done(void)     { return s_rtc_init_done; }
-void rtc_set_init_done(bool val) { s_rtc_init_done = val; }
 
 bool rtc_get_time_is_valid(void)
 {

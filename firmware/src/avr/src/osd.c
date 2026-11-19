@@ -1,13 +1,6 @@
 #include "osd.h"
 #include "hal.h"
-
-#define CMD_OSD         0x20
-#define ADDR_CLEAR      0x0F
-#define ADDR_SET_POS_X  0x10
-#define ADDR_SET_POS_Y  0x11
-#define ADDR_CHAR       0x12
-#define ADDR_ATTR       0x13
-#define ADDR_NOOP       0x14
+#include "link.h"
 
 #define SIZE_X 32
 #define SIZE_Y 26
@@ -55,10 +48,7 @@ void osd_clear(void)
 void osd_write(uint8_t chr)
 {
   uint8_t color = s_fg_color << 4;
-  spi_send(CMD_OSD, ADDR_SET_POS_X, s_current_x);
-  spi_send(CMD_OSD, ADDR_SET_POS_Y, s_current_y);
-  spi_send(CMD_OSD, ADDR_CHAR, chr);
-  spi_send(CMD_OSD, ADDR_ATTR, s_bg_color + color);
+  link_osd_char(s_current_x, s_current_y, chr, s_bg_color + color);
   osd_set_pos(s_current_x + 1, s_current_y);
 }
 

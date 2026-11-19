@@ -3,6 +3,7 @@
 #include "ps2_kbd.h"
 #include "hal.h"
 #include "zxosd.h"
+#include "link.h"
 #include <avr/pgmspace.h>
 #include <avr/eeprom.h>
 
@@ -40,7 +41,7 @@ static bool s_is_led_override = false;
 static bool s_use_hw_buttons = true;
 static uint8_t s_lang = LANG_EN;
 
-static bool s_matrix[ZX_MATRIX_FULL_SIZE];
+static bool s_matrix[ZX_MATRIX_SIZE]; // the 40 keys and the 5th bit of Profi
 static bool s_profi_mode = true;
 static uint8_t s_turbo = 0;
 static uint8_t s_max_turbo = 3;
@@ -140,6 +141,37 @@ static void eeprom_store_bool(int addr, bool val)
   hal_eeprom_update(addr, val ? EEPROM_VALUE_TRUE : EEPROM_VALUE_FALSE);
 }
 
+static uint8_t osd_value(void)
+{
+  return (s_osd_overlay ? LV_OSD_MENU : 0) | (s_osd_popup ? LV_OSD_POPUP : 0);
+}
+
+// every menu value and control to the link (at the start and when the link asks)
+void keyboard_send_values(void)
+{
+  // ROM bank: banks 0..3 first, so that sw3 / sw4 are right under +3e too
+  link_setval(LV_ROMBANK, (s_is_sw3 ? 1 : 0) | (s_is_sw4 ? 2 : 0));
+  if (s_is_plus3e) link_setval(LV_ROMBANK, 4);
+  link_setval(LV_TURBOFDC, s_is_sw5);
+  link_setval(LV_COVOX, s_is_sw6);
+  link_setval(LV_PSG_MIX, keyboard_get_stereo());
+  link_setval(LV_PSG_TYPE, s_is_sw8);
+  link_setval(LV_VIDEO, s_is_sw1);
+  link_setval(LV_VSYNC, s_is_sw2);
+  link_setval(LV_TURBO, s_turbo);
+  link_setval(LV_SWAP_FDD, s_is_sw10);
+  link_setval(LV_JOY_TYPE, s_joy_type);
+  link_setval(LV_JOY_MODE, s_joy_mode);
+  link_setval(LV_SCREEN, s_screen_mode);
+  link_setval(LV_DIVMMC, s_is_divmmc);
+  link_setval(LV_NEMOIDE, s_is_nemoide);
+  link_setval(LV_KEYBOARD, s_profi_mode);
+  link_setval(LV_PAUSE, s_is_wait);
+  link_setval(LV_RESET, 0);
+  link_setval(LV_MAGIC, 0);
+  link_setval(LV_OSD, osd_value());
+}
+
 static void eeprom_restore_values(void)
 {
   s_turbo = hal_eeprom_read(EEPROM_TURBO_ADDRESS);
@@ -186,49 +218,26 @@ static void eeprom_restore_values(void)
     hal_eeprom_update(EEPROM_LANG_ADDRESS, LANG_EN);
   }
 
-  // Apply restored values to matrix
-  s_matrix[ZX_K_TURBO]        = bitRead(s_turbo, 0);
-  s_matrix[ZX_K_TURBO2]       = bitRead(s_turbo, 1);
-  s_matrix[ZX_K_SW1]          = s_is_sw1;
-  s_matrix[ZX_K_SW2]          = s_is_sw2;
-  s_matrix[ZX_K_SW3]          = s_is_sw3;
-  s_matrix[ZX_K_SW4]          = s_is_sw4;
-  s_matrix[ZX_K_PLUS3E]       = s_is_plus3e;
-  s_matrix[ZX_K_SW5]          = s_is_sw5;
-  s_matrix[ZX_K_SW6]          = s_is_sw6;
-  s_matrix[ZX_K_SW7]          = s_is_sw7;
-  s_matrix[ZX_K_SW8]          = s_is_sw8;
-  s_matrix[ZX_K_SW9]          = s_is_sw9;
-  s_matrix[ZX_K_SW10]         = s_is_sw10;
-  s_matrix[ZX_K_KBD_MODE]     = s_profi_mode;
-  s_matrix[ZX_K_JOY_TYPE]     = s_joy_type;
-  s_matrix[ZX_K_SCREEN_MODE0] = bitRead(s_screen_mode, 0);
-  s_matrix[ZX_K_SCREEN_MODE1] = bitRead(s_screen_mode, 1);
-  s_matrix[ZX_K_JOY_MODE0]    = bitRead(s_joy_mode, 0);
-  s_matrix[ZX_K_JOY_MODE1]    = bitRead(s_joy_mode, 1);
-  s_matrix[ZX_K_JOY_MODE2]    = bitRead(s_joy_mode, 2);
-  s_matrix[ZX_K_DIVMMC]       = s_is_divmmc;
-  s_matrix[ZX_K_NEMOIDE]      = s_is_nemoide;
+  keyboard_send_values();
 }
 
-static uint8_t get_matrix_byte(uint8_t pos)
+static void get_keys(uint8_t keys[LINK_KEYS_SIZE])
 {
-  uint8_t result = 0;
-  for (uint8_t i = 0; i < 8; i++) {
-    uint8_t k = pos * 8 + i;
-    if (k < ZX_MATRIX_FULL_SIZE) {
-      if (s_matrix[k]) result |= (1 << i);
+  for (uint8_t pos = 0; pos < LINK_KEYS_SIZE; pos++) {
+    uint8_t result = 0;
+    for (uint8_t i = 0; i < 8; i++) {
+      uint8_t k = pos * 8 + i;
+      if (k < ZX_MATRIX_SIZE && s_matrix[k]) result |= (1 << i);
     }
+    keys[pos] = result;
   }
-  return result;
 }
 
 static void send_cs(void)
 {
-  uint8_t cs_data = get_matrix_byte(0);
-  uint8_t end_data = get_matrix_byte(5);
-  spi_send(CMD_KEYBOARD, 1, cs_data);
-  spi_send(CMD_KEYBOARD, 6, end_data);
+  uint8_t keys[LINK_KEYS_SIZE];
+  get_keys(keys);
+  link_keys_cs(keys);
   delay_ms(20);
 }
 
@@ -412,15 +421,7 @@ static void fill_key(uint16_t sc, uint32_t n)
 
   is_ss_used = false;
 
-  s_matrix[ZX_K_IS_UP] = is_up;
-  s_matrix[ZX_K_SCANCODE7] = bitRead(code, 7);
-  s_matrix[ZX_K_SCANCODE6] = bitRead(code, 6);
-  s_matrix[ZX_K_SCANCODE5] = bitRead(code, 5);
-  s_matrix[ZX_K_SCANCODE4] = bitRead(code, 4);
-  s_matrix[ZX_K_SCANCODE3] = bitRead(code, 3);
-  s_matrix[ZX_K_SCANCODE2] = bitRead(code, 2);
-  s_matrix[ZX_K_SCANCODE1] = bitRead(code, 1);
-  s_matrix[ZX_K_SCANCODE0] = bitRead(code, 0);
+  link_scancode(code, is_up);
 
   // hotfix
   if (status == 0 && code == PS2_KEY_L_SHIFT) {
@@ -646,7 +647,7 @@ static void fill_key(uint16_t sc, uint32_t n)
 void keyboard_init(void)
 {
   ps2_kbd_init();
-  keyboard_clear(ZX_MATRIX_FULL_SIZE);
+  keyboard_clear(ZX_MATRIX_SIZE);
   eeprom_restore_values();
   s_is_started = true;
   s_kbd_detected = false;
@@ -700,14 +701,14 @@ bool keyboard_handle(void)
 
 void keyboard_set_key(uint8_t key, bool pressed)
 {
-  if (key < ZX_MATRIX_FULL_SIZE) {
+  if (key < ZX_MATRIX_SIZE) {
     s_matrix[key] = pressed;
   }
 }
 
 bool keyboard_get_key(uint8_t key)
 {
-  return (key < ZX_MATRIX_FULL_SIZE) ? s_matrix[key] : false;
+  return (key < ZX_MATRIX_SIZE) ? s_matrix[key] : false;
 }
 
 void keyboard_clear(int clear_size)
@@ -719,29 +720,26 @@ void keyboard_clear(int clear_size)
 
 void keyboard_transmit(void)
 {
-  uint8_t bytes = ZX_MATRIX_FULL_SIZE / 8;
-  for (uint8_t i = 0; i < bytes; i++) {
-    uint8_t data = get_matrix_byte(i);
-    spi_send(CMD_KEYBOARD, i + 1, data);
-  }
+  uint8_t keys[LINK_KEYS_SIZE];
+  get_keys(keys);
+  link_keys(keys);
 }
 
-void keyboard_do_special(uint8_t key1, uint8_t key2)
+// a control (LV_RESET, LV_MAGIC) on for 100 ms with all keys released
+void keyboard_do_special(uint8_t lv)
 {
   keyboard_clear(ZX_MATRIX_SIZE);
-  s_matrix[key1] = 1;
-  s_matrix[key2] = 1;
+  link_setval(lv, 1);
   keyboard_transmit();
   delay_ms(100);
   keyboard_clear(ZX_MATRIX_SIZE);
-  s_matrix[key1] = 0;
-  s_matrix[key2] = 0;
+  link_setval(lv, 0);
   keyboard_transmit();
 }
 
 void keyboard_do_reset(void)
 {
-  keyboard_do_special(ZX_K_RESET, ZX_K_RESET);
+  keyboard_do_special(LV_RESET);
 }
 
 void keyboard_do_full_reset(void)
@@ -750,12 +748,12 @@ void keyboard_do_full_reset(void)
   s_kbd_detected = false;
   s_last_probe_time = 0;
   keyboard_clear(ZX_MATRIX_SIZE);
-  s_matrix[ZX_K_RESET] = 1;
+  link_setval(LV_RESET, 1);
   keyboard_transmit();
   s_matrix[ZX_K_SP] = 1;
   keyboard_transmit();
   delay_ms(500);
-  s_matrix[ZX_K_RESET] = 0;
+  link_setval(LV_RESET, 0);
   keyboard_transmit();
   delay_ms(500);
   s_matrix[ZX_K_SP] = 0;
@@ -763,7 +761,7 @@ void keyboard_do_full_reset(void)
 
 void keyboard_do_magic(void)
 {
-  keyboard_do_special(ZX_K_MAGICK, ZX_K_MAGICK);
+  keyboard_do_special(LV_MAGIC);
 }
 
 void keyboard_do_caps(void)
@@ -779,14 +777,14 @@ void keyboard_do_caps(void)
 void keyboard_do_pause(void)
 {
   s_is_wait = !s_is_wait;
-  s_matrix[ZX_K_WAIT] = s_is_wait;
+  link_setval(LV_PAUSE, s_is_wait);
   zxosd_on_key_event(EVENT_OSD_PAUSE);
 }
 
 void keyboard_toggle_osd_overlay(void)
 {
   s_osd_overlay = !s_osd_overlay;
-  s_matrix[ZX_K_OSD_OVERLAY] = s_osd_overlay;
+  link_setval(LV_OSD, osd_value());
   if (s_osd_overlay) {
     zxosd_init_overlay();
   }
@@ -795,7 +793,7 @@ void keyboard_toggle_osd_overlay(void)
 void keyboard_set_osd_popup(bool val)
 {
   s_osd_popup = val;
-  s_matrix[ZX_K_OSD_POPUP] = s_osd_popup;
+  link_setval(LV_OSD, osd_value());
 }
 
 // Banks 0..3 are selected by sw3/sw4; bank 4 (+3e) is a separate flag and
@@ -810,23 +808,21 @@ void keyboard_set_rombank(uint8_t bank)
   eeprom_store_bool(EEPROM_SW3_ADDRESS, s_is_sw3);
   eeprom_store_bool(EEPROM_SW4_ADDRESS, s_is_sw4);
   eeprom_store_bool(EEPROM_PLUS3E_ADDRESS, s_is_plus3e);
-  s_matrix[ZX_K_SW3] = s_is_sw3;
-  s_matrix[ZX_K_SW4] = s_is_sw4;
-  s_matrix[ZX_K_PLUS3E] = s_is_plus3e;
+  link_setval(LV_ROMBANK, bank);
 }
 
 void keyboard_toggle_turbofdc(void)
 {
   s_is_sw5 = !s_is_sw5;
   eeprom_store_bool(EEPROM_SW5_ADDRESS, s_is_sw5);
-  s_matrix[ZX_K_SW5] = s_is_sw5;
+  link_setval(LV_TURBOFDC, s_is_sw5);
 }
 
 void keyboard_toggle_covox(void)
 {
   s_is_sw6 = !s_is_sw6;
   eeprom_store_bool(EEPROM_SW6_ADDRESS, s_is_sw6);
-  s_matrix[ZX_K_SW6] = s_is_sw6;
+  link_setval(LV_COVOX, s_is_sw6);
 }
 
 void keyboard_toggle_stereo(uint8_t stereo)
@@ -835,37 +831,35 @@ void keyboard_toggle_stereo(uint8_t stereo)
   s_is_sw9 = bitRead(stereo, 1);
   eeprom_store_bool(EEPROM_SW7_ADDRESS, s_is_sw7);
   eeprom_store_bool(EEPROM_SW9_ADDRESS, s_is_sw9);
-  s_matrix[ZX_K_SW7] = s_is_sw7;
-  s_matrix[ZX_K_SW9] = s_is_sw9;
+  link_setval(LV_PSG_MIX, keyboard_get_stereo());
 }
 
 void keyboard_toggle_ssg(void)
 {
   s_is_sw8 = !s_is_sw8;
   eeprom_store_bool(EEPROM_SW8_ADDRESS, s_is_sw8);
-  s_matrix[ZX_K_SW8] = s_is_sw8;
+  link_setval(LV_PSG_TYPE, s_is_sw8);
 }
 
 void keyboard_toggle_video(void)
 {
   s_is_sw1 = !s_is_sw1;
   eeprom_store_bool(EEPROM_SW1_ADDRESS, s_is_sw1);
-  s_matrix[ZX_K_SW1] = s_is_sw1;
+  link_setval(LV_VIDEO, s_is_sw1);
 }
 
 void keyboard_toggle_vsync(void)
 {
   s_is_sw2 = !s_is_sw2;
   eeprom_store_bool(EEPROM_SW2_ADDRESS, s_is_sw2);
-  s_matrix[ZX_K_SW2] = s_is_sw2;
+  link_setval(LV_VSYNC, s_is_sw2);
 }
 
 void keyboard_set_turbo(uint8_t val)
 {
   s_turbo = val;
   hal_eeprom_update(EEPROM_TURBO_ADDRESS, s_turbo);
-  s_matrix[ZX_K_TURBO] = bitRead(s_turbo, 0);
-  s_matrix[ZX_K_TURBO2] = bitRead(s_turbo, 1);
+  link_setval(LV_TURBO, s_turbo);
 }
 
 void keyboard_set_max_turbo(uint8_t val)
@@ -880,21 +874,21 @@ void keyboard_toggle_swap_ab(void)
 {
   s_is_sw10 = !s_is_sw10;
   eeprom_store_bool(EEPROM_SW10_ADDRESS, s_is_sw10);
-  s_matrix[ZX_K_SW10] = s_is_sw10;
+  link_setval(LV_SWAP_FDD, s_is_sw10);
 }
 
 void keyboard_toggle_joy_type(void)
 {
   s_joy_type = !s_joy_type;
   eeprom_store_bool(EEPROM_JOY_TYPE_ADDRESS, s_joy_type);
-  s_matrix[ZX_K_JOY_TYPE] = s_joy_type;
+  link_setval(LV_JOY_TYPE, s_joy_type);
 }
 
 void keyboard_toggle_keyboard_type(void)
 {
   s_profi_mode = !s_profi_mode;
   eeprom_store_bool(EEPROM_MODE_ADDRESS, s_profi_mode);
-  s_matrix[ZX_K_KBD_MODE] = s_profi_mode;
+  link_setval(LV_KEYBOARD, s_profi_mode);
 }
 
 void keyboard_set_mouse_swap(bool val)
@@ -912,24 +906,21 @@ void keyboard_set_screen_mode(uint8_t val)
 {
   s_screen_mode = constrain(val, 0, s_max_screen_mode);
   hal_eeprom_update(EEPROM_SCREEN_MODE_ADDRESS, s_screen_mode);
-  s_matrix[ZX_K_SCREEN_MODE0] = bitRead(s_screen_mode, 0);
-  s_matrix[ZX_K_SCREEN_MODE1] = bitRead(s_screen_mode, 1);
+  link_setval(LV_SCREEN, s_screen_mode);
 }
 
 void keyboard_set_joy_mode(uint8_t val)
 {
   s_joy_mode = constrain(val, 0, 4);
   hal_eeprom_update(EEPROM_JOY_MODE_ADDRESS, s_joy_mode);
-  s_matrix[ZX_K_JOY_MODE0] = bitRead(s_joy_mode, 0);
-  s_matrix[ZX_K_JOY_MODE1] = bitRead(s_joy_mode, 1);
-  s_matrix[ZX_K_JOY_MODE2] = bitRead(s_joy_mode, 2);
+  link_setval(LV_JOY_MODE, s_joy_mode);
 }
 
 void keyboard_set_divmmc(bool val)
 {
   s_is_divmmc = val;
   eeprom_store_bool(EEPROM_DIVMMC_ADDRESS, s_is_divmmc);
-  s_matrix[ZX_K_DIVMMC] = s_is_divmmc;
+  link_setval(LV_DIVMMC, s_is_divmmc);
 }
 
 void keyboard_toggle_divmmc(void)
@@ -946,7 +937,7 @@ void keyboard_set_nemoide(bool val)
 {
   s_is_nemoide = val;
   eeprom_store_bool(EEPROM_NEMOIDE_ADDRESS, s_is_nemoide);
-  s_matrix[ZX_K_NEMOIDE] = s_is_nemoide;
+  link_setval(LV_NEMOIDE, s_is_nemoide);
 }
 
 void keyboard_toggle_nemoide(void)
@@ -1024,7 +1015,7 @@ uint8_t keyboard_get_max_turbo(void) { return s_max_turbo; }
 bool keyboard_get_swap_ab(void)   { return s_is_sw10; }
 bool keyboard_get_joy_type(void)  { return s_joy_type; }
 bool keyboard_get_keyboard_type(void) { return s_profi_mode; }
-bool keyboard_get_pause(void)     { return s_matrix[ZX_K_WAIT]; }
+bool keyboard_get_pause(void)     { return s_is_wait; }
 uint8_t keyboard_get_screen_mode(void) { return s_screen_mode; }
 uint8_t keyboard_get_max_screen_mode(void) { return s_max_screen_mode; }
 uint8_t keyboard_get_joy_mode(void) { return s_joy_mode; }

@@ -25,17 +25,7 @@
 #define PIN_SDA A4 // pin 23 
 #define PIN_SCL A5 // ping 24
 
-// LED command
-#define CMD_LED_WRITE 0x0E
-
-// INIT command
-#define CMD_INIT_REQ 0xFD // init req
-
-// BUILD version commands
-#define CMD_BUILD_REQ 0xF0
-
-// NOP command
-#define CMD_NONE 0xFF
+// the commands of the FPGA link are in src/link_v1.c
 
 // Popup timeouts
 #define POPUP_TIMEOUT 1000

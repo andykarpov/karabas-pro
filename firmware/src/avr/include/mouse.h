@@ -4,11 +4,6 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#define CMD_MOUSE 0x0A
-#define ADDR_MOUSE_X 0x0A
-#define ADDR_MOUSE_Y 0x0B
-#define ADDR_MOUSE_Z 0x0C
-
 #ifdef __cplusplus
 extern "C" {
 #endif

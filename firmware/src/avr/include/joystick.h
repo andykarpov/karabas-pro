@@ -4,8 +4,6 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#define CMD_JOY 0x0D
-
 #define ZX_JOY_FIRE  0
 #define ZX_JOY_FIRE2 1
 #define ZX_JOY_UP    2

@@ -6,8 +6,6 @@
 
 #define RTC_ADDRESS 0x68
 #define EEPROM_RTC_OFFSET 0x20
-#define CMD_RTC_INIT_REQ 0xFC
-#define CMD_RTC 0xFA
 
 #ifdef __cplusplus
 extern "C" {
@@ -40,8 +38,6 @@ void rtc_set_day(uint8_t val);
 void rtc_set_month(uint8_t val);
 void rtc_set_year(int val);
 
-bool rtc_get_init_done(void);
-void rtc_set_init_done(bool val);
 bool rtc_get_time_is_valid(void);
 bool rtc_get_date_is_valid(void);
 

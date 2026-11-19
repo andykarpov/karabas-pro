@@ -2,6 +2,7 @@
 #include "hal.h"
 #include "keyboard.h"
 #include "zxosd.h"
+#include "link.h"
 
 #define PIN_MS_CLK 3 // PD3 (INT1)
 #define PIN_MS_DAT 5 // PD5
@@ -283,9 +284,7 @@ void mouse_handle(bool menu)
     bitWrite(s_mouse_z, 6, btn3);
     bitWrite(s_mouse_z, 7, s_mouse_new_packet);
 
-    spi_send(CMD_MOUSE, ADDR_MOUSE_X, s_mouse_x);
-    spi_send(CMD_MOUSE, ADDR_MOUSE_Y, s_mouse_y);
-    spi_send(CMD_MOUSE, ADDR_MOUSE_Z, s_mouse_z);
+    link_mouse(s_mouse_x, s_mouse_y, s_mouse_z & 0x7F); // bit 7 (the v1 toggle) is the link's
 
     if (keyboard_get_is_osd_overlay()) {
       zxosd_update_mouse(s_mouse_x, s_mouse_y, s_mouse_z);
