@@ -1,77 +1,59 @@
 #!/bin/bash
-# Host stand of the AVR firmware: builds the firmware of this checkout and of BASE (a git ref,
-# default origin/master) for the PC with the models of sim.c, runs the same scenario on both
-# (with an erased EEPROM and with saved settings) and compares the SPI frames to the FPGA.
-# Then mutates the link of this checkout and checks that the comparison catches it.
-# Needs gcc and git.
+# Host stand of the AVR firmware (README.md). Builds this checkout (link v2) and BASE_REF (link
+# v1, default eba1f0a: the last commit before link v2) for the PC with the models of sim.c, runs
+# the scenario on both (erased EEPROM "a", saved settings "b") and checks that
+#   - neither switches the SPI off with CS low;
+#   - both reach the same number of passes (lines "M");
+#   - the EEPROM and the DS1307 are the same at the end (menu values saved, the CPU writes into
+#     the RTC that came back from the FPGA by CMD_RTC / RTC GET).
+# The logs (WORK_DIR/v1.?.log, v2.?.log) are the input of fpga/profi/sim/run_avr_link.sh, which
+# replays them into the old and the new FPGA module.
 #
-# Usage: firmware/src/avr/host_test/run.sh [BASE_REF] [WORK_DIR]
-#   BASE_REF  - (a dash) runs only this checkout and prints the frame count
+# Usage: firmware/src/avr/host_test/run.sh [BASE_REF] [WORK_DIR] [AVR_DIR]
+#   AVR_DIR  the link v2 sources (default: this checkout; run_avr_link.sh passes mutated copies)
 set -euo pipefail
 HERE=$(cd "$(dirname "$0")" && pwd)
-AVR=$(cd "$HERE/.." && pwd)
-BASE=${1:-origin/master}
+BASE=${1:-eba1f0a}
 W=${2:-$(mktemp -d)}
+AVR=${3:-$(cd "$HERE/.." && pwd)}
 mkdir -p "$W"
 
-build() { # $1 = avr source dir, $2 = output binary
-  local src=$1 out=$2 objs=() f
+build() { # $1 = avr source dir, $2 = output binary, $3 = extra flags of sim.c
+  local src=$1 out=$2 objs=() f def
   rm -rf "$out.o"; mkdir -p "$out.o"
   for f in "$src"/src/*.c; do
     case $(basename "$f") in hal.c|ps2_kbd.c|mouse.c) continue ;; esac
-    gcc -std=gnu11 -O1 -w -DBUILD_VER=HOSTTEST -Dmain=avr_main -I "$HERE/include" -I "$src/include" \
+    def=""
+    case $(basename "$f") in link_v*.c) def="-Dlink_keys=link_keys_real" ;; esac
+    gcc -std=gnu11 -O1 -w -DBUILD_VER=HOSTTEST -Dmain=avr_main $def -I "$HERE/include" -I "$src/include" \
       -c "$f" -o "$out.o/$(basename "$f").o"
     objs+=("$out.o/$(basename "$f").o")
   done
   gcc -std=gnu11 -O1 -w -I "$HERE/include" -I "$src/include" -I "$src/src" -c "$HERE/mouse_wrap.c" -o "$out.o/mouse_wrap.o"
-  gcc -std=gnu11 -O1 -w -I "$HERE/include" -I "$src/include" -c "$HERE/sim.c" -o "$out.o/sim.o"
+  gcc -std=gnu11 -O1 -w $3 -I "$HERE/include" -I "$src/include" -c "$HERE/sim.c" -o "$out.o/sim.o"
   gcc -o "$out" "${objs[@]}" "$out.o/mouse_wrap.o" "$out.o/sim.o"
 }
 
-runs() { # $1 = binary, $2 = log prefix
-  "$1" "$2.a.log" a
-  "$1" "$2.b.log" b
-}
-
-same() { # $1, $2 = log prefixes
-  cmp -s "$1.a.log" "$2.a.log" && cmp -s "$1.b.log" "$2.b.log"
-}
-
-build "$AVR" "$W/new"
-runs "$W/new" "$W/new"
-echo "this checkout: $(wc -l < "$W/new.a.log") + $(wc -l < "$W/new.b.log") frames"
-[ "$BASE" = "-" ] && exit 0
-
 rm -rf "$W/base"; mkdir -p "$W/base"
-git -C "$AVR" archive "$BASE" -- . | tar -x -C "$W/base"
-build "$W/base" "$W/old"
-runs "$W/old" "$W/old"
-if same "$W/old" "$W/new"; then
-  echo "OK: the SPI frames are the same as in $BASE"
-else
-  echo "FAIL: the SPI frames differ from $BASE (first differences):" >&2
-  { diff "$W/old.a.log" "$W/new.a.log" | head -10; diff "$W/old.b.log" "$W/new.b.log" | head -10; } >&2 || true
-  exit 1
-fi
+git -C "$HERE/.." archive "$BASE" -- . | tar -x -C "$W/base"
+BASE_AVR=$W/base
+[ -d "$BASE_AVR/src" ] || { echo "no firmware/src/avr in $BASE" >&2; exit 1; }
+build "$BASE_AVR" "$W/v1bin" -DLINK_V1
+build "$AVR" "$W/v2bin" ""
 
-# mutations of the link: each must change the frames
 fail=0
-mut() { # name, file, old text, new text
-  rm -rf "$W/mut"; cp -r "$AVR" "$W/mut"
-  python3 -I -c 'import sys; p,a,b=sys.argv[1:]; t=open(p,encoding="utf-8").read(); assert t.count(a)==1, a; open(p,"w",encoding="utf-8").write(t.replace(a,b))' \
-    "$W/mut/$2" "$3" "$4"
-  build "$W/mut" "$W/mutbin"
-  runs "$W/mutbin" "$W/mut"
-  if same "$W/old" "$W/mut"; then echo "mutation $1: NOT caught" >&2; fail=1; else echo "mutation $1: caught"; fi
-}
-mut psg-mix src/link_v1.c 'bit_set(B_SW7, val & 1); bit_set(B_SW9, val & 2);' 'bit_set(B_SW7, val & 2); bit_set(B_SW9, val & 1);'
-mut rombank-keep src/link_v1.c '      if (val != 4) {' '      if (1) {'
-mut plus3e-at-start src/keyboard.c '  if (s_is_plus3e) link_setval(LV_ROMBANK, 4);' ''
-mut turbo2 src/link_v1.c 'bit_set(B_TURBO2, val & 2);' 'bit_set(B_TURBO2, 0);'
-mut joy-start src/link_v1.c 'if (buttons & LJ_START) flags |= 0x80;' 'if (buttons & LJ_A) flags |= 0x80;'
-mut mouse-toggle src/link_v1.c 'static bool s_mouse_toggle = false;' 'static bool s_mouse_toggle = true;'
-mut osd-popup src/link_v1.c 'bit_set(B_OSD_POPUP, val & LV_OSD_POPUP);' ''
-mut scancode src/link_v1.c 'bit_set(B_SCANCODE + i, (code >> i) & 1);' 'bit_set(B_SCANCODE + 7 - i, (code >> i) & 1);'
-mut pause src/keyboard.c '  link_setval(LV_PAUSE, s_is_wait);
-  zxosd_on_key_event(EVENT_OSD_PAUSE);' '  zxosd_on_key_event(EVENT_OSD_PAUSE);'
-[ $fail = 0 ] && echo "OK: all mutations caught" || { echo "FAIL: a mutation was not caught" >&2; exit 1; }
+for s in a b; do
+  "$W/v1bin" "$W/v1.$s.log" $s
+  "$W/v2bin" "$W/v2.$s.log" $s
+  m1=$(grep -c '^M ' "$W/v1.$s.log"); m2=$(grep -c '^M ' "$W/v2.$s.log")
+  p1=$(grep -c '^[0-9]*:' "$W/v1.$s.log"); p2=$(grep -c '^[0-9]*:' "$W/v2.$s.log")
+  echo "scenario $s: v1 $p1 frames, v2 $p2 packets, $m2 passes"
+  if grep -q 'ERROR' "$W/v1.$s.log" "$W/v2.$s.log"; then
+    grep -m3 'ERROR' "$W/v1.$s.log" "$W/v2.$s.log" >&2; fail=1
+  fi
+  [ "$m1" = "$m2" ] || { echo "scenario $s: $m1 passes on v1, $m2 on v2" >&2; fail=1; }
+  if ! diff <(sed -n '/^EEPROM/,$p' "$W/v1.$s.log") <(sed -n '/^EEPROM/,$p' "$W/v2.$s.log") > "$W/dump.$s.diff"; then
+    echo "scenario $s: EEPROM / DS1307 differ at the end:" >&2; head -8 "$W/dump.$s.diff" >&2; fail=1
+  fi
+done
+[ $fail = 0 ] && echo "OK: same passes, EEPROM and DS1307 on v1 and v2" || { echo "FAIL" >&2; exit 1; }

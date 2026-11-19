@@ -50,8 +50,8 @@ static uint32_t s_tl2 = 0;
 void link_on_init(uint8_t cfg, uint8_t max_turbo)
 {
   keyboard_set_max_turbo(max_turbo);
+  keyboard_send_values();
   keyboard_transmit();
-  rtc_send_all();
   rtc_send_all();
   keyboard_do_reset();
   zxosd_set_fpga_cfg(cfg);
@@ -202,6 +202,7 @@ int main(void)
     }
 
     keyboard_reset_osd_controls();
+    link_service();
   }
 
   return 0;

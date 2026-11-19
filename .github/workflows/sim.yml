@@ -3,7 +3,8 @@ name: GHDL simulation
 # GHDL benches (firmware/src/fpga/profi/sim):
 # - video controller -> OSD overlay -> scandoubler in all six screen modes,
 #   compared with expected_scandoubler.txt;
-# - avr.vhd RTC handling, audio_mixer against a model, tda1543 decoded;
+# - audio_mixer against a model, tda1543 decoded;
+# - the AVR link v2: avr_link.v, the old avr.vhd against it on host stand logs, mutations;
 # - memory.vhd in the +3e mode against the ZX Spectrum +3 memory map;
 # - the frame INT of the video controller against the old one, with mutations.
 
@@ -28,8 +29,8 @@ jobs:
           firmware/src/fpga/profi/sim/run_scandoubler.sh "$RUNNER_TEMP/sim" | tee sim.log
           { echo '### Scandoubler timing (GHDL)'; echo '```'; grep -E '^(pentagon|classic|profi)' sim.log; echo '```'; tail -1 sim.log; } >> "$GITHUB_STEP_SUMMARY"
 
-  avr-audio:
-    name: avr RTC + audio (GHDL)
+  audio:
+    name: audio (GHDL)
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
@@ -40,8 +41,25 @@ jobs:
 
       - name: Run the benches
         run: |
-          firmware/src/fpga/profi/sim/run_avr_audio.sh "$RUNNER_TEMP/sim" | tee sim.log
-          { echo '### avr RTC + audio (GHDL)'; echo '```'; cat sim.log; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+          firmware/src/fpga/profi/sim/run_audio.sh "$RUNNER_TEMP/sim" | tee sim.log
+          { echo '### audio (GHDL)'; echo '```'; cat sim.log; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+
+  avr-link:
+    name: AVR link v2 (iverilog, GHDL, host stand)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # the host stand builds the link v1 firmware of eba1f0a
+
+      - name: Install GHDL and iverilog
+        run: sudo apt-get update -q && sudo apt-get install -y -q ghdl iverilog
+
+      - name: Run the benches
+        run: |
+          firmware/src/fpga/profi/sim/run_avr_link.sh "$RUNNER_TEMP/sim" | tee sim.log
+          { echo '### AVR link v2'; echo '```'; cat sim.log; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
 
   plus3e:
     name: +3e memory map (GHDL)

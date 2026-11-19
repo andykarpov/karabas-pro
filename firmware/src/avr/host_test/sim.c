@@ -1,20 +1,23 @@
 /*
  * Host stand of the AVR firmware (run.sh): the firmware sources of src/ (except hal.c and
- * ps2_kbd.c) run on the PC against models of the hardware, and every SPI frame to the FPGA is
- * written to a log. Two builds of the same scenario (before and after a change) must give the
- * same log when the change is not meant to change the link.
+ * ps2_kbd.c) run on the PC against models of the hardware, and every SPI packet to the FPGA is
+ * written to a log, with a line "M" at every call of link_keys() (once per pass of the main
+ * loop, after the keyboard and menu changes of the pass have gone).
  *
- * Time is virtual: it moves only by SPI bytes (SPI_BYTE_US each) and by the delays of the
- * firmware, so the log is the same on every run.
+ * Time is virtual and moves only by the calls of millis() (MILLIS_US each) and by the delays of
+ * the firmware outside the link: the time line does not depend on how many bytes a link sends,
+ * so a run on link v1 and a run on link v2 reach every "M" at the same time and state.
  *
  * Models:
- *   - FPGA link v1 (avr.vhd): the answer frame is chosen when CS goes low: a queued answer
- *     (INIT, BUILD, a CPU write into the RTC), otherwise a CMD_LED frame;
+ *   - the FPGA: link v1 (-DLINK_V1, avr.vhd of master: the answer frame is chosen when CS goes
+ *     low: a queued answer (INIT, BUILD, a CPU write into the RTC), otherwise a CMD_LED frame)
+ *     or link v2 (docs/AVR_LINK_V2.md: the status byte, STATUS, INIT, the FIFO of RTC GET);
+ *     the SPI must not be switched off while CS is low;
  *   - PS/2 keyboard: ps2_kbd.h returns the events of the scenario (codes of ps2_kbd.h);
  *   - PS/2 mouse: reports put into the queue of mouse.c (mouse_wrap.c);
  *   - joystick pins (Kempston and a 3-button Sega pad on the strobe PC1);
  *   - DS1307 on TWI, EEPROM (erased, LED override on; argument "b": saved settings), ADC of
- *     the two buttons.
+ *     the two buttons. Both are written to the log at the end.
  */
 #include <setjmp.h>
 #include <stdio.h>
@@ -25,7 +28,7 @@
 #include "hal.h"
 #include "ps2_kbd.h"
 
-#define SPI_BYTE_US 10
+#define MILLIS_US 20
 #define T_END_MS 14000
 
 volatile uint8_t DDRB, DDRC, DDRD, PORTB, PORTC, PORTD, SPCR, SPSR, SPDR, SREG;
@@ -41,10 +44,10 @@ static void tick(double us)
   if (s_us / 1000 > T_END_MS) longjmp(s_end, 1);
 }
 
-uint32_t millis(void) { scenario(); return (uint32_t)(s_us / 1000); }
+uint32_t millis(void) { tick(MILLIS_US); scenario(); return (uint32_t)(s_us / 1000); }
 void sim_delay_us(double us) { tick(us); }
 void delay_ms(uint16_t ms) { tick(ms * 1000.0); }
-void delay_us(uint16_t us) { tick(us); }
+void delay_us(uint16_t us) { (void)us; } /* only the link (CS high time): not charged */
 void hal_timer_init(void) {}
 
 /* ---------------- EEPROM ---------------- */
@@ -53,25 +56,37 @@ static uint8_t s_eeprom[1024];
 uint8_t eeprom_read_byte(const uint8_t *addr) { return s_eeprom[(uintptr_t)addr & 1023]; }
 void eeprom_update_byte(uint8_t *addr, uint8_t val) { s_eeprom[(uintptr_t)addr & 1023] = val; }
 
-/* ---------------- FPGA link v1 ---------------- */
+/* ---------------- the FPGA ---------------- */
 
+static uint8_t s_led_bits = 0x00;
+static uint8_t s_rx[2100];
+static unsigned s_rxn;
+static bool s_cs_low;
+static const char s_build[8] = { '2', '6', '1', '1', '1', '9', '0', '0' };
+static const uint8_t s_cfg = (2 << 6) | 0x24; /* max turbo 2, Rev.E */
+static bool s_spe_error;
+
+static void log_packet(void)
+{
+  fprintf(s_log, "%llu:", (unsigned long long)s_us);
+  for (unsigned i = 0; i < s_rxn; i++) fprintf(s_log, " %02X", s_rx[i]);
+  fprintf(s_log, " | C%02X\n", PORTC & 0x06);
+}
+
+void hal_spi_init(void) {}
+
+#ifdef LINK_V1
 typedef struct { uint8_t b[3]; } frame_t;
 static frame_t s_q[1024];
 static unsigned s_qh, s_qt;
-static uint8_t s_led_bits = 0x00;
-static frame_t s_tx; /* answer of the current frame */
-static uint8_t s_rx[600];
-static unsigned s_rxn;
-static bool s_cs_low;
+static frame_t s_tx;
 static unsigned s_init_reqs;
-static const char s_build[8] = { '2', '6', '1', '1', '1', '9', '0', '0' };
 
 static void q_push(uint8_t a, uint8_t b, uint8_t c)
 {
   if (s_qh - s_qt < 1024) { s_q[s_qh % 1024] = (frame_t){ { a, b, c } }; s_qh++; }
 }
-
-void hal_spi_init(void) {}
+static void cpu_rtc_write(uint8_t reg, uint8_t val) { q_push(0xFA, reg, val); }
 
 void hal_spi_cs_low(void)
 {
@@ -85,24 +100,77 @@ void hal_spi_cs_high(void)
 {
   if (!s_cs_low) return;
   s_cs_low = false;
-  fprintf(s_log, "%llu:", (unsigned long long)s_us);
-  for (unsigned i = 0; i < s_rxn; i++) fprintf(s_log, " %02X", s_rx[i]);
-  fprintf(s_log, " | C%02X\n", PORTC & 0x06);
+  log_packet();
   if (s_rxn == 3) {
-    if (s_rx[0] == 0xFD && ++s_init_reqs >= 3) q_push(0xFD, 0x00, (2 << 6) | 0x24); /* max turbo 2, Rev.E */
+    if (s_rx[0] == 0xFD && ++s_init_reqs >= 3) q_push(0xFD, 0x00, s_cfg);
     if (s_rx[0] == 0xF0) q_push(0xF0, s_rx[1] & 7, (uint8_t)s_build[s_rx[1] & 7]);
   }
 }
 
+static uint8_t answer(unsigned i) { return i < 3 ? s_tx.b[i] : 0xFF; }
+#else
+static uint16_t s_fifo[256];
+static unsigned s_fh, s_ft;
+static bool s_init_req = true;
+
+static void cpu_rtc_write(uint8_t reg, uint8_t val)
+{
+  if (!s_init_req && s_fh - s_ft < 256) s_fifo[s_fh++ % 256] = (uint16_t)(reg << 8 | val);
+}
+
+static uint8_t status(void)
+{
+  return (uint8_t)((s_init_req ? 1 : 0) | (s_fh != s_ft ? 2 : 0) | (s_led_bits << 4));
+}
+
+static uint8_t s_st; /* the status of this packet */
+void hal_spi_cs_low(void) { s_cs_low = true; s_rxn = 0; s_st = status(); }
+
+void hal_spi_cs_high(void)
+{
+  if (!s_cs_low) return;
+  s_cs_low = false;
+  log_packet();
+  if (s_rxn >= 2 && s_rx[0] == 0x00 && s_rx[1] == 0x02) s_init_req = false;
+  if (s_rxn >= 5 && s_rx[0] == 0x03 && s_rx[1] == 0x02 && (s_st & 2)) s_ft++; /* the value byte went */
+}
+
+static uint8_t answer(unsigned i)
+{
+  if (i == 0) return 0x00;
+  if (i == 1) return s_st;
+  unsigned m = i - 2; /* payload position */
+  if (s_rx[0] == 0x00 && s_rx[1] == 0x01) {
+    static const uint8_t sig[] = { 'K', 'P', 2 };
+    if (m >= 1 && m <= 3) return sig[m - 1];
+    if (m == 4) return s_cfg;
+    if (m >= 5 && m <= 12) return (uint8_t)s_build[m - 5];
+    return 0;
+  }
+  if (s_rx[0] == 0x03 && s_rx[1] == 0x02 && (s_st & 2)) {
+    if (m == 1) return (uint8_t)(s_fifo[s_ft % 256] >> 8);
+    if (m == 2) return (uint8_t)s_fifo[s_ft % 256];
+  }
+  return 0;
+}
+#endif
+
 uint8_t hal_spi_transfer(uint8_t data)
 {
-  tick(SPI_BYTE_US);
   uint8_t r = 0xFF;
   if (s_cs_low) {
-    if (s_rxn < 3) r = s_tx.b[s_rxn];
+    r = answer(s_rxn);
     if (s_rxn < sizeof(s_rx)) s_rx[s_rxn++] = data;
   }
   return r;
+}
+
+/* every pass of the main loop calls link_keys() (keyboard_transmit) */
+void link_keys_real(const uint8_t *keys);
+void link_keys(const uint8_t *keys)
+{
+  link_keys_real(keys);
+  fprintf(s_log, "M %llu\n", (unsigned long long)s_us);
 }
 
 /* ---------------- TWI: DS1307 ---------------- */
@@ -146,6 +214,10 @@ static bool s_sega;       /* a Sega pad on the connector, else an Atari stick */
 
 uint8_t sim_pin(char port)
 {
+  if (s_cs_low && !(SPCR & (1 << SPE)) && !s_spe_error) {
+    s_spe_error = true;
+    fprintf(s_log, "ERROR: the SPI is off while CS is low\n");
+  }
   /* all inputs have pull-ups: 1 = released */
   bool up = s_joy & J_UP, down = s_joy & J_DOWN, left = s_joy & J_LEFT, right = s_joy & J_RIGHT;
   bool f1 = s_joy & J_B, f2 = s_joy & J_C;
@@ -258,7 +330,7 @@ static void scenario(void)
       case 'j': s_joy = (uint8_t)e->a; break;
       case 's': s_sega = e->a != 0; break;
       case 'l': s_led_bits = (uint8_t)e->a; break;
-      case 'r': q_push(0xFA, (uint8_t)e->a, (uint8_t)e->b); break;
+      case 'r': cpu_rtc_write((uint8_t)e->a, (uint8_t)e->b); break;
       case '1': s_btn1 = e->a != 0; break;
       case '2': s_btn2 = e->a != 0; break;
     }
@@ -283,7 +355,11 @@ int main(int argc, char **argv)
   }
   PORTD = 0x80;
   if (!setjmp(s_end)) avr_main();
-  fprintf(s_log, "end at %llu us\n", (unsigned long long)s_us);
+  fprintf(s_log, "end at %llu us\nEEPROM", (unsigned long long)s_us);
+  for (unsigned i = 0; i < 512; i++) fprintf(s_log, "%s%02X", i % 32 ? " " : "\n", s_eeprom[i]);
+  fprintf(s_log, "\nDS1307");
+  for (unsigned i = 0; i < 64; i++) fprintf(s_log, " %02X", s_ds[i]);
+  fprintf(s_log, "\n");
   fclose(s_log);
   return 0;
 }

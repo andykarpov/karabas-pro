@@ -181,7 +181,6 @@ signal kb_wait 		: std_logic := '0';
 signal kb_mode 		: std_logic := '1';
 signal joy_type 		: std_logic := '0';
 signal joy_mode 		: std_logic_vector(2 downto 0) := "000";
-signal kb_loaded 		: std_logic := '0';
 signal kb_screen_mode: std_logic_vector(1 downto 0) := "00";
 
 -- Joy
@@ -218,7 +217,9 @@ signal blink 			: std_logic;
 -- OSD overlay
 signal osd_overlay 	: std_logic := '0';
 signal osd_popup 		: std_logic := '0';
-signal osd_command 	: std_logic_vector(15 downto 0);
+signal osd_wr 		: std_logic;
+signal osd_a 		: std_logic_vector(9 downto 0);
+signal osd_d 		: std_logic_vector(15 downto 0);
 
 -- Z-Controller
 signal zc_do_bus		: std_logic_vector(7 downto 0);
@@ -771,7 +772,9 @@ port map (
 	-- osd overlay
 	OSD_OVERLAY		=> osd_overlay,
 	OSD_POPUP 		=> osd_popup,
-	OSD_COMMAND 	=> osd_command
+	OSD_WR 			=> osd_wr,
+	OSD_A 			=> osd_a,
+	OSD_D 			=> osd_d
 );
 
 -- Scandoubler	
@@ -900,7 +903,6 @@ end generate G_SAA1099;
 U15: entity work.avr
 port map (
 	 CLK 				=> clk_bus,
-	 CLKEN 			=> clk_cpu,
 	 N_RESET 		=> not areset,
     A       		=> cpu_a_bus(15 downto 8),
     KB				=> kb_do_bus,
@@ -937,8 +939,6 @@ port map (
 	 
 	 KB_MODE 		=> kb_mode,
 	 
-	 KB_SCANCODE 	=> open, 
-
 	 RESET 			=> kb_reset,
 	 TURBO 			=> kb_turbo,
 	 MAGICK 			=> kb_magic,
@@ -947,16 +947,17 @@ port map (
 	 JOY_MODE 		=> joy_mode,
 	 OSD_OVERLAY 	=> osd_overlay,
 	 OSD_POPUP 		=> osd_popup,
-	 OSD_COMMAND	=> osd_command,
+	 OSD_WR			=> osd_wr,
+	 OSD_A			=> osd_a,
+	 OSD_D			=> osd_d,
 	 MAX_TURBO 		=> max_turbo,
 	 SCREEN_MODE   => kb_screen_mode,
 	 DIVMMC_EN 		=> divmmc_en_avr,
 	 NEMOIDE_EN 	=> nemoide_en,
 	 PLUS3E 			=> plus3e_avr,
 	 
-	 LOADED 			=> kb_loaded,
-	 
-	 JOY 				=> joy_bus	 
+	 JOY 				=> joy_bus,
+	 JOY_BTN			=> open
 );
 	
 -- TDA1543

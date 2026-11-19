@@ -56,13 +56,18 @@
 extern "C" {
 #endif
 
-// waits for the FPGA, reads its build id; calls link_on_init() / link_on_build()
+// waits for the FPGA, reads its build id; calls link_on_build() / link_on_init(), then SYS INIT
 void link_start(void);
+// end of a pass of the main loop: closes a run, polls the status if nothing went, takes a CPU
+// write into the RTC (link_on_rtc_write), starts over when the FPGA asks (INIT_REQ)
+void link_service(void);
+// closes an open run (CS high): before the SPI is switched off (joystick_handle)
+void link_flush(void);
 
 void link_setval(uint8_t idx, uint8_t val);
 void link_keys(const uint8_t keys[LINK_KEYS_SIZE]);
 void link_keys_cs(const uint8_t keys[LINK_KEYS_SIZE]); // CS ahead of a cursor key
-void link_scancode(uint8_t code, bool up); // link v1 only (bits of the matrix frames)
+void link_scancode(uint8_t code, bool up); // reserved (HID PS2): nothing yet
 void link_mouse(uint8_t dx, uint8_t dy, uint8_t z); // z: bits 3..0 wheel, 4..6 buttons
 void link_joy(uint16_t buttons);
 void link_osd_char(uint8_t x, uint8_t y, uint8_t chr, uint8_t attr);

@@ -120,7 +120,10 @@ scripts/timing/compare.py ../kp-base/firmware/src/fpga/profi/syn/ep4ce10/timing_
 
 ```sh
 firmware/src/fpga/profi/sim/run_scandoubler.sh     # развёртка VGA во всех режимах, сравнение с эталоном
-firmware/src/fpga/profi/sim/run_avr_audio.sh       # RTC в avr.vhd, микшер против модели, ЦАП (I2S / LSB-justified)
+firmware/src/fpga/profi/sim/run_audio.sh           # микшер против модели, ЦАП (I2S / LSB-justified)
+firmware/src/fpga/profi/sim/run_avr_link.sh        # линк AVR v2: модуль, сравнение со старым avr.vhd, мутации (~30 мин)
+firmware/src/fpga/profi/sim/run_int.sh             # INT кадра против старого видеоконтроллера, мутации (~30 мин)
+firmware/src/avr/host_test/run.sh                  # прошивка AVR на ПК: v1 против v2 на одном сценарии
 ```
 
 Если меняется развёртка намеренно, обновите `expected_scandoubler.txt` в том же PR.

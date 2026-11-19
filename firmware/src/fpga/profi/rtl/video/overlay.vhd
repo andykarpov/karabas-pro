@@ -37,7 +37,10 @@ entity overlay is
 
 		OSD_OVERLAY 	: in std_logic := '0'; -- full overlay osd
 		OSD_POPUP 		: in std_logic := '0'; -- popup osd
-		OSD_COMMAND 	: in std_logic_vector(15 downto 0)
+		-- video memory writes of the AVR link (avr_link.v: registered there)
+		OSD_WR 		: in std_logic := '0';
+		OSD_A 		: in std_logic_vector(9 downto 0) := (others => '0');
+		OSD_D 		: in std_logic_vector(15 downto 0) := (others => '0') -- character & attribute
 	);
 end entity;
 
@@ -84,10 +87,7 @@ architecture rtl of overlay is
 	 signal pixel_reg: std_logic := '0';
 
     signal addr_read: std_logic_vector(9 downto 0) := (others => '0');
-    signal addr_write: std_logic_vector(9 downto 0) := (others => '0');
-    signal vram_di: std_logic_vector(15 downto 0) := (others => '0');
     signal vram_do: std_logic_vector(15 downto 0);
-    signal vram_wr: std_logic := '0';
 
     signal flash : std_logic;
     signal is_flash : std_logic;
@@ -96,8 +96,6 @@ architecture rtl of overlay is
     signal rgb_mix : std_logic_vector(8 downto 0);
 
     signal selector : std_logic_vector(3 downto 0);
-	 signal last_osd_command : std_logic_vector(15 downto 0) := (others => '0');
-	 signal char_buf : std_logic_vector(7 downto 0) := (others => '0');
 	 signal paper : std_logic;
 	 signal paper2 : std_logic;
 
@@ -149,13 +147,13 @@ begin
 	 -- видеопамять OSD
     U_VRAM: screen1
     port map (
-        data    => vram_di,
+        data    => OSD_D,
         rdaddress => addr_read,
         rdclken   => ce_osd,
         rdclock   => CLK,
-        wraddress => addr_write,
+        wraddress => OSD_A,
         wrclock   => CLK,
-        wren      => vram_wr,
+        wren      => OSD_WR,
         q         => vram_do
     );
 
@@ -255,23 +253,5 @@ begin
 			end if;
 		end if;
 	 end process;
-
-		-- заполнение видеопамяти AVR'кой по SPI
-		process(CLK)
-		begin
-			  if rising_edge(CLK) then
-					 vram_wr <= '0';
-					 if (osd_command /= last_osd_command) then
-						last_osd_command <= osd_command;
-						case osd_command(15 downto 8) is
-						  when X"10"  => vram_wr <= '0'; addr_write(4 downto 0) <= osd_command(4 downto 0); -- x: 0...32
-						  when X"11" => vram_wr <= '0'; addr_write(9 downto 5) <= osd_command(4 downto 0); -- y: 0...32
-						  when X"12"  => vram_wr <= '0'; char_buf <= osd_command(7 downto 0); -- char
-						  when X"13"  => vram_wr <= '1'; vram_di <= char_buf & osd_command(7 downto 0); -- attrs
-						  when others => vram_wr <= '0';
-						end case;
-					 end if;
-			  end if;
-		end process;
 
 end architecture;

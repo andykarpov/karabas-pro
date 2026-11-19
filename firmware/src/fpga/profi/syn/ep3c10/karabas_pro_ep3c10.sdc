@@ -1,6 +1,7 @@
 # описание входных клоков
 create_clock -period 50MHz -name {CLK_50MHZ} [get_ports {CLK_50MHZ}]
-create_clock -period 1MHz -name {AVR_SCK} [get_ports {AVR_SCK}]
+# AVR_SCK: up to 8 MHz (fosc/2 of the ATmega328P), docs/AVR_LINK_V2.md
+create_clock -period 8MHz -name {AVR_SCK} [get_ports {AVR_SCK}]
 
 # pll-ные клоки сгенерятся сами
 derive_pll_clocks
@@ -22,9 +23,10 @@ set_clock_groups -exclusive \
 	-group {U2|altpll_component|auto_generated|pll1|clk[0] U2|altpll_component|auto_generated|pll1|clk[2]} \
 	-group {U2|altpll_component|auto_generated|pll1|clk[1] U2|altpll_component|auto_generated|pll1|clk[3]}
 
-# AVR_SCK асинхронен всем внутренним клокам. Обмен с SPI-доменом идёт через
-# синхронизаторы spi_slave (do_valid_A..D, di_req_o_A..D, wren_*): данные
-# do_buffer_reg / di_reg стабильны всё время, пока строб проходит синхронизатор.
+# AVR_SCK асинхронен всем внутренним клокам. Обмен с SPI-доменом avr_link.v (как
+# kg_l2_link Karabas Go): байт держится в byte_hold 8 периодов SCK, в clk_bus его
+# видно по переключателю byte_tgl через три триггера; ответ di clk_bus пишет после
+# этого, а в сдвиговый регистр он грузится по спаду SCK в конце следующего байта.
 set_clock_groups -asynchronous \
 	-group {AVR_SCK} \
 	-group {CLK_50MHZ U2|altpll_component|auto_generated|pll1|clk[*]}

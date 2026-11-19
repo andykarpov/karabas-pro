@@ -109,7 +109,8 @@ static uint16_t sega_read_state(void)
 
 void joystick_handle(bool joy_type)
 {
-  // Stop hardware SPI to read shared PB2 (SS / JOY_RIGHT)
+  // Stop hardware SPI to read shared PB2 (SS / JOY_RIGHT): no packet may stay open
+  link_flush();
   SPCR &= ~(1 << SPE);
 
   // Set PB2 as input with pullup

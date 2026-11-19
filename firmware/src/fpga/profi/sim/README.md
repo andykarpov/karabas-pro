@@ -56,22 +56,43 @@ Then the script mutates the RTL (acknowledge always on, never on, never cleared;
 the INT of Pentagon, Classic and Profi moved or shortened) and fails if a mutation
 is not caught. About 30 minutes.
 
-## avr RTC and audio
+## AVR link v2
 
 ```sh
-firmware/src/fpga/profi/sim/run_avr_audio.sh
+firmware/src/fpga/profi/sim/run_avr_link.sh   # about 30 minutes; needs iverilog, ghdl, gcc
 ```
 
-- `tb_rtc.vhd`: `avr.vhd` with an SPI master playing the AVR. A register sent by
-  the AVR is written into the RTC RAM once, a CPU write is not overwritten
-  afterwards, and one CPU write sends exactly one `CMD_RTC` packet to the AVR.
+`rtl/avr/avr_link.v` (docs/AVR_LINK_V2.md) is Verilog, so its benches run in iverilog:
+
+- `tb_avr_link.v`: the module alone. Every command and answer at its byte position, packets cut
+  in the middle of a record, a GET cut before its value byte (the entry stays), an OSD run longer
+  than 1024 bytes, back-to-back packets with the minimum CS gap, CPU writes into the RTC read
+  back by GET; at clk 24 / 28 MHz x SCK 1 / 4 / 8 MHz.
+- `tb_avr_replay_v1.vhd` (GHDL) and `tb_avr_replay_v2.v` (iverilog): the AVR host stand
+  (`firmware/src/avr/host_test`) runs one scenario on the firmware of link v1 and of link v2;
+  `avr_replay.py` turns the SPI logs into replay files; the v1 frames go into the old `avr.vhd`
+  (`sim/ref/avr_ref.vhd`, with `ref/spi_slave.vhd` and `avr_ip_models.vhd`), the v2 packets into
+  `avr_link.v`. The core side at every pass of the AVR main loop, every OSD video memory write
+  and the 256 RTC registers at the end must be the same. The v1 filter of `avr_replay.py`
+  (repeated keyboard / joystick frames dropped) was checked once against the unfiltered frames
+  over the first 40000 passes (start, reset, popup, first keys): the same states.
+- Then mutations of `avr_link.v` (caught by `tb_avr_link.v`) and of the v2 firmware (caught by
+  the host stand or the replay).
+
+`avr_link_stub.vhd` stands in for `avr_link` in the GHDL benches of the whole core (`tb_boot`).
+
+## Audio
+
+```sh
+firmware/src/fpga/profi/sim/run_audio.sh
+```
+
 - `tb_audio.vhd`: `audio_mixer` against an integer model (random inputs,
   extremes, ACB / ABC / mono / mute), and `tda1543` decoded the way the DAC
   chips do (I2S for TDA1543, LSB-justified for TDA1543A), compared with the
   samples it loaded.
 
-The script exits with an error if a check fails. `avr_ip_models.vhd` holds
-models of the RTC RAM, the SPI queue and the message ROM.
+The script exits with an error if a check fails.
 
 ## +3e memory map
 

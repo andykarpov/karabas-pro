@@ -238,7 +238,6 @@ set_global_assignment -name QIP_FILE ../../rtl/clock/clk_ctrl.qip
 set_global_assignment -name VHDL_FILE ../../rtl/clock/clk_ctrl2.vhd
 set_global_assignment -name VHDL_FILE ../../rtl/flash/flash.vhd
 set_global_assignment -name VHDL_FILE ../../rtl/loader/loader.vhd
-set_global_assignment -name VHDL_FILE ../../rtl/spi/spi_slave.vhd
 set_global_assignment -name VHDL_FILE ../../rtl/spi/spi_master.vhd
 set_global_assignment -name VHDL_FILE ../../rtl/sd/zc_spi.vhd
 set_global_assignment -name VHDL_FILE ../../rtl/memory/memory.vhd
@@ -272,8 +271,7 @@ set_global_assignment -name VHDL_FILE ../../rtl/uart/fifo.vhd
 set_global_assignment -name VHDL_FILE ../../rtl/storage/bus_port.vhd
 set_global_assignment -name QIP_FILE ../../rtl/storage/bus_mux.qip
 set_global_assignment -name VHDL_FILE ../../rtl/avr/avr.vhd
-set_global_assignment -name QIP_FILE ../../rtl/avr/rtc.qip
-set_global_assignment -name QIP_FILE ../../rtl/avr/queue.qip
+set_global_assignment -name VERILOG_FILE ../../rtl/avr/avr_link.v
 set_global_assignment -name VHDL_FILE ../../rtl/mouse/serial_mouse.vhd
 set_global_assignment -name VHDL_FILE ../../rtl/mouse/hw_int.vhd
 set_global_assignment -name QIP_FILE ../../rtl/mouse/mmux.qip

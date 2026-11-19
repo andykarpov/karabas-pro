@@ -20,14 +20,7 @@ G="--std=08 -fsynopsys -frelaxed"
 python3 -I "$HERE/mkroms.py" "$RTL/video" .
 python3 -I -c "import sys; d = open(sys.argv[1], 'rb').read(); open('plus3e.txt', 'w').write(''.join('%02X\n' % b for b in d))" \
   "$HERE/../rom/plus3e_mmc.rom"
-sed -e 's/when (N) =>/when 24 =>/' -e 's/when (N-1) downto (PREFETCH+3) =>/when 23 downto 5 =>/' \
-    -e 's/when (PREFETCH+2) downto 2 =>/when 4 downto 2 =>/' \
-    -e 's/signal state_next : natural range N+1 downto 0 := 0;/signal state_next : integer := 0;/' \
-    -e 's/signal state_reg : natural range N+1 downto 0 := 0;/signal state_reg : integer := 0;/' \
-    -e "s/state_dbg_o <= std_logic_vector(to_unsigned(state_reg, 6));/state_dbg_o <= (others => '0');/" \
-    "$RTL/spi/spi_slave.vhd" > spi_slave_sim.vhd
-
-ghdl -a $G "$HERE/top_models.vhd" "$HERE/ip_models.vhd" "$HERE/avr_ip_models.vhd" spi_slave_sim.vhd \
+ghdl -a $G "$HERE/top_models.vhd" "$HERE/ip_models.vhd" "$HERE/avr_ip_models.vhd" "$HERE/avr_link_stub.vhd" \
   "$RTL/spi/spi_master.vhd" "$RTL/flash/flash.vhd" "$RTL/sd/zc_spi.vhd" "$RTL/memory/memory.vhd" \
   "$RTL/t80se/T80_Pack.vhd" "$RTL/t80se/T80_ALU.vhd" "$RTL/t80se/T80_MCode.vhd" "$RTL/t80se/T80_Reg.vhd" \
   "$RTL/t80se/T80.vhd" "$RTL/t80se/T80a.vhd" "$RTL/video/pentagon_video.vhd" "$RTL/video/profi_video.vhd" \
