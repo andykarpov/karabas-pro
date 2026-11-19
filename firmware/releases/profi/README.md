@@ -1,5 +1,13 @@
 # Karabas-Pro Profi firmware
 
+## Upgrading: flash the FPGA and the AVR together
+
+Since this release the FPGA and the AVR talk over a new link (link v2: one SPI packet per
+command, SCK 8 MHz). It is not compatible with the old one in either direction: a new FPGA
+core with an old AVR firmware, or an old core with a new AVR firmware, gives no keyboard,
+mouse, joystick, OSD menu or clock. Always flash both from the same release: the FPGA / CPLD
+as below, then the AVR (flash and EEPROM).
+
 ## How to flash FPGA and CPLD things
 
 1) Open Quartus Programmer file target/karabas_pro_target_tda1543.cdf or target/karabas_pro_target_tda1543a.cdf (depends of the DAC model on your board)
