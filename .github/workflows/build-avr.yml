@@ -2,13 +2,13 @@ name: Build AVR Firmware
 
 on:
   push:
-    branches: [ master ]
+    branches: [ master, link-v2 ]
     paths:
       - 'firmware/src/avr/**'
       - 'firmware/src/build_avr.sh'
       - '.github/workflows/build-avr.yml'
   pull_request:
-    branches: [ master ]
+    branches: [ master, link-v2 ]
     paths:
       - 'firmware/src/avr/**'
       - 'firmware/src/build_avr.sh'

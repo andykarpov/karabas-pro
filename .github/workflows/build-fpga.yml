@@ -2,14 +2,14 @@ name: Build FPGA & CPLD
 
 on:
   push:
-    branches: [ master ]
+    branches: [ master, link-v2 ]
     paths:
       - 'firmware/src/fpga/profi/**'
       - 'firmware/src/cpld/**'
       - 'docker/quartus13/**'
       - '.github/workflows/build-fpga.yml'
   pull_request:
-    branches: [ master ]
+    branches: [ master, link-v2 ]
     paths:
       - 'firmware/src/fpga/profi/**'
       - 'firmware/src/cpld/**'
