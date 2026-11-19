@@ -26,7 +26,7 @@ begin
 
   U_VID: entity work.video port map (
     CLK2X => clk, CLK => div2, ENA => div4, RESET => reset, BORDER => x"01", DI => x"FF",
-    TURBO => "00", INTA => '1', MODE60 => MODE60, INT => open, ATTR_O => open, pFF_CS => open, A => open,
+    INTA => '1', MODE60 => MODE60, INT => open, ATTR_O => open, pFF_CS => open, A => open,
     VIDEO_R => vid_r, VIDEO_G => vid_g, VIDEO_B => vid_b, HSYNC => hs, VSYNC => vs,
     DS80 => DS80, CS7E => '0', BUS_A => x"00", BUS_D => x"00", BUS_WR_N => '1', GX0 => open,
     SCREEN_MODE => SCR, COUNT_BLOCK => open, HCNT => hcnt, VCNT => vcnt, ISPAPER => ispaper, BLINK => blink,

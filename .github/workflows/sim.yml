@@ -4,7 +4,8 @@ name: GHDL simulation
 # - video controller -> OSD overlay -> scandoubler in all six screen modes,
 #   compared with expected_scandoubler.txt;
 # - avr.vhd RTC handling, audio_mixer against a model, tda1543 decoded;
-# - memory.vhd in the +3e mode against the ZX Spectrum +3 memory map.
+# - memory.vhd in the +3e mode against the ZX Spectrum +3 memory map;
+# - the frame INT of the video controller against the old one, with mutations.
 
 # Manual only: Actions -> GHDL simulation -> Run workflow.
 on:
@@ -56,3 +57,18 @@ jobs:
         run: |
           firmware/src/fpga/profi/sim/run_plus3e.sh "$RUNNER_TEMP/sim" | tee sim.log
           { echo '### +3e memory map (GHDL)'; echo '```'; cat sim.log; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+
+  frame-int:
+    name: frame INT (GHDL)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install GHDL
+        run: sudo apt-get update -q && sudo apt-get install -y -q ghdl
+
+      - name: Run the bench
+        run: |
+          firmware/src/fpga/profi/sim/run_int.sh "$RUNNER_TEMP/sim" | tee sim.log
+          { echo '### Frame INT (GHDL)'; echo '```'; cat sim.log; echo '```'; } >> "$GITHUB_STEP_SUMMARY"

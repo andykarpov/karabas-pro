@@ -14,8 +14,6 @@ entity pentagon_video is
 		ENA		: in std_logic; -- 7 MHz 
 		BORDER	: in std_logic_vector(2 downto 0);	-- bordr color (port #xxFE)
 		DI			: in std_logic_vector(7 downto 0);	-- video data from memory
-		TURBO 	: in std_logic_vector := "00"; -- 01 = turbo 2x mode, 10 - turbo 4x mode, 11 - turbo 8x mode, 00 = normal mode
-		INTA		: in std_logic := '0'; -- int request for turbo mode
 		INT		: out std_logic; -- int output
 		MODE60	: in std_logic := '0'; -- '0'
 		pFF_CS	: out std_logic; -- port FF select
@@ -71,7 +69,7 @@ architecture rtl of pentagon_video is
 begin
 
 	-- sync, counters
-	process( CLK2X, CLK, ENA, chr_col_cnt, hor_cnt, chr_row_cnt, ver_cnt, TURBO, INTA)
+	process( CLK2X, CLK, ENA, chr_col_cnt, hor_cnt, chr_row_cnt, ver_cnt)
 	begin
 		if CLK2X'event and CLK2X = '1' then
 		
@@ -122,55 +120,26 @@ begin
 					
 				end if;
 			
-				-- int
-				if TURBO = "01" then
-					-- TURBO 2x int
-					if chr_col_cnt = 6 and hor_cnt(1 downto 0) = "11" then
-						if ver_cnt = 29 and chr_row_cnt = 7 and hor_cnt(5 downto 2) = "1001" then
+				-- int: 32 T of the 3.5 MHz CPU in every turbo mode (video.vhd ends it at the
+				-- acknowledge while the CPU runs faster)
+				-- PENTAGON int
+				if (SCREEN_MODE = "00") then 
+					if chr_col_cnt = 6 and hor_cnt(2 downto 0) = "111" then
+						if ver_cnt = 29 and chr_row_cnt = 7 and hor_cnt(5 downto 3) = "100" then
 							int_sig <= '0';
 						else
 							int_sig <= '1';
 						end if;
 					end if;
-				elsif TURBO = "10" then 
-					-- TURBO 4x int
-					if chr_col_cnt = 6 and hor_cnt(0) = '1' then
-						if ver_cnt = 29 and chr_row_cnt = 7 and hor_cnt(5 downto 1) = "10011" then
+				-- CLASSIC int
+				elsif (SCREEN_MODE = "01") then 
+					if chr_col_cnt = 0 then
+						if ver_cnt = 31 and chr_row_cnt = 0 and hor_cnt(5 downto 3) = "000" then
 							int_sig <= '0';
 						else
 							int_sig <= '1';
 						end if;
 					end if;
-				elsif TURBO = "11" then 
-					-- TURBO 8x int
-					if chr_col_cnt = 6 then
-						if ver_cnt = 29 and chr_row_cnt = 7 and hor_cnt(5 downto 0) = "100111" then
-							int_sig <= '0';
-						else
-							int_sig <= '1';
-						end if;
-					end if;
-				else 
-					-- PENTAGON int
-					if (SCREEN_MODE = "00") then 
-						if chr_col_cnt = 6 and hor_cnt(2 downto 0) = "111" then
-							if ver_cnt = 29 and chr_row_cnt = 7 and hor_cnt(5 downto 3) = "100" then
-								int_sig <= '0';
-							else
-								int_sig <= '1';
-							end if;
-						end if;
-					-- CLASSIC int
-					elsif (SCREEN_MODE = "01") then 
-						if chr_col_cnt = 0 then
-							if ver_cnt = 31 and chr_row_cnt = 0 and hor_cnt(5 downto 3) = "000" then
-								int_sig <= '0';
-							else
-								int_sig <= '1';
-							end if;
-						end if;
-					end if;
-
 				end if;
 
 				chr_col_cnt <= chr_col_cnt + 1;

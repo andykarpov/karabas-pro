@@ -34,6 +34,28 @@ The border is the same on both sides of the paper: 103 clocks for Spectrum, 51
 for Profi. If a change in the video path moves the picture, adjust
 `SPEC_PAPER` / `PROF_PAPER` in `rtl/video/scandoubler.vhd`.
 
+## Frame INT
+
+```sh
+firmware/src/fpga/profi/sim/run_int.sh
+```
+
+`tb_int.vhd` runs the new `video` controller next to the old one (`sim/ref`, master
+8fbc791, entities renamed `*_ref`) in all six screen modes, with INTA pulses at
+random places, many of them inside the INT:
+
+- `G_ACK = 0`, the CPU at 3.5 MHz: every output of the controller (INT, RGB, syncs,
+  video address, attribute, counters) equals the old one with `TURBO = "00"`, clock
+  by clock;
+- `G_ACK = 1`, the CPU faster: the INT starts where the old 3.5 MHz INT starts, is
+  low until the first INTA inside it or to its old end, and starts once per frame;
+  the other outputs equal the old ones. The length of the old turbo 4x INT is
+  printed next to it.
+
+Then the script mutates the RTL (acknowledge always on, never on, never cleared;
+the INT of Pentagon, Classic and Profi moved or shortened) and fails if a mutation
+is not caught. About 30 minutes.
+
 ## avr RTC and audio
 
 ```sh

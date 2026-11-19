@@ -371,6 +371,7 @@ signal loader_done 	: std_logic := '0';
 signal dos_act			: std_logic := '1';
 signal clk_cpu			: std_logic;
 signal clk_cpu_en		: std_logic;
+signal cpu_fast		: std_logic;
 -- keep the CPU clock enable as a separate node, so clk_bus passes through a single
 -- AND gate on its way to clk_cpu instead of being merged into a chain of LUTs
 attribute keep : boolean;
@@ -717,7 +718,7 @@ port map (
 	RESET 			=> reset,	
 	BORDER 			=> port_xxfe_reg(7 downto 0),
 	DI 				=> vid_do_bus,
-	TURBO 			=> turbo_mode,	-- turbo signal for int length
+	INT_ACK 		=> cpu_fast,	-- the CPU runs faster than 3.5 MHz: INT ends at the acknowledge
 	INTA 				=> cpu_inta_n,
 	INT 				=> cpu_int_n,
 	pFF_CS			=> vid_pff_cs, -- port FF select
@@ -1240,6 +1241,9 @@ clk_cpu_en <= '0' when kb_wait = '1' or  (kb_screen_mode = "01" and memory_conte
 	ena_div8;
 
 clk_cpu <= clk_bus and clk_cpu_en;
+
+-- the CPU clock is above 3.5 MHz (the turbo branches of clk_cpu_en above)
+cpu_fast <= '1' when fdd_wait = '1' and turbo_mode /= "00" and turbo_mode <= max_turbo else '0';
 
 -- одновибратор - по спаду /IORQ отсчитывает 400нс вейта проца 
 -- для работы периферии в турбе или в режиме расширенного экрана 

@@ -16,8 +16,8 @@ entity video is
 
 		BORDER	: in std_logic_vector(7 downto 0);	-- bordr color (port #xxFE)
 		DI			: in std_logic_vector(7 downto 0);	-- video data from memory
-		TURBO 	: in std_logic_vector := "00"; -- 01 = turbo 2x mode, 10 - turbo 4x mode, 11 - turbo 8x mode, 00 = normal mode
-		INTA		: in std_logic := '0'; -- int request for turbo mode
+		INT_ACK	: in std_logic := '0'; -- 1 = the CPU runs faster than 3.5 MHz: INT ends at the acknowledge
+		INTA		: in std_logic := '1'; -- INT acknowledge cycle (M1 and IORQ), active low
 		MODE60	: in std_logic := '0'; -- 
 		INT		: out std_logic; -- int output
 		ATTR_O	: out std_logic_vector(7 downto 0); -- attribute register output
@@ -102,6 +102,9 @@ architecture rtl of video is
 	signal vcnt_spec : std_logic_vector(8 downto 0);
 	signal ispaper_spec : std_logic;
 
+	signal int_frame : std_logic;
+	signal int_ack_r : std_logic := '0';
+
 begin
 
 	U_PENT: entity work.pentagon_video 
@@ -111,8 +114,6 @@ begin
 		ENA => ENA, -- 7
 		BORDER => BORDER(2 downto 0),
 		DI => DI,
-		TURBO => TURBO,
-		INTA => INTA,
 		INT => int_spec,
 		MODE60 => MODE60,
 		pFF_CS => pFF_CS_spec,
@@ -143,7 +144,6 @@ begin
 		CLK => CLK, -- 14
 		CLK2x => CLK2x, -- 28
 		ENA => ENA, -- 7
-		TURBO => TURBO,
 		BORDER => BORDER(3 downto 0),
 		DI => DI,
 		INTA => INTA,
@@ -171,7 +171,25 @@ begin
 
 	A <= vid_a_profi when ds80 = '1' else vid_a_spec;
 
-	INT <= int_profi when ds80 = '1' else int_spec;
+	-- The frame INT is as long as on the 3.5 MHz machine (32 T, 9 us) in every turbo mode. While
+	-- the CPU runs faster it ends at the INT acknowledge: a turbo-length INT (2.3 us at 14 MHz) was
+	-- missed by an instruction slowed down by WAIT or by the FDC pacing, and a 9 us INT without the
+	-- acknowledge would be taken twice by a short interrupt routine. At 3.5 MHz INT_ACK is 0 and the
+	-- INT is exactly the one of the machine (a short routine may take it twice there too).
+	int_frame <= int_profi when ds80 = '1' else int_spec;
+
+	process (CLK2X)
+	begin
+		if rising_edge(CLK2X) then
+			if int_frame = '1' then
+				int_ack_r <= '0';
+			elsif INT_ACK = '1' and INTA = '0' then
+				int_ack_r <= '1';
+			end if;
+		end if;
+	end process;
+
+	INT <= int_frame or int_ack_r;
 
 	rgb <= rgb_profi when ds80 = '1' else rgb_spec;
 	i <= i_profi when ds80 = '1' else i_spec;
