@@ -195,10 +195,10 @@ void delayMicroseconds(unsigned int us);
 unsigned long millis(void);
 #endif
 
-#ifdef LINK_DEBUG
+// UART on PD0 / PD1, 115200 8N1: AT+KARABAS= (at_cmd.c), the link check of the debug build
 void hal_uart_init(void);
-void hal_uart_putc(char c); // sim.c: lines "U <text>" in the log
-#endif
+void hal_uart_putc(char c);
+int16_t hal_uart_getc(void); // -1: nothing received
 
 // SPI Master; SCK in MHz: 8 (default), 4, 2 or 1
 #ifndef LINK_SPI_MHZ

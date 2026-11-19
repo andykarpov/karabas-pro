@@ -158,6 +158,11 @@ static volatile uint32_t s_tx_start_time = 0;
 static volatile uint8_t s_resend_count = 0;
 
 static uint8_t s_led_lock = 0;
+
+// keys of AT+KARABAS= (at_cmd.c): key id | 0x80 for a break, read before the keyboard's
+#define INJ_SIZE 16
+static uint8_t s_inj[INJ_SIZE];
+static uint8_t s_inj_head = 0, s_inj_tail = 0;
 static uint8_t s_keystatus = 0;
 
 // IO pin control
@@ -448,12 +453,28 @@ bool ps2_kbd_is_tx_busy(void)
 bool ps2_kbd_available(void)
 {
   ps2_kbd_check_tx_timeout();
-  return (s_rx_head != s_rx_tail);
+  return (s_rx_head != s_rx_tail) || (s_inj_head != s_inj_tail);
 }
+
+bool ps2_kbd_inject(uint8_t key_id, bool up)
+{
+  uint8_t next = (uint8_t)((s_inj_head + 1) % INJ_SIZE);
+  if (next == s_inj_tail) return false;
+  s_inj[s_inj_head] = key_id | (up ? 0x80 : 0);
+  s_inj_head = next;
+  return true;
+}
+
+static uint16_t key_result(uint8_t key_id, bool is_break);
 
 uint16_t ps2_kbd_read(void)
 {
   ps2_kbd_check_tx_timeout();
+  if (s_inj_head != s_inj_tail) {
+    uint8_t v = s_inj[s_inj_tail];
+    s_inj_tail = (uint8_t)((s_inj_tail + 1) % INJ_SIZE);
+    return key_result(v & 0x7F, (v & 0x80) != 0);
+  }
   if (s_rx_head == s_rx_tail) return 0;
 
   uint8_t next = s_rx_tail + 1;
@@ -490,9 +511,12 @@ uint16_t ps2_kbd_read(void)
   }
 
   if (key_id == 0) return 0;
+  return key_result(key_id, (mode & MODE_BREAK) != 0);
+}
 
-  bool is_break = (mode & MODE_BREAK) != 0;
-
+// the modifiers and the result of a decoded key (the keyboard's or an injected one)
+static uint16_t key_result(uint8_t key_id, bool is_break)
+{
   // Update modifiers
   switch (key_id) {
     case PS2_KEY_L_SHIFT:

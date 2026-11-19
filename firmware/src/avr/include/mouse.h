@@ -18,6 +18,7 @@ uint8_t mouse_get_z(void);
 
 bool mouse_get_swap(void);
 void mouse_set_swap(bool val);
+bool mouse_inject(uint8_t status, int8_t x, int8_t y); // AT+KARABAS= (at_cmd.c)
 
 #ifdef __cplusplus
 }

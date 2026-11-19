@@ -68,4 +68,27 @@ case "$last" in *" errors 0") ;; *) echo "debug build: link check failed: $last"
 grep -q '^U link up, SCK 8 MHz' "$W/v2dbg.a.log" || { echo "debug build: no link up line" >&2; fail=1; }
 if grep -q 'ERROR' "$W/v2dbg.a.log"; then grep -m3 'ERROR' "$W/v2dbg.a.log" >&2; fail=1; fi
 
+# AT+KARABAS= (src/at_cmd.c, docs/AT_KARABAS.md): scenario c sends AT lines, scenario d makes the
+# same keys, pad and mouse by the models; their HID packets must be the same, and c must answer
+# and send the menu values
+"$W/v2bin" "$W/v2.c.log" c
+"$W/v2bin" "$W/v2.d.log" d
+hid() { sed -n 's/^[0-9]*: \(01 [^|]*\) |.*/\1/p' "$1"; }
+nc=$(hid "$W/v2.c.log" | wc -l)
+if ! diff <(hid "$W/v2.c.log") <(hid "$W/v2.d.log") > "$W/at.diff"; then
+  echo "AT: HID packets differ from the models:" >&2; head -8 "$W/at.diff" >&2; fail=1
+fi
+at_want() { # $1 = fixed text that must be in the log of c
+  grep -qF -- "$1" "$W/v2.c.log" || { echo "AT: no '$1' in the log" >&2; fail=1; }
+}
+at_want "U +KARABAS:HOSTTEST;pro;"
+at_want "U +KARABAS:item;7;turbo;2;2"
+at_want "U +KARABAS:item;18;menu;0;1"
+at_want ": 00 03 07 02 |"
+at_want ": 00 03 00 04 |"
+at_want ": 00 03 12 01 |"
+nok=$(grep -c '^U OK$' "$W/v2.c.log"); nerr=$(grep -c '^U ERROR$' "$W/v2.c.log")
+[ "$nok" = 14 ] && [ "$nerr" = 2 ] || { echo "AT: $nok OK, $nerr ERROR (want 14, 2)" >&2; fail=1; }
+echo "AT: $nc HID packets as by the models, $nok OK, $nerr ERROR"
+
 [ $fail = 0 ] && echo "OK: same passes, EEPROM and DS1307 on v1 and v2" || { echo "FAIL" >&2; exit 1; }

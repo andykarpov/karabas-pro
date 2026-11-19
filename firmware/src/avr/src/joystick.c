@@ -107,6 +107,10 @@ static uint16_t sega_read_state(void)
   return s_sega_state;
 }
 
+static uint16_t s_at_buttons = 0;
+
+void joystick_set_at_buttons(uint16_t buttons) { s_at_buttons = buttons; }
+
 void joystick_handle(bool joy_type)
 {
   // Stop hardware SPI to read shared PB2 (SS / JOY_RIGHT): no packet may stay open
@@ -154,6 +158,20 @@ void joystick_handle(bool joy_type)
     if (st & SC_BTN_A)     buttons |= LJ_A;
     if (st & SC_BTN_B)     buttons |= LJ_B;
     if (st & SC_BTN_C)     buttons |= LJ_C;
+  }
+
+  // AT+KARABAS=pad (at_cmd.c) on top of the real buttons, in both modes
+  if (s_at_buttons) {
+    uint16_t a = s_at_buttons;
+    buttons |= a;
+    if (a & LJ_UP)    flags |= (1 << ZX_JOY_UP);
+    if (a & LJ_DOWN)  flags |= (1 << ZX_JOY_DOWN);
+    if (a & LJ_LEFT)  flags |= (1 << ZX_JOY_LEFT);
+    if (a & LJ_RIGHT) flags |= (1 << ZX_JOY_RIGHT);
+    if (a & LJ_B)     flags |= (1 << ZX_JOY_FIRE);
+    if (a & LJ_C)     flags |= (1 << ZX_JOY_FIRE2);
+    if (a & LJ_A)     flags |= (1 << ZX_JOY_A);
+    if (a & LJ_START) flags |= (1 << ZX_JOY_B);
   }
 
   // Restore PB2 as output low for SPI SS

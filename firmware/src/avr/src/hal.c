@@ -93,17 +93,33 @@ uint8_t hal_spi_transfer(uint8_t data)
   return SPDR;
 }
 
-#ifdef LINK_DEBUG
 /****************************************************************************/
-// UART TX (PD1, 115200 8N1), debug builds only (env ATmega328_debug)
+// UART (PD1 TX, PD0 RX, 115200 8N1): AT+KARABAS= commands (at_cmd.c), the link check of the
+// debug build
 /****************************************************************************/
+
+#define UART_RX_SIZE 128
+static volatile uint8_t s_urx[UART_RX_SIZE];
+static volatile uint8_t s_urx_head = 0;
+static uint8_t s_urx_tail = 0;
+
+ISR(USART_RX_vect)
+{
+  uint8_t c = UDR0;
+  uint8_t next = (uint8_t)((s_urx_head + 1) % UART_RX_SIZE);
+  if (next != s_urx_tail) {
+    s_urx[s_urx_head] = c;
+    s_urx_head = next;
+  }
+}
 
 void hal_uart_init(void)
 {
+  PORTD |= (1 << PD0); // pull-up: nothing connected reads as idle
   UCSR0A = (1 << U2X0);
-  UBRR0 = 16; // 16 MHz / (8 x 17) = 117647 baud, -2.1 % from 115200 with U2X0
-  UCSR0B = (1 << TXEN0);
+  UBRR0 = 16; // 16 MHz / (8 x 17) = 117647 baud, +2.1 % from 115200 with U2X0
   UCSR0C = (1 << UCSZ01) | (1 << UCSZ00);
+  UCSR0B = (1 << TXEN0) | (1 << RXEN0) | (1 << RXCIE0);
 }
 
 void hal_uart_putc(char c)
@@ -111,7 +127,14 @@ void hal_uart_putc(char c)
   while (!(UCSR0A & (1 << UDRE0)));
   UDR0 = c;
 }
-#endif
+
+int16_t hal_uart_getc(void)
+{
+  if (s_urx_head == s_urx_tail) return -1;
+  uint8_t c = s_urx[s_urx_tail];
+  s_urx_tail = (uint8_t)((s_urx_tail + 1) % UART_RX_SIZE);
+  return c;
+}
 
 /****************************************************************************/
 // Hardware TWI (I2C) Master Driver

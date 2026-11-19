@@ -37,7 +37,7 @@ static uint64_t s_us = 0;
 static jmp_buf s_end;
 static FILE *s_log;
 
-#ifdef LINK_DEBUG
+/* ---------------- UART: lines "U <text>" of the firmware, AT lines of scenario c ---------------- */
 static char s_uart[80];
 static unsigned s_uartn = 0;
 void hal_uart_init(void) {}
@@ -52,7 +52,16 @@ void hal_uart_putc(char c)
     s_uart[s_uartn++] = c;
   }
 }
-#endif
+
+static char s_urx[512];
+static unsigned s_urx_h, s_urx_t;
+static void uart_send(const char *s)
+{
+  while (*s) s_urx[s_urx_h++ % sizeof(s_urx)] = *s++;
+  s_urx[s_urx_h++ % sizeof(s_urx)] = '\r';
+  s_urx[s_urx_h++ % sizeof(s_urx)] = '\n';
+}
+int16_t hal_uart_getc(void) { return s_urx_h != s_urx_t ? (uint8_t)s_urx[s_urx_t++ % sizeof(s_urx)] : -1; }
 static void scenario(void);
 
 static void tick(double us)
@@ -274,6 +283,7 @@ bool ps2_kbd_available(void) { return s_kh != s_kt; }
 uint16_t ps2_kbd_read(void) { return s_kh != s_kt ? s_kq[s_kt++ % 256] : 0; }
 bool ps2_kbd_check_tx_timeout(void) { return false; }
 bool ps2_kbd_is_tx_busy(void) { return false; }
+bool ps2_kbd_inject(uint8_t key_id, bool up) { key(key_id, up); return true; }
 
 /* ---------------- scenario ---------------- */
 
@@ -327,6 +337,39 @@ static const ev_t s_ev[] = {
   { 13600, 'u', PS2_KEY_BS, 0 }, { 13620, 'u', ALT, 0 }, { 13640, 'u', CTRL, 0 },
 };
 
+/* scenario c: AT+KARABAS= lines (op a: s_at[a]); scenario d: the same keys, pad and mouse by the
+   models, at the times the AT jobs make them (key 100 ms down + 40 up, type 60 + 40, pad 100 +
+   40, mouse 127 counts per 10 ms, click 60 ms); run.sh compares their HID packets */
+static const char *const s_at[] = {
+  "AT+KARABAS=version", "AT+KARABAS=osd:turbo=2", "AT+KARABAS=osd:rombank=4", "AT+KARABAS=key:a",
+  "AT+KARABAS=type:Ab1", "AT+KARABAS=pad:0:up+b", "AT+KARABAS=mouse:200,-5,1",
+  "AT+KARABAS=click:right", "AT+KARABAS=bogus", "AT+KARABAS=osd:turbo=9", "AT+KARABAS=osd",
+  "AT+KARABAS=hold:shift", "AT+KARABAS=key:x", "AT+KARABAS=release", "AT+KARABAS=osd:menu=1",
+  "AT+KARABAS=osd:menu=0", "noise without the prefix",
+};
+static const ev_t s_ev_c[] = {
+  { 10, 'k', PS2_KEY_BAT, 0 },
+  { 3000, 'a', 0, 0 }, { 3100, 'a', 1, 0 }, { 3200, 'a', 2, 0 }, { 3300, 'a', 3, 0 },
+  { 3600, 'a', 4, 0 }, { 4200, 'a', 5, 0 }, { 4600, 'a', 6, 0 }, { 4800, 'a', 7, 0 },
+  { 5000, 'a', 8, 0 }, { 5050, 'a', 16, 0 }, { 5100, 'a', 9, 0 }, { 5200, 'a', 10, 0 },
+  { 5300, 'a', 11, 0 }, { 5400, 'a', 12, 0 }, { 5700, 'a', 13, 0 }, { 5800, 'a', 14, 0 },
+  { 6000, 'a', 15, 0 },
+};
+static const ev_t s_ev_d[] = {
+  { 10, 'k', PS2_KEY_BAT, 0 },
+  { 3300, 'd', PS2_KEY_A, 0 }, { 3400, 'u', PS2_KEY_A, 0 },
+  { 3600, 'd', SHIFT, 0 }, { 3600, 'd', PS2_KEY_A, 0 }, { 3660, 'u', PS2_KEY_A, 0 }, { 3660, 'u', SHIFT, 0 },
+  { 3700, 'd', PS2_KEY_B, 0 }, { 3760, 'u', PS2_KEY_B, 0 },
+  { 3800, 'd', PS2_KEY_1, 0 }, { 3860, 'u', PS2_KEY_1, 0 },
+  { 4200, 'j', J_UP | J_B, 0 }, { 4300, 'j', 0, 0 },
+  { 4600, 'm', 0x09, 0x057F }, { 4610, 'm', 0x09, 0x0049 },
+  { 4800, 'm', 0x0B, 0 }, { 4860, 'm', 0x09, 0 },
+  { 5300, 'd', SHIFT, 0 }, { 5400, 'u', SHIFT, 0 }, { 5400, 'd', PS2_KEY_X, 0 }, { 5500, 'u', PS2_KEY_X, 0 },
+  { 5700, 'm', 0x08, 0 },
+};
+static const ev_t *s_evp = s_ev;
+static unsigned s_evn = sizeof(s_ev) / sizeof(s_ev[0]);
+
 static unsigned s_evi;
 static ev_t s_ups[16];
 static unsigned s_nups;
@@ -337,8 +380,8 @@ static void scenario(void)
   for (unsigned i = 0; i < s_nups; i++) {
     if (s_ups[i].ms <= now) { key((uint8_t)s_ups[i].a, true); s_ups[i] = s_ups[--s_nups]; i--; }
   }
-  while (s_evi < sizeof(s_ev) / sizeof(s_ev[0]) && s_ev[s_evi].ms <= now) {
-    const ev_t *e = &s_ev[s_evi++];
+  while (s_evi < s_evn && s_evp[s_evi].ms <= now) {
+    const ev_t *e = &s_evp[s_evi++];
     switch (e->op) {
       case 'k': key((uint8_t)e->a, false); s_ups[s_nups++] = (ev_t){ now + 40, 'u', e->a, 0 }; break;
       case 'd': key((uint8_t)e->a, false); break;
@@ -350,6 +393,7 @@ static void scenario(void)
       case 'r': cpu_rtc_write((uint8_t)e->a, (uint8_t)e->b); break;
       case '1': s_btn1 = e->a != 0; break;
       case '2': s_btn2 = e->a != 0; break;
+      case 'a': uart_send(s_at[e->a]); break;
     }
   }
 }
@@ -370,6 +414,8 @@ int main(int argc, char **argv)
     s_eeprom[0x0E] = 1; s_eeprom[0x10] = 10; s_eeprom[0x14] = 1;
     s_sega = true;
   }
+  if (argc > 2 && argv[2][0] == 'c') { s_evp = s_ev_c; s_evn = sizeof(s_ev_c) / sizeof(s_ev_c[0]); }
+  if (argc > 2 && argv[2][0] == 'd') { s_evp = s_ev_d; s_evn = sizeof(s_ev_d) / sizeof(s_ev_d[0]); }
   PORTD = 0x80;
   if (!setjmp(s_end)) avr_main();
   fprintf(s_log, "end at %llu us\nEEPROM", (unsigned long long)s_us);

@@ -144,6 +144,8 @@ bool ps2_kbd_available(void);
 uint16_t ps2_kbd_read(void);
 bool ps2_kbd_check_tx_timeout(void);
 bool ps2_kbd_is_tx_busy(void);
+// a key of AT+KARABAS= (at_cmd.c) as if the keyboard sent it; false: the queue is full
+bool ps2_kbd_inject(uint8_t key_id, bool up);
 
 #ifdef __cplusplus
 }

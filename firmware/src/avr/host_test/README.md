@@ -27,7 +27,9 @@ settings (`b`: ROM bank +3e over bank 1, turbo 2, Spectrum layout, Sega, ...).
 and checks: the SPI is never switched off with CS low, both reach the same number of passes,
 the EEPROM and the DS1307 are the same at the end. It also runs the debug build
 (`-DLINK_DEBUG`, env `ATmega328_debug`) on scenario `a`: the same passes, and its link check (SYS
-STATUS on idle passes, printed by `hal_uart_putc()` as lines `U ...`) counts no errors. The logs are the input of
+STATUS on idle passes, printed by `hal_uart_putc()` as lines `U ...`) counts no errors. Scenario `c` sends `AT+KARABAS=` lines into the UART (`src/at_cmd.c`,
+docs/AT_KARABAS.md) and scenario `d` makes the same keys, pad and mouse by the models: their HID
+packets must be the same, and `c` must answer as expected and send the menu values. The logs are the input of
 `firmware/src/fpga/profi/sim/run_avr_link.sh`, which replays them into the old and the new FPGA
 module and mutates the firmware.
 

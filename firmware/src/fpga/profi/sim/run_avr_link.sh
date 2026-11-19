@@ -155,4 +155,7 @@ mut_c rombank-order src/keyboard.c "  link_setval(LV_ROMBANK, (s_is_sw3 ? 1 : 0)
   if (s_is_plus3e) link_setval(LV_ROMBANK, 4);" "  if (s_is_plus3e) link_setval(LV_ROMBANK, 4);
   link_setval(LV_ROMBANK, (s_is_sw3 ? 1 : 0) | (s_is_sw4 ? 2 : 0));"
 
+mut_c at-mouse-y src/at_cmd.c "(int8_t)dx, (int8_t)-dy);" "(int8_t)dx, (int8_t)dy);"
+mut_c at-type-shift src/at_cmd.c "if (c >= 'A' && c <= 'Z') { *shift = true;" "if (c >= 'A' && c <= 'Z') { *shift = false;"
+
 [ $fail = 0 ] && echo "OK: avr link v2" || { echo "FAIL" >&2; exit 1; }

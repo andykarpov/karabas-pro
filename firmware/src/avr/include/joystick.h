@@ -21,6 +21,7 @@ void joystick_init(void);
 bool joystick_started(void);
 void joystick_handle(bool joy_type);
 uint8_t joystick_get_state(void);
+void joystick_set_at_buttons(uint16_t buttons); // AT+KARABAS=pad: LJ_* bits held on top
 
 #ifdef __cplusplus
 }

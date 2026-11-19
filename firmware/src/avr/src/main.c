@@ -30,6 +30,7 @@ Ukraine, 2021 - 2026
 #include "zxosd.h"
 #include "utils.h"
 #include "link.h"
+#include "at_cmd.h"
 
 #define STRINGIFY(s) STRINGIFY1(s)
 #define STRINGIFY1(s) #s
@@ -60,6 +61,7 @@ void link_on_init(uint8_t cfg, uint8_t max_turbo)
 void link_on_build(uint8_t pos, uint8_t c)
 {
   zxosd_set_fpga_build_num(pos, c);
+  at_on_build(pos, c);
 }
 
 void link_on_leds(uint8_t bits)
@@ -102,9 +104,7 @@ int main(void)
 
   // Setup hardware SPI and ADC
   hal_spi_init();
-#ifdef LINK_DEBUG
   hal_uart_init();
-#endif
   hal_adc_init();
 
   // LEDs as outputs, initially HIGH (off)
@@ -205,6 +205,7 @@ int main(void)
     }
 
     keyboard_reset_osd_controls();
+    at_handle();
     link_service();
   }
 
