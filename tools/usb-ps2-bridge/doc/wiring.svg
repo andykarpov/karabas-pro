@@ -1,0 +1,483 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1380" height="1050" viewBox="0 0 1380 1050">
+<rect x="0" y="0" width="1380" height="1050" rx="0" fill="#fbfaf6" stroke="none" stroke-width="1"/>
+<text x="24" y="36" font-family="DejaVu Sans, Arial, sans-serif" font-size="20" fill="#222" text-anchor="start" font-weight="bold">Переходник USB → PS/2 + UART для Karabas-Pro: монтаж</text>
+<text x="24" y="58" font-family="DejaVu Sans, Arial, sans-serif" font-size="12" fill="#555" text-anchor="start" font-weight="normal">Схема: pcb/usb-ps2-bridge/usb-ps2-bridge.kicad_sch · прошивка: tools/usb-ps2-bridge</text>
+<rect x="470" y="150" width="504" height="206" rx="8" fill="#1b7f3b" stroke="#0f4f24" stroke-width="2"/>
+<rect x="456" y="233.0" width="26" height="40" rx="3" fill="#b0b6bb" stroke="#6d7378" stroke-width="1.5"/>
+<rect x="620" y="220" width="62" height="62" rx="3" fill="#1d1d1d" stroke="#000" stroke-width="1"/>
+<text x="651" y="256" font-family="DejaVu Sans, Arial, sans-serif" font-size="10" fill="#ddd" text-anchor="middle" font-weight="normal">RP2040</text>
+<rect x="710" y="230" width="34" height="26" rx="2" fill="#cfcfcf" stroke="#888" stroke-width="1"/>
+<circle cx="540" cy="246" r="11" fill="#f2f2f2" stroke="#999" stroke-width="1.5"/>
+<text x="540" y="274" font-family="DejaVu Sans, Arial, sans-serif" font-size="9" fill="#e8f5e9" text-anchor="middle" font-weight="normal">BOOTSEL</text>
+<text x="850" y="248" font-family="DejaVu Sans, Arial, sans-serif" font-size="16" fill="#ffffff" text-anchor="middle" font-weight="bold">Raspberry Pi Pico</text>
+<text x="850" y="268" font-family="DejaVu Sans, Arial, sans-serif" font-size="12" fill="#e8f5e9" text-anchor="middle" font-weight="normal">U1</text>
+<circle cx="488" cy="344" r="6" fill="#d4a537" stroke="#8a6a1c" stroke-width="1.2"/>
+<circle cx="488" cy="344" r="2.6" fill="#5a4512" stroke="none" stroke-width="1"/>
+<text x="492" y="332" font-family="DejaVu Sans, Arial, sans-serif" font-size="9" fill="#ffffff" text-anchor="start" font-weight="bold" transform="rotate(-90 492 332)">GP0</text>
+<text x="488" y="366" font-family="DejaVu Sans, Arial, sans-serif" font-size="9" fill="#555" text-anchor="middle" font-weight="normal">1</text>
+<circle cx="512" cy="344" r="6" fill="#d4a537" stroke="#8a6a1c" stroke-width="1.2"/>
+<circle cx="512" cy="344" r="2.6" fill="#5a4512" stroke="none" stroke-width="1"/>
+<text x="516" y="332" font-family="DejaVu Sans, Arial, sans-serif" font-size="9" fill="#ffffff" text-anchor="start" font-weight="bold" transform="rotate(-90 516 332)">GP1</text>
+<text x="512" y="366" font-family="DejaVu Sans, Arial, sans-serif" font-size="9" fill="#555" text-anchor="middle" font-weight="normal">2</text>
+<circle cx="536" cy="344" r="6" fill="#d4a537" stroke="#8a6a1c" stroke-width="1.2"/>
+<circle cx="536" cy="344" r="2.6" fill="#5a4512" stroke="none" stroke-width="1"/>
+<text x="540" y="332" font-family="DejaVu Sans, Arial, sans-serif" font-size="9" fill="#ffffff" text-anchor="start" font-weight="bold" transform="rotate(-90 540 332)">GND</text>
+<text x="536" y="366" font-family="DejaVu Sans, Arial, sans-serif" font-size="9" fill="#555" text-anchor="middle" font-weight="normal">3</text>
+<circle cx="560" cy="344" r="6" fill="#d4a537" stroke="#8a6a1c" stroke-width="1.2"/>
+<circle cx="560" cy="344" r="2.6" fill="#5a4512" stroke="none" stroke-width="1"/>
+<text x="564" y="332" font-family="DejaVu Sans, Arial, sans-serif" font-size="9" fill="#ffffff" text-anchor="start" font-weight="bold" transform="rotate(-90 564 332)">GP2</text>
+<text x="560" y="366" font-family="DejaVu Sans, Arial, sans-serif" font-size="9" fill="#555" text-anchor="middle" font-weight="normal">4</text>
+<circle cx="584" cy="344" r="6" fill="#d4a537" stroke="#8a6a1c" stroke-width="1.2"/>
+<circle cx="584" cy="344" r="2.6" fill="#5a4512" stroke="none" stroke-width="1"/>
+<text x="588" y="332" font-family="DejaVu Sans, Arial, sans-serif" font-size="9" fill="#ffffff" text-anchor="start" font-weight="bold" transform="rotate(-90 588 332)">GP3</text>
+<text x="584" y="366" font-family="DejaVu Sans, Arial, sans-serif" font-size="9" fill="#555" text-anchor="middle" font-weight="normal">5</text>
+<circle cx="608" cy="344" r="6" fill="#d4a537" stroke="#8a6a1c" stroke-width="1.2"/>
+<circle cx="608" cy="344" r="2.6" fill="#5a4512" stroke="none" stroke-width="1"/>
+<text x="612" y="332" font-family="DejaVu Sans, Arial, sans-serif" font-size="9" fill="#ffffff" text-anchor="start" font-weight="bold" transform="rotate(-90 612 332)">GP4</text>
+<text x="608" y="366" font-family="DejaVu Sans, Arial, sans-serif" font-size="9" fill="#555" text-anchor="middle" font-weight="normal">6</text>
+<circle cx="632" cy="344" r="6" fill="#d4a537" stroke="#8a6a1c" stroke-width="1.2"/>
+<circle cx="632" cy="344" r="2.6" fill="#5a4512" stroke="none" stroke-width="1"/>
+<text x="636" y="332" font-family="DejaVu Sans, Arial, sans-serif" font-size="9" fill="#ffffff" text-anchor="start" font-weight="bold" transform="rotate(-90 636 332)">GP5</text>
+<text x="632" y="366" font-family="DejaVu Sans, Arial, sans-serif" font-size="9" fill="#555" text-anchor="middle" font-weight="normal">7</text>
+<circle cx="656" cy="344" r="6" fill="#d4a537" stroke="#8a6a1c" stroke-width="1.2"/>
+<circle cx="656" cy="344" r="2.6" fill="#5a4512" stroke="none" stroke-width="1"/>
+<text x="660" y="332" font-family="DejaVu Sans, Arial, sans-serif" font-size="9" fill="#a5d6a7" text-anchor="start" font-weight="normal" transform="rotate(-90 660 332)">GND</text>
+<text x="656" y="366" font-family="DejaVu Sans, Arial, sans-serif" font-size="9" fill="#555" text-anchor="middle" font-weight="normal">8</text>
+<circle cx="680" cy="344" r="6" fill="#d4a537" stroke="#8a6a1c" stroke-width="1.2"/>
+<circle cx="680" cy="344" r="2.6" fill="#5a4512" stroke="none" stroke-width="1"/>
+<text x="684" y="332" font-family="DejaVu Sans, Arial, sans-serif" font-size="9" fill="#ffffff" text-anchor="start" font-weight="bold" transform="rotate(-90 684 332)">GP6</text>
+<text x="680" y="366" font-family="DejaVu Sans, Arial, sans-serif" font-size="9" fill="#555" text-anchor="middle" font-weight="normal">9</text>
+<circle cx="704" cy="344" r="6" fill="#d4a537" stroke="#8a6a1c" stroke-width="1.2"/>
+<circle cx="704" cy="344" r="2.6" fill="#5a4512" stroke="none" stroke-width="1"/>
+<text x="708" y="332" font-family="DejaVu Sans, Arial, sans-serif" font-size="9" fill="#ffffff" text-anchor="start" font-weight="bold" transform="rotate(-90 708 332)">GP7</text>
+<text x="704" y="366" font-family="DejaVu Sans, Arial, sans-serif" font-size="9" fill="#555" text-anchor="middle" font-weight="normal">10</text>
+<circle cx="728" cy="344" r="6" fill="#d4a537" stroke="#8a6a1c" stroke-width="1.2"/>
+<circle cx="728" cy="344" r="2.6" fill="#5a4512" stroke="none" stroke-width="1"/>
+<text x="732" y="332" font-family="DejaVu Sans, Arial, sans-serif" font-size="9" fill="#a5d6a7" text-anchor="start" font-weight="normal" transform="rotate(-90 732 332)">GP8</text>
+<text x="728" y="366" font-family="DejaVu Sans, Arial, sans-serif" font-size="9" fill="#555" text-anchor="middle" font-weight="normal">11</text>
+<circle cx="752" cy="344" r="6" fill="#d4a537" stroke="#8a6a1c" stroke-width="1.2"/>
+<circle cx="752" cy="344" r="2.6" fill="#5a4512" stroke="none" stroke-width="1"/>
+<text x="756" y="332" font-family="DejaVu Sans, Arial, sans-serif" font-size="9" fill="#a5d6a7" text-anchor="start" font-weight="normal" transform="rotate(-90 756 332)">GP9</text>
+<text x="752" y="366" font-family="DejaVu Sans, Arial, sans-serif" font-size="9" fill="#555" text-anchor="middle" font-weight="normal">12</text>
+<circle cx="776" cy="344" r="6" fill="#d4a537" stroke="#8a6a1c" stroke-width="1.2"/>
+<circle cx="776" cy="344" r="2.6" fill="#5a4512" stroke="none" stroke-width="1"/>
+<text x="780" y="332" font-family="DejaVu Sans, Arial, sans-serif" font-size="9" fill="#a5d6a7" text-anchor="start" font-weight="normal" transform="rotate(-90 780 332)">GND</text>
+<text x="776" y="366" font-family="DejaVu Sans, Arial, sans-serif" font-size="9" fill="#555" text-anchor="middle" font-weight="normal">13</text>
+<circle cx="800" cy="344" r="6" fill="#d4a537" stroke="#8a6a1c" stroke-width="1.2"/>
+<circle cx="800" cy="344" r="2.6" fill="#5a4512" stroke="none" stroke-width="1"/>
+<text x="804" y="332" font-family="DejaVu Sans, Arial, sans-serif" font-size="9" fill="#a5d6a7" text-anchor="start" font-weight="normal" transform="rotate(-90 804 332)">GP10</text>
+<text x="800" y="366" font-family="DejaVu Sans, Arial, sans-serif" font-size="9" fill="#555" text-anchor="middle" font-weight="normal">14</text>
+<circle cx="824" cy="344" r="6" fill="#d4a537" stroke="#8a6a1c" stroke-width="1.2"/>
+<circle cx="824" cy="344" r="2.6" fill="#5a4512" stroke="none" stroke-width="1"/>
+<text x="828" y="332" font-family="DejaVu Sans, Arial, sans-serif" font-size="9" fill="#a5d6a7" text-anchor="start" font-weight="normal" transform="rotate(-90 828 332)">GP11</text>
+<text x="824" y="366" font-family="DejaVu Sans, Arial, sans-serif" font-size="9" fill="#555" text-anchor="middle" font-weight="normal">15</text>
+<circle cx="848" cy="344" r="6" fill="#d4a537" stroke="#8a6a1c" stroke-width="1.2"/>
+<circle cx="848" cy="344" r="2.6" fill="#5a4512" stroke="none" stroke-width="1"/>
+<text x="852" y="332" font-family="DejaVu Sans, Arial, sans-serif" font-size="9" fill="#a5d6a7" text-anchor="start" font-weight="normal" transform="rotate(-90 852 332)">GP12</text>
+<text x="848" y="366" font-family="DejaVu Sans, Arial, sans-serif" font-size="9" fill="#555" text-anchor="middle" font-weight="normal">16</text>
+<circle cx="872" cy="344" r="6" fill="#d4a537" stroke="#8a6a1c" stroke-width="1.2"/>
+<circle cx="872" cy="344" r="2.6" fill="#5a4512" stroke="none" stroke-width="1"/>
+<text x="876" y="332" font-family="DejaVu Sans, Arial, sans-serif" font-size="9" fill="#a5d6a7" text-anchor="start" font-weight="normal" transform="rotate(-90 876 332)">GP13</text>
+<text x="872" y="366" font-family="DejaVu Sans, Arial, sans-serif" font-size="9" fill="#555" text-anchor="middle" font-weight="normal">17</text>
+<circle cx="896" cy="344" r="6" fill="#d4a537" stroke="#8a6a1c" stroke-width="1.2"/>
+<circle cx="896" cy="344" r="2.6" fill="#5a4512" stroke="none" stroke-width="1"/>
+<text x="900" y="332" font-family="DejaVu Sans, Arial, sans-serif" font-size="9" fill="#ffffff" text-anchor="start" font-weight="bold" transform="rotate(-90 900 332)">GND</text>
+<text x="896" y="366" font-family="DejaVu Sans, Arial, sans-serif" font-size="9" fill="#555" text-anchor="middle" font-weight="normal">18</text>
+<circle cx="920" cy="344" r="6" fill="#d4a537" stroke="#8a6a1c" stroke-width="1.2"/>
+<circle cx="920" cy="344" r="2.6" fill="#5a4512" stroke="none" stroke-width="1"/>
+<text x="924" y="332" font-family="DejaVu Sans, Arial, sans-serif" font-size="9" fill="#a5d6a7" text-anchor="start" font-weight="normal" transform="rotate(-90 924 332)">GP14</text>
+<text x="920" y="366" font-family="DejaVu Sans, Arial, sans-serif" font-size="9" fill="#555" text-anchor="middle" font-weight="normal">19</text>
+<circle cx="944" cy="344" r="6" fill="#d4a537" stroke="#8a6a1c" stroke-width="1.2"/>
+<circle cx="944" cy="344" r="2.6" fill="#5a4512" stroke="none" stroke-width="1"/>
+<text x="948" y="332" font-family="DejaVu Sans, Arial, sans-serif" font-size="9" fill="#a5d6a7" text-anchor="start" font-weight="normal" transform="rotate(-90 948 332)">GP15</text>
+<text x="944" y="366" font-family="DejaVu Sans, Arial, sans-serif" font-size="9" fill="#555" text-anchor="middle" font-weight="normal">20</text>
+<circle cx="488" cy="162" r="6" fill="#d4a537" stroke="#8a6a1c" stroke-width="1.2"/>
+<circle cx="488" cy="162" r="2.6" fill="#5a4512" stroke="none" stroke-width="1"/>
+<text x="492" y="174" font-family="DejaVu Sans, Arial, sans-serif" font-size="9" fill="#a5d6a7" text-anchor="end" font-weight="normal" transform="rotate(-90 492 174)">VBUS</text>
+<text x="488" y="148" font-family="DejaVu Sans, Arial, sans-serif" font-size="9" fill="#555" text-anchor="middle" font-weight="normal">40</text>
+<circle cx="512" cy="162" r="6" fill="#d4a537" stroke="#8a6a1c" stroke-width="1.2"/>
+<circle cx="512" cy="162" r="2.6" fill="#5a4512" stroke="none" stroke-width="1"/>
+<text x="516" y="174" font-family="DejaVu Sans, Arial, sans-serif" font-size="9" fill="#ffffff" text-anchor="end" font-weight="bold" transform="rotate(-90 516 174)">VSYS</text>
+<text x="512" y="148" font-family="DejaVu Sans, Arial, sans-serif" font-size="9" fill="#555" text-anchor="middle" font-weight="normal">39</text>
+<circle cx="536" cy="162" r="6" fill="#d4a537" stroke="#8a6a1c" stroke-width="1.2"/>
+<circle cx="536" cy="162" r="2.6" fill="#5a4512" stroke="none" stroke-width="1"/>
+<text x="540" y="174" font-family="DejaVu Sans, Arial, sans-serif" font-size="9" fill="#ffffff" text-anchor="end" font-weight="bold" transform="rotate(-90 540 174)">GND</text>
+<text x="536" y="148" font-family="DejaVu Sans, Arial, sans-serif" font-size="9" fill="#555" text-anchor="middle" font-weight="normal">38</text>
+<circle cx="560" cy="162" r="6" fill="#d4a537" stroke="#8a6a1c" stroke-width="1.2"/>
+<circle cx="560" cy="162" r="2.6" fill="#5a4512" stroke="none" stroke-width="1"/>
+<text x="564" y="174" font-family="DejaVu Sans, Arial, sans-serif" font-size="9" fill="#a5d6a7" text-anchor="end" font-weight="normal" transform="rotate(-90 564 174)">3V3_EN</text>
+<text x="560" y="148" font-family="DejaVu Sans, Arial, sans-serif" font-size="9" fill="#555" text-anchor="middle" font-weight="normal">37</text>
+<circle cx="584" cy="162" r="6" fill="#d4a537" stroke="#8a6a1c" stroke-width="1.2"/>
+<circle cx="584" cy="162" r="2.6" fill="#5a4512" stroke="none" stroke-width="1"/>
+<text x="588" y="174" font-family="DejaVu Sans, Arial, sans-serif" font-size="9" fill="#ffffff" text-anchor="end" font-weight="bold" transform="rotate(-90 588 174)">3V3</text>
+<text x="584" y="148" font-family="DejaVu Sans, Arial, sans-serif" font-size="9" fill="#555" text-anchor="middle" font-weight="normal">36</text>
+<circle cx="608" cy="162" r="6" fill="#d4a537" stroke="#8a6a1c" stroke-width="1.2"/>
+<circle cx="608" cy="162" r="2.6" fill="#5a4512" stroke="none" stroke-width="1"/>
+<text x="612" y="174" font-family="DejaVu Sans, Arial, sans-serif" font-size="9" fill="#a5d6a7" text-anchor="end" font-weight="normal" transform="rotate(-90 612 174)">VREF</text>
+<text x="608" y="148" font-family="DejaVu Sans, Arial, sans-serif" font-size="9" fill="#555" text-anchor="middle" font-weight="normal">35</text>
+<circle cx="632" cy="162" r="6" fill="#d4a537" stroke="#8a6a1c" stroke-width="1.2"/>
+<circle cx="632" cy="162" r="2.6" fill="#5a4512" stroke="none" stroke-width="1"/>
+<text x="636" y="174" font-family="DejaVu Sans, Arial, sans-serif" font-size="9" fill="#a5d6a7" text-anchor="end" font-weight="normal" transform="rotate(-90 636 174)">GP28</text>
+<text x="632" y="148" font-family="DejaVu Sans, Arial, sans-serif" font-size="9" fill="#555" text-anchor="middle" font-weight="normal">34</text>
+<circle cx="656" cy="162" r="6" fill="#d4a537" stroke="#8a6a1c" stroke-width="1.2"/>
+<circle cx="656" cy="162" r="2.6" fill="#5a4512" stroke="none" stroke-width="1"/>
+<text x="660" y="174" font-family="DejaVu Sans, Arial, sans-serif" font-size="9" fill="#a5d6a7" text-anchor="end" font-weight="normal" transform="rotate(-90 660 174)">AGND</text>
+<text x="656" y="148" font-family="DejaVu Sans, Arial, sans-serif" font-size="9" fill="#555" text-anchor="middle" font-weight="normal">33</text>
+<circle cx="680" cy="162" r="6" fill="#d4a537" stroke="#8a6a1c" stroke-width="1.2"/>
+<circle cx="680" cy="162" r="2.6" fill="#5a4512" stroke="none" stroke-width="1"/>
+<text x="684" y="174" font-family="DejaVu Sans, Arial, sans-serif" font-size="9" fill="#a5d6a7" text-anchor="end" font-weight="normal" transform="rotate(-90 684 174)">GP27</text>
+<text x="680" y="148" font-family="DejaVu Sans, Arial, sans-serif" font-size="9" fill="#555" text-anchor="middle" font-weight="normal">32</text>
+<circle cx="704" cy="162" r="6" fill="#d4a537" stroke="#8a6a1c" stroke-width="1.2"/>
+<circle cx="704" cy="162" r="2.6" fill="#5a4512" stroke="none" stroke-width="1"/>
+<text x="708" y="174" font-family="DejaVu Sans, Arial, sans-serif" font-size="9" fill="#a5d6a7" text-anchor="end" font-weight="normal" transform="rotate(-90 708 174)">GP26</text>
+<text x="704" y="148" font-family="DejaVu Sans, Arial, sans-serif" font-size="9" fill="#555" text-anchor="middle" font-weight="normal">31</text>
+<circle cx="728" cy="162" r="6" fill="#d4a537" stroke="#8a6a1c" stroke-width="1.2"/>
+<circle cx="728" cy="162" r="2.6" fill="#5a4512" stroke="none" stroke-width="1"/>
+<text x="732" y="174" font-family="DejaVu Sans, Arial, sans-serif" font-size="9" fill="#a5d6a7" text-anchor="end" font-weight="normal" transform="rotate(-90 732 174)">RUN</text>
+<text x="728" y="148" font-family="DejaVu Sans, Arial, sans-serif" font-size="9" fill="#555" text-anchor="middle" font-weight="normal">30</text>
+<circle cx="752" cy="162" r="6" fill="#d4a537" stroke="#8a6a1c" stroke-width="1.2"/>
+<circle cx="752" cy="162" r="2.6" fill="#5a4512" stroke="none" stroke-width="1"/>
+<text x="756" y="174" font-family="DejaVu Sans, Arial, sans-serif" font-size="9" fill="#a5d6a7" text-anchor="end" font-weight="normal" transform="rotate(-90 756 174)">GP22</text>
+<text x="752" y="148" font-family="DejaVu Sans, Arial, sans-serif" font-size="9" fill="#555" text-anchor="middle" font-weight="normal">29</text>
+<circle cx="776" cy="162" r="6" fill="#d4a537" stroke="#8a6a1c" stroke-width="1.2"/>
+<circle cx="776" cy="162" r="2.6" fill="#5a4512" stroke="none" stroke-width="1"/>
+<text x="780" y="174" font-family="DejaVu Sans, Arial, sans-serif" font-size="9" fill="#a5d6a7" text-anchor="end" font-weight="normal" transform="rotate(-90 780 174)">GND</text>
+<text x="776" y="148" font-family="DejaVu Sans, Arial, sans-serif" font-size="9" fill="#555" text-anchor="middle" font-weight="normal">28</text>
+<circle cx="800" cy="162" r="6" fill="#d4a537" stroke="#8a6a1c" stroke-width="1.2"/>
+<circle cx="800" cy="162" r="2.6" fill="#5a4512" stroke="none" stroke-width="1"/>
+<text x="804" y="174" font-family="DejaVu Sans, Arial, sans-serif" font-size="9" fill="#a5d6a7" text-anchor="end" font-weight="normal" transform="rotate(-90 804 174)">GP21</text>
+<text x="800" y="148" font-family="DejaVu Sans, Arial, sans-serif" font-size="9" fill="#555" text-anchor="middle" font-weight="normal">27</text>
+<circle cx="824" cy="162" r="6" fill="#d4a537" stroke="#8a6a1c" stroke-width="1.2"/>
+<circle cx="824" cy="162" r="2.6" fill="#5a4512" stroke="none" stroke-width="1"/>
+<text x="828" y="174" font-family="DejaVu Sans, Arial, sans-serif" font-size="9" fill="#a5d6a7" text-anchor="end" font-weight="normal" transform="rotate(-90 828 174)">GP20</text>
+<text x="824" y="148" font-family="DejaVu Sans, Arial, sans-serif" font-size="9" fill="#555" text-anchor="middle" font-weight="normal">26</text>
+<circle cx="848" cy="162" r="6" fill="#d4a537" stroke="#8a6a1c" stroke-width="1.2"/>
+<circle cx="848" cy="162" r="2.6" fill="#5a4512" stroke="none" stroke-width="1"/>
+<text x="852" y="174" font-family="DejaVu Sans, Arial, sans-serif" font-size="9" fill="#a5d6a7" text-anchor="end" font-weight="normal" transform="rotate(-90 852 174)">GP19</text>
+<text x="848" y="148" font-family="DejaVu Sans, Arial, sans-serif" font-size="9" fill="#555" text-anchor="middle" font-weight="normal">25</text>
+<circle cx="872" cy="162" r="6" fill="#d4a537" stroke="#8a6a1c" stroke-width="1.2"/>
+<circle cx="872" cy="162" r="2.6" fill="#5a4512" stroke="none" stroke-width="1"/>
+<text x="876" y="174" font-family="DejaVu Sans, Arial, sans-serif" font-size="9" fill="#a5d6a7" text-anchor="end" font-weight="normal" transform="rotate(-90 876 174)">GP18</text>
+<text x="872" y="148" font-family="DejaVu Sans, Arial, sans-serif" font-size="9" fill="#555" text-anchor="middle" font-weight="normal">24</text>
+<circle cx="896" cy="162" r="6" fill="#d4a537" stroke="#8a6a1c" stroke-width="1.2"/>
+<circle cx="896" cy="162" r="2.6" fill="#5a4512" stroke="none" stroke-width="1"/>
+<text x="900" y="174" font-family="DejaVu Sans, Arial, sans-serif" font-size="9" fill="#a5d6a7" text-anchor="end" font-weight="normal" transform="rotate(-90 900 174)">GND</text>
+<text x="896" y="148" font-family="DejaVu Sans, Arial, sans-serif" font-size="9" fill="#555" text-anchor="middle" font-weight="normal">23</text>
+<circle cx="920" cy="162" r="6" fill="#d4a537" stroke="#8a6a1c" stroke-width="1.2"/>
+<circle cx="920" cy="162" r="2.6" fill="#5a4512" stroke="none" stroke-width="1"/>
+<text x="924" y="174" font-family="DejaVu Sans, Arial, sans-serif" font-size="9" fill="#a5d6a7" text-anchor="end" font-weight="normal" transform="rotate(-90 924 174)">GP17</text>
+<text x="920" y="148" font-family="DejaVu Sans, Arial, sans-serif" font-size="9" fill="#555" text-anchor="middle" font-weight="normal">22</text>
+<circle cx="944" cy="162" r="6" fill="#d4a537" stroke="#8a6a1c" stroke-width="1.2"/>
+<circle cx="944" cy="162" r="2.6" fill="#5a4512" stroke="none" stroke-width="1"/>
+<text x="948" y="174" font-family="DejaVu Sans, Arial, sans-serif" font-size="9" fill="#a5d6a7" text-anchor="end" font-weight="normal" transform="rotate(-90 948 174)">GP16</text>
+<text x="944" y="148" font-family="DejaVu Sans, Arial, sans-serif" font-size="9" fill="#555" text-anchor="middle" font-weight="normal">21</text>
+<path d="M456,253.0 L380,253.0" fill="none" stroke="#4a4a4a" stroke-width="9" stroke-linecap="round"/>
+<rect x="352" y="244.0" width="30" height="18" rx="2" fill="#9e9e9e" stroke="#555" stroke-width="1"/>
+<text x="346" y="249.0" font-family="DejaVu Sans, Arial, sans-serif" font-size="12" fill="#333" text-anchor="end" font-weight="normal">к компьютеру:</text>
+<text x="346" y="265.0" font-family="DejaVu Sans, Arial, sans-serif" font-size="12" fill="#333" text-anchor="end" font-weight="normal">USB serial + питание</text>
+<rect x="742" y="482" width="256" height="156" rx="6" fill="#1f3f99" stroke="#132a66" stroke-width="2"/>
+<rect x="755" y="544" width="14" height="10" rx="0" fill="#111" stroke="none" stroke-width="1"/>
+<rect x="757" y="566" width="10" height="5" rx="0" fill="#e0c9a6" stroke="none" stroke-width="1"/>
+<rect x="779" y="544" width="14" height="10" rx="0" fill="#111" stroke="none" stroke-width="1"/>
+<rect x="781" y="566" width="10" height="5" rx="0" fill="#e0c9a6" stroke="none" stroke-width="1"/>
+<rect x="803" y="544" width="14" height="10" rx="0" fill="#111" stroke="none" stroke-width="1"/>
+<rect x="805" y="566" width="10" height="5" rx="0" fill="#e0c9a6" stroke="none" stroke-width="1"/>
+<rect x="827" y="544" width="14" height="10" rx="0" fill="#111" stroke="none" stroke-width="1"/>
+<rect x="829" y="566" width="10" height="5" rx="0" fill="#e0c9a6" stroke="none" stroke-width="1"/>
+<rect x="851" y="544" width="14" height="10" rx="0" fill="#111" stroke="none" stroke-width="1"/>
+<rect x="853" y="566" width="10" height="5" rx="0" fill="#e0c9a6" stroke="none" stroke-width="1"/>
+<rect x="875" y="544" width="14" height="10" rx="0" fill="#111" stroke="none" stroke-width="1"/>
+<rect x="877" y="566" width="10" height="5" rx="0" fill="#e0c9a6" stroke="none" stroke-width="1"/>
+<rect x="899" y="544" width="14" height="10" rx="0" fill="#111" stroke="none" stroke-width="1"/>
+<rect x="901" y="566" width="10" height="5" rx="0" fill="#e0c9a6" stroke="none" stroke-width="1"/>
+<rect x="923" y="544" width="14" height="10" rx="0" fill="#111" stroke="none" stroke-width="1"/>
+<rect x="925" y="566" width="10" height="5" rx="0" fill="#e0c9a6" stroke="none" stroke-width="1"/>
+<circle cx="760" cy="500" r="6" fill="#d4a537" stroke="#8a6a1c" stroke-width="1.2"/>
+<circle cx="760" cy="500" r="2.6" fill="#5a4512" stroke="none" stroke-width="1"/>
+<text x="760" y="520" font-family="DejaVu Sans, Arial, sans-serif" font-size="9" fill="#fff" text-anchor="middle" font-weight="normal">L1</text>
+<circle cx="760" cy="620" r="6" fill="#d4a537" stroke="#8a6a1c" stroke-width="1.2"/>
+<circle cx="760" cy="620" r="2.6" fill="#5a4512" stroke="none" stroke-width="1"/>
+<text x="760" y="608" font-family="DejaVu Sans, Arial, sans-serif" font-size="9" fill="#fff" text-anchor="middle" font-weight="normal">H1</text>
+<circle cx="784" cy="500" r="6" fill="#d4a537" stroke="#8a6a1c" stroke-width="1.2"/>
+<circle cx="784" cy="500" r="2.6" fill="#5a4512" stroke="none" stroke-width="1"/>
+<text x="784" y="520" font-family="DejaVu Sans, Arial, sans-serif" font-size="9" fill="#fff" text-anchor="middle" font-weight="normal">L2</text>
+<circle cx="784" cy="620" r="6" fill="#d4a537" stroke="#8a6a1c" stroke-width="1.2"/>
+<circle cx="784" cy="620" r="2.6" fill="#5a4512" stroke="none" stroke-width="1"/>
+<text x="784" y="608" font-family="DejaVu Sans, Arial, sans-serif" font-size="9" fill="#fff" text-anchor="middle" font-weight="normal">H2</text>
+<circle cx="808" cy="500" r="6" fill="#d4a537" stroke="#8a6a1c" stroke-width="1.2"/>
+<circle cx="808" cy="500" r="2.6" fill="#5a4512" stroke="none" stroke-width="1"/>
+<text x="808" y="520" font-family="DejaVu Sans, Arial, sans-serif" font-size="9" fill="#fff" text-anchor="middle" font-weight="normal">L3</text>
+<circle cx="808" cy="620" r="6" fill="#d4a537" stroke="#8a6a1c" stroke-width="1.2"/>
+<circle cx="808" cy="620" r="2.6" fill="#5a4512" stroke="none" stroke-width="1"/>
+<text x="808" y="608" font-family="DejaVu Sans, Arial, sans-serif" font-size="9" fill="#fff" text-anchor="middle" font-weight="normal">H3</text>
+<circle cx="832" cy="500" r="6" fill="#d4a537" stroke="#8a6a1c" stroke-width="1.2"/>
+<circle cx="832" cy="500" r="2.6" fill="#5a4512" stroke="none" stroke-width="1"/>
+<text x="832" y="520" font-family="DejaVu Sans, Arial, sans-serif" font-size="9" fill="#fff" text-anchor="middle" font-weight="normal">L4</text>
+<circle cx="832" cy="620" r="6" fill="#d4a537" stroke="#8a6a1c" stroke-width="1.2"/>
+<circle cx="832" cy="620" r="2.6" fill="#5a4512" stroke="none" stroke-width="1"/>
+<text x="832" y="608" font-family="DejaVu Sans, Arial, sans-serif" font-size="9" fill="#fff" text-anchor="middle" font-weight="normal">H4</text>
+<circle cx="856" cy="500" r="6" fill="#d4a537" stroke="#8a6a1c" stroke-width="1.2"/>
+<circle cx="856" cy="500" r="2.6" fill="#5a4512" stroke="none" stroke-width="1"/>
+<text x="856" y="520" font-family="DejaVu Sans, Arial, sans-serif" font-size="9" fill="#fff" text-anchor="middle" font-weight="normal">L5</text>
+<circle cx="856" cy="620" r="6" fill="#d4a537" stroke="#8a6a1c" stroke-width="1.2"/>
+<circle cx="856" cy="620" r="2.6" fill="#5a4512" stroke="none" stroke-width="1"/>
+<text x="856" y="608" font-family="DejaVu Sans, Arial, sans-serif" font-size="9" fill="#fff" text-anchor="middle" font-weight="normal">H5</text>
+<circle cx="880" cy="500" r="6" fill="#d4a537" stroke="#8a6a1c" stroke-width="1.2"/>
+<circle cx="880" cy="500" r="2.6" fill="#5a4512" stroke="none" stroke-width="1"/>
+<text x="880" y="520" font-family="DejaVu Sans, Arial, sans-serif" font-size="9" fill="#fff" text-anchor="middle" font-weight="normal">L6</text>
+<circle cx="880" cy="620" r="6" fill="#d4a537" stroke="#8a6a1c" stroke-width="1.2"/>
+<circle cx="880" cy="620" r="2.6" fill="#5a4512" stroke="none" stroke-width="1"/>
+<text x="880" y="608" font-family="DejaVu Sans, Arial, sans-serif" font-size="9" fill="#fff" text-anchor="middle" font-weight="normal">H6</text>
+<circle cx="904" cy="500" r="6" fill="#d4a537" stroke="#8a6a1c" stroke-width="1.2"/>
+<circle cx="904" cy="500" r="2.6" fill="#5a4512" stroke="none" stroke-width="1"/>
+<text x="904" y="520" font-family="DejaVu Sans, Arial, sans-serif" font-size="9" fill="#fff" text-anchor="middle" font-weight="normal">L7</text>
+<circle cx="904" cy="620" r="6" fill="#d4a537" stroke="#8a6a1c" stroke-width="1.2"/>
+<circle cx="904" cy="620" r="2.6" fill="#5a4512" stroke="none" stroke-width="1"/>
+<text x="904" y="608" font-family="DejaVu Sans, Arial, sans-serif" font-size="9" fill="#fff" text-anchor="middle" font-weight="normal">H7</text>
+<circle cx="928" cy="500" r="6" fill="#d4a537" stroke="#8a6a1c" stroke-width="1.2"/>
+<circle cx="928" cy="500" r="2.6" fill="#5a4512" stroke="none" stroke-width="1"/>
+<text x="928" y="520" font-family="DejaVu Sans, Arial, sans-serif" font-size="9" fill="#fff" text-anchor="middle" font-weight="normal">L8</text>
+<circle cx="928" cy="620" r="6" fill="#d4a537" stroke="#8a6a1c" stroke-width="1.2"/>
+<circle cx="928" cy="620" r="2.6" fill="#5a4512" stroke="none" stroke-width="1"/>
+<text x="928" y="608" font-family="DejaVu Sans, Arial, sans-serif" font-size="9" fill="#fff" text-anchor="middle" font-weight="normal">H8</text>
+<circle cx="952" cy="500" r="6" fill="#d4a537" stroke="#8a6a1c" stroke-width="1.2"/>
+<circle cx="952" cy="500" r="2.6" fill="#5a4512" stroke="none" stroke-width="1"/>
+<text x="952" y="520" font-family="DejaVu Sans, Arial, sans-serif" font-size="9" fill="#fff" text-anchor="middle" font-weight="normal">GND</text>
+<circle cx="952" cy="620" r="6" fill="#d4a537" stroke="#8a6a1c" stroke-width="1.2"/>
+<circle cx="952" cy="620" r="2.6" fill="#5a4512" stroke="none" stroke-width="1"/>
+<text x="952" y="608" font-family="DejaVu Sans, Arial, sans-serif" font-size="9" fill="#fff" text-anchor="middle" font-weight="normal">GND</text>
+<circle cx="976" cy="500" r="6" fill="#d4a537" stroke="#8a6a1c" stroke-width="1.2"/>
+<circle cx="976" cy="500" r="2.6" fill="#5a4512" stroke="none" stroke-width="1"/>
+<text x="976" y="520" font-family="DejaVu Sans, Arial, sans-serif" font-size="9" fill="#fff" text-anchor="middle" font-weight="normal">LV</text>
+<circle cx="976" cy="620" r="6" fill="#d4a537" stroke="#8a6a1c" stroke-width="1.2"/>
+<circle cx="976" cy="620" r="2.6" fill="#5a4512" stroke="none" stroke-width="1"/>
+<text x="976" y="608" font-family="DejaVu Sans, Arial, sans-serif" font-size="9" fill="#fff" text-anchor="middle" font-weight="normal">HV</text>
+<text x="870.0" y="590.0" font-family="DejaVu Sans, Arial, sans-serif" font-size="10" fill="#e3e8ff" text-anchor="middle" font-weight="normal">преобразователь уровней BSS138</text>
+<text x="1006" y="504" font-family="DejaVu Sans, Arial, sans-serif" font-size="11" fill="#333" text-anchor="start" font-weight="normal">3,3 В (LV)</text>
+<text x="1006" y="624" font-family="DejaVu Sans, Arial, sans-serif" font-size="11" fill="#333" text-anchor="start" font-weight="normal">5 В (HV)</text>
+<rect x="150" y="372" width="110" height="100" rx="4" fill="#c7ccd1" stroke="#7a8086" stroke-width="2"/>
+<rect x="162" y="402" width="70" height="40" rx="2" fill="#2a2a2a" stroke="none" stroke-width="1"/>
+<rect x="168" y="416" width="58" height="12" rx="1" fill="#1565c0" stroke="none" stroke-width="1"/>
+<text x="205" y="464" font-family="DejaVu Sans, Arial, sans-serif" font-size="11" fill="#333" text-anchor="middle" font-weight="normal">USB-A</text>
+<line x1="260" y1="392" x2="274" y2="392" stroke="#8a6a1c" stroke-width="3"/>
+<text x="254" y="396" font-family="DejaVu Sans, Arial, sans-serif" font-size="9" fill="#222" text-anchor="end" font-weight="normal">GND</text>
+<line x1="260" y1="412" x2="274" y2="412" stroke="#8a6a1c" stroke-width="3"/>
+<text x="254" y="416" font-family="DejaVu Sans, Arial, sans-serif" font-size="9" fill="#222" text-anchor="end" font-weight="normal">D+</text>
+<line x1="260" y1="432" x2="274" y2="432" stroke="#8a6a1c" stroke-width="3"/>
+<text x="254" y="436" font-family="DejaVu Sans, Arial, sans-serif" font-size="9" fill="#222" text-anchor="end" font-weight="normal">D−</text>
+<line x1="260" y1="452" x2="274" y2="452" stroke="#8a6a1c" stroke-width="3"/>
+<text x="254" y="456" font-family="DejaVu Sans, Arial, sans-serif" font-size="9" fill="#222" text-anchor="end" font-weight="normal">VBUS</text>
+<text x="144" y="338" font-family="DejaVu Sans, Arial, sans-serif" font-size="12" fill="#222" text-anchor="start" font-weight="bold">J1: гнездо USB-A</text>
+<text x="144" y="354" font-family="DejaVu Sans, Arial, sans-serif" font-size="11" fill="#444" text-anchor="start" font-weight="normal">приёмник клавиатуры и мыши</text>
+<line x1="320" y1="120" x2="408" y2="120" stroke="#9e9e9e" stroke-width="2.5"/>
+<rect x="342" y="111" width="44" height="18" rx="3" fill="#222" stroke="none" stroke-width="1"/>
+<rect x="376" y="111" width="7" height="18" rx="0" fill="#cfd8dc" stroke="none" stroke-width="1"/>
+<text x="364" y="104" font-family="DejaVu Sans, Arial, sans-serif" font-size="11" fill="#222" text-anchor="middle" font-weight="bold">D1 1N5819 (SS14)</text>
+<text x="364" y="148" font-family="DejaVu Sans, Arial, sans-serif" font-size="10" fill="#555" text-anchor="middle" font-weight="normal">анод ← 5 В   катод → VSYS</text>
+<rect x="572" y="800" width="108" height="26" rx="3" fill="#2b2b2b" stroke="none" stroke-width="1"/>
+<rect x="585" y="794" width="10" height="10" rx="0" fill="#d4a537" stroke="#8a6a1c" stroke-width="1"/>
+<text x="590" y="819" font-family="DejaVu Sans, Arial, sans-serif" font-size="11" fill="#fff" text-anchor="middle" font-weight="bold">1</text>
+<rect x="609" y="794" width="10" height="10" rx="0" fill="#d4a537" stroke="#8a6a1c" stroke-width="1"/>
+<text x="614" y="819" font-family="DejaVu Sans, Arial, sans-serif" font-size="11" fill="#fff" text-anchor="middle" font-weight="bold">2</text>
+<rect x="633" y="794" width="10" height="10" rx="0" fill="#d4a537" stroke="#8a6a1c" stroke-width="1"/>
+<text x="638" y="819" font-family="DejaVu Sans, Arial, sans-serif" font-size="11" fill="#fff" text-anchor="middle" font-weight="bold">3</text>
+<rect x="657" y="794" width="10" height="10" rx="0" fill="#d4a537" stroke="#8a6a1c" stroke-width="1"/>
+<text x="662" y="819" font-family="DejaVu Sans, Arial, sans-serif" font-size="11" fill="#fff" text-anchor="middle" font-weight="bold">4</text>
+<path d="M626.0,826 L626.0,910" stroke="#555" stroke-width="10" stroke-linecap="round"/>
+<text x="686" y="818" font-family="DejaVu Sans, Arial, sans-serif" font-size="10" fill="#444" text-anchor="start" font-weight="normal"></text>
+<text x="626.0" y="928" font-family="DejaVu Sans, Arial, sans-serif" font-size="12" fill="#222" text-anchor="middle" font-weight="bold">→ J6 «AVR UART»</text>
+<text x="626.0" y="944" font-family="DejaVu Sans, Arial, sans-serif" font-size="11" fill="#444" text-anchor="middle" font-weight="normal">разъём на плате (rev.E)</text>
+<rect x="742" y="800" width="84" height="26" rx="3" fill="#2b2b2b" stroke="none" stroke-width="1"/>
+<rect x="755" y="794" width="10" height="10" rx="0" fill="#d4a537" stroke="#8a6a1c" stroke-width="1"/>
+<text x="760" y="819" font-family="DejaVu Sans, Arial, sans-serif" font-size="11" fill="#fff" text-anchor="middle" font-weight="bold">5</text>
+<rect x="779" y="794" width="10" height="10" rx="0" fill="#d4a537" stroke="#8a6a1c" stroke-width="1"/>
+<text x="784" y="819" font-family="DejaVu Sans, Arial, sans-serif" font-size="11" fill="#fff" text-anchor="middle" font-weight="bold">1</text>
+<rect x="803" y="794" width="10" height="10" rx="0" fill="#d4a537" stroke="#8a6a1c" stroke-width="1"/>
+<text x="808" y="819" font-family="DejaVu Sans, Arial, sans-serif" font-size="11" fill="#fff" text-anchor="middle" font-weight="bold">3</text>
+<path d="M784.0,826 L784.0,910" stroke="#6a1b9a" stroke-width="10" stroke-linecap="round"/>
+<circle cx="784.0" cy="930" r="22" fill="#8e24aa" stroke="#333" stroke-width="2"/>
+<circle cx="775.0" cy="923" r="2.4" fill="#e0e0e0" stroke="none" stroke-width="1"/>
+<circle cx="793.0" cy="923" r="2.4" fill="#e0e0e0" stroke="none" stroke-width="1"/>
+<circle cx="772.0" cy="934" r="2.4" fill="#e0e0e0" stroke="none" stroke-width="1"/>
+<circle cx="796.0" cy="934" r="2.4" fill="#e0e0e0" stroke="none" stroke-width="1"/>
+<circle cx="777.0" cy="943" r="2.4" fill="#e0e0e0" stroke="none" stroke-width="1"/>
+<circle cx="791.0" cy="943" r="2.4" fill="#e0e0e0" stroke="none" stroke-width="1"/>
+<rect x="780.0" y="910" width="8" height="6" rx="0" fill="#333" stroke="none" stroke-width="1"/>
+<text x="832" y="818" font-family="DejaVu Sans, Arial, sans-serif" font-size="10" fill="#444" text-anchor="start" font-weight="normal"></text>
+<text x="784.0" y="970" font-family="DejaVu Sans, Arial, sans-serif" font-size="12" fill="#222" text-anchor="middle" font-weight="bold">→ CON5</text>
+<text x="784.0" y="986" font-family="DejaVu Sans, Arial, sans-serif" font-size="11" fill="#444" text-anchor="middle" font-weight="normal">PS/2 клавиатура</text>
+<rect x="838" y="800" width="84" height="26" rx="3" fill="#2b2b2b" stroke="none" stroke-width="1"/>
+<rect x="851" y="794" width="10" height="10" rx="0" fill="#d4a537" stroke="#8a6a1c" stroke-width="1"/>
+<text x="856" y="819" font-family="DejaVu Sans, Arial, sans-serif" font-size="11" fill="#fff" text-anchor="middle" font-weight="bold">5</text>
+<rect x="875" y="794" width="10" height="10" rx="0" fill="#d4a537" stroke="#8a6a1c" stroke-width="1"/>
+<text x="880" y="819" font-family="DejaVu Sans, Arial, sans-serif" font-size="11" fill="#fff" text-anchor="middle" font-weight="bold">1</text>
+<rect x="899" y="794" width="10" height="10" rx="0" fill="#d4a537" stroke="#8a6a1c" stroke-width="1"/>
+<text x="904" y="819" font-family="DejaVu Sans, Arial, sans-serif" font-size="11" fill="#fff" text-anchor="middle" font-weight="bold">3</text>
+<path d="M880.0,826 L880.0,910" stroke="#2e7d32" stroke-width="10" stroke-linecap="round"/>
+<circle cx="880.0" cy="930" r="22" fill="#43a047" stroke="#333" stroke-width="2"/>
+<circle cx="871.0" cy="923" r="2.4" fill="#e0e0e0" stroke="none" stroke-width="1"/>
+<circle cx="889.0" cy="923" r="2.4" fill="#e0e0e0" stroke="none" stroke-width="1"/>
+<circle cx="868.0" cy="934" r="2.4" fill="#e0e0e0" stroke="none" stroke-width="1"/>
+<circle cx="892.0" cy="934" r="2.4" fill="#e0e0e0" stroke="none" stroke-width="1"/>
+<circle cx="873.0" cy="943" r="2.4" fill="#e0e0e0" stroke="none" stroke-width="1"/>
+<circle cx="887.0" cy="943" r="2.4" fill="#e0e0e0" stroke="none" stroke-width="1"/>
+<rect x="876.0" y="910" width="8" height="6" rx="0" fill="#333" stroke="none" stroke-width="1"/>
+<text x="928" y="818" font-family="DejaVu Sans, Arial, sans-serif" font-size="10" fill="#444" text-anchor="start" font-weight="normal"></text>
+<text x="880.0" y="970" font-family="DejaVu Sans, Arial, sans-serif" font-size="12" fill="#222" text-anchor="middle" font-weight="bold">→ CON6</text>
+<text x="880.0" y="986" font-family="DejaVu Sans, Arial, sans-serif" font-size="11" fill="#444" text-anchor="middle" font-weight="normal">PS/2 мышь</text>
+<circle cx="450" cy="120" r="5" fill="#d81b60" stroke="#2b2b2b" stroke-width="1.5"/>
+<path d="M488,344 L488,470 L760,470 L760,500" fill="none" stroke="#2b2b2b" stroke-width="7" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M488,344 L488,470 L760,470 L760,500" fill="none" stroke="#fdd835" stroke-width="4.2" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="488" cy="344" r="3.2" fill="#fdd835" stroke="#2b2b2b" stroke-width="1.2"/>
+<circle cx="760" cy="500" r="3.2" fill="#fdd835" stroke="#2b2b2b" stroke-width="1.2"/>
+<path d="M512,344 L512,458 L784,458 L784,500" fill="none" stroke="#2b2b2b" stroke-width="7" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M512,344 L512,458 L784,458 L784,500" fill="none" stroke="#26c6da" stroke-width="4.2" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="512" cy="344" r="3.2" fill="#26c6da" stroke="#2b2b2b" stroke-width="1.2"/>
+<circle cx="784" cy="500" r="3.2" fill="#26c6da" stroke="#2b2b2b" stroke-width="1.2"/>
+<path d="M608,344 L608,446 L808,446 L808,500" fill="none" stroke="#2b2b2b" stroke-width="7" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M608,344 L608,446 L808,446 L808,500" fill="none" stroke="#1e88e5" stroke-width="4.2" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="608" cy="344" r="3.2" fill="#1e88e5" stroke="#2b2b2b" stroke-width="1.2"/>
+<circle cx="808" cy="500" r="3.2" fill="#1e88e5" stroke="#2b2b2b" stroke-width="1.2"/>
+<path d="M632,344 L632,434 L832,434 L832,500" fill="none" stroke="#2b2b2b" stroke-width="7" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M632,344 L632,434 L832,434 L832,500" fill="none" stroke="#7e57c2" stroke-width="4.2" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="632" cy="344" r="3.2" fill="#7e57c2" stroke="#2b2b2b" stroke-width="1.2"/>
+<circle cx="832" cy="500" r="3.2" fill="#7e57c2" stroke="#2b2b2b" stroke-width="1.2"/>
+<path d="M680,344 L680,422 L856,422 L856,500" fill="none" stroke="#2b2b2b" stroke-width="7" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M680,344 L680,422 L856,422 L856,500" fill="none" stroke="#8bc34a" stroke-width="4.2" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="680" cy="344" r="3.2" fill="#8bc34a" stroke="#2b2b2b" stroke-width="1.2"/>
+<circle cx="856" cy="500" r="3.2" fill="#8bc34a" stroke="#2b2b2b" stroke-width="1.2"/>
+<path d="M704,344 L704,410 L880,410 L880,500" fill="none" stroke="#2b2b2b" stroke-width="7" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M704,344 L704,410 L880,410 L880,500" fill="none" stroke="#a1887f" stroke-width="4.2" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="704" cy="344" r="3.2" fill="#a1887f" stroke="#2b2b2b" stroke-width="1.2"/>
+<circle cx="880" cy="500" r="3.2" fill="#a1887f" stroke="#2b2b2b" stroke-width="1.2"/>
+<path d="M896,344 L896,390 L952,390 L952,500" fill="none" stroke="#2b2b2b" stroke-width="7" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M896,344 L896,390 L952,390 L952,500" fill="none" stroke="#263238" stroke-width="4.2" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="896" cy="344" r="3.2" fill="#263238" stroke="#2b2b2b" stroke-width="1.2"/>
+<circle cx="952" cy="500" r="3.2" fill="#263238" stroke="#2b2b2b" stroke-width="1.2"/>
+<path d="M584,162 L584,96 L1040,96 L1040,476 L976,476 L976,500" fill="none" stroke="#2b2b2b" stroke-width="7" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M584,162 L584,96 L1040,96 L1040,476 L976,476 L976,500" fill="none" stroke="#fb8c00" stroke-width="4.2" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="584" cy="162" r="3.2" fill="#fb8c00" stroke="#2b2b2b" stroke-width="1.2"/>
+<circle cx="976" cy="500" r="3.2" fill="#fb8c00" stroke="#2b2b2b" stroke-width="1.2"/>
+<path d="M536,344 L536,392 L274,392" fill="none" stroke="#2b2b2b" stroke-width="7" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M536,344 L536,392 L274,392" fill="none" stroke="#263238" stroke-width="4.2" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="536" cy="344" r="3.2" fill="#263238" stroke="#2b2b2b" stroke-width="1.2"/>
+<circle cx="274" cy="392" r="3.2" fill="#263238" stroke="#2b2b2b" stroke-width="1.2"/>
+<path d="M560,344 L560,412 L274,412" fill="none" stroke="#2b2b2b" stroke-width="7" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M560,344 L560,412 L274,412" fill="none" stroke="#43a047" stroke-width="4.2" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="560" cy="344" r="3.2" fill="#43a047" stroke="#2b2b2b" stroke-width="1.2"/>
+<circle cx="274" cy="412" r="3.2" fill="#43a047" stroke="#2b2b2b" stroke-width="1.2"/>
+<path d="M584,344 L584,432 L274,432" fill="none" stroke="#555" stroke-width="7" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M584,344 L584,432 L274,432" fill="none" stroke="#f5f5f5" stroke-width="4.2" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="584" cy="344" r="3.2" fill="#f5f5f5" stroke="#555" stroke-width="1.2"/>
+<circle cx="274" cy="432" r="3.2" fill="#f5f5f5" stroke="#555" stroke-width="1.2"/>
+<path d="M408,120 L512,120 L512,162" fill="none" stroke="#2b2b2b" stroke-width="7" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M408,120 L512,120 L512,162" fill="none" stroke="#d81b60" stroke-width="4.2" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="408" cy="120" r="3.2" fill="#d81b60" stroke="#2b2b2b" stroke-width="1.2"/>
+<circle cx="512" cy="162" r="3.2" fill="#d81b60" stroke="#2b2b2b" stroke-width="1.2"/>
+<path d="M450,120 L450,80 L110,80 L110,500 L300,500 L300,452 L274,452" fill="none" stroke="#2b2b2b" stroke-width="7" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M450,120 L450,80 L110,80 L110,500 L300,500 L300,452 L274,452" fill="none" stroke="#d81b60" stroke-width="4.2" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="450" cy="120" r="3.2" fill="#d81b60" stroke="#2b2b2b" stroke-width="1.2"/>
+<circle cx="274" cy="452" r="3.2" fill="#d81b60" stroke="#2b2b2b" stroke-width="1.2"/>
+<path d="M760,620 L760,652 L662,652 L662,800" fill="none" stroke="#2b2b2b" stroke-width="7" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M760,620 L760,652 L662,652 L662,800" fill="none" stroke="#fdd835" stroke-width="4.2" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="760" cy="620" r="3.2" fill="#fdd835" stroke="#2b2b2b" stroke-width="1.2"/>
+<circle cx="662" cy="800" r="3.2" fill="#fdd835" stroke="#2b2b2b" stroke-width="1.2"/>
+<path d="M784,620 L784,666 L638,666 L638,800" fill="none" stroke="#2b2b2b" stroke-width="7" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M784,620 L784,666 L638,666 L638,800" fill="none" stroke="#26c6da" stroke-width="4.2" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="784" cy="620" r="3.2" fill="#26c6da" stroke="#2b2b2b" stroke-width="1.2"/>
+<circle cx="638" cy="800" r="3.2" fill="#26c6da" stroke="#2b2b2b" stroke-width="1.2"/>
+<path d="M808,620 L808,690 L760,690 L760,800" fill="none" stroke="#2b2b2b" stroke-width="7" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M808,620 L808,690 L760,690 L760,800" fill="none" stroke="#1e88e5" stroke-width="4.2" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="808" cy="620" r="3.2" fill="#1e88e5" stroke="#2b2b2b" stroke-width="1.2"/>
+<circle cx="760" cy="800" r="3.2" fill="#1e88e5" stroke="#2b2b2b" stroke-width="1.2"/>
+<path d="M832,620 L832,704 L784,704 L784,800" fill="none" stroke="#2b2b2b" stroke-width="7" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M832,620 L832,704 L784,704 L784,800" fill="none" stroke="#7e57c2" stroke-width="4.2" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="832" cy="620" r="3.2" fill="#7e57c2" stroke="#2b2b2b" stroke-width="1.2"/>
+<circle cx="784" cy="800" r="3.2" fill="#7e57c2" stroke="#2b2b2b" stroke-width="1.2"/>
+<path d="M856,620 L856,800" fill="none" stroke="#2b2b2b" stroke-width="7" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M856,620 L856,800" fill="none" stroke="#8bc34a" stroke-width="4.2" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="856" cy="620" r="3.2" fill="#8bc34a" stroke="#2b2b2b" stroke-width="1.2"/>
+<circle cx="856" cy="800" r="3.2" fill="#8bc34a" stroke="#2b2b2b" stroke-width="1.2"/>
+<path d="M880,620 L880,800" fill="none" stroke="#2b2b2b" stroke-width="7" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M880,620 L880,800" fill="none" stroke="#a1887f" stroke-width="4.2" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="880" cy="620" r="3.2" fill="#a1887f" stroke="#2b2b2b" stroke-width="1.2"/>
+<circle cx="880" cy="800" r="3.2" fill="#a1887f" stroke="#2b2b2b" stroke-width="1.2"/>
+<path d="M952,620 L952,1005 L550,1005 L550,770 L614,770 L614,800" fill="none" stroke="#2b2b2b" stroke-width="7" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M952,620 L952,1005 L550,1005 L550,770 L614,770 L614,800" fill="none" stroke="#263238" stroke-width="4.2" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="952" cy="620" r="3.2" fill="#263238" stroke="#2b2b2b" stroke-width="1.2"/>
+<circle cx="614" cy="800" r="3.2" fill="#263238" stroke="#2b2b2b" stroke-width="1.2"/>
+<path d="M952,742 L808,742 L808,800" fill="none" stroke="#2b2b2b" stroke-width="7" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M952,742 L808,742 L808,800" fill="none" stroke="#263238" stroke-width="4.2" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="952" cy="742" r="3.2" fill="#263238" stroke="#2b2b2b" stroke-width="1.2"/>
+<circle cx="808" cy="800" r="3.2" fill="#263238" stroke="#2b2b2b" stroke-width="1.2"/>
+<path d="M904,742 L904,800" fill="none" stroke="#2b2b2b" stroke-width="7" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M904,742 L904,800" fill="none" stroke="#263238" stroke-width="4.2" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="904" cy="742" r="3.2" fill="#263238" stroke="#2b2b2b" stroke-width="1.2"/>
+<circle cx="904" cy="800" r="3.2" fill="#263238" stroke="#2b2b2b" stroke-width="1.2"/>
+<path d="M976,620 L976,1022 L530,1022 L530,756 L590,756 L590,800" fill="none" stroke="#2b2b2b" stroke-width="7" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M976,620 L976,1022 L530,1022 L530,756 L590,756 L590,800" fill="none" stroke="#e53935" stroke-width="4.2" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="976" cy="620" r="3.2" fill="#e53935" stroke="#2b2b2b" stroke-width="1.2"/>
+<circle cx="590" cy="800" r="3.2" fill="#e53935" stroke="#2b2b2b" stroke-width="1.2"/>
+<path d="M530,1022 L130,1022 L130,120 L320,120" fill="none" stroke="#2b2b2b" stroke-width="7" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M530,1022 L130,1022 L130,120 L320,120" fill="none" stroke="#e53935" stroke-width="4.2" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="530" cy="1022" r="3.2" fill="#e53935" stroke="#2b2b2b" stroke-width="1.2"/>
+<circle cx="320" cy="120" r="3.2" fill="#e53935" stroke="#2b2b2b" stroke-width="1.2"/>
+<circle cx="952" cy="742" r="5" fill="#263238" stroke="#2b2b2b" stroke-width="1.5"/>
+<circle cx="904" cy="742" r="5" fill="#263238" stroke="#2b2b2b" stroke-width="1.5"/>
+<circle cx="530" cy="1022" r="5" fill="#e53935" stroke="#2b2b2b" stroke-width="1.5"/>
+<rect x="352" y="407" width="36" height="10" rx="4" fill="#e8d3a8" stroke="#8d6e63" stroke-width="1"/>
+<rect x="358" y="407" width="3" height="10" rx="0" fill="#d32f2f" stroke="none" stroke-width="1"/>
+<rect x="366" y="407" width="3" height="10" rx="0" fill="#6a1b9a" stroke="none" stroke-width="1"/>
+<rect x="374" y="407" width="3" height="10" rx="0" fill="#111" stroke="none" stroke-width="1"/>
+<text x="392" y="406" font-family="DejaVu Sans, Arial, sans-serif" font-size="9" fill="#333" text-anchor="start" font-weight="normal">R1 27</text>
+<rect x="352" y="427" width="36" height="10" rx="4" fill="#e8d3a8" stroke="#8d6e63" stroke-width="1"/>
+<rect x="358" y="427" width="3" height="10" rx="0" fill="#d32f2f" stroke="none" stroke-width="1"/>
+<rect x="366" y="427" width="3" height="10" rx="0" fill="#6a1b9a" stroke="none" stroke-width="1"/>
+<rect x="374" y="427" width="3" height="10" rx="0" fill="#111" stroke="none" stroke-width="1"/>
+<text x="392" y="426" font-family="DejaVu Sans, Arial, sans-serif" font-size="9" fill="#333" text-anchor="start" font-weight="normal">R2 27</text>
+<text x="1080" y="160" font-family="DejaVu Sans, Arial, sans-serif" font-size="13" fill="#222" text-anchor="start" font-weight="bold">Цвета проводов</text>
+<line x1="1080" y1="178" x2="1110" y2="178" stroke="#2b2b2b" stroke-width="7" stroke-linecap="round"/>
+<line x1="1080" y1="178" x2="1110" y2="178" stroke="#e53935" stroke-width="4.2" stroke-linecap="round"/>
+<text x="1120" y="182" font-family="DejaVu Sans, Arial, sans-serif" font-size="11" fill="#333" text-anchor="start" font-weight="normal">+5 В платы (J6.1)</text>
+<line x1="1080" y1="197" x2="1110" y2="197" stroke="#2b2b2b" stroke-width="7" stroke-linecap="round"/>
+<line x1="1080" y1="197" x2="1110" y2="197" stroke="#d81b60" stroke-width="4.2" stroke-linecap="round"/>
+<text x="1120" y="201" font-family="DejaVu Sans, Arial, sans-serif" font-size="11" fill="#333" text-anchor="start" font-weight="normal">VSYS (после D1)</text>
+<line x1="1080" y1="216" x2="1110" y2="216" stroke="#2b2b2b" stroke-width="7" stroke-linecap="round"/>
+<line x1="1080" y1="216" x2="1110" y2="216" stroke="#fb8c00" stroke-width="4.2" stroke-linecap="round"/>
+<text x="1120" y="220" font-family="DejaVu Sans, Arial, sans-serif" font-size="11" fill="#333" text-anchor="start" font-weight="normal">3,3 В Pico</text>
+<line x1="1080" y1="235" x2="1110" y2="235" stroke="#2b2b2b" stroke-width="7" stroke-linecap="round"/>
+<line x1="1080" y1="235" x2="1110" y2="235" stroke="#263238" stroke-width="4.2" stroke-linecap="round"/>
+<text x="1120" y="239" font-family="DejaVu Sans, Arial, sans-serif" font-size="11" fill="#333" text-anchor="start" font-weight="normal">GND (общий)</text>
+<line x1="1080" y1="254" x2="1110" y2="254" stroke="#2b2b2b" stroke-width="7" stroke-linecap="round"/>
+<line x1="1080" y1="254" x2="1110" y2="254" stroke="#43a047" stroke-width="4.2" stroke-linecap="round"/>
+<text x="1120" y="258" font-family="DejaVu Sans, Arial, sans-serif" font-size="11" fill="#333" text-anchor="start" font-weight="normal">USB D+ (GP2)</text>
+<line x1="1080" y1="273" x2="1110" y2="273" stroke="#2b2b2b" stroke-width="7" stroke-linecap="round"/>
+<line x1="1080" y1="273" x2="1110" y2="273" stroke="#f5f5f5" stroke-width="4.2" stroke-linecap="round"/>
+<text x="1120" y="277" font-family="DejaVu Sans, Arial, sans-serif" font-size="11" fill="#333" text-anchor="start" font-weight="normal">USB D− (GP3)</text>
+<line x1="1080" y1="292" x2="1110" y2="292" stroke="#2b2b2b" stroke-width="7" stroke-linecap="round"/>
+<line x1="1080" y1="292" x2="1110" y2="292" stroke="#fdd835" stroke-width="4.2" stroke-linecap="round"/>
+<text x="1120" y="296" font-family="DejaVu Sans, Arial, sans-serif" font-size="11" fill="#333" text-anchor="start" font-weight="normal">GP0 TX → AVR_RX</text>
+<line x1="1080" y1="311" x2="1110" y2="311" stroke="#2b2b2b" stroke-width="7" stroke-linecap="round"/>
+<line x1="1080" y1="311" x2="1110" y2="311" stroke="#26c6da" stroke-width="4.2" stroke-linecap="round"/>
+<text x="1120" y="315" font-family="DejaVu Sans, Arial, sans-serif" font-size="11" fill="#333" text-anchor="start" font-weight="normal">GP1 RX ← AVR_TX</text>
+<line x1="1080" y1="330" x2="1110" y2="330" stroke="#2b2b2b" stroke-width="7" stroke-linecap="round"/>
+<line x1="1080" y1="330" x2="1110" y2="330" stroke="#1e88e5" stroke-width="4.2" stroke-linecap="round"/>
+<text x="1120" y="334" font-family="DejaVu Sans, Arial, sans-serif" font-size="11" fill="#333" text-anchor="start" font-weight="normal">клавиатура CLK (GP4)</text>
+<line x1="1080" y1="349" x2="1110" y2="349" stroke="#2b2b2b" stroke-width="7" stroke-linecap="round"/>
+<line x1="1080" y1="349" x2="1110" y2="349" stroke="#7e57c2" stroke-width="4.2" stroke-linecap="round"/>
+<text x="1120" y="353" font-family="DejaVu Sans, Arial, sans-serif" font-size="11" fill="#333" text-anchor="start" font-weight="normal">клавиатура DATA (GP5)</text>
+<line x1="1080" y1="368" x2="1110" y2="368" stroke="#2b2b2b" stroke-width="7" stroke-linecap="round"/>
+<line x1="1080" y1="368" x2="1110" y2="368" stroke="#8bc34a" stroke-width="4.2" stroke-linecap="round"/>
+<text x="1120" y="372" font-family="DejaVu Sans, Arial, sans-serif" font-size="11" fill="#333" text-anchor="start" font-weight="normal">мышь CLK (GP6)</text>
+<line x1="1080" y1="387" x2="1110" y2="387" stroke="#2b2b2b" stroke-width="7" stroke-linecap="round"/>
+<line x1="1080" y1="387" x2="1110" y2="387" stroke="#a1887f" stroke-width="4.2" stroke-linecap="round"/>
+<text x="1120" y="391" font-family="DejaVu Sans, Arial, sans-serif" font-size="11" fill="#333" text-anchor="start" font-weight="normal">мышь DATA (GP7)</text>
+<text x="1080" y="430" font-family="DejaVu Sans, Arial, sans-serif" font-size="11" fill="#555" text-anchor="start" font-weight="normal">Модули BSS138 бывают с другими подписями</text>
+<text x="1080" y="446" font-family="DejaVu Sans, Arial, sans-serif" font-size="11" fill="#555" text-anchor="start" font-weight="normal">и порядком выводов: ищите LV / HV, GND</text>
+<text x="1080" y="462" font-family="DejaVu Sans, Arial, sans-serif" font-size="11" fill="#555" text-anchor="start" font-weight="normal">и номера каналов. Подтяжки PS/2 4k7 к 5 В</text>
+<text x="1080" y="478" font-family="DejaVu Sans, Arial, sans-serif" font-size="11" fill="#555" text-anchor="start" font-weight="normal">уже стоят на плате (R21–R24).</text>
+<text x="1080" y="510" font-family="DejaVu Sans, Arial, sans-serif" font-size="11" fill="#222" text-anchor="start" font-weight="bold">J6 платы:</text>
+<text x="1080" y="526" font-family="DejaVu Sans, Arial, sans-serif" font-size="11" fill="#444" text-anchor="start" font-weight="normal">1 +5 В, 2 GND, 3 AVR_TX, 4 AVR_RX</text>
+<text x="1080" y="544" font-family="DejaVu Sans, Arial, sans-serif" font-size="11" fill="#222" text-anchor="start" font-weight="bold">CON5 / CON6:</text>
+<text x="1080" y="560" font-family="DejaVu Sans, Arial, sans-serif" font-size="11" fill="#444" text-anchor="start" font-weight="normal">5 CLK, 1 DATA, 3 GND</text>
+</svg>

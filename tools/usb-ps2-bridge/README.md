@@ -10,6 +10,10 @@
 
 ## Подключение
 
+![Монтаж переходника](doc/wiring.svg)
+
+(PNG: `doc/wiring.png`, генератор картинки: `doc/wiring.py`.)
+
 Схема в KiCad: `pcb/usb-ps2-bridge/usb-ps2-bridge.kicad_sch` (преобразователь уровней на ней
 нарисован дискретно, Q1..Q6 и R3..R14: это то же, что модуль на BSS138).
 
